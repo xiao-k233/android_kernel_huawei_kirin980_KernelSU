@@ -63,7 +63,7 @@ void hi64xx_utils_deinit(void)
 	}
 }
 EXPORT_SYMBOL(hi64xx_utils_deinit);
-
+/*
 int hisi_codec_get_dieid(char *dieid, unsigned int len)
 {
 	if (cdc_type == HI64XX_CODEC_TYPE_6405) {
@@ -71,7 +71,7 @@ int hisi_codec_get_dieid(char *dieid, unsigned int len)
 	}
 	return -1;
 }
-
+*/
 MODULE_DESCRIPTION("hi64xx util");
 MODULE_AUTHOR("liujinhong <liujinhong@hisilicon.com>");
 MODULE_LICENSE("GPL");
