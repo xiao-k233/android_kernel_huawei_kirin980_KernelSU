@@ -625,7 +625,7 @@ u32 nv_emmc_access(const s8* path,s32 mode)
         return NV_ERROR;
     }
 	/* coverity[self_assign] */
-    mode = mode;
+    mode = mode + 0;
     switch(fd->emmc_type)
     {
         case NV_FILE_DLOAD:
@@ -653,12 +653,36 @@ u32 nv_emmc_access(const s8* path,s32 mode)
 
 u32 nv_storage_read(const char *part_name, loff_t part_offset, void *data_buf, size_t data_len)
 {
+#ifdef BSP_CONFIG_PHONE_TYPE
         return(u32)bsp_blk_read(part_name,part_offset,data_buf,data_len);
+#else
+    if(!strncmp(part_name, NV_DLOAD_SEC_NAME, sizeof(NV_DLOAD_SEC_NAME))
+        || !strncmp(part_name, NV_DLOAD_CUST_SEC_NAME, sizeof(NV_DLOAD_CUST_SEC_NAME)))
+    {
+        return (u32)bsp_blk_read(part_name,(part_offset + NV_SEC_VRL_SIZE),data_buf,data_len);
+    }
+    else
+    {
+        return(u32)bsp_blk_read(part_name,part_offset,data_buf,data_len);
+    }
+#endif
 }
 
 u32 nv_storage_write(const char *part_name, loff_t part_offset, void *data_buf, size_t data_len)
 {
+#ifdef BSP_CONFIG_PHONE_TYPE
         return(u32)bsp_blk_write(part_name,part_offset,data_buf,data_len);
+#else
+    if(!strncmp(part_name, NV_DLOAD_SEC_NAME, sizeof(NV_DLOAD_SEC_NAME))
+        || !strncmp(part_name, NV_DLOAD_CUST_SEC_NAME, sizeof(NV_DLOAD_CUST_SEC_NAME)))
+    {
+        return (u32)bsp_blk_write(part_name,(part_offset + NV_SEC_VRL_SIZE),data_buf,data_len);
+    }
+    else
+    {
+        return(u32)bsp_blk_write(part_name,part_offset,data_buf,data_len);
+    }
+#endif
 }
 
 

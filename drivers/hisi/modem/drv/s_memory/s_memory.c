@@ -69,7 +69,7 @@
 	(bsp_err("<%s> "fmt, __FUNCTION__, ##__VA_ARGS__))
 struct mem_ctrl g_mem_ctrl;
 
-int __init bsp_shared_mem_init(void)
+int bsp_shared_mem_init(void)
 {
 	memset_s(&g_mem_ctrl, sizeof(struct mem_ctrl), 0x0, sizeof(struct mem_ctrl));
 	g_mem_ctrl.sddr_phy_addr  = (void*)HI_SHARED_DDR_BASE_ADDR;
@@ -80,5 +80,8 @@ int __init bsp_shared_mem_init(void)
 	return 0;
 }
 
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+core_initcall(bsp_shared_mem_init); /*lint !e528*/
+#endif
 EXPORT_SYMBOL_GPL(g_mem_ctrl);
 

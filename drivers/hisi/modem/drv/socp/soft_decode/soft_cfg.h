@@ -75,9 +75,6 @@ enum SOCP_SOFT_DECODE_CB_ENUM
     SOCP_DECODER_DST_CB_BUTT
 };
 
-/* 通道接收数据、数据长度、回卷数据、回卷数据长度 */
-typedef void (*SCM_DECODERDESTFUCN)(SOCP_DECODER_DST_ENUM_U32 enChanID,unsigned char *pucData, unsigned int ulSize, unsigned char *pucRBData, unsigned int ulRBSize);
-
 u32 SCM_RegDecoderDestProc(SOCP_DECODER_DST_ENUM_U32 enChanlID, SCM_DECODERDESTFUCN func);
 void SCM_RcvDataDispatch(OM_HDLC_STRU *pstHdlcCtrl, u8 ucDataType);
 

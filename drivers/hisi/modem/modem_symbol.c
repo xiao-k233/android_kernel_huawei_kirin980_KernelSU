@@ -58,8 +58,10 @@
 #include <linux/of_fdt.h>
 #include <linux/reboot.h>
 
+#ifdef CONFIG_MMC_DW_MUX_SDSIM
 #include <linux/mmc/host.h>
 #include <linux/mmc/dw_mmc_mux_sdsim.h>
+#endif
 
 #include "adrv.h"
 #include "mdrv.h"
@@ -149,11 +151,13 @@ EXPORT_SYMBOL(strcat_s);
 
 EXPORT_SYMBOL(num_to_str);
 
+#ifdef CONFIG_MMC_DW_MUX_SDSIM
 extern int dw_mci_check_himntn(int feature);
 EXPORT_SYMBOL(dw_mci_check_himntn);
 EXPORT_SYMBOL(sd_sim_detect_run);
 EXPORT_SYMBOL(detect_status_to_string);
 EXPORT_SYMBOL(sd_sim_detect_status_current);
+#endif
 
 #include "mdrv_sysboot.h"
 EXPORT_SYMBOL(hifireset_regcbfunc);
@@ -174,5 +178,13 @@ EXPORT_SYMBOL(set_gps_ref_clk_enable);
 
 
 /* TODO */
+#ifndef CONFIG_HUAWEI_BASTET
+char cur_netdev_name[16];
+EXPORT_SYMBOL(cur_netdev_name);
+void ind_hisi_com(void *info __attribute__((unused)), u32 len __attribute__((unused)))
+{
+}
+EXPORT_SYMBOL(ind_hisi_com);
+#endif
 
 

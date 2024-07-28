@@ -53,8 +53,10 @@
 /* 保护此头文件是因为包含了PS域相关的定义，但是本项目未修改PS域相关的，后续需要调整 */
 #include "AtDataProc.h"
 #include "AcpuReset.h"
+#if (FEATURE_ON == FEATURE_LTE)
 #include "msp_nvim.h"
 #include "at_lte_common.h"
+#endif
 #include "nv_stru_was.h"
 #include "nv_stru_gas.h"
 #include "acore_nv_stru_msp.h"
@@ -64,10 +66,15 @@
 #include "GuNasLogFilter.h"
 #include "PsLogFilterInterface.h"
 #include "TafAcoreLogPrivacy.h"
+#if (FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
+#include "ads_dev_i.h"
+#else
 #include "AdsDeviceInterface.h"
+#endif
 
 
 #include "ATCmdProc.h"
+
 
 
 
@@ -81,7 +88,11 @@
 /*****************************************************************************
   2 全局变量定义
 *****************************************************************************/
+#if(FEATURE_ON == FEATURE_UE_MODE_NR)
+extern AT_MT_INFO_STRU                         g_stMtInfoCtx;
+#else
 extern AT_DEVICE_CMD_CTRL_STRU                 g_stAtDevCmdCtrl;
+#endif
 
 /*****************************************************************************
   3 函数实现
@@ -112,32 +123,46 @@ VOS_VOID AT_ReadPlatformNV(VOS_VOID)
             pstAtSptRatList->ucPlatformSptLte        = VOS_FALSE;
             pstAtSptRatList->ucPlatformSptUtralTDD   = VOS_FALSE;
 
+#if (FEATURE_ON == FEATURE_UE_MODE_NR)
+            pstAtSptRatList->ucPlatformSptNR        = VOS_FALSE;
+#endif
 
             stPlatFormRat.usRatNum = AT_MIN(stPlatFormRat.usRatNum, PLATFORM_MAX_RAT_NUM);
             for (ucRatIndex = 0; ucRatIndex < stPlatFormRat.usRatNum; ucRatIndex++)
             {
+#if(FEATURE_ON == FEATURE_LTE)
                 /* 平台支持LTE */
                 if (PLATFORM_RAT_LTE == stPlatFormRat.aenRatList[ucRatIndex])
                 {
                     pstAtSptRatList->ucPlatformSptLte = VOS_TRUE;
                 }
+#endif
                 /* 平台支持WCDMA */
                 if (PLATFORM_RAT_WCDMA == stPlatFormRat.aenRatList[ucRatIndex])
                 {
                     pstAtSptRatList->ucPlatformSptWcdma = VOS_TRUE;
                 }
 
+#if(FEATURE_ON == FEATURE_UE_MODE_TDS)
                 /* 平台支持TDS*/
                 if (PLATFORM_RAT_TDS == stPlatFormRat.aenRatList[ucRatIndex])
                 {
                     pstAtSptRatList->ucPlatformSptUtralTDD = VOS_TRUE;
                 }
+#endif
                 /* 平台支持GSM */
                 if (PLATFORM_RAT_GSM == stPlatFormRat.aenRatList[ucRatIndex])
                 {
                     pstAtSptRatList->ucPlatformSptGsm = VOS_TRUE;
                 }
 
+#if (FEATURE_ON == FEATURE_UE_MODE_NR)
+                /* 平台支持NR */
+                if (PLATFORM_RAT_NR == stPlatFormRat.aenRatList[ucRatIndex])
+                {
+                    pstAtSptRatList->ucPlatformSptNR = VOS_TRUE;
+                }
+#endif
             }
         }
     }
@@ -181,7 +206,9 @@ VOS_VOID AT_ReadClientConfigNV(VOS_VOID)
         pstCfgMapTbl = AT_GetClientCfgMapTbl(i);
         pstClientCfg = AT_GetClientConfig(pstCfgMapTbl->enClientId);
 
+#if (2 <= MULTI_MODEM_NUMBER)
         pstClientCfg->enModemId   = pstCfgDesc[pstCfgMapTbl->enNvIndex].ucModemId;
+#endif
         pstClientCfg->ucReportFlg = pstCfgDesc[pstCfgMapTbl->enNvIndex].ucReportFlg;
     }
 
@@ -1195,6 +1222,7 @@ VOS_VOID AT_ReadCregAndCgregCiFourByteRptNV( VOS_VOID )
     return;
 }
 
+#if (FEATURE_ON == FEATURE_IPV6)
 
 VOS_VOID AT_ReadIpv6CapabilityNV( VOS_VOID )
 {
@@ -1298,6 +1326,7 @@ VOS_VOID AT_ReadIpv6AddrTestModeCfgNV(VOS_VOID)
     return;
 }
 
+#endif
 
 
 VOS_VOID AT_ReadSharePdpInfoNV(VOS_VOID)
@@ -1369,6 +1398,7 @@ VOS_VOID  AT_ReadPsNV(VOS_VOID)
     /* 读取CREG/CGREG的CI参数是否以4字节上报的控制NV(Vodafone需求) */
     AT_ReadCregAndCgregCiFourByteRptNV();
 
+#if (FEATURE_ON == FEATURE_IPV6)
     /* 读取IPV6能力的NV, 目前IPV6能力只能支持到IPV4V6_OVER_ONE_PDP */
     AT_ReadIpv6CapabilityNV();
 
@@ -1376,6 +1406,7 @@ VOS_VOID  AT_ReadPsNV(VOS_VOID)
     AT_ReadIpv6BackProcExtCauseNV();
 
     AT_ReadIpv6AddrTestModeCfgNV();
+#endif
 
     /* 读取拨号系统托盘显示速率定制NV */
     AT_ReadDialConnectDisplayRateNV();
@@ -1462,6 +1493,7 @@ VOS_VOID  AT_ReadCsNV(VOS_VOID)
     return;
 }
 
+#if (FEATURE_ON == FEATURE_LTE)
 
 VOS_VOID AT_ReadLTENV(VOS_VOID)
 {
@@ -1501,6 +1533,7 @@ VOS_VOID AT_ReadLTENV(VOS_VOID)
     return;
 }
 
+#endif
 
 
 VOS_VOID AT_ReadAgpsNv(VOS_VOID)
@@ -1588,10 +1621,16 @@ VOS_VOID  AT_ReadNV(VOS_VOID)
     /* 读取SMS相关的NV */
     AT_ReadSmsNV();
 
+#if (FEATURE_ON == FEATURE_LTE)
     /* 读取LTE NV项 */
     AT_ReadLTENV();
 
+#endif
 
+#if (FEATURE_ON == FEATURE_AT_HSUART)
+    /* 读取uart相关相关NV项 */
+    AT_ReadUartCfgNV();
+#endif
 
     AT_ReadPortBuffCfgNV();
 
@@ -1599,7 +1638,9 @@ VOS_VOID  AT_ReadNV(VOS_VOID)
 
     AT_ReadAgpsNv();
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     AT_ReadCdmaModemSwitchNotResetCfgNv();
+#endif
 
     AT_ReadCustomUsimmCfg();
 
@@ -1633,7 +1674,11 @@ VOS_UINT32  AT_ReadPhyNV(VOS_VOID)
 VOS_VOID AT_InitDeviceCmd(VOS_VOID)
 {
 
+    #if (FEATURE_OFF == FEATURE_UE_MODE_NR)
     TAF_MEM_SET_S(&g_stAtDevCmdCtrl, sizeof(g_stAtDevCmdCtrl), 0x00, sizeof(AT_DEVICE_CMD_CTRL_STRU));
+    #else
+    TAF_MEM_SET_S(&g_stMtInfoCtx, sizeof(g_stMtInfoCtx), 0x00, sizeof(AT_MT_INFO_STRU));
+    #endif
 
 
     if (VOS_OK != AT_ReadPhyNV())
@@ -1822,6 +1867,9 @@ VOS_VOID AT_InitPort(VOS_VOID)
     /* UART口链路的建立 */
     AT_UART_InitPort();
 
+#if (FEATURE_ON == FEATURE_AT_HSUART)
+    AT_HSUART_InitPort();
+#endif
 
     /* NDIS MODEM口链路的建立 */
     AT_UsbNdisEst();
@@ -1857,6 +1905,10 @@ VOS_UINT32  At_PidInit(enum VOS_INIT_PHASE_DEFINE enPhase)
             /* 初始化AT的上下文 */
             AT_InitCtx();
 
+#if (FEATURE_ON == FEATURE_AT_HSUART)
+            /* 初始化UART相关的上下文 */
+            AT_InitUartCtx();
+#endif
 
             AT_InitPortBuffCfg();
 
@@ -1876,8 +1928,10 @@ VOS_UINT32  At_PidInit(enum VOS_INIT_PHASE_DEFINE enPhase)
             At_RegisterExCmdTable();
             At_RegisterExPrivateCmdTable();
             At_RegisterDeviceCmdTable();
+#if (FEATURE_LTE == FEATURE_ON)
             At_RegisterDeviceCmdTLTable();
             At_RegisterTLCmdTable();
+#endif
             /* 装备初始化 */
             AT_InitDeviceCmd();
 
@@ -1910,9 +1964,11 @@ VOS_UINT32  At_PidInit(enum VOS_INIT_PHASE_DEFINE enPhase)
 
             AT_InitMntnCtx();
 
+#if (OSA_CPU_ACPU == VOS_OSA_CPU)
             /* 注册层间消息过滤函数 */
             GUNAS_OM_LayerMsgReplaceCBRegACore();
             TAF_OM_LayerMsgLogPrivacyMatchRegAcore();
+#endif
             break;
 
         default:
@@ -1939,6 +1995,65 @@ VOS_VOID AT_ReadSsNV( VOS_VOID )
     return;
 }
 
+#if (FEATURE_ON == FEATURE_AT_HSUART)
+
+VOS_VOID AT_ReadUartCfgNV(VOS_VOID)
+{
+    AT_UART_CTX_STRU                   *pstUartCtx = VOS_NULL_PTR;
+    TAF_NV_UART_CFG_STRU                stUartNVCfg;
+    VOS_UINT32                          ulRet;
+
+    TAF_MEM_SET_S(&stUartNVCfg, sizeof(stUartNVCfg), 0x00, sizeof(TAF_NV_UART_CFG_STRU));
+
+    pstUartCtx = AT_GetUartCtxAddr();
+
+    /* 读取NV项 */
+    ulRet = TAF_ACORE_NV_READ(MODEM_ID_0,
+                              en_NV_Item_UART_CFG,
+                              &stUartNVCfg,
+                              sizeof(TAF_NV_UART_CFG_STRU));
+
+    if (VOS_OK == ulRet)
+    {
+         /* 检查NV中设置的波特率是否在支持的范围内 */
+        ulRet = AT_HSUART_IsBaudRateValid(stUartNVCfg.ulBaudRate);
+        if (VOS_TRUE == ulRet)
+        {
+            /* 将NV中的值赋给上下文全局变量 */
+            pstUartCtx->stPhyConfig.enBaudRate = stUartNVCfg.ulBaudRate;
+        }
+        else
+        {
+            AT_HSUART_DBG_NV_BAUDRATE_ERR(1);
+        }
+
+        /* 检查NV中设置的帧格式是否在支持的范围内 */
+        ulRet = AT_HSUART_ValidateCharFrameParam(stUartNVCfg.stFrame.ucFormat,
+                                                 stUartNVCfg.stFrame.ucParity);
+        if (VOS_TRUE == ulRet)
+        {
+            pstUartCtx->stPhyConfig.stFrame.enFormat = stUartNVCfg.stFrame.ucFormat;
+            pstUartCtx->stPhyConfig.stFrame.enParity = stUartNVCfg.stFrame.ucParity;
+        }
+        else
+        {
+            AT_HSUART_DBG_NV_FORMAT_ERR(1);
+        }
+
+        pstUartCtx->stRiConfig.ulSmsRiOnInterval    = stUartNVCfg.stRiConfig.ulSmsRiOnInterval;
+        pstUartCtx->stRiConfig.ulSmsRiOffInterval   = stUartNVCfg.stRiConfig.ulSmsRiOffInterval;
+        pstUartCtx->stRiConfig.ulVoiceRiOnInterval  = stUartNVCfg.stRiConfig.ulVoiceRiOnInterval;
+        pstUartCtx->stRiConfig.ulVoiceRiOffInterval = stUartNVCfg.stRiConfig.ulVoiceRiOffInterval;
+        pstUartCtx->stRiConfig.ucVoiceRiCycleTimes  = stUartNVCfg.stRiConfig.ucVoiceRiCycleTimes;
+    }
+    else
+    {
+        AT_HSUART_DBG_NV_READ_ERR(1);
+    }
+
+    return;
+}
+#endif
 
 
 VOS_VOID AT_ReadRedialNwCauseFlagNV(VOS_VOID)
@@ -1989,6 +2104,7 @@ VOS_VOID AT_ReadRedialNwCauseFlagNV(VOS_VOID)
     return;
 }
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_VOID AT_ReadCdmaModemSwitchNotResetCfgNv(VOS_VOID)
 {
@@ -2022,5 +2138,6 @@ VOS_VOID AT_ReadCdmaModemSwitchNotResetCfgNv(VOS_VOID)
 
     return;
 }
+#endif
 
 

@@ -526,7 +526,7 @@ VOS_VOID DIAG_TraceReport(VOS_VOID *pMsg)
     if(VOS_NULL == pDiagMsg)
     {
         DIAG_DEBUG_SDM_FUN(EN_DIAG_CBT_API_TRACE_ERR, ERR_MSP_INVALID_PARAMETER, 0, 1);
-        return ;
+        return;
     }
 
     if(pDiagMsg->ulLength < LAYER_MSG_MIN_LEN)
@@ -544,7 +544,7 @@ VOS_VOID DIAG_TraceReport(VOS_VOID *pMsg)
         if(!DIAG_IS_CONN_ON)
         {
             DIAG_DEBUG_SDM_FUN(EN_DIAG_CBT_API_TRACE_ERR, ERR_MSP_NO_INITILIZATION, 0, 1);
-            return ;
+            return;
         }
 
         /*检查是否允许层间消息上报*/
@@ -552,7 +552,7 @@ VOS_VOID DIAG_TraceReport(VOS_VOID *pMsg)
         if(ret)
         {
             DIAG_DEBUG_SDM_FUN(EN_DIAG_CBT_API_TRACE_ERR, ERR_MSP_CFG_LOG_NOT_ALLOW, 0, 1);
-            return ;
+            return;
         }
     }
 
@@ -565,13 +565,13 @@ VOS_VOID DIAG_TraceReport(VOS_VOID *pMsg)
     {
         DIAG_DEBUG_SDM_FUN(EN_DIAG_CBT_API_TRACE_OK, 0, 0, 5);
     }
-    return ;
+    return;
 }
 
 
 
 
-VOS_VOID DIAG_LayerMsgReport(VOS_VOID *pMsg)
+VOS_UINT32 DIAG_LayerMsgReport(VOS_VOID *pMsg)
 {
     DIAG_OSA_MSG_STRU *pDiagMsg = (DIAG_OSA_MSG_STRU *)pMsg;
     DIAG_OSA_MSG_STRU *pNewMsg  = NULL;
@@ -580,12 +580,12 @@ VOS_VOID DIAG_LayerMsgReport(VOS_VOID *pMsg)
     if(VOS_NULL == pDiagMsg)
     {
         DIAG_DEBUG_SDM_FUN(EN_DIAG_API_MSG_LAYER_ERR, ERR_MSP_INVALID_PARAMETER, 0, 1);
-        return ;
+        return ERR_MSP_INVALID_PARAMETER;
     }
 
     if(pDiagMsg->ulLength < LAYER_MSG_MIN_LEN)
     {
-        return;
+        return ERR_MSP_INVALID_PARAMETER;
     }
 
     ulSrcModule = pDiagMsg->ulSenderPid;
@@ -598,7 +598,7 @@ VOS_VOID DIAG_LayerMsgReport(VOS_VOID *pMsg)
         if(!DIAG_IS_CONN_ON)
         {
             DIAG_DEBUG_SDM_FUN(EN_DIAG_API_MSG_LAYER_ERR, ERR_MSP_NO_INITILIZATION, 0, 2);
-            return ;
+            return ERR_MSP_CFG_LOG_NOT_ALLOW;
         }
 
         /*检查是否允许层间消息上报*/
@@ -606,7 +606,7 @@ VOS_VOID DIAG_LayerMsgReport(VOS_VOID *pMsg)
         if(ret)
         {
             DIAG_DEBUG_SDM_FUN(EN_DIAG_API_MSG_LAYER_ERR, ERR_MSP_CFG_LOG_NOT_ALLOW, 0, 3);
-            return ;
+            return ERR_MSP_CFG_LOG_NOT_ALLOW;
         }
     }
 
@@ -620,7 +620,7 @@ VOS_VOID DIAG_LayerMsgReport(VOS_VOID *pMsg)
         if(VOS_NULL == pNewMsg)
         {
             DIAG_DEBUG_SDM_FUN(EN_DIAG_API_MSG_LAYER_MATCH, ulSrcModule, ulDstModule, ulMsgId);
-            return ;
+            return ERR_MSP_CFG_LOG_NOT_ALLOW;
         }
     }
 
@@ -642,7 +642,7 @@ VOS_VOID DIAG_LayerMsgReport(VOS_VOID *pMsg)
             DIAG_DEBUG_SDM_FUN(EN_DIAG_API_MSG_LAYER_NOTIFY, 0, 0, 6);
         }
     }
-    return ;
+    return ERR_MSP_SUCCESS;
 }
 
 

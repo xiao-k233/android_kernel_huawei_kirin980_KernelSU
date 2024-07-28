@@ -66,6 +66,64 @@
 *****************************************************************************/
 
 #define THIS_FILE_ID                    PS_FILE_ID_DMS_CORE_C
+#if (FEATURE_ON == FEATURE_EXTRA_MODEM_MODE)
+/*****************************************************************************
+  2 全局变量定义
+*****************************************************************************/
+
+
+/*****************************************************************************
+  3 外部函数声明
+*****************************************************************************/
+
+
+/*****************************************************************************
+  3 函数实现
+*****************************************************************************/
+
+/*****************************************************************************
+ 函 数 名  : HIFI_ACORE_PidInit
+ 功能描述  : HIFI A AGENT PID初始化函数
+ 输入参数  : enum VOS_INIT_PHASE_DEFINE enPhase
+ 输出参数  : 无
+ 返 回 值  : VOS_UINT32
+             VOS_OK
+             VOS_ERR
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2018年09月10日
+    修改内容   : 新生成函数
+*****************************************************************************/
+static VOS_VOID VOICE_AGENT_Init(VOS_VOID)
+{
+    VOS_UINT8                           ucDevindex = 0;
+
+    VOICEAGENT_INFO_LOG("VOICE_AGENT_Init enter");
+
+    /* 打开PCIE的通道 */
+    for (ucDevindex = 0; ucDevindex < VOICE_AGENT_DEV_BUTT; ucDevindex++)
+    {
+        if(VOS_OK != VOICE_AGENT_PcieOpen(ucDevindex))
+        {
+            VOICEAGENT_ERR_LOG1("PcieOpen fail, devindex = %d\n", ucDevindex);
+        }
+    }
+
+    if (VOS_OK != VOICE_AGENT_NV_PROC())
+    {
+        VOICEAGENT_ERR_LOG("VOICE_AGENT_NV_PROC fail\n");
+    }
+
+    if (VOS_OK != VOICE_AGENT_OM_PROC())
+    {
+        VOICEAGENT_ERR_LOG("VOICE_AGENT_OM_PROC fail\n");
+    }
+    return;
+
+}
+#endif
 /*****************************************************************************
  函 数 名  : HIFI_ACORE_MsgProc
  功能描述  : AT模块消息处理入口函数
@@ -82,6 +140,28 @@
 *****************************************************************************/
 static VOS_VOID VOICE_AGENT_MsgProc(MsgBlock* pMsg)
 {
+#if (FEATURE_ON == FEATURE_EXTRA_MODEM_MODE)
+	MsgBlock		  *pHeader = VOS_NULL_PTR;
+
+	/* 获取消息头指针*/
+	pHeader = pMsg;
+
+	switch(pHeader->ulSenderPid)
+	{
+		case UEPS_PID_MTC:
+			VOICE_AGENT_VcMsgProc(pMsg);
+			break;
+		case I0_PS_PID_IMSA:
+		case I1_PS_PID_IMSA:
+			VOICE_AGENT_ImsaMsgProc(pMsg);
+			break;
+        case MSP_PID_DIAG_AGENT:
+            VOICE_AGENT_DiagAgentMsgProc(pMsg);
+            break;
+		default:
+			break;
+	}
+#endif
 	return;
 }
 /*****************************************************************************
@@ -106,6 +186,9 @@ static VOS_UINT32  VOICE_AGENT_PidInit(enum VOS_INIT_PHASE_DEFINE enPhase)
     switch ( enPhase )
     {
         case VOS_IP_INITIAL:
+#if (FEATURE_ON == FEATURE_EXTRA_MODEM_MODE)
+            VOICE_AGENT_Init();
+#endif
             break;
 
         default:

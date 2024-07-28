@@ -50,5 +50,42 @@
 #include <bsp_reset.h>
 #include <product_config.h>
 
+#if (!defined(CONFIG_BALONG_ONOFF) && !defined(CONFIG_BALONG_MODEM_ONOFF))
 
+void mdrv_sysboot_shutdown(void)
+{
+}
+
+void mdrv_sysboot_restart(void)
+{
+}
+
+void bsp_reboot_callback_register(void (*hook)(void))
+{
+}
+
+/******************************************************************************
+*  Function:  bsp_drv_power_reboot_direct
+*  Description:
+*  Input:
+*         None
+*  Output:
+*         None
+*  Return:
+*         None
+*  Note  : ÷±Ω”÷ÿ∆Ù
+********************************************************************************/
+void bsp_drv_power_reboot_direct( void )
+{
+    return;
+}
+
+#endif
+
+#ifndef CONFIG_BALONG_MODEM_ONOFF
+int mdrv_set_modem_state(unsigned int state)
+{
+	return 0;
+}
+#endif
 

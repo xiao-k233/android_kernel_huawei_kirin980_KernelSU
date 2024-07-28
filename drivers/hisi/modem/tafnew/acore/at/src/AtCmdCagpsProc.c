@@ -53,6 +53,7 @@
 #include "AtEventReport.h"
 
 
+#if ((FEATURE_ON == FEATURE_UE_MODE_CDMA) && (FEATURE_ON == FEATURE_AGPS) && (FEATURE_ON == FEATURE_XPDS))
 
 /*****************************************************************************
     协议栈打印打点方式下的.C文件宏定义
@@ -1297,5 +1298,6 @@ VOS_UINT32 At_SetCgpsControlStop(
     }
 }
 
+#endif
 
 

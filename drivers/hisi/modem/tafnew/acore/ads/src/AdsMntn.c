@@ -68,6 +68,10 @@
 ADS_MNTN_UL_IP_PKT_REC_STRU             g_stAdsUlPktRecInfo = {0};
 ADS_MNTN_DL_IP_PKT_REC_STRU             g_stAdsDlPktRecInfo = {0};
 
+#if (FEATURE_ON == FEATURE_PC5_DATA_CHANNEL)
+ADS_MNTN_UL_PC5_PKT_REC_STRU            g_stAdsUlPc5PktRecInfo = {0};
+ADS_MNTN_DL_PC5_PKT_REC_STRU            g_stAdsDlPc5PktRecInfo = {0};
+#endif
 /*****************************************************************************
   3 函数实现
 *****************************************************************************/
@@ -584,5 +588,157 @@ VOS_VOID ADS_MNTN_RecDLIpPktInfo(
     return;
 }
 
+#if (FEATURE_ON == FEATURE_PC5_DATA_CHANNEL)
+
+VOS_VOID ADS_MNTN_ReportPc5ULPktInfo(VOS_VOID)
+{
+    ADS_MNTN_UL_PC5_PKT_REC_STRU       *pstRecStru   = VOS_NULL_PTR;
+    VOS_UINT16                          usReportSize = 0;
+
+    pstRecStru = ADS_MNTN_UL_PC5_RKT_REC_INFO_ARRAY;
+
+    /*没有数据不上报*/
+    if (0 == pstRecStru->ulRptNum)
+    {
+        return;
+    }
+
+    usReportSize = (VOS_UINT16)(sizeof(ADS_MNTN_UL_PC5_PKT_HEAD_STRU) * (pstRecStru->ulRptNum) + (sizeof(VOS_UINT8) * 4) + sizeof(VOS_UINT32));
+
+    pstRecStru->ucVer = 100;
+
+    ADS_MNTN_TransReport(ID_DIAG_ADS_UL_PC5_INFO_STATS_IND,
+                        (VOS_VOID *)pstRecStru,
+                         usReportSize);
+
+    pstRecStru->ulRptNum = 0;
+
+    return;
+}
+
+VOS_VOID ADS_MNTN_ReportPc5DLPktInfo(VOS_VOID)
+{
+    ADS_MNTN_DL_PC5_PKT_REC_STRU       *pstRecStru   = VOS_NULL_PTR;
+    VOS_UINT16                          usReportSize = 0;
+
+    pstRecStru = ADS_MNTN_DL_PC5_RKT_REC_INFO_ARRAY;
+
+    /*没有数据不上报*/
+    if (0 == pstRecStru->ulRptNum)
+    {
+        return;
+    }
+
+    usReportSize = (VOS_UINT16)(sizeof(ADS_MNTN_DL_PC5_PKT_HEAD_STRU) * (pstRecStru->ulRptNum) + (sizeof(VOS_UINT8) * 4) + sizeof(VOS_UINT32));
+
+    pstRecStru->ucVer = 100;
+
+    ADS_MNTN_TransReport(ID_DIAG_ADS_DL_PC5_INFO_STATS_IND,
+                        (VOS_VOID *)pstRecStru,
+                         usReportSize);
+
+    pstRecStru->ulRptNum = 0;
+
+    return;
+}
+
+
+VOS_VOID ADS_MNTN_RecPc5ULPktInfo(
+    IMM_ZC_STRU                        *pstImmZc
+)
+{
+    ADS_MNTN_UL_PC5_PKT_REC_STRU       *pstRecStru = VOS_NULL_PTR;
+    ADS_MNTN_UL_PC5_PKT_HEAD_STRU      *pstPktInfo = VOS_NULL_PTR;
+    VOS_UINT32                          ulRet;
+    VOS_UINT32                          ulDataLen;
+
+    ulDataLen = IMM_ZcGetUsedLen(pstImmZc);
+
+    /* HIDS未连接 */
+    if (VOS_NO == DIAG_GetConnState())
+    {
+        return;
+    }
+
+    ulRet = IPS_MNTN_GetIPInfoCfg(ID_IPS_TRACE_ADS_DL);
+    if(PS_FALSE == ulRet)
+    {
+        /*不捕获该报文*/
+        return;
+    }
+
+    pstRecStru = ADS_MNTN_UL_PC5_RKT_REC_INFO_ARRAY;
+
+    if (pstRecStru->ulRptNum >= ADS_MNTN_REC_UL_PKT_MAX_NUM)
+    {
+        return;
+    }
+
+    pstPktInfo = &(pstRecStru->astPc5UlPktRecInfo[pstRecStru->ulRptNum]);
+
+    TAF_MEM_CPY_S(pstPktInfo,
+        sizeof(ADS_MNTN_UL_PC5_PKT_HEAD_STRU),
+        IMM_ZcGetDataPtr(pstImmZc),
+        PS_MIN(ulDataLen, sizeof(ADS_MNTN_UL_PC5_PKT_HEAD_STRU)));
+
+    (pstRecStru->ulRptNum)++;
+    if (pstRecStru->ulRptNum >= ADS_MNTN_REC_UL_PKT_MAX_NUM)
+    {
+        ADS_MNTN_ReportPc5ULPktInfo();
+        pstRecStru->ulRptNum = 0;
+    }
+
+    return;
+}
+
+
+VOS_VOID ADS_MNTN_RecPc5DLPktInfo(
+    IMM_ZC_STRU                        *pstImmZc
+)
+{
+    ADS_MNTN_DL_PC5_PKT_REC_STRU       *pstRecStru = VOS_NULL_PTR;
+    ADS_MNTN_DL_PC5_PKT_HEAD_STRU      *pstPktInfo = VOS_NULL_PTR;
+    VOS_UINT32                          ulRet;
+    VOS_UINT32                          ulDataLen;
+
+    ulDataLen = IMM_ZcGetUsedLen(pstImmZc);
+
+    /* HIDS未连接 */
+    if (VOS_NO == DIAG_GetConnState())
+    {
+        return;
+    }
+
+    ulRet = IPS_MNTN_GetIPInfoCfg(ID_IPS_TRACE_ADS_DL);
+    if(PS_FALSE == ulRet)
+    {
+        /*不捕获该报文*/
+        return;
+    }
+
+    pstRecStru = ADS_MNTN_DL_PC5_RKT_REC_INFO_ARRAY;
+
+    if (pstRecStru->ulRptNum >= ADS_MNTN_REC_DL_PKT_MAX_NUM)
+    {
+        return;
+    }
+
+    pstPktInfo = &(pstRecStru->astPc5DlPktRecInfo[pstRecStru->ulRptNum]);
+
+    TAF_MEM_CPY_S(pstPktInfo,
+            sizeof(ADS_MNTN_DL_PC5_PKT_HEAD_STRU),
+            IMM_ZcGetDataPtr(pstImmZc),
+            PS_MIN(ulDataLen, sizeof(ADS_MNTN_DL_PC5_PKT_HEAD_STRU)));
+
+    (pstRecStru->ulRptNum)++;
+    if (pstRecStru->ulRptNum >= ADS_MNTN_REC_DL_PKT_MAX_NUM)
+    {
+        ADS_MNTN_ReportPc5DLPktInfo();
+        pstRecStru->ulRptNum = 0;
+    }
+
+    return;
+}
+#endif
 
 

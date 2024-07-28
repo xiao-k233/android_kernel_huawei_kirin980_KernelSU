@@ -56,13 +56,17 @@
 #include "TafSsaApi.h"
 #include "AtMtaInterface.h"
 #include "TafDrvAgent.h"
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 #include "AtXpdsInterface.h"
+#endif
 #include "MnMsgApi.h"
 #include "TafCcmApi.h"
 #include "RnicCdsInterface.h"
 #include "TafPsApi.h"
 #include "TafPsTypeDef.h"
+#if (FEATURE_ON == FEATURE_IMS)
 #include "AtImsaInterface.h"
+#endif
 
 
 #define    THIS_FILE_ID        PS_FILE_ID_TAF_LOG_PRIVACY_MATCH_C
@@ -199,6 +203,7 @@ VOS_VOID* TAF_PrivacyMatchAppMnCallBackCsCall(
     return (VOS_VOID *)pstPrivacyAtIndEvt;
 }
 
+#if (FEATURE_ON == FEATURE_IMS)
 
 VOS_VOID* AT_PrivacyMatchCallAppEconfDialReq(
     MsgBlock                           *pstMsg
@@ -234,6 +239,7 @@ VOS_VOID* AT_PrivacyMatchCallAppEconfDialReq(
 
     return (VOS_VOID *)pstEconfDialReq;
 }
+#endif
 
 
 VOS_VOID* AT_PrivacyMatchRegisterSsMsg(
@@ -1045,6 +1051,7 @@ VOS_VOID* TAF_PrivacyMatchAtCallBackQryProc(
     return (VOS_VOID *)pucSendAtMsg;
 }
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_VOID*  TAF_XSMS_PrivacyMatchAppMsgTypeRcvInd(
     MsgBlock                           *pstMsg
@@ -1197,6 +1204,7 @@ VOS_VOID*  AT_PrivacyMatchAppMsgTypeSendReq(
 
     return (VOS_VOID *)pstMatchTafXsmsSendMsgReq;
 }
+#endif
 
 
 
@@ -1279,6 +1287,7 @@ VOS_VOID*  AT_PrivacyMatchSimLockWriteExSetReq(
     return (VOS_VOID *)pstMatchAppMsgSimlockWriteExSetReq;
 }
 
+#if (FEATURE_ON == FEATURE_IMS)
 
 VOS_VOID* AT_PrivacyMatchImsaImsCtrlMsg(
     MsgBlock                                               *pstMsg
@@ -1350,6 +1359,7 @@ VOS_VOID* AT_PrivacyMatchImsaNickNameSetReq(
 
     return (VOS_VOID *)pstMatchAppMsgNickNameSetReq;
 }
+#endif
 
 
 VOS_VOID*  AT_PrivacyMatchMeidSetReq(
@@ -1391,6 +1401,7 @@ VOS_VOID*  AT_PrivacyMatchMeidSetReq(
     return (VOS_VOID *)pstMatchAppMsgSetReq;
 }
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_VOID*  AT_PrivacyMatchAppMsgTypeWriteReq(
     MsgBlock                           *pstMsg
@@ -1572,6 +1583,7 @@ VOS_VOID* AT_PrivacyMatchCallAppSendContReq(
     return (VOS_VOID *)pstConttDtmfReq;
 }
 
+#if ((FEATURE_ON == FEATURE_AGPS) && (FEATURE_ON == FEATURE_XPDS))
 
 VOS_VOID* AT_PrivacyMatchCagpsPosInfoRsp(
     MsgBlock                           *pstMsg
@@ -1975,7 +1987,145 @@ VOS_VOID* TAF_XPDS_PrivacyMatchAtUtsGpsPosInfoInd(
 
     return (VOS_VOID *)pstPrivacyMatchUtsPosInfo;
 }
+#endif
 
+#if (FEATURE_ON == FEATURE_CHINA_TELECOM_VOICE_ENCRYPT)
+
+VOS_VOID* TAF_PrivacyMatchCallAppEncryptVoiceReq(
+    MsgBlock                           *pstMsg
+)
+{
+    TAF_CALL_APP_ENCRYPT_VOICE_REQ_STRU                    *pstEncryptVoiceReq = VOS_NULL_PTR;
+    VOS_UINT32                                              ulLength;
+
+    ulLength = pstMsg->ulLength + VOS_MSG_HEAD_LENGTH;
+
+    pstEncryptVoiceReq  = (TAF_CALL_APP_ENCRYPT_VOICE_REQ_STRU *)VOS_MemAlloc(pstMsg->ulSenderPid,
+                                                                              DYNAMIC_MEM_PT,
+                                                                              ulLength);
+
+    if (VOS_NULL_PTR == pstEncryptVoiceReq)
+    {
+        return VOS_NULL_PTR;
+    }
+
+    TAF_MEM_CPY_S(pstEncryptVoiceReq,
+                  sizeof(TAF_CALL_APP_ENCRYPT_VOICE_REQ_STRU),
+                  pstMsg,
+                  ulLength);
+
+    TAF_MEM_SET_S(&(pstEncryptVoiceReq->stDialNumber),
+                  sizeof(TAF_ECC_CALL_BCD_NUM_STRU),
+                  0,
+                  sizeof(TAF_ECC_CALL_BCD_NUM_STRU));
+
+    return (VOS_VOID *)pstEncryptVoiceReq;
+}
+
+#if (FEATURE_ON == FEATURE_CHINA_TELECOM_VOICE_ENCRYPT_TEST_MODE)
+
+VOS_VOID* TAF_PrivacyMatchCallAppSetEcKmcReq(
+    MsgBlock                           *pstMsg
+)
+{
+    TAF_CALL_APP_SET_EC_KMC_REQ_STRU   *pstSetEcKmcReq = VOS_NULL_PTR;
+    VOS_UINT32                          ulLength;
+
+    ulLength = pstMsg->ulLength + VOS_MSG_HEAD_LENGTH;
+
+    pstSetEcKmcReq  = (TAF_CALL_APP_SET_EC_KMC_REQ_STRU *)VOS_MemAlloc(pstMsg->ulSenderPid,
+                                                                       DYNAMIC_MEM_PT,
+                                                                       ulLength);
+
+    if (VOS_NULL_PTR == pstSetEcKmcReq)
+    {
+        return VOS_NULL_PTR;
+    }
+
+    TAF_MEM_CPY_S(pstSetEcKmcReq,
+                  sizeof(TAF_CALL_APP_SET_EC_KMC_REQ_STRU),
+                  pstMsg,
+                  ulLength);
+
+    TAF_MEM_SET_S(&(pstSetEcKmcReq->stKmcData),
+                  sizeof(MN_CALL_APP_EC_KMC_DATA_STRU),
+                  0,
+                  sizeof(MN_CALL_APP_EC_KMC_DATA_STRU));
+
+    return (VOS_VOID *)pstSetEcKmcReq;
+}
+
+
+VOS_VOID* TAF_XCALL_PrivacyMatchAppGetEcRandomCnf(
+    MsgBlock                           *pstMsg
+)
+{
+    TAF_CALL_APP_GET_EC_RANDOM_CNF_STRU                    *pstGetRandomCnf = VOS_NULL_PTR;
+    VOS_UINT32                                              ulLength;
+
+    ulLength = pstMsg->ulLength + VOS_MSG_HEAD_LENGTH;
+
+    /* 申请消息 */
+    pstGetRandomCnf = (TAF_CALL_APP_GET_EC_RANDOM_CNF_STRU *)VOS_MemAlloc(pstMsg->ulSenderPid,
+                                                                          DYNAMIC_MEM_PT,
+                                                                          ulLength);
+
+    if (VOS_NULL_PTR == pstGetRandomCnf)
+    {
+        return VOS_NULL_PTR;
+    }
+
+    TAF_MEM_CPY_S(pstGetRandomCnf,
+                  sizeof(TAF_CALL_APP_GET_EC_RANDOM_CNF_STRU),
+                  pstMsg,
+                  ulLength);
+
+    /* 将敏感信息设置为全0 */
+    TAF_MEM_SET_S(pstGetRandomCnf->stEccRandom,
+                  TAF_CALL_APP_EC_RANDOM_NUM * sizeof(TAF_CALL_APP_EC_RANDOM_DATA_STRU),
+                  0,
+                  TAF_CALL_APP_EC_RANDOM_NUM * sizeof(TAF_CALL_APP_EC_RANDOM_DATA_STRU));
+
+    return (VOS_VOID *)pstGetRandomCnf;
+}
+
+
+VOS_VOID* TAF_XCALL_PrivacyMatchAppGetEcKmcCnf(
+    MsgBlock                           *pstMsg
+)
+{
+    TAF_CALL_APP_GET_EC_KMC_CNF_STRU   *pstGetEcKmcCnf = VOS_NULL_PTR;
+    VOS_UINT32                          ulLength;
+
+    ulLength = pstMsg->ulLength + VOS_MSG_HEAD_LENGTH;
+
+    /* 申请消息 */
+    pstGetEcKmcCnf = (TAF_CALL_APP_GET_EC_KMC_CNF_STRU *)VOS_MemAlloc(pstMsg->ulSenderPid,
+                                                                      DYNAMIC_MEM_PT,
+                                                                      ulLength);
+
+    if (VOS_NULL_PTR == pstGetEcKmcCnf)
+    {
+        return VOS_NULL_PTR;
+    }
+
+    TAF_MEM_CPY_S(pstGetEcKmcCnf,
+                  sizeof(TAF_CALL_APP_GET_EC_KMC_CNF_STRU),
+                  pstMsg,
+                  ulLength);
+
+    /* 将敏感信息设置为全0 */
+    TAF_MEM_SET_S(&(pstGetEcKmcCnf->stKmcData),
+                  sizeof(MN_CALL_APP_EC_KMC_DATA_STRU),
+                  0,
+                  sizeof(MN_CALL_APP_EC_KMC_DATA_STRU));
+
+    return (VOS_VOID *)pstGetEcKmcCnf;
+}
+
+#endif
+#endif
+#endif
 
 
 VOS_VOID* TAF_MTA_PrivacyMatchCposrInd(
@@ -2288,6 +2438,7 @@ VOS_VOID* TAF_MMA_PrivacyMatchAtSrchedPlmnInfoInd(
     return (VOS_VOID *)pstSndMsg;
 }
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_VOID* TAF_MMA_PrivacyMatchAtCdmaLocInfoQryCnf(
     MsgBlock                           *pstMsg
@@ -2317,9 +2468,12 @@ VOS_VOID* TAF_MMA_PrivacyMatchAtCdmaLocInfoQryCnf(
 
     /* 将敏感信息设置为全0 */
     pstSndMsg->stClocinfoPara.ulBaseId = 0;
+    pstSndMsg->stClocinfoPara.lBaseLatitude = 0;
+    pstSndMsg->stClocinfoPara.lBaseLongitude = 0;
 
     return (VOS_VOID *)pstSndMsg;
 }
+#endif /* (FEATURE_ON == FEATURE_UE_MODE_CDMA) */
 
 
 VOS_VOID* TAF_MMA_PrivacyMatchAtNetScanCnf(
@@ -2427,7 +2581,8 @@ VOS_VOID* TAF_MMA_PrivacyMatchAtClocInfoInd(
 
     /* 将敏感信息设置为全0 */
     pstSndMsg->stClocinfoPara.ulBaseId = 0;
-
+    pstSndMsg->stClocinfoPara.lBaseLatitude = 0;
+    pstSndMsg->stClocinfoPara.lBaseLongitude = 0;
     return (VOS_VOID *)pstSndMsg;
 }
 
@@ -2466,6 +2621,41 @@ VOS_VOID* TAF_MMA_PrivacyMatchAtRejInfoQryCnf(
     return (VOS_VOID *)pstSndMsg;
 }
 
+#if (FEATURE_ON == FEATURE_CL_INTERWORK)
+
+VOS_VOID* TAF_MSG_PrivacyMatchMmaRegReqProc(
+    MsgBlock                                               *pstMsg
+)
+{
+    TAF_MMA_REG_REQ_STRU               *pstRegReq = VOS_NULL_PTR;
+    VOS_UINT32                          ulLength;
+
+    ulLength  = pstMsg->ulLength + VOS_MSG_HEAD_LENGTH;
+
+    /* 分配消息,申请内存后续统一由底层释放 */
+    pstRegReq = (TAF_MMA_REG_REQ_STRU *)VOS_MemAlloc(pstMsg->ulSenderPid,
+                                                     DYNAMIC_MEM_PT,
+                                                     ulLength);
+
+    if (VOS_NULL_PTR == pstRegReq)
+    {
+        return VOS_NULL_PTR;
+    }
+
+    TAF_MEM_CPY_S(pstRegReq,
+                  sizeof(TAF_MMA_REG_REQ_STRU),
+                  pstMsg,
+                  ulLength);
+
+    /* 将敏感信息设置为全0 */
+    TAF_MEM_SET_S(pstRegReq->stRegPara.stCellInfo.ausCellId,
+                  sizeof(pstRegReq->stRegPara.stCellInfo.ausCellId),
+                  0,
+                  sizeof(pstRegReq->stRegPara.stCellInfo.ausCellId));
+
+    return (VOS_VOID *)pstRegReq;
+}
+#endif
 
 
 VOS_VOID* RNIC_PrivacyMatchCdsImsDataReq(
@@ -3731,7 +3921,7 @@ VOS_VOID* TAF_MMA_PrivacyMatchAtEfPsClocInfoQryCnf(
     pstSndMsg->stPsEflociInfo.ulPTmsi = 0;
     pstSndMsg->stPsEflociInfo.usLac   = 0;
     pstSndMsg->stPsEflociInfo.ucRac   = 0;
-
+    pstSndMsg->stPsEflociInfo.ulPTmsiSignature = 0;
     return (VOS_VOID *)pstSndMsg;
 }
 

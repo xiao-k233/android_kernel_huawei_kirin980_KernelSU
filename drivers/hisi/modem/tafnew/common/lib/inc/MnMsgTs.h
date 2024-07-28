@@ -269,7 +269,8 @@ extern "C" {
 typedef struct
 {
     VOS_UINT32                          ulSmsUserDataLen;    /* 用户数据长度*/
-    VOS_UINT8                           aucReserved[4];
+    VOS_UINT8                           ucIsSmsStaRptType;
+    VOS_UINT8                           aucReserved[3];
     VOS_UINT8                          *pucSrcOct;          /* 指向用户数据的数组指针 */
 }MN_MSG_DECODE_USER_DATA_STRU;
 

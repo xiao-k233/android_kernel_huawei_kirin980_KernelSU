@@ -3505,7 +3505,7 @@ typedef enum
     PS_FILE_ID_PPPC_VSNCP_ENCODE_C              = TTFCOMM_TEAM_FILE_ID + 0x0016,
     PS_FILE_ID_PPPC_PAP_DBG_C                   = TTFCOMM_TEAM_FILE_ID + 0x0017,
     PS_FILE_ID_PPPC_CHAP_DBG_C                  = TTFCOMM_TEAM_FILE_ID + 0x0018,
-    PS_FILE_ID_PPPC_CCP_C                       = TTFCOMM_TEAM_FILE_ID + 0x0019,
+    PS_FILE_ID_PPPC_PPPA_PROC_C                 = TTFCOMM_TEAM_FILE_ID + 0x0019,
     PS_FILE_ID_PPPC_UIM_C                       = TTFCOMM_TEAM_FILE_ID + 0x001A,
     PS_FILE_ID_PPPC_UTIL_SHA1_C                 = TTFCOMM_TEAM_FILE_ID + 0x001B,
     PS_FILE_ID_PPPC_UTIL_AES_C                  = TTFCOMM_TEAM_FILE_ID + 0x001C,

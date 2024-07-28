@@ -162,7 +162,11 @@ VOS_UINT32  AT_FillAndSndAppReqMsg(
     }
 
     if ( (PS_PID_IMSA == ulRcvPid)
+#if ( FEATURE_MODEM1_SUPPORT_LTE == FEATURE_ON )
       && (MODEM_ID_2 == enModemId))
+#else
+      && ((MODEM_ID_1 == enModemId) || (MODEM_ID_2 == enModemId)))
+#endif
     {
         return TAF_FAILURE;
     }
@@ -437,6 +441,90 @@ VOS_UINT32  AT_SndCcmReqMsg(
     return VOS_OK;
 }
 
+#if (FEATURE_ON == FEATURE_HUAWEI_VP)
+
+VOS_UINT32 AT_SndSetVoicePrefer (
+    VOS_UINT16                          usClientId,
+    VOS_UINT8                           ucOpId,
+    VOS_UINT32                          ulVoicePreferApStatus
+)
+{
+    AT_RABM_SET_VOICEPREFER_PARA_REQ_STRU                  *pstSndMsg = VOS_NULL_PTR;
+    VOS_UINT32                                              ulRslt;
+
+    /* 申请内存  */
+    /*lint -save -e516 */
+    pstSndMsg = (AT_RABM_SET_VOICEPREFER_PARA_REQ_STRU *)PS_ALLOC_MSG(WUEPS_PID_AT,
+                                               sizeof(AT_RABM_SET_VOICEPREFER_PARA_REQ_STRU) - VOS_MSG_HEAD_LENGTH);
+    /*lint -restore */
+    if ( VOS_NULL_PTR == pstSndMsg )
+    {
+        /* 内存申请失败 */
+        AT_ERR_LOG("AT_SndSetVoicePrefer:ERROR: Memory Alloc Error for pstMsg");
+        return VOS_ERR;
+    }
+
+    /* 填写相关参数 */
+    pstSndMsg->stMsgHeader.ulReceiverCpuId   = VOS_LOCAL_CPUID;
+    pstSndMsg->stMsgHeader.ulReceiverPid     = AT_GetDestPid(usClientId, I0_WUEPS_PID_RABM);
+    pstSndMsg->stMsgHeader.ulLength          = sizeof(AT_RABM_SET_VOICEPREFER_PARA_REQ_STRU) - VOS_MSG_HEAD_LENGTH;
+    pstSndMsg->stMsgHeader.ulMsgName         = ID_AT_RABM_SET_VOICEPREFER_PARA_REQ;
+    pstSndMsg->usClientId                    = usClientId;
+    pstSndMsg->ucOpId                        = ucOpId;
+
+    pstSndMsg->ulVoicePreferApStatus         = ulVoicePreferApStatus;
+
+    /* 调用VOS发送原语 */
+    ulRslt = PS_SEND_MSG(WUEPS_PID_AT, pstSndMsg);
+    if ( VOS_OK != ulRslt )
+    {
+        AT_ERR_LOG("AT_SndSetVoicePrefer:ERROR:PS_SEND_MSG ");
+        return VOS_ERR;
+    }
+
+    return VOS_OK;
+}
+
+
+VOS_UINT32 AT_SndQryVoicePrefer (
+    VOS_UINT16                          usClientId,
+    VOS_UINT8                           ucOpId
+)
+{
+    AT_RABM_QRY_VOICEPREFER_PARA_REQ_STRU                  *pstSndMsg = VOS_NULL_PTR;
+    VOS_UINT32                                              ulRslt;
+
+    /* 申请内存  */
+    /*lint -save -e516 */
+    pstSndMsg = (AT_RABM_QRY_VOICEPREFER_PARA_REQ_STRU *)PS_ALLOC_MSG(WUEPS_PID_AT,
+                                               sizeof(AT_RABM_QRY_VOICEPREFER_PARA_REQ_STRU) - VOS_MSG_HEAD_LENGTH);
+    /*lint -restore */
+    if ( VOS_NULL_PTR == pstSndMsg )
+    {
+        /* 内存申请失败 */
+        AT_ERR_LOG("AT_SndQryVoicePrefer:ERROR: Memory Alloc Error for pstMsg");
+        return VOS_ERR;
+    }
+
+    /* 填写相关参数 */
+    pstSndMsg->stMsgHeader.ulReceiverCpuId   = VOS_LOCAL_CPUID;
+    pstSndMsg->stMsgHeader.ulReceiverPid     = AT_GetDestPid(usClientId, I0_WUEPS_PID_RABM);
+    pstSndMsg->stMsgHeader.ulLength          = sizeof(AT_RABM_QRY_VOICEPREFER_PARA_REQ_STRU) - VOS_MSG_HEAD_LENGTH;
+    pstSndMsg->stMsgHeader.ulMsgName         = ID_AT_RABM_QRY_VOICEPREFER_PARA_REQ;
+    pstSndMsg->usClientId                    = usClientId;
+    pstSndMsg->ucOpId                        = ucOpId;
+
+    /* 调用VOS发送原语 */
+    ulRslt = PS_SEND_MSG(WUEPS_PID_AT, pstSndMsg);
+    if ( VOS_OK != ulRslt )
+    {
+        AT_ERR_LOG("AT_SndQryVoicePrefer:ERROR:PS_SEND_MSG ");
+        return VOS_ERR;
+    }
+
+    return VOS_OK;
+}
+#endif
 
 
 VOS_UINT32 AT_FillAndSndCSIMAMsg(VOS_UINT16 usClinetID, VOS_UINT32 ulModemStatus)
@@ -480,6 +568,7 @@ VOS_UINT32 AT_FillAndSndCSIMAMsg(VOS_UINT16 usClinetID, VOS_UINT32 ulModemStatus
     return PS_SEND_MSG(WUEPS_PID_AT, pstATCSIMAIndMsg);
 }
 
+#if (FEATURE_ON == FEATURE_IMS)
 
 VOS_UINT32 AT_SndImsaImsCtrlMsg (
     VOS_UINT16                          usClientId,
@@ -503,7 +592,11 @@ VOS_UINT32 AT_SndImsaImsCtrlMsg (
         return VOS_ERR;
     }
 
+#if ( FEATURE_MODEM1_SUPPORT_LTE == FEATURE_ON )
     if (MODEM_ID_2 == enModemId)
+#else
+    if ((MODEM_ID_1 == enModemId) || (MODEM_ID_2 == enModemId))
+#endif
     {
         AT_ERR_LOG("AT_SndImsaImsCtrlMsg: enModemId is not support ims");
         return VOS_ERR;
@@ -535,4 +628,5 @@ VOS_UINT32 AT_SndImsaImsCtrlMsg (
     /* 调用VOS发送原语 */
     return PS_SEND_MSG(WUEPS_PID_AT, pstSndMsg);
 }
+#endif
 

@@ -78,6 +78,7 @@ u32 g_trans_init_state=TRANSLOG_CHN_UNINIT;
 print_report_hook g_bsp_print_hook = NULL;
 
 
+#if ((FEATURE_HDS_PRINTLOG == FEATURE_ON) || (FEATURE_HDS_TRANSLOG == FEATURE_ON))
 
 void bsp_print_level_cfg(u32 *level)
 {
@@ -102,6 +103,7 @@ void bsp_print_level_cfg(u32 *level)
 /*lint -save -e550 */
 s32 bsp_transreport(TRANS_IND_STRU *pstData)
 {
+#if (FEATURE_HDS_TRANSLOG == FEATURE_ON)
     s32 ret;
 
     /*判断工具连接状态、开关状态*/
@@ -124,6 +126,9 @@ s32 bsp_transreport(TRANS_IND_STRU *pstData)
         return ret;
     }
     return HDS_TRANS_RE_SUCC;
+#else
+    return HDS_TRANS_CFG_OFF;
+#endif
 }
 /*lint -restore +e550 */
 
@@ -190,6 +195,7 @@ int bsp_trace_to_hids(u32 module_id, u32 level, u32 sel, char* print_buff)
 }
 /*lint -restore +e550 */
 
+#endif
 
 
 int __init bsp_hds_init(void)
@@ -198,13 +204,21 @@ int __init bsp_hds_init(void)
 
     hds_printf("[init] start!\n");
 
+#if (FEATURE_HDS_PRINTLOG == FEATURE_ON)
     g_bsp_print_hook = (print_report_hook)bsp_trace_to_hids;
     g_print_init_state = PRINTLOG_CHN_INIT;
+#endif
 
+#if (FEATURE_HDS_TRANSLOG == FEATURE_ON)
     g_trans_init_state = TRANSLOG_CHN_INIT;
+#endif
 
     hds_printf("[init] ok!\n");
     return HDS_OK;
 }
 
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+/*lint --e{528}*/
+module_init(bsp_hds_init);
+#endif
 EXPORT_SYMBOL(bsp_transreport);

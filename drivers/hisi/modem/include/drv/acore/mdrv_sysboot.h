@@ -55,6 +55,7 @@ extern "C"
 #endif
 
 #include <mdrv_sysboot_commmon.h>
+#include <linux/version.h>
 
 typedef enum DRV_SHUTDOWN_REASON_tag_s
 {
@@ -139,7 +140,7 @@ int  mdrv_set_modem_state(unsigned int state);
 *****************************************************************************/
 typedef int (*pdrv_reset_cbfun)(DRV_RESET_CB_MOMENT_E enparam, int userdata);
 int mdrv_sysboot_register_reset_notify(const char *pname, pdrv_reset_cbfun pcbfun, int userdata, int priolevel);
-
+#if (LINUX_VERSION_CODE <= KERNEL_VERSION(4, 9, 0))
 /*****************************************************************************
  函 数 名  : hifireset_regcbfunc
  功能描述  : 提供上层应用程序注册HIFI单独复位的回调接口函数。
@@ -155,6 +156,7 @@ extern int hifireset_regcbfunc(const char *pname, pdrv_reset_cbfun pcbfun, int u
 #define DRV_HIFIRESET_REGCBFUNC(pname,pcbfun, userdata, priolevel)\
                 hifireset_regcbfunc(pname,pcbfun, userdata, priolevel)
 
+#endif
 #ifdef __cplusplus
 }
 #endif

@@ -739,7 +739,7 @@ VOS_UINT32 atQryCellInfoCnfProc(VOS_VOID *pMsgBlock)
 }
 
 
-VOS_VOID atLwclashInd(VOS_VOID *pMsgBlock)
+VOS_UINT32 atLwclashInd(VOS_VOID *pMsgBlock)
 {
     L4A_READ_LWCLASH_IND_STRU *pstLwclash = NULL;
 
@@ -776,21 +776,12 @@ VOS_VOID atLwclashInd(VOS_VOID *pMsgBlock)
                     gaucAtCrLf);
 
     At_SendResultData(AT_BROADCAST_CLIENT_INDEX_MODEM_0, pgucLAtSndCodeAddr, usLength);
+
+    return AT_FW_CLIENT_STATUS_READY;
 }
 
-/*****************************************************************************
- 函 数 名  : atLcacellInd
- 功能描述  : ^LCACELLURC命令主动上报处理
- 输入参数  : VOS_VOID *pMsgBlock
- 输出参数  : 无
- 返 回 值  : VOS_VOID
- 调用函数  :
- 被调函数  :
 
- 修改历史  :
-
-*****************************************************************************/
-VOS_VOID atLcacellInd(VOS_VOID *pMsgBlock)
+VOS_UINT32 atLcacellInd(VOS_VOID *pMsgBlock)
 {
     L4A_READ_LCACELL_IND_STRU *pstLcacell = NULL;
     VOS_UINT16 usLength = 0;
@@ -831,6 +822,8 @@ VOS_VOID atLcacellInd(VOS_VOID *pMsgBlock)
                 gaucAtCrLf);
 
     At_SendResultData(AT_BROADCAST_CLIENT_INDEX_MODEM_0, pgucLAtSndCodeAddr, usLength);
+
+    return AT_FW_CLIENT_STATUS_READY;
 }
 
 
@@ -860,8 +853,8 @@ static const AT_L4A_MSG_FUN_TABLE_STRU g_astAtL4aIndMsgFunTable[] = {
     {ID_MSG_L4A_ANLEVEL_IND         ,   atAnlevelInfoIndProc    },
     {ID_MSG_L4A_CERSSI_IND          ,   atCerssiInfoIndProc     },
     {ID_MSG_L4A_MODE_IND            ,   atSysModeIndProc        },
-    {ID_MSG_L4A_LWCLASH_IND         ,   (AT_L4A_MSG_FUN)atLwclashInd},
-    {ID_MSG_L4A_LCACELL_IND         ,   (AT_L4A_MSG_FUN)atLcacellInd},
+    {ID_MSG_L4A_LWCLASH_IND         ,   atLwclashInd},
+    {ID_MSG_L4A_LCACELL_IND         ,   atLcacellInd},
 };
 
 /******************************************************************************
@@ -1049,11 +1042,13 @@ AT_FTM_CNF_MSG_PROC_STRU g_astLteAtFtmCnfMsgTbl[] =
 
 };
 
+#if(FEATURE_OFF == FEATURE_UE_MODE_NR)  
 AT_FTM_IND_MSG_PROC_STRU g_astLteAtFtmIndMsgTbl[] = 
 {
 
     {ID_MSG_FTM_TX_CLT_INFO_IND, At_ProcLteTxCltInfoReport},
 };
+#endif
 
 
 
@@ -1096,6 +1091,7 @@ AT_FTM_CNF_MSG_PROC_STRU* atGetFtmCnfMsgProc(VOS_UINT32 ulMsgId)
 
 AT_FTM_IND_MSG_PROC_STRU* At_GetFtmIndMsgProc(VOS_UINT32 ulMsgId)
 {
+#if(FEATURE_OFF == FEATURE_UE_MODE_NR) 
     VOS_UINT32                          i;
     VOS_UINT32                          ulTableLen;
 
@@ -1108,6 +1104,7 @@ AT_FTM_IND_MSG_PROC_STRU* At_GetFtmIndMsgProc(VOS_UINT32 ulMsgId)
             return &(g_astLteAtFtmIndMsgTbl[i]);
         }
     }
+#endif  
     return VOS_NULL_PTR;
 }
 
@@ -1139,7 +1136,9 @@ VOS_VOID At_FtmEventMsgProc(VOS_VOID* pMsg)
     AT_FW_DATA_MSG_STRU *pDataMsg = (AT_FW_DATA_MSG_STRU*)pMsg;
     VOS_VOID * pTmp;
 
+#if(FEATURE_OFF == FEATURE_UE_MODE_NR)    
     AT_FTM_IND_MSG_PROC_STRU           *pstFtmIndMsgItem = VOS_NULL_PTR;
+#endif
 
     pstMsgBlock = VOS_MemAlloc(WUEPS_PID_AT, (DYNAMIC_MEM_PT), (sizeof(MsgBlock)+sizeof(OS_MSG_STRU)-2));
     if (NULL == pstMsgBlock)
@@ -1168,17 +1167,21 @@ VOS_VOID At_FtmEventMsgProc(VOS_VOID* pMsg)
 
     /* 消息处理 */
     pMsgProcItem        = atGetFtmCnfMsgProc(pDataMsg->ulMsgId);
+#if(FEATURE_OFF == FEATURE_UE_MODE_NR)    
     pstFtmIndMsgItem    = At_GetFtmIndMsgProc(pDataMsg->ulMsgId);
+#endif
 
     if(NULL != pMsgProcItem)
     {
         AT_STOP_TIMER_CMD_READY(pDataMsg->ulClientId);
         pMsgProcItem->pfnCnfMsgProc((VOS_UINT8)(pDataMsg->ulClientId), (VOS_VOID *)pstMsgBlock);
     }
+#if(FEATURE_OFF == FEATURE_UE_MODE_NR)   /* only CLT, not support NR MODE */  
     else if (VOS_NULL_PTR != pstFtmIndMsgItem)
     {
         pstFtmIndMsgItem->pfnIndMsgProc((VOS_VOID *)pstMsgBlock);
     }
+#endif    
     else
     {
         ;

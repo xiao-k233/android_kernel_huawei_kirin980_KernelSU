@@ -400,26 +400,6 @@ void CPM_Show(void)
 
     (void)diag_crit("CPM_Show The Phy Info is :\n");
 
-    for(enPhyPort=0; enPhyPort<(CPM_PORT_BUTT - CPM_IND_PORT); enPhyPort++)
-    {
-        /* 为打印出函数名称，使用printk */
-        diag_crit("The Phy %d Port's Rec Func is %pS.\n \
-                Send Func is %pS.\n", \
-                        enPhyPort, \
-                        g_astCPMPhyPortCfg[enPhyPort].pRcvFunc, \
-                        g_astCPMPhyPortCfg[enPhyPort].pSendFunc);
-    }
-
-    for(enLogicPort=0; enLogicPort<CPM_COMM_BUTT; enLogicPort++)
-    {
-        /* 为打印出函数名称，使用printk */
-        diag_crit("The Logic %d Port's Rec Func is %pS.\n \
-                  Send Func is %pS.\n", \
-                        enLogicPort, \
-                        g_astCPMLogicPortCfg[enLogicPort].pRcvFunc, \
-                        g_astCPMLogicPortCfg[enLogicPort].pSendFunc);
-    }
-
     return;
 }
 EXPORT_SYMBOL(CPM_Show);

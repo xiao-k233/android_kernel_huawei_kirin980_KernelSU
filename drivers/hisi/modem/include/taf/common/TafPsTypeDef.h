@@ -242,7 +242,6 @@ AUTH_PAP (RFC 1334)
 
 #define TAF_PS_MAX_QOS_RULE_NUM_IN_QOS_FLOW                 (4)
 
-/* Added by l60609 for L-C»¥²Ù×÷ÏîÄ¿, 2014-01-06, Begin */
 
 enum TAF_PDP_REQUEST_TYPE_ENUM
 {

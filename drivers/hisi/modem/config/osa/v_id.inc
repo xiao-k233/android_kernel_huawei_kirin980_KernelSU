@@ -46,29 +46,6 @@
  *
  */
 
-/*****************************************************************************/
-/*                                                                           */
-/*                Copyright 1999 - 2003, Huawei Tech. Co., Ltd.              */
-/*                           ALL RIGHTS RESERVED                             */
-/*                                                                           */
-/* FileNmae: \vos\include\vos\v_id.inc                                       */
-/*                                                                           */
-/* Author: Qin Peifeng                                                       */
-/*                                                                           */
-/* Version: 1.0                                                              */
-/*                                                                           */
-/* Date: 2000-04-21                                                          */
-/*                                                                           */
-/* Description:                                                              */
-/*                                                                           */
-/* Others:                                                                   */
-/*                                                                           */
-/* History:                                                                  */
-/* 1. Date: 2000-04-21                                                       */
-/*    Author: Qin Peifeng                                                    */
-/*    Modification: Create this file                                         */
-/*                                                                           */
-/*****************************************************************************/
 
 #ifndef _V_ID_INC
 #define _V_ID_INC
@@ -406,6 +383,8 @@ BEGIN_DECLARE_PID_BELONG_TO_FID()
     ON_DECLARE(UEPS_PID_EHSM,                   UEPS_FID_CNAS,          VOS_PRIORITY_NULL,    MODEM_ID_0)
     ON_DECLARE(UEPS_PID_HLU,                    UEPS_FID_CNAS,          VOS_PRIORITY_NULL,    MODEM_ID_0)
     ON_DECLARE(UEPS_PID_HRM,                    UEPS_FID_CNAS,          VOS_PRIORITY_NULL,    MODEM_ID_0)
+#endif
+#if ((FEATURE_ON == FEATURE_UE_MODE_CDMA) || (FEATURE_ON == FEATURE_PPP))
     ON_DECLARE(MSPS_PID_PPPC,                   MSPS_FID_PPPC,          VOS_PRIORITY_NULL,    MODEM_ID_0)
     ON_DECLARE(MSPS_PID_MIP,                    MSPS_FID_PPPC,          VOS_PRIORITY_NULL,    MODEM_ID_0)
 #endif

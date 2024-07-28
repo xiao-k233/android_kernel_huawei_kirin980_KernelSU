@@ -136,6 +136,7 @@ enum TAF_LMM_MULTIMODE_CARD_TYPE_ENUM
     TAF_LMM_UNKONWN_CDMA_DUAL_MODE_CARD,                        /* 未知CDMA双模卡 */
     TAF_LMM_SINGLE_MODE_USIM_CARD,                              /* (U)SIM单模卡 */
     TAF_LMM_NO_CARD,                                            /* 无卡 */
+    TAF_LMM_CTCC_USIM_SINGLE_MODE_CARD,                         /* 中国电信USIM单模卡 */
     TAF_LMM_MULTIMODE_CARD_TYPE_BUTT
 };
 typedef VOS_UINT8 TAF_LMM_MULTIMODE_CARD_TYPE_ENUM_UINT8;

@@ -49,13 +49,15 @@
 #ifndef __PM_OM_DEBUG_H__
 #define __PM_OM_DEBUG_H__
 
+#include <linux/device.h>
+#include <linux/pm_wakeup.h>
+#include <linux/notifier.h>
+#include <bsp_pm_om.h>
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-#include <linux/wakelock.h>
-#include <linux/notifier.h>
-#include <bsp_pm_om.h>
 
 #define TIME_SLICE_FREQ  (32768)
 struct pm_om_stat
@@ -76,7 +78,7 @@ struct pm_om_debug
 	struct notifier_block pm;
 	char   *cdrx_dump_addr;
 	char   *cdrx_dump_corepm_addr;
-	struct wake_lock wakelock_debug;
+	struct wakeup_source wakelock_debug;
 };
 
 int pm_om_debug_init(void);

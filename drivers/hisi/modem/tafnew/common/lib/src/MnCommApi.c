@@ -52,6 +52,9 @@
 #include "MnCommApi.h"
 #include "AtMnInterface.h"
 #include "MnClient.h"
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+#include "NasMultiInstanceApi.h"
+#endif
 
 
 
@@ -65,10 +68,12 @@
 /*****************************************************************************
   3 º¯ÊýÊµÏÖ
 *****************************************************************************/
+#if (OSA_CPU_ACPU == VOS_OSA_CPU)
 extern VOS_UINT32 AT_GetDestPid(
     MN_CLIENT_ID_T                      usClientId,
     VOS_UINT32                          ulRcvPid
 );
+#endif
 
 
 
@@ -107,6 +112,10 @@ VOS_VOID  MN_FillAppReqMsgHeader(
     VOS_UINT32                          ulReceiverPid
  )
 {
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+    MODEM_ID_ENUM_UINT16                enModemId;
+    VOS_UINT32                          ulRcvPid;
+#endif
 
     MN_APP_REQ_MSG_STRU *pAppMsgHeader;
 
@@ -117,7 +126,15 @@ VOS_VOID  MN_FillAppReqMsgHeader(
     /* pAppMsgHeader->ulSenderCpuId        = VOS_LOCAL_CPUID; */
     /* pAppMsgHeader->ulReceiverCpuId      = VOS_LOCAL_CPUID; */
     /* pAppMsgHeader->ulSenderPid          = WUEPS_PID_AT; */
+#if (OSA_CPU_ACPU == VOS_OSA_CPU)
     pAppMsgHeader->ulReceiverPid = AT_GetDestPid(ClientId, ulReceiverPid);
+#else
+    enModemId = NAS_MULTIINSTANCE_GetCurrInstanceModemId(WUEPS_PID_TAF);
+
+    ulRcvPid = NAS_MULTIINSTANCE_GetSpecModemPid(enModemId, ulReceiverPid);
+
+    pAppMsgHeader->ulReceiverPid = ulRcvPid;
+#endif
 
     return;
 }

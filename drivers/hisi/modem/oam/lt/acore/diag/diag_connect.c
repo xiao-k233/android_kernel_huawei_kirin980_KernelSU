@@ -69,8 +69,10 @@
 
 #define    THIS_FILE_ID        MSP_FILE_ID_DIAG_CONNECT_C
 
+#ifdef DIAG_SEC_TOOLS
 VOS_UINT32 g_ulAuthState = DIAG_AUTH_TYPE_DEFAULT;
 HTIMER     g_AuthTimer = VOS_NULL;
+#endif
 
 #define DIAG_NV_IMEI_LEN                             15
 
@@ -213,11 +215,13 @@ VOS_UINT32 diag_ConnProc(VOS_UINT8* pstReq)
             diag_GetModemInfo((DIAG_CONNECT_FRAME_INFO_STRU *)pstDiagHead);
             return ERR_MSP_SUCCESS;
         }
+#ifdef DIAG_SEC_TOOLS
         if(DIAG_VERIFY_SIGN_BIT == (pstInfo->ulInfo&DIAG_VERIFY_SIGN_BIT))
         {
             diag_ConnAuth((DIAG_CONNECT_FRAME_INFO_STRU *)pstDiagHead);
             return ERR_MSP_SUCCESS;
         }
+#endif
     }
 
     if(pstDiagHead->ulMsgLen < sizeof(MSP_DIAG_DATA_REQ_STRU))
@@ -228,7 +232,9 @@ VOS_UINT32 diag_ConnProc(VOS_UINT8* pstReq)
 
     diag_crit("Receive tool connect cmd!\n");
 
+#ifdef DIAG_SEC_TOOLS
     g_ulAuthState = DIAG_AUTH_TYPE_DEFAULT;
+#endif
     pstConn = (DIAG_MSG_MSP_CONN_STRU *)VOS_AllocMsg(MSP_PID_DIAG_APP_AGENT, (VOS_UINT32)(sizeof(DIAG_MSG_MSP_CONN_STRU)-VOS_MSG_HEAD_LENGTH));
     if(VOS_NULL == pstConn)
     {
@@ -281,7 +287,11 @@ VOS_UINT32 diag_ConnProc(VOS_UINT8* pstReq)
     pstConn->stConnInfo.diag_cfg.CtrlFlag.ulDrxControlFlag = 0; /*和HIDS确认此处不再使用,打桩处理即可*/
     pstConn->stConnInfo.diag_cfg.CtrlFlag.ulPortFlag = 0;
     pstConn->stConnInfo.diag_cfg.CtrlFlag.ulOmUnifyFlag = 1;
+#ifdef DIAG_SEC_TOOLS
     pstConn->stConnInfo.diag_cfg.CtrlFlag.ulAuthFlag = 1;
+#else
+    pstConn->stConnInfo.diag_cfg.CtrlFlag.ulAuthFlag = 0;
+#endif
     pstConn->stConnInfo.ulLpdMode = 0x5a5a5a5a;
 
     (VOS_VOID)VOS_MemSet_s(pstConn->stConnInfo.szProduct, (VOS_UINT32)sizeof(pstConn->stConnInfo.szProduct),
@@ -321,6 +331,12 @@ VOS_UINT32 diag_ConnProc(VOS_UINT8* pstReq)
 
         mdrv_hds_translog_conn();
 
+#ifndef DIAG_SEC_TOOLS
+        if(!DIAG_IS_POLOG_ON)
+        {
+            mdrv_socp_send_data_manager(SOCP_CODER_DST_OM_IND, SOCP_DEST_DSM_ENABLE);
+        }
+#endif
         diag_crit("Diag send ConnInfo to Modem success.\n");
 
         return ulCnfRst;
@@ -356,7 +372,9 @@ DIAG_ERROR:
 
 VOS_UINT32 diag_SetChanDisconn(MsgBlock* pMsgBlock)
 {
+#ifdef DIAG_SEC_TOOLS
     g_ulAuthState = DIAG_AUTH_TYPE_DEFAULT;
+#endif
 
     if(!DIAG_IS_CONN_ON)
     {
@@ -396,8 +414,10 @@ VOS_UINT32 diag_DisConnProc(VOS_UINT8* pstReq)
 
     diag_crit("Receive tool disconnect cmd!\n");
 
+#ifdef DIAG_SEC_TOOLS
         /* 清空鉴权状态 */
         g_ulAuthState = DIAG_AUTH_TYPE_DEFAULT;
+#endif
 
     pstDiagHead = (DIAG_FRAME_INFO_STRU *)pstReq;
 
@@ -441,6 +461,7 @@ DIAG_ERROR:
     return ret;
 
 }
+#ifdef DIAG_SEC_TOOLS
 VOS_VOID diag_ConnAuth(DIAG_CONNECT_FRAME_INFO_STRU *pstDiagHead)
 {
     VOS_UINT32 ulRet = 0;
@@ -519,6 +540,7 @@ VOS_VOID diag_ConnAuthRst(MsgBlock* pMsgBlock)
     (VOS_VOID)DIAG_MsgReport(&stDiagInfo, (VOS_VOID *)&stCmdAuthCnf, sizeof(stCmdAuthCnf));
     return;
 }
+#endif
 VOS_UINT32 diag_ConnTimerProc(VOS_VOID)
 {
     return ERR_MSP_SUCCESS;

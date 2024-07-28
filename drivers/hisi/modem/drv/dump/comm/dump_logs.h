@@ -56,6 +56,7 @@
 #define OM_DUMP_PATH            (MODEM_LOG_ROOT"/drv/onoff/")
 #define OM_RESET_LOG            (MODEM_LOG_ROOT"/drv/onoff/reset.log")
 #define OM_RESET_LOG_MAX        2048
+#define DUMP_SAVE_FLAG          "CP_DONE"
 
 #define DUMP_TASK_JOB_RESET_LOG             (0x00000001)
 #define DUMP_TASK_JOB_SAVE                  (0x00000002)
@@ -76,6 +77,7 @@ typedef struct _dump_ctrl_s
 
 void dump_save_file(char * file_name, void * addr,void * phy_addr, u32 len);
 int dump_create_dir(char *path);
+int dump_create_file(const char *filename);
 int dump_append_file(char * dir, char *filename, void * address,void* phy_addr, u32 length, u32 max_size);
 
 #endif

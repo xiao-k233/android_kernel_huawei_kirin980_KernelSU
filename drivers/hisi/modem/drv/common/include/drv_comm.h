@@ -172,8 +172,7 @@ typedef int (*PWRCTRLFUNCPTRVOID)(void);
 
 #if defined(BSP_CORE_MODEM) || defined(PRODUCT_CFG_CORE_TYPE_MODEM)
 #else
-
-typedef BSP_VOID (*VOIDFUNCPTR)(BSP_U32);/*lint !e761*/
+#include "mdrv_public.h"
 #ifndef SEM_FULL
 #define SEM_FULL            (1)
 #endif

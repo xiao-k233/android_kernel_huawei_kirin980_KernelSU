@@ -1,15 +1,50 @@
-/******************************************************************************
-
-  Copyright(C)2008,Hisilicon Co. LTD.
-
- ******************************************************************************
-  File Name       : AppNasComm.h
-  Description     : AppNasComm.h header file
-  History         :
-      1.sunbing       2008-12-17   Draft Enact
-      2.lihong        2009-09-22   Modify
-
-******************************************************************************/
+/*
+ * Copyright (C) Huawei Technologies Co., Ltd. 2012-2019. All rights reserved.
+ * foss@huawei.com
+ *
+ * If distributed as part of the Linux kernel, the following license terms
+ * apply:
+ *
+ * * This program is free software; you can redistribute it and/or modify
+ * * it under the terms of the GNU General Public License version 2 and
+ * * only version 2 as published by the Free Software Foundation.
+ * *
+ * * This program is distributed in the hope that it will be useful,
+ * * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * * GNU General Public License for more details.
+ * *
+ * * You should have received a copy of the GNU General Public License
+ * * along with this program; if not, write to the Free Software
+ * * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+ *
+ * Otherwise, the following license terms apply:
+ *
+ * * Redistribution and use in source and binary forms, with or without
+ * * modification, are permitted provided that the following conditions
+ * * are met:
+ * * 1) Redistributions of source code must retain the above copyright
+ * *    notice, this list of conditions and the following disclaimer.
+ * * 2) Redistributions in binary form must reproduce the above copyright
+ * *    notice, this list of conditions and the following disclaimer in the
+ * *    documentation and/or other materials provided with the distribution.
+ * * 3) Neither the name of Huawei nor the names of its contributors may
+ * *    be used to endorse or promote products derived from this software
+ * *    without specific prior written permission.
+ *
+ * * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
 
 #ifndef __APPNASCOMM_H__
 #define __APPNASCOMM_H__
@@ -73,6 +108,7 @@ extern "C" {
 #define APP_ERR_NOT_STARTED_YET                             (APP_ERR_COMMON_SECTION_BEGIN + 25)
 
 /* MM与APP错误码*/
+/* Modified for PDP_CAUSE_RPT,2017-09-11,Begin */
 #define APP_ERR_MM_NW_BEAR_NOT_SYNC                         (APP_ERR_MM_SECTION_BEGIN + 0)
 #define APP_ERR_MM_REL_IND                                  (APP_ERR_MM_SECTION_BEGIN + 1)
 #define APP_ERR_MM_AUTH_TIME_OUT                            (APP_ERR_MM_SECTION_BEGIN + 2)
@@ -140,6 +176,7 @@ extern "C" {
 #define APP_ERR_MM_NW_REJ_MSG_NOT_COMPATIBLE                (APP_ERR_MM_NW_SECTION_BEGIN + 101)
 #define APP_ERR_MM_NW_REJ_PROTOCOL_ERROR                    (APP_ERR_MM_NW_SECTION_BEGIN + 111)
 #define APP_ERR_MM_NW_REJ_OTHERS                            (APP_ERR_MM_NW_SECTION_BEGIN + 255)
+/* Modified for PDP_CAUSE_RPT,2017-09-11,End */
 
 
 /* SM与APP错误码 */
@@ -180,29 +217,53 @@ extern "C" {
 #define APP_ERR_SM_DEDICATED_FOR_EMERGENCY_NOT_ALLOWED      (APP_ERR_SM_SECTION_BEGIN + 34)
 #define APP_ERR_SM_ONLY_EMERGENCY_ALLOWED                   (APP_ERR_SM_SECTION_BEGIN + 35)
 
+/* mod for program 2015-01-15 begin */
 #define APP_ERR_SM_BACKOFF_ALG_NOT_ALLOWED                  (APP_ERR_SM_SECTION_BEGIN + 36)
+/* mod for program 2015-01-15 end */
 
+/* Added for DATA RETRY PHASEI, 2016-03-21, Begin */
 #define APP_ERR_SM_THROT_ALG_NOT_ALLOWED                    (APP_ERR_SM_SECTION_BEGIN + 37)
+/* Added for DATA RETRY PHASEI, 2016-03-21, End */
 
+/* add for provide PDP_NOT_ALLOWED 2016-05-20 begin */
 #define APP_ERR_SM_BACKOFF_ALG_NOT_ALLOWED_IGNORE           (APP_ERR_SM_SECTION_BEGIN + 38)
 #define APP_ERR_SM_BACKOFF_ALG_NOT_ALLOWED_PERM             (APP_ERR_SM_SECTION_BEGIN + 39)
 #define APP_ERR_SM_BACKOFF_ALG_NOT_ALLOWED_TEMP             (APP_ERR_SM_SECTION_BEGIN + 40)
 #define APP_ERR_SM_BACKOFF_ALG_NOT_ALLOWED_RSV              (APP_ERR_SM_SECTION_BEGIN + 41)
+/* add for provide PDP_NOT_ALLOWED 2016-05-20 end */
+/* Added for DATA RETRY PHASEIII, 2016-03-21, begin */
 #define APP_ERR_SM_THROT_T3396_IS_RUNNING                   (APP_ERR_SM_SECTION_BEGIN + 42)
+/* Added for DATA RETRY PHASEIII, 2016-03-21, End */
+/* Added for DATA RETRY PHASEIV, 2016-7-25, begin */
 #define APP_ERR_SM_NAS_SIG_LOW_PRIORITY_NOT_SUPPROT         (APP_ERR_SM_SECTION_BEGIN + 43)
+/* Added for DATA RETRY PHASEIV, 2016-7-25, end */
 
+/* Added for Boston_R13_CR_PHASEI, 2016-10-17, Begin */
 #define APP_ERR_SM_NAS_MO_SIG_ACCESS_BAR                    (APP_ERR_SM_SECTION_BEGIN + 44)
+/* Added for Boston_R13_CR_PHASEI, 2016-10-17, End */
+/* Added for Boston_R13_CR_PHASEII, 2016-12-01, begin */
 #define APP_ERR_SM_MAX_EPS_NUM_REACHED                      (APP_ERR_SM_SECTION_BEGIN + 45)
+/* Added for Boston_R13_CR_PHASEII, 2016-12-01, end */
+/* Added for Boston_R13_CR_PHASEIII, 2017-01-16, Begin */
 #define APP_ERR_SM_THROT_BACKOFF_IS_RUNNING                 (APP_ERR_SM_SECTION_BEGIN + 46)
+/* Added for Boston_R13_CR_PHASEIII, 2017-01-16, End */
+/* Added for PDP_CAUSE_RPT,2017-09-11,Begin */
 #define APP_ERR_SM_MM_NOT_SYNC                              (APP_ERR_SM_SECTION_BEGIN + 47)
 #define APP_ERR_SM_NW_RECONFIGURE                           (APP_ERR_SM_SECTION_BEGIN + 48)
 #define APP_ERR_SM_DELETE_SDF                               (APP_ERR_SM_SECTION_BEGIN + 49)
+/* Added for PDP_CAUSE_RPT,2017-09-11,End */
+/* added for Band13 R1 PHASE1, 2017-10-20, begin */
 #define APP_ERR_SM_NOT_IN_ACL_LIST                          (APP_ERR_SM_SECTION_BEGIN + 50)
 #define APP_ERR_SM_APN_DISABLE                              (APP_ERR_SM_SECTION_BEGIN + 51)
 #define APP_ERR_SM_IMS_DEREG_NOT_ATTACH                     (APP_ERR_SM_SECTION_BEGIN + 52)
+/* added for Band13 R1 PHASE1, 2017-10-20, end */
+/* Begin Added for LTE Data Retry 2017-11-2 */
 #define APP_ERR_SM_BEARER_ALLOC_NOT_ALLOWED     (APP_ERR_SM_SECTION_BEGIN + 53)
+/* End Added for LTE Data Retry 2017-11-2 */
 
+/* Begin Added for LTE Data Retry 2017-12-6 */
 #define APP_ERR_SM_BEARER_MOD_NOT_ALLOWED     (APP_ERR_SM_SECTION_BEGIN + 54)
+/* End Added for LTE Data Retry 2017-12-6 */
 
 /* SM与网侧错误码 */
 #define APP_ERR_SM_NW_OPERATOR_DETERMINED_BARRING           (APP_ERR_SM_NW_SECTION_BEGIN + 0)
@@ -246,9 +307,14 @@ extern "C" {
 #define APP_ERR_SM_NW_APN_RESTRICTION_INCOMPATIBLE_WITH_ACT_EPS_BEARER  (APP_ERR_SM_NW_SECTION_BEGIN + 38)
 #define APP_ERR_SM_NW_UNSUPPORTED_QCI_VALUE                 (APP_ERR_SM_NW_SECTION_BEGIN + 39)
 #define APP_ERR_SM_NW_APN_NOT_SUPPORT_IN_CURRENT_RAT_AND_PLMN     (APP_ERR_SM_NW_SECTION_BEGIN + 40)
+/* Added for DATA RETRY PHASEIV, 2016-7-25, begin */
 #define APP_ERR_SM_NW_REACTIVATION_REQUESTED                      (APP_ERR_SM_NW_SECTION_BEGIN + 41)
+/* Added for DATA RETRY PHASEIV, 2016-7-25, end */
+/* Added 2016-10-31, begin */
 #define APP_ERR_SM_NW_BEARER_HANDLING_NOT_SUPPORTED               (APP_ERR_SM_NW_SECTION_BEGIN + 42)
 #define APP_ERR_SM_NW_MAXIMUM_NUMBER_OF_EPS_BEARERS_REACHED       (APP_ERR_SM_NW_SECTION_BEGIN + 43)
+/* Added 2016-10-31, end */
+
 
 #define NAS_MM_MAX_TA_NUM               64                  /* TA 列表最大个数 */
 #define NAS_MM_MAX_LA_NUM               64                  /* LA 列表最大个数 */
@@ -288,8 +354,11 @@ extern "C" {
 
 #define MAX_SUPPORTED_CODEC_NUM         10
 
+/* moded for nw-cause adaption, 2017-09-22, begin */
 #define NAS_LMM_MAX_CAUSE_NUM           20
+/* moded for nw-cause adaption, 2017-09-22, end */
 
+/* mod for program 2015-01-04 begin */
 #define NAS_MM_MAX_PDP_REJ_CAUSE_NUM         16
 #define NAS_MM_DAM_MAX_PLMN_NUM              16
 
@@ -297,16 +366,29 @@ extern "C" {
 #define NAS_LMM_DAM_NV_CSERVICE_MIN_VALUE     1
 #define NAS_LMM_DAM_CSERVICE_DEFAULT_VALUE    5
 
+/* mod for program 2015-01-04 end */
 
+/* mod for program phaseIII 2015-03-15 begin */
 #define NAS_TMO_IMSI_HPLMN_MAX_NUM       8
+/* mod for program phaseIII 2015-03-15 end */
+/* Add for LTE CSG,2015-09-24, Begin */
 #define NAS_MM_MAX_HOME_NODEB_NAME_LEN  (48)
+/* Add for LTE CSG,2015-09-24, End */
 
+/* Added for DATA RETRY PHASEI, 2016-03-21, Begin */
 #define NAS_MM_MAX_T3402_PLMN_NUM       (16)
+/* Added for DATA RETRY PHASEI, 2016-03-21, End */
 
+/* Added for DSDS OPTIMIZE MT DETACH BY TAU, 2016-06-16, Begin */
 #define NAS_MT_DETACH_TAU_PLMN_MAX_NUM  (6)
+/* Added for DSDS OPTIMIZE MT DETACH BY TAU, 2016-06-16, End */
 
+/* Added for DATA RETRY PHASEIII, 2016-6-23, begin */
 #define NAS_MM_MAX_T3396_PLMN_NUM       (7)
+/* Added for DATA RETRY PHASEIII, 2016-6-23, end */
+/* Added for Band66 support ,2017-04-20,begin */
 #define NAS_LMM_BAND_MAX_LENTH          (8)
+/* Added for Band66 support ,2017-04-20,end */
 
 /*****************************************************************************
   3 Massage Declare
@@ -523,6 +605,7 @@ enum NAS_LMM_VOICE_DOMAIN_ENUM
    NAS_LMM_VOICE_DOMAIN_BUTT
 };
 typedef VOS_UINT32   NAS_LMM_VOICE_DOMAIN_ENUM_UINT32;
+/* Added for DATA RETRY PHASEIII, 2016-6-23, begin */
 
 /*****************************************************************************
  枚举名    : NAS_ESM_BEARER_PRIO_ENUM_UINT32
@@ -536,8 +619,10 @@ enum NAS_ESM_BEARER_PRIO_ENUM
    NAS_ESM_BEARER_PRIO_BUTT
 };
 typedef VOS_UINT32   NAS_ESM_BEARER_PRIO_ENUM_UINT32;
+/* Added for DATA RETRY PHASEIII, 2016-6-23, begin */
 
 
+/* Add  for LTE CSG, 2015-10-23, Begin */
 /*****************************************************************************
  结构名称: LRRC_LNAS_CELL_TYPE_ENUM_UINT8
  协议表格:
@@ -552,6 +637,8 @@ enum NAS_MM_CELL_TYPE_ENUM
     NAS_MM_CELL_TYPE_BUTT
 };
 typedef VOS_UINT8 NAS_MM_CELL_TYPE_ENUM_UINT8;
+/* Add  for LTE CSG, 2015-10-23, End */
+/* Added  for GU_BACK_OFF, 2016-04-07, Begin */
 /*****************************************************************************
  结构名称: NAS_BACKOFF_RAT_SUPPORT_ENUM_UINT32
  协议表格:
@@ -567,6 +654,7 @@ enum NAS_BACKOFF_RAT_SUPPORT_ENUM
     NAS_BACKOFF_RAT_SUPPORT_BUTT
 };
 typedef VOS_UINT32 NAS_BACKOFF_RAT_SUPPORT_ENUM_UINT32;
+/* Added  for GU_BACK_OFFCSG, 2016-04-07, End */
 
 /*****************************************************************************
   5 STRUCT
@@ -783,7 +871,9 @@ typedef struct
 }NAS_MM_PLMN_LIST_STRU;
 typedef NAS_MM_PLMN_LIST_STRU           NAS_EMM_PLMN_LIST_STRU;
 typedef NAS_MM_PLMN_LIST_STRU           NAS_MMC_PLMN_LIST_STRU;
+/* begin for r11 2014-09-04 */
 typedef NAS_MM_PLMN_LIST_STRU           NAS_ESM_PLMN_LIST_STRU;
+/* end for r11 2014-09-04 */
 /*****************************************************************************
  结构名    : NAS_MM_PLMN_ACT_LIST_STRU
  协议表格  :
@@ -966,6 +1056,7 @@ typedef struct
 }NAS_MM_DRX_STRU;
 typedef NAS_MM_DRX_STRU                 NAS_EMM_DRX_STRU;
 typedef NAS_MM_DRX_STRU                 NAS_MMC_DRX_STRU;
+/* Add for LTE CSG, 2015-09-24, Begin */
 /*****************************************************************************
 结构名称    :NAS_MM_CSG_ID_HOME_NODEB_NAME_STRU
 使用说明    :
@@ -988,6 +1079,7 @@ typedef struct
     VOS_UINT32                          ulCsgId;
 }NAS_MM_CSG_INFO_STRU;
 
+/* Add for LTE CSG, 2015-09-24, End */
 
 /*****************************************************************************
 结构名称    :NAS_MM_NETWORK_ID_STRU
@@ -1000,24 +1092,38 @@ typedef struct
     VOS_UINT32                          bitOpRac      :1; /* 1: VALID; 0: INVALID*/
     VOS_UINT32                          bitOpTac      :1; /* 1: VALID; 0: INVALID*/
     VOS_UINT32                          bitOpCellId   :1;
+    /* Mod for LNAS_POSITION_INFO, 2015-10-15, Begin */
     VOS_UINT32                          bitOpLteBand  :1;
     VOS_UINT32                          bitOpRsv      :26;
+    /* Mod for LNAS_POSITION_INFO, 2015-10-15, End */
     NAS_MM_PLMN_ID_STRU                 stPlmnId;
     NAS_MM_LAC_STRU                     stLac;
     NAS_MM_RAC_STRU                     stRac;
     NAS_MM_TAC_STRU                     stTac;
     VOS_UINT32                          ulCellId;        /* Cell Identity */
+    /* emergency tau&service begin */
     VOS_UINT32                          ulForbiddenInfo;
     VOS_UINT32                          ulCellStatus;
+    /* emergency tau&service end */
+    /* Mod for LNAS_POSITION_INFO, 2015-10-12, Begin */
+    /* Modified for Band66 support ,2017-04-20,begin */
     VOS_UINT32                          aulLteBand[NAS_LMM_BAND_MAX_LENTH];
+    /* Modified for Band66 support ,2017-04-20,end */
     VOS_UINT32                          ulArfcn;                                /* 驻留频点信息 */
+    /* Mod for LNAS_POSITION_INFO, 2015-10-12, End */
+    /* mod for ProcedureCompatibilityPhaseI, 2018-06-06, Begin */
     VOS_UINT16                          usPhysCellId;               /* 物理小区ID */
     NAS_MM_CELL_TYPE_ENUM_UINT8         ucCellType;
+    /* Begin Mod for AccessType Issue 20180925 */
     VOS_UINT8                           ucAccessType;
+    /* End Mod for AccessType Issue 20180925 */
     VOS_UINT32                          ulCsgId;
+    /* mod for ProcedureCompatibilityPhaseI, 2018-06-06, End */
+    /* Begin Add for AccessType Issue 20180925 */
     VOS_UINT8                            ucSupportImsEmcFlag;
     VOS_UINT8                            ucBandWidth;
     VOS_UINT8                            ucRsv[2];
+    /* End Add for AccessType Issue 20180925 */
 }NAS_MM_NETWORK_ID_STRU;
 typedef NAS_MM_NETWORK_ID_STRU          NAS_EMM_NETWORK_ID_STRU;
 typedef NAS_MM_NETWORK_ID_STRU          NAS_MMC_NETWORK_ID_STRU;
@@ -1228,7 +1334,7 @@ typedef struct
     VOS_UINT8                           aucOp[NAS_EMM_SOFT_USIM_OP_LEN];
 }NAS_EMM_SOFT_USIM_AUTH_PARAM_STRU;
 
-/*self-adaption NW cause modify begin for leili*/
+/*self-adaption NW cause modify begin*/
 
 /*****************************************************************************
 结构名称    :NAS_LMM_ADAPTION_CAUSE_STRU
@@ -1252,9 +1358,10 @@ typedef struct
     VOS_UINT8                           aucRsv[3];
     NAS_LMM_ADAPTION_CAUSE_STRU         astAdaptCause[NAS_LMM_MAX_CAUSE_NUM];
 }LNAS_LMM_CONFIG_NWCAUSE_STRU;
-/*self-adaption NW cause modify end for leili*/
+/*self-adaption NW cause modify end*/
 
 
+/* mod for program 2015-01-04 begin */
 /*****************************************************************************
 结构名称    :NAS_MM_DAM_PLMN_LIST_STRU
 使用说明    :美国需求DAM生效的PLMN列表
@@ -1300,7 +1407,9 @@ typedef struct
     VOS_UINT8              ucFxTemp;     /* 1小时内临时拒绝限定次数 */
     VOS_UINT8              ucRsv;
 } NAS_CONFIG_BACKOFF_FX_PARA_STRU;
+/* mod for program 2015-01-04 end */
 
+/* mod for program phaseIII 2015-03-15 begin */
 /*****************************************************************************
 结构名称    :NAS_DAM_CONFIG_PLMN_PARA
 使用说明    :TMO定制需求生效的IMSI PLMN列表
@@ -1310,8 +1419,12 @@ typedef struct
     VOS_UINT32                 ulPlmnNum;
     NAS_MM_PLMN_ID_STRU        astPlmnId[NAS_TMO_IMSI_HPLMN_MAX_NUM];
 } NAS_TMO_IMSI_HPLMN_LIST;
+/* mod for program phaseIII 2015-03-15 end */
+/* add for separate special part from original NV, 2017-03-07, begin */
 typedef NAS_TMO_IMSI_HPLMN_LIST LNAS_LMM_NV_TMO_IMSI_HPLMN_LIST_CONFIG_STRU;
+/* add for separate special part from original NV, 2017-03-07, end */
 
+/* Added for DATA RETRY PHASEI, 2016-03-21, Begin */
 /*****************************************************************************
 结构名称    :NAS_PLMN_T3402_STRU
 使用说明    :LNAS关于DATA RETRY特性T3402定时器针对PLMN列表维护的数据结构
@@ -1322,7 +1435,9 @@ typedef struct
     VOS_UINT32                          ulTimerLen;                             /* 网侧分配的T3402定时器时长(UNIT: 秒) */
     VOS_UINT32                          ulTimerRemainLen;                       /* 关机时Timer暂停状态下的剩余时长(UNIT: ms)*/
 }NAS_PLMN_T3402_STRU;
+/* Added for DATA RETRY PHASEI, 2016-03-21, End */
 
+/* Added for DSDS OPTIMIZE MT DETACH BY TAU, 2016-06-16, Begin */
 /*****************************************************************************
 结构名称    :NAS_MM_MT_DETACH_TAU_PLMN_LIST_STRU
 使用说明    :TAU优化网络周期DETACH生效的PLMN列表
@@ -1332,6 +1447,8 @@ typedef struct
     VOS_UINT32                          ulPlmnNum;
     NAS_MM_PLMN_ID_STRU                 astPlmnId[NAS_MT_DETACH_TAU_PLMN_MAX_NUM];
 } NAS_MM_MT_DETACH_TAU_PLMN_LIST_STRU;
+/* Added for DSDS OPTIMIZE MT DETACH BY TAU, 2016-06-16, End */
+/* Added for DATA RETRY PHASEIII, 2016-6-23, begin */
 /*****************************************************************************
 结构名称    :NAS_PLMN_T3396_STRU
 使用说明    :LNAS关于DATA RETRY特性T3396定时器针对PLMN列表维护的数据结构
@@ -1341,6 +1458,8 @@ typedef struct
     NAS_MM_PLMN_ID_STRU                 stPlmnId;                               /* 受控制的PLMN ID */
     VOS_UINT32                          ulT3396RemainLenForCustom;              /* 关机时Timer暂停状态下的剩余时长(UNIT: ms)*/
 }NAS_PLMN_T3396_STRU;
+/* Added for DATA RETRY PHASEIII, 2016-6-23, end */
+/* Added for PDP_CAUSE_RPT,2017-09-11,Begin */
 /*****************************************************************************
  结构名    : ESM_APP_ERR_CODE_MAP_STRU
  结构说明  : ESM和APS间原因值转换
@@ -1350,6 +1469,7 @@ typedef struct
     VOS_UINT32                          enEsmCuase;
     VOS_UINT32                          ulAppCause;
 } ESM_APP_ERR_CODE_MAP_STRU;
+/* Added for PDP_CAUSE_RPT,2017-09-11,End */
 
 /*****************************************************************************
   6 UNION

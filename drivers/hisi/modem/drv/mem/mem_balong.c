@@ -326,7 +326,7 @@ s32 bsp_init_poll(u32 u32PoolType)
 BSP_BOOL bsp_ptr_invalid(const void* pMem)
 {
     u32 u32Type;
-    MEM_POOL_INFO* pPoolInfo;
+    MEM_POOL_INFO *pPoolInfo = NULL;
     u32 u32FindMem = 0;
 	void *pRel = NULL;
     if(NULL == pMem)
@@ -374,7 +374,7 @@ void* bsp_pool_alloc(MEM_ALLOC_INFO* pAllocInfo, u32 u32Size)
 
 void* bsp_get_item(MEM_ALLOC_INFO* pAllocInfo, u32 cnt, u32 u32PoolType, u32 u32Size)
 {
-    void *pItem;
+    void *pItem = NULL;
     void **ppHead = (void**)(&(pAllocInfo->allocList[cnt]));
 
     /* 如果链表中没有节点,则从内存池中分配 */
@@ -588,6 +588,9 @@ s32 bsp_mem_init(void)
     mb();
     return BSP_OK;
 }
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+module_init(bsp_mem_init);
+#endif
 s32 bsp_set_most_used_size(u32 u32Size, u32 u32PoolType)
 {
     u32 u32Item;
@@ -729,7 +732,7 @@ void  bsp_free_dbg(void* pMem, u8* pFileName, u32 u32Line)
 *****************************************************************************/
 void* bsp_smalloc(u32 u32Size, MEM_POOL_TYPE enFlags)
 {
-    u8 *pItem;
+    u8 *pItem = NULL;
     if(0 == *g_mem_init_mark)
     {
         return NULL;
@@ -759,9 +762,9 @@ EXPORT_SYMBOL(bsp_smalloc);
 *****************************************************************************/
 void* bsp_smalloc_dbg(u32 u32Size, MEM_POOL_TYPE enFlags, u8* pFileName, u32 u32Line)
 {
-    u8 *pItem;
-    if(0 == *g_mem_init_mark)
-    {
+    u8 *pItem = NULL;
+
+    if (0 == *g_mem_init_mark) {
         return NULL;
     }
 

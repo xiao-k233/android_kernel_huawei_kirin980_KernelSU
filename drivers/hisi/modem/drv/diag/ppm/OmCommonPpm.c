@@ -445,12 +445,32 @@ void PPM_ReadPortDataInit(CPM_PHY_PORT_ENUM_UINT32        enPhyPort,
         return;
     }
 
+#ifdef BSP_CONFIG_PHONE_TYPE
     if(BSP_OK != PPM_UdiRegCallBackFun(g_astOMPortUDIHandle[enHandle], ACM_IOCTL_SET_WRITE_CB, pWriteCB))
     {
         diag_error("mdrv_udi_ioctl Failed\r\n");
 
         return;
     }
+#else
+    if(enHandle == OM_USB_IND_PORT_HANDLE)
+    {
+        if(BSP_OK != PPM_UdiRegCallBackFun(g_astOMPortUDIHandle[enHandle], ACM_IOCTL_SET_WRITE_INFO_CB, pWriteCB))
+        {
+            diag_error("mdrv_udi_ioctl Failed\r\n");
+            return;
+        }
+    }
+    else
+    {
+	    if(BSP_OK != PPM_UdiRegCallBackFun(g_astOMPortUDIHandle[enHandle], ACM_IOCTL_SET_WRITE_CB, pWriteCB))
+	    {
+	        diag_error("mdrv_udi_ioctl Failed\r\n");
+
+	        return;
+        }
+    }
+#endif
 
     if(BSP_OK != PPM_UdiRegCallBackFun(g_astOMPortUDIHandle[enHandle], ACM_IOCTL_SET_EVT_CB, pStateCB))
     {

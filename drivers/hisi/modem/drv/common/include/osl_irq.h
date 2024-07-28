@@ -124,7 +124,7 @@ static __inline__ void free_irq(unsigned int irq, void *dev_id)
 		logMsg("intDisable irq %d error\n", irq, 0, 0, 0, 0, 0);
 		return;
 	}
-	ret = intDisconnect((VOIDFUNCPTR*)(irq), (VOIDFUNCPTR)NULL, (int)dev_id);/* [false alarm]:Îó±¨ */
+	ret = intDisconnect((VOIDFUNCPTR*)(irq), (VOIDFUNCPTR)NULL, (int)dev_id);
 	if(ret != OK)
 	{
 		logMsg("intDisconnect irq %d error\n", irq, 0, 0, 0, 0, 0);

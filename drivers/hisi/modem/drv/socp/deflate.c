@@ -77,6 +77,7 @@ extern DRV_DEFLATE_CFG_STRU  g_deflate_nv_ctrl;
 *****************************************************************************/
 void deflate_get_data_buffer(DEFLATE_RING_BUF_STRU *pRingBuffer, DEFLATE_BUFFER_RW_STRU *pRWBuffer)
 {
+ #ifdef  FEATURE_SOCP_ADDR_64BITS
     if(pRingBuffer->u32Read <= pRingBuffer->u32Write)
     {
         /* 写指针大于读指针，直接计算 */
@@ -93,6 +94,24 @@ void deflate_get_data_buffer(DEFLATE_RING_BUF_STRU *pRingBuffer, DEFLATE_BUFFER_
         pRWBuffer->pRbBuffer = (char *)pRingBuffer->Start;
         pRWBuffer->u32RbSize = pRingBuffer->u32Write;
     }
+ #else
+    if(pRingBuffer->u32Read <= pRingBuffer->u32Write)
+    {
+        /* 写指针大于读指针，直接计算 */
+        pRWBuffer->pBuffer = (char *)((unsigned long)pRingBuffer->u32Read);
+        pRWBuffer->u32Size = (u32)(pRingBuffer->u32Write - pRingBuffer->u32Read);
+        pRWBuffer->pRbBuffer = (char *)DEFLATE_NULL;
+        pRWBuffer->u32RbSize = 0;
+    }
+    else
+    {
+        /* 读指针大于写指针，需要考虑回卷 */
+        pRWBuffer->pBuffer = (char *)((unsigned long)pRingBuffer->u32Read);
+        pRWBuffer->u32Size = (u32)((pRingBuffer->End - pRingBuffer->u32Read )+ 1);
+        pRWBuffer->pRbBuffer = (char *)((unsigned long)pRingBuffer->Start);
+        pRWBuffer->u32RbSize = (u32)(pRingBuffer->u32Write - pRingBuffer->Start);
+    }
+ #endif
 }
 /*****************************************************************************
 * 函 数 名  : deflate_read_done
@@ -108,11 +127,19 @@ void deflate_get_data_buffer(DEFLATE_RING_BUF_STRU *pRingBuffer, DEFLATE_BUFFER_
 *****************************************************************************/
 void deflate_read_done(DEFLATE_RING_BUF_STRU *pRingBuffer, u32 u32Size)
 {
+#ifdef  FEATURE_SOCP_ADDR_64BITS
 	pRingBuffer->u32Read += u32Size;
 	if(pRingBuffer->u32Read > (u32)(pRingBuffer->End - pRingBuffer->Start))
 	{
     	pRingBuffer->u32Read -= pRingBuffer->u32Length;
 	}
+#else
+    pRingBuffer->u32Read += u32Size;
+    if(pRingBuffer->u32Read > pRingBuffer->End)
+    {
+        pRingBuffer->u32Read -= pRingBuffer->u32Length;
+    }
+#endif
 }
 /*****************************************************************************
 * 函 数 名  : deflate_debug
@@ -140,8 +167,12 @@ void deflate_debug(void)
     DEFLATE_REG_READ(SOCP_REG_DEFLATEDEST_BUFREMAINTHCFG,g_strDeflateAbort.u32ObufThrh);
     DEFLATE_REG_READ(SOCP_REG_DEFLATEDEST_BUFRPTR,g_strDeflateAbort.u32ReadAddr);
     DEFLATE_REG_READ(SOCP_REG_DEFLATEDEST_BUFWPTR,g_strDeflateAbort.u32WriteAddr);
+#ifdef FEATURE_SOCP_ADDR_64BITS
     DEFLATE_REG_READ(SOCP_REG_DEFLATEDST_BUFADDR_L,g_strDeflateAbort.u32StartLowAddr);
 	DEFLATE_REG_READ(SOCP_REG_DEFLATEDST_BUFADDR_H,g_strDeflateAbort.u32StartHighAddr);
+#else
+	DEFLATE_REG_READ(SOCP_REG_DEFLATEDEST_BUFADDR,g_strDeflateAbort.u32StartowAddr);
+#endif
     DEFLATE_REG_READ(SOCP_REG_DEFLATEDEST_BUFDEPTH,g_strDeflateAbort.u32BufSize);
     DEFLATE_REG_READ(SOCP_REG_DEFLATEDEST_BUFTHRH,g_strDeflateAbort.u32IntThrh);
     DEFLATE_REG_READ(SOCP_REG_DEFLATEDEST_BUFOVFTIMEOUT,g_strDeflateAbort.u32OvfTimeoutEn);
@@ -226,11 +257,17 @@ u32 deflate_set(u32 u32DestChanID, DEFLATE_CHAN_CONFIG_S *pDeflateAttr)
     if (!pChan->u32SetStat)
     {
         /* 写入起始地址到目的buffer起始地址寄存器*/
+#ifdef FEATURE_SOCP_ADDR_64BITS
         DEFLATE_REG_WRITE(SOCP_REG_DEFLATEDST_BUFADDR_L, (u32)start);
     	DEFLATE_REG_WRITE(SOCP_REG_DEFLATEDST_BUFADDR_H, (u32)((u64)start>>32));
     	DEFLATE_REG_WRITE(SOCP_REG_DEFLATEDEST_BUFRPTR,0);
     	DEFLATE_REG_WRITE(SOCP_REG_DEFLATEDEST_BUFRPTR,0);
 
+#else
+        DEFLATE_REG_WRITE(SOCP_REG_DEFLATEDEST_BUFADDR,start);
+        DEFLATE_REG_WRITE(SOCP_REG_DEFLATEDEST_BUFRPTR,start);
+ 	    DEFLATE_REG_WRITE(SOCP_REG_DEFLATEDEST_BUFWPTR,start);
+#endif
         DEFLATE_REG_WRITE(SOCP_REG_DEFLATEDEST_BUFDEPTH,buflength);
         DEFLATE_REG_WRITE(SOCP_REG_DEFLATEDEST_BUFREMAINTHCFG,u32Thrh);//阈值溢出
         DEFLATE_REG_WRITE(SOCP_REG_DEFLATEDEST_BUFTHRH,bufThreshold);
@@ -347,6 +384,9 @@ u32 deflate_enable(u32 u32DestChanID)
 u32 deflate_disable(u32 u32DestChanID)
 {
     u32 DeflateIdleState;
+#ifndef   FEATURE_SOCP_ADDR_64BITS
+    u32 start;
+#endif
     u32  u32ChanID;
 
     u32ChanID  = DEFLATE_REAL_CHAN_ID(u32DestChanID);
@@ -379,10 +419,17 @@ u32 deflate_disable(u32 u32DestChanID)
         /*lint -save -e845*/
         DEFLATE_REG_SETBITS(SOCP_REG_DEFLATE_GLOBALCTRL, 21, 1, 0);
          /*lint -restore +e845*/
+#ifdef FEATURE_SOCP_ADDR_64BITS
 
     	DEFLATE_REG_WRITE(SOCP_REG_DEFLATEDEST_BUFRPTR ,0);
     	DEFLATE_REG_WRITE(SOCP_REG_DEFLATEDEST_BUFWPTR, 0);
 
+#else
+
+        DEFLATE_REG_READ(SOCP_REG_DEFLATEDEST_BUFADDR,start);
+        DEFLATE_REG_WRITE(SOCP_REG_DEFLATEDEST_BUFRPTR,start);
+        DEFLATE_REG_WRITE(SOCP_REG_DEFLATEDEST_BUFWPTR,start);
+#endif
         /*清压缩中断状态，屏蔽中断状态*/
         bsp_deflate_data_send_manager(COMPRESS_DISABLE_STATE);
     }
@@ -824,7 +871,7 @@ void deflate_ovf(void)
 *
 * 返 回 值   : 无
 *****************************************************************************/
-void deflate_task(void)
+int deflate_task(void* para)
  {
 
     u32 IntTfrState = 0;
@@ -915,7 +962,7 @@ void deflate_task(void)
           }
       }
   }
-    //  return DEFLATE_OK;
+  return 0;
 }
 
 
@@ -1321,65 +1368,64 @@ s32 deflate_stop(u32 u32DstChanID)
 *****************************************************************************/
  void deflate_help(void)
  {
-   socp_crit("deflate_show_debug_gbl: 查看全局统计信息:通道申请、配置和中断总计数\n");
-   socp_crit("deflate_show_dest_chan_cur: 查看压缩目的通道信息\n");
+   socp_crit("deflate_show_debug_gbl: check global cnt info(src channel,config and interrupt)\n");
+   socp_crit("deflate_show_dest_chan_cur: compress dst chan info\n");  
  }
 void deflate_show_debug_gbl(void)
 {
-    socp_crit("\r DEFLATE 全局状态维护信息:\n");
-    socp_crit("\r deflate配置编码目的通道的次数                             : 0x%x\n",
+    socp_crit("\r DEFLATE global status:\n");
+    socp_crit("\r g_strDeflateDebug.u32DeflateDstSetCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateDstSetCnt);
-    socp_crit("\r deflate配置编码目的通道成功的次数                         : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateDstSetSucCnt : 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateDstSetSucCnt);
-    socp_crit("\r deflate注册deflate目的通道读数据回调函数次数              : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateRegReadCBCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateRegReadCBCnt);
-    socp_crit("\r deflate注册deflate目的通道异常事件回调函数次数            : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateRegEventCBCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateRegEventCBCnt);
-    socp_crit("\r deflate尝试获取deflate目的buffer次数                      : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateGetReadBufEtrCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateGetReadBufEtrCnt);
-    socp_crit("\r deflate获取deflate目的buffer成功次数                      : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateGetReadBufSucCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateGetReadBufSucCnt);
-    socp_crit("\r deflate尝试读取deflate目的数据次数                        : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateReaddoneEtrCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateReaddoneEtrCnt);
-    socp_crit("\r deflate尝试读取deflate目的数据长度等于0次数               : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateReaddoneZeroCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateReaddoneZeroCnt);
-    socp_crit("\r deflate读取deflate目的数据长度不等于0次数                 : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateReaddoneValidCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateReaddoneValidCnt);
-    socp_crit("\r deflate读取deflate目的数据失败的次数                      : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateReaddoneFailCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateReaddoneFailCnt);
-    socp_crit("\r deflate读取deflate目的数据成功的次数                      : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateReaddoneSucCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateReaddoneSucCnt);
-    socp_crit("\r deflate处理传输中断任务的次数                             : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateTskTrfCbOriCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateTskTrfCbOriCnt);
-    socp_crit("\r deflate处理完传输中断任务的次数                           : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateTskTrfCbCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateTskTrfCbCnt);
-    socp_crit("\r deflate处理上溢中断的次数                                 : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateTskOvfCbOriCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateTskOvfCbOriCnt);
-    socp_crit("\r deflate处理完上溢中断的次数*                              : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateTskOvfCbCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateTskOvfCbCnt);
-    socp_crit("\r deflate处理阈值溢出的次数                                 : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateTskThresholdOvfCbOriCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateTskThresholdOvfCbOriCnt);
-    socp_crit("\r deflate处理完阈值溢出的次数                               : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateTskThresholdOvfCbCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateTskThresholdOvfCbCnt);
-    socp_crit("\r deflate处理异常的次数                                     : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateTskIntWorkAortCbOriCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateTskIntWorkAortCbOriCnt);
-    socp_crit("\r deflate处理完异常的次数                                   : 0x%x\n",
+    socp_crit("\r g_strDeflateDebug.u32DeflateTskIntWorkAortCbCnt: 0x%x\n",
            (s32)g_strDeflateDebug.u32DeflateTskIntWorkAortCbCnt);
 }
 u32 deflate_show_dest_chan_cur(void)
 {
 
-    socp_crit("初始化状态:0x%x\n",g_strDeflateCtrl.initFlag);
-    socp_crit("通道ID:0x%x\n",g_strDeflateCtrl.u32ChanID);
-    socp_crit(" 通道配置状态:%d\n",g_strDeflateCtrl.u32SetStat);
-    socp_crit("通道buffer 起始地址:0x%pK\n",(char *)g_strDeflateCtrl.sDeflateDstChan.Start);
-    socp_crit("通道buffer 结束地址:0x%pK\n",(char *)g_strDeflateCtrl.sDeflateDstChan.End);
-    socp_crit("通道buffer 读指针:0x%x\n",g_strDeflateCtrl.sDeflateDstChan.u32Read);
-    socp_crit("通道buffer 写指针:0x%x\n",g_strDeflateCtrl.sDeflateDstChan.u32Write);
-    socp_crit("通道buffer 长度:0x%x\n",g_strDeflateCtrl.sDeflateDstChan.u32Length);
+    socp_crit("g_strDeflateCtrl.initFlag:0x%x\n",g_strDeflateCtrl.initFlag);
+    socp_crit("g_strDeflateCtrl.u32ChanID:0x%x\n",g_strDeflateCtrl.u32ChanID);
+    socp_crit("g_strDeflateCtrl.u32SetStat:%d\n",g_strDeflateCtrl.u32SetStat);
+    socp_crit("g_strDeflateCtrl.sDeflateDstChan.u32Read:0x%x\n",g_strDeflateCtrl.sDeflateDstChan.u32Read);
+    socp_crit("g_strDeflateCtrl.sDeflateDstChan.u32Write:0x%x\n",g_strDeflateCtrl.sDeflateDstChan.u32Write);
+    socp_crit("g_strDeflateCtrl.sDeflateDstChan.u32Length:0x%x\n",g_strDeflateCtrl.sDeflateDstChan.u32Length);
     return BSP_OK;
 }
 
+#ifdef CONFIG_PM
 static s32 deflate_suspend(struct device *dev)
 {
     u32 DeflateIdleState;
@@ -1408,6 +1454,9 @@ static const struct dev_pm_ops deflate_pm_ops ={
 };
 
 #define DEFLATE_PM_OPS (&deflate_pm_ops)
+#else
+#define DEFLATE_PM_OPS  NULL
+#endif
 
 static struct platform_driver modem_deflate_drv = {
     .driver     = {
@@ -1450,4 +1499,8 @@ int deflate_dev_init(void)
     return 0;
 }
 
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+device_initcall(deflate_dev_init);
+module_init(deflate_init);
+#endif
 

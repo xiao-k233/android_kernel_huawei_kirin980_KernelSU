@@ -56,6 +56,9 @@
 #include "AtDataProc.h"
 #include "AtTafAgentInterface.h"
 #include "AtEventReport.h"
+#if (VOS_OS_VER != VOS_LINUX)
+#include "Linuxstub.h"
+#endif
 #include "AtCtx.h"
 
 
@@ -488,6 +491,7 @@ const VOS_CHAR   *g_ucDialRateDisplayNv[] =
     " 7200000",
 };
 
+#if (FEATURE_ON == FEATURE_LTE)
 /*速率气泡显示的速率表数组,NV定制值*/
 const AT_DISPLAY_RATE_PAIR_STRU         g_ucLTERateDisplay[AT_UE_LTE_CATEGORY_NUM_MAX] =
 {
@@ -514,6 +518,7 @@ const AT_DISPLAY_RATE_PAIR_STRU         g_ucLTERateDisplay[AT_UE_LTE_CATEGORY_NU
     {" 1900000000", " 310000000"},                                              /* category20上下行理论最大速率 */
     {" 1300000000", " 300000000"},                                              /* category21上下行理论最大速率 */
 };
+#endif
 
 const AT_SUB_SYS_MODE_CONNECT_RATE_PAIR_STRU gastSubSysModeConnectRateArr[] =
 {
@@ -528,6 +533,9 @@ const AT_SUB_SYS_MODE_CONNECT_RATE_PAIR_STRU gastSubSysModeConnectRateArr[] =
 /*****************************************************************************
    3 函数、变量声明
 *****************************************************************************/
+#if (VOS_WIN32 == VOS_OS_VER) && (LLT_OS_VER == LLT_WIN)
+extern VOS_INT32 Sock_Send(VOS_UINT8 ucPortNo, VOS_UINT8* pucData, VOS_UINT16 uslength);
+#endif
 
 
 /*****************************************************************************
@@ -568,8 +576,12 @@ TAF_UINT32 At_SendData(TAF_UINT8 ucIndex,TAF_UINT8 ucType,TAF_UINT8* pData,TAF_U
         if (AT_USBCOM_USER == gastAtClientTab[ucIndex].UserType)
         {
             /*向USB COM口发送数据*/
+            #if (VOS_WIN32 == VOS_OS_VER)
+            Sock_Send(AT_USB_COM_PORT_NO, pData, usLen);
+            #else
             DMS_COM_SEND(AT_USB_COM_PORT_NO, pData, usLen);
             AT_MNTN_TraceCmdResult(ucIndex, pData, usLen);
+            #endif
             return AT_SUCCESS;
         }
         /* 向VCOM口发送数据 */
@@ -641,7 +653,11 @@ VOS_VOID  AT_DisplayResultData (
     if (AT_USBCOM_USER == gastAtClientTab[ucIndex].UserType)
     {
         /*向USB COM口发送数据*/
+        #if (VOS_WIN32 == VOS_OS_VER)
+        Sock_Send(AT_USB_COM_PORT_NO, gstAtSendDataBuffer, usLen);
+        #else
         DMS_COM_SEND(AT_USB_COM_PORT_NO, gstAtSendDataBuffer, usLen);
+        #endif
     }
 
     /*选择control口*/
@@ -678,6 +694,12 @@ VOS_VOID  AT_DisplayResultData (
     {
         AT_UART_SendDlData(ucIndex, gstAtSendDataBuffer, usLen);
     }
+#if (FEATURE_ON == FEATURE_AT_HSUART)
+    else if(AT_HSUART_USER == gastAtClientTab[ucIndex].UserType)
+    {
+        AT_HSUART_SendDlData(ucIndex, gstAtSendDataBuffer, usLen);
+    }
+#endif
     else
     {
         ;
@@ -701,7 +723,11 @@ VOS_VOID AT_DisplaySelResultData(
             /* 选择PCUI口 */
             if (0 == gucAtPortSel)
             {
+                #if (VOS_WIN32 == VOS_OS_VER)
+                Sock_Send(AT_USB_COM_PORT_NO, gstAtSendDataBuffer, usLen);
+                #else
                 DMS_COM_SEND(AT_USB_COM_PORT_NO, gstAtSendDataBuffer, usLen);
+                #endif
             }
         }
         else if (AT_CTR_USER == gastAtClientTab[ucIndex].UserType)
@@ -729,6 +755,12 @@ VOS_VOID AT_DisplaySelResultData(
                 AT_SendDataToModem(ucIndex, gstAtSendDataBuffer, usLen);
             }
         }
+#if (FEATURE_ON == FEATURE_AT_HSUART)
+        else if (AT_HSUART_USER == gastAtClientTab[ucIndex].UserType)
+        {
+            AT_HSUART_SendDlData(ucIndex, gstAtSendDataBuffer,usLen);
+        }
+#endif
         else if (AT_APP_USER == gastAtClientTab[ucIndex].UserType)
         {
             APP_VCOM_SEND(gastAtClientTab[ucIndex].ucPortNo, gstAtSendDataBuffer, usLen);
@@ -1433,6 +1465,7 @@ VOS_VOID At_AddDialRateToConnect(
             ulTmp = VOS_StrLen((TAF_CHAR *)g_PppDialRateDisplay[enRateDisplay]);
             TAF_MEM_CPY_S(aucDialRateTmp, sizeof(aucDialRateTmp), g_PppDialRateDisplay[enRateDisplay], ulTmp);
         }
+#if (FEATURE_ON == FEATURE_LTE)
         else if (TAF_PH_INFO_LTE_RAT == stSysMode.enRatType)
         {
             ucDlCategoryIndex = AT_GetLteUeDlCategoryIndex();
@@ -1440,6 +1473,7 @@ VOS_VOID At_AddDialRateToConnect(
             ulTmp = VOS_StrLen((TAF_CHAR *)(g_ucLTERateDisplay[ucDlCategoryIndex].acStrDlSpeed));
             TAF_MEM_CPY_S(aucDialRateTmp, sizeof(aucDialRateTmp), g_ucLTERateDisplay[ucDlCategoryIndex].acStrDlSpeed, ulTmp);
         }
+#endif
         else
         {
             enRateDisplay = AT_GetRateDisplayIndexForGsm(&stSysMode);
@@ -2169,6 +2203,438 @@ VOS_UINT32 AT_GetRateDisplayIndexForWcdma(
     return enRateIndex;
 }
 
+#if (FEATURE_ON == FEATURE_AT_HSUART)
+
+VOS_UINT32 AT_IsSmsRingingTe(VOS_VOID)
+{
+    AT_UART_RI_STATE_INFO_STRU         *pstRiStateInfo = VOS_NULL_PTR;
+
+    pstRiStateInfo = AT_GetUartRiStateInfo();
+
+    if ( (VOS_TRUE == pstRiStateInfo->ulRunFlg)
+      && (AT_UART_RI_TYPE_SMS == pstRiStateInfo->enType) )
+    {
+        return VOS_TRUE;
+    }
+
+    return VOS_FALSE;
+}
+
+
+VOS_VOID AT_SmsRingOn(VOS_VOID)
+{
+    AT_UART_RI_CFG_STRU                *pstRiCfgInfo   = VOS_NULL_PTR;
+    AT_UART_RI_STATE_INFO_STRU         *pstRiStateInfo = VOS_NULL_PTR;
+    VOS_UINT32                          ulTmrName;
+    VOS_UINT32                          ulTmrParam;
+    VOS_UINT8                           ucIndex;
+
+    pstRiCfgInfo   = AT_GetUartRiCfgInfo();
+    pstRiStateInfo = AT_GetUartRiStateInfo();
+    ucIndex        = AT_CLIENT_TAB_HSUART_INDEX;
+
+    AT_SET_SMS_RI_TMR_NAME(ulTmrName);
+    AT_SET_SMS_RI_TMR_PARAM(ulTmrParam, ucIndex);
+
+    /* RI信号设为高电平 */
+    AT_CtrlRI(ucIndex, AT_IO_LEVEL_HIGH);
+
+    /* 启动RI信号电平保持定时器 */
+    AT_StartRelTimer(&(pstRiStateInfo->hSmsRiTmrHdl),
+                     pstRiCfgInfo->ulSmsRiOnInterval,
+                     ulTmrName,
+                     ulTmrParam,
+                     VOS_RELTIMER_NOLOOP);
+
+    pstRiStateInfo->enSmsRiTmrStatus = AT_TIMER_STATUS_RUNNING;
+
+    return;
+}
+
+
+VOS_VOID AT_SmsRingOff(VOS_VOID)
+{
+    AT_UART_RI_CFG_STRU                *pstRiCfgInfo   = VOS_NULL_PTR;
+    AT_UART_RI_STATE_INFO_STRU         *pstRiStateInfo = VOS_NULL_PTR;
+    VOS_UINT32                          ulTmrName;
+    VOS_UINT32                          ulTmrParam;
+    VOS_UINT8                           ucIndex;
+
+    pstRiCfgInfo   = AT_GetUartRiCfgInfo();
+    pstRiStateInfo = AT_GetUartRiStateInfo();
+    ucIndex        = AT_CLIENT_TAB_HSUART_INDEX;
+
+    AT_SET_SMS_RI_TMR_NAME(ulTmrName);
+    AT_SET_SMS_RI_TMR_PARAM(ulTmrParam, ucIndex);
+
+    if (0 == pstRiCfgInfo->ulSmsRiOffInterval)
+    {
+        AT_SmsStopRingTe();
+    }
+    else
+    {
+        /* RI信号设为低电平 */
+        AT_CtrlRI(ucIndex, AT_IO_LEVEL_LOW);
+
+        /* 启动RI信号电平保持定时器 */
+        AT_StartRelTimer(&(pstRiStateInfo->hSmsRiTmrHdl),
+                         pstRiCfgInfo->ulSmsRiOffInterval,
+                         ulTmrName,
+                         ulTmrParam,
+                         VOS_RELTIMER_NOLOOP);
+
+        pstRiStateInfo->enSmsRiTmrStatus = AT_TIMER_STATUS_RUNNING;
+    }
+
+    return;
+}
+
+
+VOS_VOID AT_SmsStartRingTe(VOS_UINT32 ulNewSmsFlg)
+{
+    AT_UART_RI_STATE_INFO_STRU         *pstRiStateInfo = VOS_NULL_PTR;
+
+    pstRiStateInfo = AT_GetUartRiStateInfo();
+
+    /* 检查增加短信通知波形计数的标识 */
+    if (VOS_TRUE == ulNewSmsFlg)
+    {
+        pstRiStateInfo->ulSmsRiOutputCount++;
+    }
+
+    /* 检查是否正在输出波形 */
+    if (VOS_TRUE == pstRiStateInfo->ulRunFlg)
+    {
+        return;
+    }
+
+    /* 输出RI信号高电平波形 */
+    AT_SmsRingOn();
+
+    /* 记录RI信号状态 */
+    pstRiStateInfo->ulRunFlg = VOS_TRUE;
+    pstRiStateInfo->enType   = AT_UART_RI_TYPE_SMS;
+
+    return;
+}
+
+
+VOS_VOID AT_SmsStopRingTe(VOS_VOID)
+{
+    AT_UART_RI_STATE_INFO_STRU         *pstRiStateInfo = VOS_NULL_PTR;
+    VOS_UINT32                          ulTmrName;
+    VOS_UINT8                           ucIndex;
+
+    pstRiStateInfo = AT_GetUartRiStateInfo();
+    ucIndex        = AT_CLIENT_TAB_HSUART_INDEX;
+
+    AT_SET_SMS_RI_TMR_NAME(ulTmrName);
+
+    /* RI信号设为低电平 */
+    if (AT_IO_LEVEL_HIGH == AT_GetIoLevel(ucIndex, IO_CTRL_RI))
+    {
+        AT_CtrlRI(ucIndex, AT_IO_LEVEL_LOW);
+    }
+
+    /* 如果电平保持定时器已经停止, 说明短信通知波形已经完整输出 */
+    if (AT_TIMER_STATUS_RUNNING == pstRiStateInfo->enSmsRiTmrStatus)
+    {
+        /* 停止RI信号电平保持定时器 */
+        AT_StopRelTimer(ulTmrName, &(pstRiStateInfo->hSmsRiTmrHdl));
+        pstRiStateInfo->enSmsRiTmrStatus = AT_TIMER_STATUS_STOP;
+    }
+    else
+    {
+        /* 更新短信通知计数 */
+        if (pstRiStateInfo->ulSmsRiOutputCount > 0)
+        {
+            pstRiStateInfo->ulSmsRiOutputCount--;
+        }
+    }
+
+    /* 清除RI信号状态 */
+    pstRiStateInfo->ulRunFlg = VOS_FALSE;
+    pstRiStateInfo->enType   = AT_UART_RI_TYPE_BUTT;
+
+    return;
+}
+
+
+VOS_VOID AT_RcvTiSmsRiExpired(REL_TIMER_MSG *pstTmrMsg)
+{
+    AT_UART_RI_STATE_INFO_STRU         *pstRiStateInfo = VOS_NULL_PTR;
+    VOS_UINT8                           ucIndex;
+
+    pstRiStateInfo = AT_GetUartRiStateInfo();
+    ucIndex        = AT_GET_SMS_RI_CLIENTID_FROM_TMR_PARAM(pstTmrMsg->ulPara);
+
+    /* 短信通知波形输出已停止 */
+    if (VOS_TRUE != AT_IsSmsRingingTe())
+    {
+        return;
+    }
+
+    /* 更新定时器状态 */
+    pstRiStateInfo->enSmsRiTmrStatus = AT_TIMER_STATUS_STOP;
+
+    /* RI信号电平控制 */
+    if (AT_IO_LEVEL_HIGH == AT_GetIoLevel(ucIndex, IO_CTRL_RI))
+    {
+        AT_SmsRingOff();
+    }
+    else
+    {
+        AT_SmsStopRingTe();
+    }
+
+    /* SMS RI配置低电平持续时间为0时, 需要重新开始RING TE */
+    if ( (VOS_TRUE != AT_IsSmsRingingTe())
+      && (0 != pstRiStateInfo->ulSmsRiOutputCount) )
+    {
+        AT_SmsStartRingTe(VOS_FALSE);
+    }
+
+    return;
+}
+
+
+VOS_UINT32 AT_IsVoiceRingingTe(VOS_VOID)
+{
+    AT_UART_RI_STATE_INFO_STRU         *pstRiStateInfo = VOS_NULL_PTR;
+
+    pstRiStateInfo = AT_GetUartRiStateInfo();
+
+    if ( (VOS_TRUE == pstRiStateInfo->ulRunFlg)
+      && (AT_UART_RI_TYPE_VOICE == pstRiStateInfo->enType) )
+    {
+        return VOS_TRUE;
+    }
+
+    return VOS_FALSE;
+}
+
+
+AT_UART_RI_STATUS_ENUM_UINT8 AT_GetRiStatusByCallId(VOS_UINT8 ucCallId)
+{
+    AT_UART_RI_STATE_INFO_STRU         *pstRiStateInfo = VOS_NULL_PTR;
+
+    pstRiStateInfo = AT_GetUartRiStateInfo();
+
+    /* 检查CALLID有效性 */
+    if (ucCallId > MN_CALL_MAX_NUM)
+    {
+        return AT_UART_RI_STATUS_STOP;
+    }
+
+    return pstRiStateInfo->aenVoiceRiStatus[ucCallId];
+}
+
+
+VOS_VOID AT_VoiceRingOn(VOS_UINT8 ucCallId)
+{
+    AT_UART_RI_CFG_STRU                *pstRiCfgInfo   = VOS_NULL_PTR;
+    AT_UART_RI_STATE_INFO_STRU         *pstRiStateInfo = VOS_NULL_PTR;
+    VOS_UINT32                          ulTmrName;
+    VOS_UINT32                          ulTmrParam;
+    VOS_UINT8                           ucIndex;
+
+    pstRiCfgInfo   = AT_GetUartRiCfgInfo();
+    pstRiStateInfo = AT_GetUartRiStateInfo();
+    ucIndex        = AT_CLIENT_TAB_HSUART_INDEX;
+
+    AT_SET_VOICE_RI_TMR_NAME(ulTmrName);
+    AT_SET_VOICE_RI_TMR_PARAM(ulTmrParam, ucIndex, ucCallId);
+
+    /* RI信号设为高电平 */
+    AT_CtrlRI(ucIndex, AT_IO_LEVEL_HIGH);
+
+    /* 启动RI信号电平保持定时器 */
+    AT_StartRelTimer(&(pstRiStateInfo->hVoiceRiTmrHdl),
+                     pstRiCfgInfo->ulVoiceRiOnInterval,
+                     ulTmrName,
+                     ulTmrParam,
+                     VOS_RELTIMER_NOLOOP);
+
+    pstRiStateInfo->enVoiceRiTmrStatus = AT_TIMER_STATUS_RUNNING;
+
+    return;
+}
+
+
+VOS_VOID AT_VoiceRingOff(VOS_UINT8 ucCallId)
+{
+    AT_UART_RI_CFG_STRU                *pstRiCfgInfo   = VOS_NULL_PTR;
+    AT_UART_RI_STATE_INFO_STRU         *pstRiStateInfo = VOS_NULL_PTR;
+    VOS_UINT32                          ulTmrName;
+    VOS_UINT32                          ulTmrParam;
+    VOS_UINT8                           ucIndex;
+
+    pstRiCfgInfo   = AT_GetUartRiCfgInfo();
+    pstRiStateInfo = AT_GetUartRiStateInfo();
+    ucIndex        = AT_CLIENT_TAB_HSUART_INDEX;
+
+    AT_SET_VOICE_RI_TMR_NAME(ulTmrName);
+    AT_SET_VOICE_RI_TMR_PARAM(ulTmrParam, ucIndex, ucCallId);
+
+    /* RI信号设为低电平 */
+    AT_CtrlRI(ucIndex, AT_IO_LEVEL_LOW);
+
+    /* 启动RI信号电平保持定时器 */
+    AT_StartRelTimer(&(pstRiStateInfo->hVoiceRiTmrHdl),
+                     pstRiCfgInfo->ulVoiceRiOffInterval,
+                     ulTmrName,
+                     ulTmrParam,
+                     VOS_RELTIMER_NOLOOP);
+
+    pstRiStateInfo->enVoiceRiTmrStatus = AT_TIMER_STATUS_RUNNING;
+
+    return;
+}
+
+
+VOS_VOID AT_VoiceStartRingTe(VOS_UINT8 ucCallId)
+{
+    AT_UART_RI_STATE_INFO_STRU         *pstRiStateInfo = VOS_NULL_PTR;
+
+    pstRiStateInfo = AT_GetUartRiStateInfo();
+
+    /* 检查CALLID有效性 */
+    if (ucCallId > MN_CALL_MAX_NUM)
+    {
+        return;
+    }
+
+    /* 检查当前是否正在输出来电通知波形 */
+    if (VOS_TRUE == AT_IsVoiceRingingTe())
+    {
+        return;
+    }
+
+    /* 检查当前是否正在短信通知波形 */
+    if (VOS_TRUE == AT_IsSmsRingingTe())
+    {
+        /* 打断短信通知波形输出 */
+        AT_SmsStopRingTe();
+    }
+
+    /* 输出RI信号高电平波形 */
+    AT_VoiceRingOn(ucCallId);
+
+    /* 记录RI信号状态 */
+    pstRiStateInfo->ulRunFlg                   = VOS_TRUE;
+    pstRiStateInfo->enType                     = AT_UART_RI_TYPE_VOICE;
+    pstRiStateInfo->aenVoiceRiStatus[ucCallId] = AT_UART_RI_STATUS_RINGING;
+
+    return;
+}
+
+
+VOS_VOID AT_VoiceStopRingTe(VOS_UINT8 ucCallId)
+{
+    AT_UART_RI_STATE_INFO_STRU         *pstRiStateInfo = VOS_NULL_PTR;
+    VOS_UINT32                          ulTmrName;
+    VOS_UINT8                           ucIndex;
+
+    pstRiStateInfo = AT_GetUartRiStateInfo();
+    ucIndex        = AT_CLIENT_TAB_HSUART_INDEX;
+
+    AT_SET_VOICE_RI_TMR_NAME(ulTmrName);
+
+    /* 检查CALLID有效性 */
+    if (ucCallId > MN_CALL_MAX_NUM)
+    {
+        return;
+    }
+
+    /* 检查当前是否正在输出来电通知波形 */
+    if (VOS_TRUE != AT_IsVoiceRingingTe())
+    {
+        return;
+    }
+
+    /* 检查CALLID对应的RI状态 */
+    if (AT_UART_RI_STATUS_RINGING != AT_GetRiStatusByCallId(ucCallId))
+    {
+        return;
+    }
+
+    /* RI信号设为低电平 */
+    if (AT_IO_LEVEL_HIGH == AT_GetIoLevel(ucIndex, IO_CTRL_RI))
+    {
+        AT_CtrlRI(ucIndex, AT_IO_LEVEL_LOW);
+    }
+
+    /* 停止RI信号电平保持定时器 */
+    if (AT_TIMER_STATUS_RUNNING == pstRiStateInfo->enVoiceRiTmrStatus)
+    {
+        AT_StopRelTimer(ulTmrName, &(pstRiStateInfo->hVoiceRiTmrHdl));
+        pstRiStateInfo->enVoiceRiTmrStatus     = AT_TIMER_STATUS_STOP;
+    }
+
+    /* 清除RI信号状态 */
+    pstRiStateInfo->ulRunFlg                   = VOS_FALSE;
+    pstRiStateInfo->enType                     = AT_UART_RI_TYPE_BUTT;
+    pstRiStateInfo->aenVoiceRiStatus[ucCallId] = AT_UART_RI_STATUS_STOP;
+    pstRiStateInfo->ulVoiceRiCycleCount        = 0;
+
+    /* 恢复输出短信通知波形 */
+    if (pstRiStateInfo->ulSmsRiOutputCount > 0)
+    {
+        AT_SmsStartRingTe(VOS_FALSE);
+    }
+
+    return;
+}
+
+
+VOS_VOID AT_RcvTiVoiceRiExpired(REL_TIMER_MSG *pstTmrMsg)
+{
+    AT_UART_RI_CFG_STRU                *pstRiCfgInfo   = VOS_NULL_PTR;
+    AT_UART_RI_STATE_INFO_STRU         *pstRiStateInfo = VOS_NULL_PTR;
+    VOS_UINT8                           ucCallId;
+    VOS_UINT8                           ucIndex;
+
+    pstRiCfgInfo   = AT_GetUartRiCfgInfo();
+    pstRiStateInfo = AT_GetUartRiStateInfo();
+    ucCallId       = AT_GET_VOICE_RI_CALLID_FROM_TMR_PARAM(pstTmrMsg->ulPara);
+    ucIndex        = AT_GET_VOICE_RI_CLIENTID_FROM_TMR_PARAM(pstTmrMsg->ulPara);
+
+    /* 检查语音RI是否已经停止 */
+    if (VOS_TRUE != AT_IsVoiceRingingTe())
+    {
+        return;
+    }
+
+    /* 检查CALLID对应的RI状态 */
+    if (AT_UART_RI_STATUS_RINGING != AT_GetRiStatusByCallId(ucCallId))
+    {
+        return;
+    }
+
+    /* 更新定时器状态 */
+    pstRiStateInfo->enVoiceRiTmrStatus = AT_TIMER_STATUS_STOP;
+
+    /* RI信号电平控制 */
+    if (AT_IO_LEVEL_HIGH == AT_GetIoLevel(ucIndex, IO_CTRL_RI))
+    {
+        AT_VoiceRingOff(ucCallId);
+    }
+    else
+    {
+        /* 波形输出计数达到配置值, 停止RING TE, 否则继续 */
+        if ((++pstRiStateInfo->ulVoiceRiCycleCount) >= pstRiCfgInfo->ucVoiceRiCycleTimes)
+        {
+            AT_VoiceStopRingTe(ucCallId);
+        }
+        else
+        {
+            AT_VoiceRingOn(ucCallId);
+        }
+    }
+
+    return;
+}
+#endif
 
 
 VOS_VOID AT_ProcFormatResultMsc(

@@ -82,6 +82,7 @@ VOS_UINT32                          g_ulNFExtInitFlag       = 0;
 NF_EXT_STATS_STRU                   g_stNfExtStats = {{0}};
 #endif
 
+#if (FEATURE_ON == FEATURE_NFEXT)
 NF_EXT_FLOW_CTRL_ENTITY             g_stExFlowCtrlEntity;
 NF_EXT_NV_STRU                      g_stNfExtNv;
 NF_EXT_HOOK_MASK_NV_STRU            g_stExHookMask;
@@ -589,7 +590,7 @@ STATIC VOS_VOID NFExt_FlowCtrlInit(VOS_VOID)
 
 
 /*lint -e{550,438} */
-VOS_VOID  NFExt_BrSetFlowCtrl(VOS_VOID)
+VOS_UINT32 NFExt_BrSetFlowCtrl(VOS_UINT32 ulParam1, VOS_UINT32 ulParam2)
 {
     VOS_ULONG       ulFlags = 0UL;
 
@@ -598,11 +599,13 @@ VOS_VOID  NFExt_BrSetFlowCtrl(VOS_VOID)
     VOS_SpinUnlockIntUnlock(&g_stExEntity.stLockTxTask, ulFlags);
 
     IPS_MNTN_FlowCtrl(NF_EXT_BR_FORWARD_FLOW_CTRL_MASK, ID_IPS_TRACE_BR_FORWARD_FLOW_CTRL_START);
+
+    return VOS_OK;
 }
 
 
 /*lint -e{550,438} */
-VOS_VOID  NFExt_BrStopFlowCtrl(VOS_VOID)
+VOS_UINT32 NFExt_BrStopFlowCtrl(VOS_UINT32 ulParam1, VOS_UINT32 ulParam2)
 {
     VOS_ULONG       ulFlags = 0UL;
 
@@ -611,6 +614,8 @@ VOS_VOID  NFExt_BrStopFlowCtrl(VOS_VOID)
     VOS_SpinUnlockIntUnlock(&g_stExEntity.stLockTxTask, ulFlags);
 
     IPS_MNTN_FlowCtrl(NF_EXT_BR_FORWARD_FLOW_CTRL_MASK, ID_IPS_TRACE_BR_FORWARD_FLOW_CTRL_STOP);
+
+    return VOS_OK;
 }
 
 
@@ -624,6 +629,7 @@ VOS_UINT32 NFExt_GetBrBytesCnt(VOS_VOID)
 
 #endif
 
+#endif      /* #if (FEATURE_ON == FEATURE_NFEXT) */
 
 
 STATIC VOS_VOID NFExt_SndDataNotify(VOS_VOID)
@@ -980,7 +986,7 @@ VOS_VOID NFExt_MsgProc( struct MsgCB * pMsg )
 }
 
 
-VOS_VOID NFExt_FidTask(VOS_VOID)
+VOS_VOID NFExt_FidTask(VOS_UINT32 ulPara0, VOS_UINT32 ulPara1, VOS_UINT32 ulPara2, VOS_UINT32 ulPara3)
 {
     MsgBlock                           *pMsg          = VOS_NULL_PTR;
     VOS_UINT32                          ulEvent       = 0;
@@ -1087,12 +1093,14 @@ VOS_UINT32 NFExt_FidInit ( enum VOS_INIT_PHASE_DEFINE ip )
     switch ( ip )
     {
         case   VOS_IP_LOAD_CONFIG:
+#if (FEATURE_ON == FEATURE_NFEXT)
             /* 先完成模块初始化 */
             if ( 0 != NFExt_Init() )
             {
                 pr_err("[nfext]:NFExt_FidInit NFExt_Init FAIL!\n");
                 return VOS_ERR;
             }
+#endif
 
             /* 可维可测模块注册PID */
             ulRslt = VOS_RegisterPIDInfo(ACPU_PID_NFEXT,

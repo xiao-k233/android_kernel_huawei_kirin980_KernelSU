@@ -136,6 +136,7 @@ VOS_VOID IPS_MNTN_SndCfgCnf2Om
     return;
 }
 
+#if (FEATURE_ON == FEATURE_NFEXT)
 
 VOS_UINT32 IPS_MNTN_GetPktLenByTraceCfg
 (
@@ -275,7 +276,7 @@ VOS_VOID IPS_MNTN_PktInfoCB
     }
 
     /*  user版本下脱敏IP地址 */
-    TTF_TraceMaskIpAddr(ACPU_PID_NFEXT, pstTraceMsg->aucData + MAC_HEADER_LENGTH, (VOS_UINT16)ulDataLen);
+    TTF_MaskIpAddrTraces(ACPU_PID_NFEXT, pstTraceMsg->aucData + MAC_HEADER_LENGTH, (VOS_UINT16)ulDataLen);
     if (VOS_OK != IPS_MNTN_TransMsg(pucTraceData, ulTransDataLen, enType))
     {
         NF_EXT_MEM_FREE(ACPU_PID_NFEXT, pucTraceData);
@@ -483,6 +484,7 @@ VOS_VOID IPS_MNTN_FlowCtrl(VOS_UINT32 ulFcType, TTF_MNTN_MSG_TYPE_ENUM_UINT16  e
     return;
 }
 
+#endif      /* #if (FEATURE_ON == FEATURE_NFEXT) */
 
 
 VOS_UINT32 IPS_MNTN_TransMsg
@@ -693,6 +695,7 @@ VOS_VOID IPS_MNTN_TraceAdvancedCfgReq(VOS_VOID *pMsg)
         return;
     }
 
+#if (FEATURE_ON == FEATURE_NFEXT)
     enResult = NFExt_ConfigEffective(&(pRcvMsg->stIpsAdvanceCfgReq));
     if( PS_FALSE == enResult )
     {
@@ -707,6 +710,7 @@ VOS_VOID IPS_MNTN_TraceAdvancedCfgReq(VOS_VOID *pMsg)
 
         return;
     }
+#endif
 
     /*保存配置参数*/
     PSACORE_MEM_CPY(&g_stIpsTraceMsgCfg, sizeof(IPS_MNTN_TRACE_CONFIG_REQ_STRU), &(pRcvMsg->stIpsAdvanceCfgReq), sizeof(IPS_MNTN_TRACE_CONFIG_REQ_STRU));

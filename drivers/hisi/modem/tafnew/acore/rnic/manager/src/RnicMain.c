@@ -168,6 +168,10 @@ VOS_VOID RNIC_InitCtx(VOS_VOID)
     /* 初始化RNIC定时器上下文 */
     RNIC_InitAllTimers();
 
+#if (FEATURE_OFF == FEATURE_DELAY_MODEM_INIT)
+    /* 初始化拨号模式信息 */
+    RNIC_InitOnDemandDialInfo();
+#endif
 
     /* 初始化复位信号量 */
     RNIC_InitResetSem();
@@ -199,6 +203,7 @@ VOS_VOID RNIC_InitNapiCfg(
     TAF_NV_RNIC_NAPI_LB_CFG_STRU       *pstNapiLbCfg
 )
 {
+#if (FEATURE_ON == FEATURE_RNIC_NAPI_GRO)
     /* 3GPP域7张网卡按照NV配置，其他网卡关闭NAPI */
     if (enRmNetId <= RNIC_3GPP_NET_ID_MAX_NUM)
     {
@@ -243,6 +248,11 @@ VOS_VOID RNIC_InitNapiCfg(
         RNIC_SET_GRO_FEATURE(enRmNetId, RNIC_FEATURE_OFF);
         RNIC_SET_NAPI_LB_FEATURE(enRmNetId, RNIC_FEATURE_OFF);
     }
+#else
+    RNIC_SET_NAPI_FEATURE(enRmNetId, RNIC_FEATURE_OFF);
+    RNIC_SET_GRO_FEATURE(enRmNetId, RNIC_FEATURE_OFF);
+    RNIC_SET_NAPI_LB_FEATURE(enRmNetId, RNIC_FEATURE_OFF);
+#endif
 
     return;
 }
@@ -254,7 +264,7 @@ VOS_VOID RNIC_InitOnDemandDialInfo(VOS_VOID)
     RNIC_SET_PROC_IDLE_TIME(RNIC_DIAL_DEMA_IDLE_TIME);
     RNIC_SET_PROC_EVENT_REPORT(RNIC_FORBID_EVENT_REPORT);
 
-    wake_lock_init(&g_stRnicCtx.stOnDemandDisconnWakeLock, WAKE_LOCK_SUSPEND, "rnic_ondemand_dis_wake");
+    wakeup_source_init(&g_stRnicCtx.stOnDemandDisconnWakeLock, "rnic_ondemand_dis_wake");
 
     return;
 }
@@ -349,10 +359,13 @@ VOS_VOID RNIC_ReadNapiCfg(
     TAF_NV_RNIC_NAPI_LB_CFG_STRU       *pstNapiLbCfg
 )
 {
+#if (FEATURE_OFF == FEATURE_DATA_SERVICE_NEW_PLATFORM)
     TAF_NV_ADS_IPF_MODE_CFG_STRU        stIpfMode;
 
     TAF_MEM_SET_S(&stIpfMode, (VOS_SIZE_T)sizeof(stIpfMode), 0x00, (VOS_SIZE_T)sizeof(TAF_NV_ADS_IPF_MODE_CFG_STRU));
+#endif
 
+#if (FEATURE_ON == FEATURE_RNIC_NAPI_GRO)
     if (NV_OK != TAF_ACORE_NV_READ(MODEM_ID_0,
                                    en_NV_Item_Rnic_Napi_Cfg,
                                    pstNapiCfg,
@@ -372,7 +385,9 @@ VOS_VOID RNIC_ReadNapiCfg(
     {
         pstNapiLbCfg->ucNapiLbEnable = RNIC_FEATURE_OFF;
     }
+#endif
 
+#if (FEATURE_OFF == FEATURE_DATA_SERVICE_NEW_PLATFORM)
     if (NV_OK == TAF_ACORE_NV_READ(MODEM_ID_0,
                                    en_NV_Item_ADS_IPF_MODE_CFG,
                                    &stIpfMode,
@@ -385,6 +400,7 @@ VOS_VOID RNIC_ReadNapiCfg(
             pstNapiCfg->ucGroEnable  = RNIC_FEATURE_OFF;
         }
     }
+#endif
 
     RNIC_CheckNapiCfgValid(pstNapiCfg, pstNapiLbCfg);
     return;
@@ -410,9 +426,20 @@ VOS_UINT32 RNIC_PidInit (enum VOS_INIT_PHASE_DEFINE enPhase)
     {
         case VOS_IP_LOAD_CONFIG:
 
+#if (FEATURE_OFF == FEATURE_DELAY_MODEM_INIT)
+            /* 创建网卡 */
+            rnic_create_netdev();
+
+            /* 创建按需拨号相关proc节点 */
+            rnic_create_ondemand_procfs();
+#endif
             /* 初始化RNIC上下文信息 */
             RNIC_InitCtx();
 
+#if (FEATURE_OFF == FEATURE_DELAY_MODEM_INIT)
+            /* 注册按需拨号节点操作回调 */
+            RNIC_IFACE_RegOnDemandOpsCB();
+#endif
             /* 注册设备Ready notify回调 */
             RNIC_IFACE_RegDevNotifyCB();
 

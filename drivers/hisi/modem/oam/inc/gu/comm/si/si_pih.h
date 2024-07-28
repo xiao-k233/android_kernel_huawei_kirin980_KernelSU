@@ -84,8 +84,6 @@ extern "C" {
 
 #define SI_PIH_PIN_CODE_LEN             (8)
 
-#define SI_PIH_PCSC_DATA_CNF            (0xA5)
-
 #define SI_PIH_APDU_HDR_LEN             (USIMM_APDU_HEADLEN)
 
 #define SI_PIH_ATFILE_NAME_MAX          (40)
@@ -245,7 +243,6 @@ enum SI_PIH_REQ_ENUM
     SI_PIH_GACCESS_REQ              = 3,
     SI_PIH_BDN_QUERY_REQ            = 4,
     SI_PIH_FDN_QUERY_REQ            = 5,
-    SI_PIH_PCSC_DATA_REQ            = 6,
 /* Added by h59254 for V7R1C50 ISDB Project,  2012-8-27 begin */
     SI_PIH_ISDB_ACCESS_REQ          = 7,
 /* Added by h59254 for V7R1C50 ISDB Project,  2012-8-27 end */
@@ -282,6 +279,7 @@ enum SI_PIH_REQ_ENUM
     SI_PIH_SILENT_PIN_SET_REQ       = 34,
     SI_PIH_SILENT_PININFO_SET_REQ   = 35,
 #endif
+    SI_PIH_BWT_SET_REQ              = 38,
 
     SI_PIH_REQ_BUTT
 };
@@ -301,29 +299,6 @@ enum SI_PIH_CARDSTATE_REPORT_ENUM
     SI_PIH_NO_NEED_REPORT           = 1,
     SI_PIH_REPORT_BUTT
 };
-
-enum SI_PIH_PCSC_CMD_ENUM
-{
-    SI_PIH_PCSC_POWER_ON         = 0,
-    SI_PIH_PCSC_POWER_OFF        = 1,
-    SI_PIH_PCSC_SIM_QUIRY        = 2,
-    SI_PIH_PCSC_APDU_CMD         = 3,
-    SI_PIH_PCSC_GET_ATR          = 4,
-    SI_PIH_PCSC_GET_PARA         = 5,
-    SI_PIH_PCSC_GET_CLKFREQ      = 6,
-    SI_PIH_PCSC_GET_BAUDRATE     = 7,
-    SI_PIH_PCSC_CMD_BUTT
-};
-typedef VOS_UINT32      SI_PIH_PCSC_CMD_ENUM_UINT32;
-
-enum SI_PIH_PCSC_SIM_STATUS_ENUM
-{
-    SI_PIH_PCSC_SIM_ABSENT       = 0,
-    SI_PIH_PCSC_SIM_PRESENT      = 1,
-    SI_PIH_PCSC_SIM_BUTT
-};
-
-typedef VOS_UINT8       SI_PIH_PCSC_SIM_STATUS;
 
 enum SI_PIH_HVSST_HANDLE_STATE_ENUM
 {                                               /*OP_ActiveCard OP_HandleVsim   OP_VsimState    OP_CurCardOK*/
@@ -458,17 +433,6 @@ typedef struct
 
 typedef struct
 {
-    SI_PIH_MSG_HEADER_STRU          stMsgHeader;
-    VOS_UINT32                      ulMsgType;
-    VOS_UINT32                      ulCmdType;
-    VOS_UINT32                      ulCmdLen;
-    VOS_UINT8                       aucAPDU[8];
-}SI_PIH_PCSC_REQ_STRU;
-
-typedef VOS_VOID (*PUSIMPCSCPROC)(SI_PIH_CARD_SLOT_ENUM_UINT32 enSlotId, SI_PIH_PCSC_REQ_STRU *pstMsg);
-
-typedef struct
-{
     SI_PIH_MSG_HEADER_STRU              stMsgHeader;        /* PIH消息头 */
     SI_PIH_HVSST_SET_STRU               stHvSSTData;
 } SI_PIH_HVSST_REQ_STRU;
@@ -527,16 +491,6 @@ typedef struct
     VOS_UINT16                     usRsv;
     FILE                           *fpFile;
 }SI_PIH_FWRITE_PARA_STRU;
-
-typedef struct
-{
-    VOS_MSG_HEADER
-    VOS_UINT32                      ulMsgName;          /* 消息类型 */
-    VOS_UINT32                      ulResult;           /* PC/SC命令执行结果 */
-    VOS_UINT32                      ulCmdType;          /* 命令类型 */
-    VOS_UINT32                      ulRspLen;           /* 命令执行得到的数据长度 */
-    VOS_UINT8                       aucContent[4];      /* 数据内容 */
-}SI_PIH_PCSC_CNF_STRU;
 
 typedef struct
 {
@@ -611,6 +565,13 @@ typedef struct
     SI_PIH_CARD_SLOT_ENUM_UINT32        enCard1Slot;
     SI_PIH_CARD_SLOT_ENUM_UINT32        enCard2Slot;
 } SI_PIH_SCICFG_SET_REQ_STRU;
+
+typedef struct
+{
+    SI_PIH_MSG_HEADER_STRU              stMsgHeader;        /* PIH消息头 */
+    VOS_UINT16                          usProtectTime;
+    VOS_UINT16                          usRsv;
+} SI_PIH_BWT_SET_REQ_STRU;
 
 typedef struct
 {

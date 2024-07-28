@@ -46,30 +46,6 @@
  *
  */
 
-/*****************************************************************************/
-/*                                                                           */
-/*                Copyright 1999 - 2003, Huawei Tech. Co., Ltd.              */
-/*                           ALL RIGHTS RESERVED                             */
-/*                                                                           */
-/* FileName: linux_task.c                                                    */
-/*                                                                           */
-/* Author: Xu Cheng                                                          */
-/*                                                                           */
-/* Version: 1.0                                                              */
-/*                                                                           */
-/* Date: 2011-07                                                             */
-/*                                                                           */
-/* Description: implement Linux task                                         */
-/*                                                                           */
-/* Others:                                                                   */
-/*                                                                           */
-/* History:                                                                  */
-/* 1. Date:                                                                  */
-/*    Author:                                                                */
-/*    Modification: Create this file                                         */
-/*                                                                           */
-/*                                                                           */
-/*****************************************************************************/
 
 #include "vos_config.h"
 #include "v_typdef.h"
@@ -82,6 +58,7 @@
 #include "mdrv.h"
 #include "pam_tag.h"
 
+#if (VOS_LINUX == VOS_OS_VER)
 #include <linux/version.h>
 #include <linux/kthread.h>
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0))
@@ -89,8 +66,10 @@
 #include <linux/sched/debug.h>
 #include <linux/sched/signal.h>
 #endif
+#endif
 
 
+#if (VOS_LINUX == VOS_OS_VER) || defined(LLT_OS_LINUX)
 
 /*****************************************************************************
     协议栈打印打点方式下的.C文件宏定义
@@ -132,7 +111,7 @@ typedef VOS_INT (*LINUX_START_ROUTINE)( VOS_VOID * );
 /* 自旋锁，用来作task的临界资源保护 */
 VOS_SPINLOCK             g_stVosTaskSpinLock;
 
-VOS_VOID VOS_LinuxTaskEntry( VOS_VOID * pulArg );
+VOS_INT VOS_LinuxTaskEntry( VOS_VOID * pulArg );
 
 /*****************************************************************************
  Function   : VOS_TaskPrintCtrlBlkInfo
@@ -276,8 +255,7 @@ VOS_UINT32 VOS_TaskCtrlBlkFree(VOS_UINT32 Tid)
  Return     : none
  Other      : none
  *****************************************************************************/
-
-VOS_VOID VOS_LinuxTaskEntry( VOS_VOID * pulArg )
+VOS_INT VOS_LinuxTaskEntry( VOS_VOID * pulArg )
 {
     VOS_TASK_CONTROL_BLOCK      *pstTemp;
     VOS_UINT32                  ulPara1;
@@ -293,6 +271,8 @@ VOS_VOID VOS_LinuxTaskEntry( VOS_VOID * pulArg )
     ulPara4 = pstTemp->Args[3];
 
     pstTemp->Function( ulPara1, ulPara2, ulPara3, ulPara4 );
+
+    return 0;
 }
 
 /*****************************************************************************
@@ -651,6 +631,7 @@ VOS_UINT32 VOS_CreateEvent( VOS_UINT32 ulTaskID )
  *****************************************************************************/
 VOS_UINT32 VOS_CheckEvent( VOS_UINT32 ulTaskID )
 {
+#if (VOS_YES == VOS_CHECK_PARA)
     if ( ulTaskID >= vos_TaskCtrlBlkNumber )
     {
         return VOS_ERR;
@@ -670,6 +651,7 @@ VOS_UINT32 VOS_CheckEvent( VOS_UINT32 ulTaskID )
     {
         return VOS_ERR;
     }
+#endif
 
     return VOS_OK;
 }
@@ -721,16 +703,20 @@ VOS_UINT32 VOS_EventWrite( VOS_UINT32 ulTaskID, VOS_UINT32 ulEvents )
     VOS_SpinUnlockIntUnlock(&g_stVosTaskSpinLock, ulLockLevel);
 
     ulTempQueue = VOS_GetQueueIDFromFid(vos_TaskCtrlBlk[ulTaskID].ulFid);
+#if (VOS_YES == VOS_CHECK_PARA)
     if ( 0xffffffff == ulTempQueue )
     {
         return VOS_ERR;
     }
+#endif
 
     ulTempSem = VOS_GetSemIDFromQueue(ulTempQueue);
+#if (VOS_YES == VOS_CHECK_PARA)
     if ( 0xffffffff == ulTempSem )
     {
         return VOS_ERR;
     }
+#endif
 
     if ( VOS_OK != VOS_SmV( ulTempSem ) )
     {
@@ -777,6 +763,7 @@ VOS_UINT32 VOS_EventRead( VOS_UINT32 ulEvents,
     VOS_UINT32     ulTempEvent;
 
     ulTaskSelf = VOS_GetCurrentTaskID();
+#if (VOS_YES == VOS_CHECK_PARA)
     if ( 0xffffffff == ulTaskSelf )
     {
         return VOS_ERR;
@@ -790,6 +777,7 @@ VOS_UINT32 VOS_EventRead( VOS_UINT32 ulEvents,
 
         return VOS_ERR;
     }
+#endif
 
     if( !(VOS_EVENT_ANY & ulFlags) )
     {
@@ -819,16 +807,20 @@ VOS_UINT32 VOS_EventRead( VOS_UINT32 ulEvents,
     }
 
     ulTempQueue = VOS_GetQueueIDFromFid(vos_TaskCtrlBlk[ulTaskSelf].ulFid);
+#if (VOS_YES == VOS_CHECK_PARA)
     if ( 0xffffffff == ulTempQueue )
     {
         return VOS_ERR;
     }
+#endif
 
     ulTempSem = VOS_GetSemIDFromQueue(ulTempQueue);
+#if (VOS_YES == VOS_CHECK_PARA)
     if ( 0xffffffff == ulTempSem )
     {
         return VOS_ERR;
     }
+#endif
 
     if( VOS_OK != VOS_SmP( ulTempSem, ulTimeOutInMillSec ) )
     {
@@ -864,6 +856,7 @@ VOS_UINT32 VOS_EventRead( VOS_UINT32 ulEvents,
  *****************************************************************************/
 VOS_UINT32 VOS_GetQueueIDFromTID(VOS_UINT32 ulTid)
 {
+#if (VOS_YES == VOS_CHECK_PARA)
     if ( ulTid >= vos_TaskCtrlBlkNumber )
     {
         mdrv_err("<VOS_GetQueueIDFromTID> TID invaild.\n");
@@ -877,6 +870,7 @@ VOS_UINT32 VOS_GetQueueIDFromTID(VOS_UINT32 ulTid)
 
         return 0xffffffff;
     }
+#endif
 
     return VOS_GetQueueIDFromFid(vos_TaskCtrlBlk[ulTid].ulFid);
 }
@@ -890,9 +884,17 @@ VOS_UINT32 VOS_GetQueueIDFromTID(VOS_UINT32 ulTid)
  *****************************************************************************/
 VOS_UINT32 VOS_GetTCBFromTID(VOS_UINT32 ulTid)
 {
+    if ( ulTid >= vos_TaskCtrlBlkNumber )
+    {
+        mdrv_err("<VOS_GetTCBFromTID> TID invaild.\n");
+
+        return 0xffffffff;
+    }
+
     return (VOS_UINT32)vos_TaskCtrlBlk[ulTid].ulLinuxThreadId;
 }
 
+#endif
 
 
 

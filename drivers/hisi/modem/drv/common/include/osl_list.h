@@ -106,7 +106,7 @@ static OSL_INLINE void list_add_between(struct list_head *new_list, struct list_
 
 static OSL_INLINE void list_add(struct list_head *new_list, struct list_head *head)
 {
-	list_add_between(new_list, head, head->next);/* [false alarm]:Îó±¨ */
+	list_add_between(new_list, head, head->next);
 }
 
 static OSL_INLINE void list_delete_between(struct list_head * prev_list, struct list_head * next_list)
@@ -118,9 +118,8 @@ static OSL_INLINE void list_delete_between(struct list_head * prev_list, struct 
 
 static OSL_INLINE void list_add_tail(struct list_head *new_list, struct list_head *head)
 {
-	list_add_between(new_list, head->prev, head);/* [false alarm]:Îó±¨ */
+	list_add_between(new_list, head->prev, head);
 }
-
 static OSL_INLINE void _inline_list_del_cur_entry(struct list_head *entry)
 {
 	list_delete_between(entry->prev, entry->next);

@@ -180,7 +180,11 @@ VOS_VOID* ADS_FILTER_HeapAlloc(VOS_UINT32 ulSize)
         return VOS_NULL_PTR;
     }
 
+#if (VOS_LINUX == VOS_OS_VER)
     ret = (VOS_VOID *)kmalloc(ulSize, GFP_KERNEL);
+#else
+    ret = (VOS_VOID *)malloc(ulSize);
+#endif
 
     return ret;
 }
@@ -193,7 +197,11 @@ VOS_VOID ADS_FILTER_HeapFree(VOS_VOID *pAddr)
         return;
     }
 
+#if (VOS_LINUX == VOS_OS_VER)
     kfree(pAddr);
+#else
+    free(pAddr);
+#endif
 
     return;
 }

@@ -724,7 +724,7 @@ VOS_VOID At_FilterDCmdSpecCharacter(
     VOS_UINT8                   *pucPara
 )
 {
-    VOS_UINT16                  i;
+    VOS_UINT32                  i;
     VOS_UINT16                  usBeginPos;
     VOS_UINT32                  ulRet;
 

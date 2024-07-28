@@ -124,6 +124,9 @@ VOS_VOID ADS_ShowEntityStats(VOS_VOID)
             }
 
             PS_PRINTF_INFO("ADS DL RabId is %d\n", g_stAdsCtx.astAdsSpecCtx[i].stAdsDlCtx.astAdsDlRabInfo[j - ADS_RAB_ID_OFFSET].ulRabId);
+#if ( FEATURE_ON == FEATURE_DEBUG_PRINT_ADDRESS )
+            PS_PRINTF_INFO("ADS DL Rcv Func is %p\n", g_stAdsCtx.astAdsSpecCtx[i].stAdsDlCtx.astAdsDlRabInfo[j - ADS_RAB_ID_OFFSET].pRcvDlDataFunc);
+#endif
         }
     }
 
@@ -308,6 +311,28 @@ VOS_VOID ADS_ShowDLInfoStats(VOS_VOID)
     return;
 }
 
+#if (FEATURE_ON == FEATURE_PC5_DATA_CHANNEL)
+
+VOS_VOID ADS_ShowPc5PktProcStats(VOS_VOID)
+{
+    PS_PRINTF_INFO("ADS PC5 PKT PROC STATS START:            \n");
+    PS_PRINTF_INFO("ulUlRxPc5PktNum                  %10u\n", g_stAdsStats.stUlComStatsInfo.ulUlRxPc5PktNum);
+    PS_PRINTF_INFO("ulUlPc5PktEnQueSuccNum           %10u\n", g_stAdsStats.stUlComStatsInfo.ulUlPc5PktEnQueSuccNum);
+    PS_PRINTF_INFO("ulUlPc5PktEnQueFailNum           %10u\n", g_stAdsStats.stUlComStatsInfo.ulUlPc5PktEnQueFailNum);
+    PS_PRINTF_INFO("ulULPc5QueNonEmptyTrigEvent      %10u\n", g_stAdsStats.stUlComStatsInfo.ulULPc5QueNonEmptyTrigEvent);
+    PS_PRINTF_INFO("ulULPc5BdqCfgBdSuccNum           %10u\n", g_stAdsStats.stUlComStatsInfo.ulULPc5BdqCfgBdSuccNum);
+    PS_PRINTF_INFO("ulDLRdqRxPc5PktNum               %10u\n", g_stAdsStats.stDlComStatsInfo.ulDLRdqRxPc5PktNum);
+    PS_PRINTF_INFO("ADS PC5 PKT PROC STATS END.              \n");
+
+    return;
+}
+
+
+VOS_VOID ADS_SetPc5MaxQueueLen(VOS_UINT32 ulLength)
+{
+    g_stAdsCtx.stAdsPc5Ctx.ulUlQueueMaxLen = ulLength;
+}
+#endif
 
 
 VOS_VOID ADS_Help(VOS_VOID)
@@ -325,6 +350,9 @@ VOS_VOID ADS_Help(VOS_VOID)
     PS_PRINTF_INFO("<ADS_ShowResetProcStats>       \n");
     PS_PRINTF_INFO("<ADS_ShowFeatureState>         \n");
     PS_PRINTF_INFO("<ADS_ResetDebugInfo>           \n");
+#if (FEATURE_ON == FEATURE_PC5_DATA_CHANNEL)
+    PS_PRINTF_INFO("<ADS_ShowPc5PktProcStats>      \n");
+#endif
 
     return;
 }

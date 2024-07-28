@@ -40,7 +40,6 @@ def decode_xml_by_faultId(dict):
 
      修改历史      :
       1.日    期   : 2016年2月18日
-        作    者   : d00212987
         修改内容   : ERR LOG FAULT ID关联项目新增
     '''
     #print dict
@@ -205,7 +204,6 @@ def get_faultid_from_includefile():
 
      修改历史      :
       1.日    期   : 2016年2月18日
-        作    者   : d00212987
         修改内容   : ERR LOG FAULT ID关联项目新增
     '''
     includefp=open(PATH_ERR_LOG_CFG_H, 'rb')
@@ -259,7 +257,6 @@ def get_old_xml_hash_value():
 
      修改历史      :
       1.日    期   : 2016年2月18日
-        作    者   : d00212987
         修改内容   : ERR LOG FAULT ID关联项目新增
     '''
     includefp=open(PATH_ERR_LOG_CFG_C, 'rb')
@@ -290,7 +287,6 @@ def write_file_cfg_hash(str_old,str_new):
 
      修改历史      :
       1.日    期   : 2016年2月18日
-        作    者   : d00212987
         修改内容   : ERR LOG FAULT ID关联项目新增
     '''
     includefp=open(PATH_ERR_LOG_CFG_C, 'rb')
@@ -323,7 +319,6 @@ def write_file_cfg(write_count):
 
      修改历史      :
       1.日    期   : 2016年2月18日
-        作    者   : d00212987
         修改内容   : ERR LOG FAULT ID关联项目新增
     '''
     includefp=open(PATH_ERR_LOG_CFG_C, 'rb')
@@ -370,7 +365,6 @@ def calc_xml_file_hash():
 
      修改历史      :
       1.日    期   : 2016年2月18日
-        作    者   : d00212987
         修改内容   : ERR LOG FAULT ID关联项目新增
     '''
     str_xml_value=''
@@ -395,7 +389,6 @@ if __name__ == "__main__":
 
      修改历史      :
       1.日    期   : 2016年2月18日
-        作    者   : d00212987
         修改内容   : ERR LOG FAULT ID关联项目新增
     '''
     #检查文件是否有改动

@@ -45,6 +45,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
+ 
 #include "product_config.h"
 #include <linux/version.h>
 #include <linux/gfp.h>
@@ -76,7 +77,9 @@
 #include "bsp_slice.h"
 #include "bsp_softtimer.h"
 #include "socp_ind_delay.h"
+#ifdef CONFIG_DEFLATE
 #include "deflate.h"
+#endif
 /* log2.0 2014-03-19 End*/
 
 #include <securec.h>
@@ -96,7 +99,7 @@ EXPORT_SYMBOL(g_stSocpDebugInfo);
 /* SOCP基地址 */
 u32 g_SocpRegBaseAddr = 0;
 /* 中断处理函数 */
-u32 socp_app_int_handler(void);
+irqreturn_t socp_app_int_handler(int irq, void* dev_info);
 
 spinlock_t lock;
 
@@ -398,6 +401,18 @@ void socp_global_ctrl_init(void)
 
 s32 socp_clk_enable(void)
 {
+    #ifndef BSP_CONFIG_PHONE_TYPE
+        struct clk *cSocp;
+
+        /* 打开SOCP时钟 */
+        cSocp = clk_get(NULL, "socp_clk");
+        clk_prepare(cSocp);
+        if(BSP_OK !=clk_enable(cSocp))
+        {
+            socp_error("[init] Socp clk open failed.\n");
+            return BSP_ERROR;
+        }
+    #endif
 
     return BSP_OK;
 }
@@ -417,6 +432,7 @@ s32 socp_clk_enable(void)
 *****************************************************************************/
 void socp_get_idle_buffer(SOCP_RING_BUF_S *pRingBuffer, SOCP_BUFFER_RW_STRU *pRWBuffer)
 {
+#ifdef FEATURE_SOCP_ADDR_64BITS
     	if(pRingBuffer->u32Write < pRingBuffer->u32Read)
     	{
         	/* 读指针大于写指针，直接计算 */
@@ -443,6 +459,34 @@ void socp_get_idle_buffer(SOCP_RING_BUF_S *pRingBuffer, SOCP_BUFFER_RW_STRU *pRW
             		pRWBuffer->u32RbSize = 0;
         	}
     	}
+#else
+    	if(pRingBuffer->u32Write < pRingBuffer->u32Read)
+    	{
+        	/* 读指针大于写指针，直接计算 */
+        	pRWBuffer->pBuffer = (char *)((unsigned long)pRingBuffer->u32Write);
+        	pRWBuffer->u32Size = (u32)(pRingBuffer->u32Read - pRingBuffer->u32Write - 1);
+        	pRWBuffer->pRbBuffer = (char *)BSP_NULL;
+        	pRWBuffer->u32RbSize = 0;
+    	}
+    	else
+    	{
+        	/* 写指针大于读指针，需要考虑回卷 */
+        	if(pRingBuffer->u32Read != (u32)pRingBuffer->Start)
+        	{
+            		pRWBuffer->pBuffer = (char *)((unsigned long)pRingBuffer->u32Write);
+            		pRWBuffer->u32Size = (u32)(pRingBuffer->End - pRingBuffer->u32Write + 1);
+            		pRWBuffer->pRbBuffer =(char *)pRingBuffer->Start;
+            		pRWBuffer->u32RbSize = (u32)(pRingBuffer->u32Read - pRingBuffer->Start - 1);
+        	}
+        	else
+        	{
+            		pRWBuffer->pBuffer = (char *)((unsigned long)pRingBuffer->u32Write);
+            		pRWBuffer->u32Size = (u32)(pRingBuffer->End - pRingBuffer->u32Write);
+            		pRWBuffer->pRbBuffer = (char *)BSP_NULL;
+            		pRWBuffer->u32RbSize = 0;
+        	}
+    	}
+#endif
 
     return;
 }
@@ -461,6 +505,7 @@ void socp_get_idle_buffer(SOCP_RING_BUF_S *pRingBuffer, SOCP_BUFFER_RW_STRU *pRW
 *****************************************************************************/
 void socp_get_data_buffer(SOCP_RING_BUF_S *pRingBuffer, SOCP_BUFFER_RW_STRU *pRWBuffer)
 {
+#ifdef FEATURE_SOCP_ADDR_64BITS
     if(pRingBuffer->u32Read <= pRingBuffer->u32Write)
     {
         /* 写指针大于读指针，直接计算 */
@@ -477,6 +522,24 @@ void socp_get_data_buffer(SOCP_RING_BUF_S *pRingBuffer, SOCP_BUFFER_RW_STRU *pRW
         pRWBuffer->pRbBuffer = (char *)pRingBuffer->Start;
         pRWBuffer->u32RbSize = pRingBuffer->u32Write;
     }
+#else
+    if(pRingBuffer->u32Read <= pRingBuffer->u32Write)
+    {
+        /* 写指针大于读指针，直接计算 */
+        pRWBuffer->pBuffer = (char *)((unsigned long)pRingBuffer->u32Read);
+        pRWBuffer->u32Size = (u32)(pRingBuffer->u32Write - pRingBuffer->u32Read);
+        pRWBuffer->pRbBuffer = (char *)BSP_NULL;
+        pRWBuffer->u32RbSize = 0;
+    }
+    else
+    {
+        /* 读指针大于写指针，需要考虑回卷 */
+        pRWBuffer->pBuffer = (char *)((unsigned long)pRingBuffer->u32Read);
+        pRWBuffer->u32Size = (u32)(pRingBuffer->End - pRingBuffer->u32Read + 1);
+        pRWBuffer->pRbBuffer = (char *)pRingBuffer->Start;
+        pRWBuffer->u32RbSize = (u32)(pRingBuffer->u32Write - pRingBuffer->Start);
+    }
+#endif
     return;
 }
 
@@ -495,6 +558,7 @@ void socp_get_data_buffer(SOCP_RING_BUF_S *pRingBuffer, SOCP_BUFFER_RW_STRU *pRW
 void socp_write_done(SOCP_RING_BUF_S *pRingBuffer, u32 u32Size)
 {
     u32 tmp_size;
+#ifdef FEATURE_SOCP_ADDR_64BITS
     // pRingBuffer->u32Write = (pRingBuffer->u32Write+u32Size) % pRingBuffer->u32Length;
 
     tmp_size = (u32)(pRingBuffer->End - (pRingBuffer->Start + pRingBuffer->u32Write) + 1);
@@ -508,6 +572,19 @@ void socp_write_done(SOCP_RING_BUF_S *pRingBuffer, u32 u32Size)
     	pRingBuffer->u32Write =  rb_size;
     }
 
+#else
+
+    tmp_size = (u32)(pRingBuffer->End - pRingBuffer->u32Write + 1);
+    if(tmp_size > u32Size)
+    {
+    	pRingBuffer->u32Write += u32Size;
+    }
+    else
+    {
+        u32 rb_size = u32Size - tmp_size;
+        pRingBuffer->u32Write = (u32)(pRingBuffer->Start + rb_size);
+    }
+#endif
     return;
 }
 /*****************************************************************************
@@ -524,11 +601,19 @@ void socp_write_done(SOCP_RING_BUF_S *pRingBuffer, u32 u32Size)
 *****************************************************************************/
 void socp_read_done(SOCP_RING_BUF_S *pRingBuffer, u32 u32Size)
 {
+#ifdef FEATURE_SOCP_ADDR_64BITS
 	pRingBuffer->u32Read += u32Size;
     	if(pRingBuffer->u32Read > (u32)(pRingBuffer->End - pRingBuffer->Start))
     	{
         	pRingBuffer->u32Read -= pRingBuffer->u32Length;
     	}
+#else
+	pRingBuffer->u32Read += u32Size;
+    	if(pRingBuffer->u32Read > pRingBuffer->End)
+    	{
+        	pRingBuffer->u32Read -= pRingBuffer->u32Length;
+    	}
+#endif
 }
 
 /*****************************************************************************
@@ -602,6 +687,7 @@ u32 bsp_socp_clean_encsrc_chan(SOCP_CODER_SRC_ENUM_U32 enSrcChanID)
 ****************************************************************************************/
 void socp_reset_chan_reg_wr_addr(u32 ChanId, u32 Type, SOCP_ENCSRC_CHAN_S *Enc_pChan, SOCP_DECSRC_CHAN_S *Dec_pChan)
 {
+#ifdef FEATURE_SOCP_ADDR_64BITS   // SOCP 64位寻址
     if(Type == SOCP_CODER_SRC_CHAN)   // 编码通道
     {
         SOCP_REG_WRITE(SOCP_REG_ENCSRC_BUFADDR_L(ChanId),(u32)Enc_pChan->sEncSrcBuf.Start);
@@ -641,6 +727,43 @@ void socp_reset_chan_reg_wr_addr(u32 ChanId, u32 Type, SOCP_ENCSRC_CHAN_S *Enc_p
     	g_strSocpStat.sDecSrcChan[ChanId].sDecSrcBuf.u32Write = 0;
     }
 
+#else   // SOCP 32位寻址
+
+    if(Type == SOCP_CODER_SRC_CHAN)   // 编码通道
+    {
+        SOCP_REG_WRITE(SOCP_REG_ENCSRC_BUFADDR(ChanId), (u32)Enc_pChan->sEncSrcBuf.Start);
+        SOCP_REG_WRITE(SOCP_REG_ENCSRC_BUFWPTR(ChanId), (u32)Enc_pChan->sEncSrcBuf.Start);
+        SOCP_REG_WRITE(SOCP_REG_ENCSRC_BUFRPTR(ChanId),  (u32)Enc_pChan->sEncSrcBuf.Start);
+        /* 更新读写指针*/
+        g_strSocpStat.sEncSrcChan[ChanId].sEncSrcBuf.u32Read  = (u32)(Enc_pChan->sEncSrcBuf.Start);
+        g_strSocpStat.sEncSrcChan[ChanId].sEncSrcBuf.u32Write = (u32)(Enc_pChan->sEncSrcBuf.Start);
+
+        /* 如果是用链表缓冲区，则配置RDbuffer的起始地址和长度 */
+        if(SOCP_ENCSRC_CHNMODE_LIST == Enc_pChan->eChnMode)
+        {
+            SOCP_REG_WRITE(SOCP_REG_ENCSRC_RDQADDR(ChanId), (u32)Enc_pChan->sRdBuf.Start);
+            SOCP_REG_WRITE(SOCP_REG_ENCSRC_RDQRPTR(ChanId), (u32)Enc_pChan->sRdBuf.Start);
+            SOCP_REG_WRITE(SOCP_REG_ENCSRC_RDQWPTR(ChanId), (u32)Enc_pChan->sRdBuf.Start);
+			/*lint -save -e647*/
+			SOCP_REG_SETBITS(SOCP_REG_ENCSRC_RDQCFG(ChanId), 0, 16, Enc_pChan->sRdBuf.u32Length);
+            SOCP_REG_SETBITS(SOCP_REG_ENCSRC_RDQCFG(ChanId), 16, 16, 0);
+			/*lint -restore +e647*/
+			g_strSocpStat.sEncSrcChan[ChanId].sRdBuf.u32Read  = (u32)(Enc_pChan->sRdBuf.Start);
+            g_strSocpStat.sEncSrcChan[ChanId].sRdBuf.u32Write = (u32)(Enc_pChan->sRdBuf.Start);
+        }
+    }
+
+    else if(Type == SOCP_DECODER_SRC_CHAN)   // 解码通道
+    {
+    	/* 使用配置参数进行配置 */
+    	SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFADDR(ChanId), (u32)Dec_pChan->sDecSrcBuf.Start);
+    	SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFWPTR(ChanId), (u32)Dec_pChan->sDecSrcBuf.Start);
+    	SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFRPTR(ChanId), (u32)Dec_pChan->sDecSrcBuf.Start);
+    	/* 更新对应通道的读写指针*/
+    	g_strSocpStat.sDecSrcChan[ChanId].sDecSrcBuf.u32Read  = (u32)(Dec_pChan->sDecSrcBuf.Start);
+    	g_strSocpStat.sDecSrcChan[ChanId].sDecSrcBuf.u32Write = (u32)(Dec_pChan->sDecSrcBuf.Start);
+    }
+#endif
 }
 
 
@@ -783,6 +906,7 @@ s32 socp_soft_free_encdst_chan(u32 u32EncDstChanId)
 
     pChan = &g_strSocpStat.sEncDstChan[u32ChanID];
 
+#ifdef FEATURE_SOCP_ADDR_64BITS
     /* 写入起始地址到目的buffer起始地址寄存器*/
     SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFADDR_L(u32ChanID), (u32)pChan->sEncDstBuf.Start);
 	SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFADDR_H(u32ChanID), (u32)(((u64)pChan->sEncDstBuf.Start)>>32));
@@ -792,6 +916,15 @@ s32 socp_soft_free_encdst_chan(u32 u32EncDstChanId)
     g_strSocpStat.sEncDstChan[u32ChanID].sEncDstBuf.u32Write = 0; /* [false alarm]:u32ChanID已经在函数入口处经过判断 */
     g_strSocpStat.sEncDstChan[u32ChanID].sEncDstBuf.u32Read = 0;/* [false alarm]:u32ChanID已经在函数入口处经过判断 */
 
+#else
+    /* 写入起始地址到目的buffer起始地址寄存器*/
+    SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFADDR(u32ChanID), (u32)pChan->sEncDstBuf.Start);
+    SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFRPTR(u32ChanID), (u32)pChan->sEncDstBuf.Start);
+    SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFWPTR(u32ChanID), (u32)pChan->sEncDstBuf.Start);
+
+    g_strSocpStat.sEncDstChan[u32ChanID].sEncDstBuf.u32Write = (u32)pChan->sEncDstBuf.Start;
+    g_strSocpStat.sEncDstChan[u32ChanID].sEncDstBuf.u32Read = (u32)pChan->sEncDstBuf.Start;
+#endif
 
     g_strSocpStat.sEncDstChan[u32ChanID].u32SetStat = SOCP_CHN_UNSET;/* [false alarm]:u32ChanID已经在函数入口处经过判断 */
 
@@ -831,6 +964,7 @@ s32 socp_soft_free_decsrc_chan(u32 u32DecSrcChanId)
 
     pDecSrcChan = &g_strSocpStat.sDecSrcChan[u32ChanID];
 
+#ifdef FEATURE_SOCP_ADDR_64BITS
     	/* 写入起始地址到目的buffer起始地址寄存器*/
    	SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFWPTR(u32ChanID), 0);
     SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFADDR_L(u32ChanID), (u32)pDecSrcChan->sDecSrcBuf.Start);
@@ -839,6 +973,15 @@ s32 socp_soft_free_decsrc_chan(u32 u32DecSrcChanId)
 
     g_strSocpStat.sDecSrcChan[u32ChanID].sDecSrcBuf.u32Write = 0;/* [false alarm]:u32ChanID已经在函数入口处经过判断 */
     g_strSocpStat.sDecSrcChan[u32ChanID].sDecSrcBuf.u32Read = 0;/* [false alarm]:u32ChanID已经在函数入口处经过判断 */
+#else
+    	/* 写入起始地址到目的buffer起始地址寄存器*/
+   	SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFWPTR(u32ChanID), (u32)pDecSrcChan->sDecSrcBuf.Start);
+    SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFADDR(u32ChanID), (u32)pDecSrcChan->sDecSrcBuf.Start);
+    SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFRPTR(u32ChanID), (u32)pDecSrcChan->sDecSrcBuf.Start);
+
+    g_strSocpStat.sDecSrcChan[u32ChanID].sDecSrcBuf.u32Write = (u32)pDecSrcChan->sDecSrcBuf.Start;/*[false alarm] alarm*/
+    g_strSocpStat.sDecSrcChan[u32ChanID].sDecSrcBuf.u32Read = (u32)pDecSrcChan->sDecSrcBuf.Start;/*[false alarm] alarm*/
+#endif
 
     g_strSocpStat.sDecSrcChan[u32ChanID].u32SetStat = SOCP_CHN_UNSET;/* [false alarm]:u32ChanID已经在函数入口处经过判断 */
 
@@ -1796,7 +1939,7 @@ void socp_handler_decdst(void)
 *
 * 返 回 值   : 无
 *****************************************************************************/
-u32 socp_app_int_handler(void)
+irqreturn_t socp_app_int_handler(int irq, void* dev_info)
 {
     g_stSocpDebugInfo.sSocpDebugGBl.u32SocpAppEtrIntCnt++;
 
@@ -2101,6 +2244,7 @@ void socp_set_reg_wr_addr(u32 ChanId, void *pAttr, unsigned long start, unsigned
     RealChanId = SOCP_REAL_CHAN_ID(ChanId);
     ChanType  = SOCP_REAL_CHAN_TYPE(ChanId);
 
+#ifdef FEATURE_SOCP_ADDR_64BITS   // SOCP 64位寻址
     if(ChanType == SOCP_CODER_SRC_CHAN)   // 编码源通道
     {
         SOCP_REG_WRITE(SOCP_REG_ENCSRC_BUFADDR_L(RealChanId), (u32)start);
@@ -2197,6 +2341,98 @@ void socp_set_reg_wr_addr(u32 ChanId, void *pAttr, unsigned long start, unsigned
         pDecDstChan->sDecDstBuf.u32Write    = 0;
     }
 
+#else   // SOCP 32位寻址
+
+    if(ChanType == SOCP_CODER_SRC_CHAN)   // 编码源通道
+    {
+        SOCP_REG_WRITE(SOCP_REG_ENCSRC_BUFADDR(RealChanId),(u32)start);
+        SOCP_REG_WRITE(SOCP_REG_ENCSRC_BUFWPTR(RealChanId),(u32)start);
+        SOCP_REG_WRITE(SOCP_REG_ENCSRC_BUFRPTR(RealChanId), (u32)start);
+        if(SOCP_ENCSRC_CHNMODE_LIST == ((SOCP_CODER_SRC_CHAN_S *)pAttr)->eMode)
+        {
+            rdstart = (unsigned long)((SOCP_CODER_SRC_CHAN_S *)pAttr)->sCoderSetSrcBuf.pucRDStart;
+            rdend   = (unsigned long)((SOCP_CODER_SRC_CHAN_S *)pAttr)->sCoderSetSrcBuf.pucRDEnd;
+    		SOCP_REG_WRITE(SOCP_REG_ENCSRC_RDQADDR(RealChanId), (u32)rdstart);
+            SOCP_REG_WRITE(SOCP_REG_ENCSRC_RDQRPTR(RealChanId), (u32)rdstart);
+            SOCP_REG_WRITE(SOCP_REG_ENCSRC_RDQWPTR(RealChanId), (u32)rdstart);
+        }
+        pEncSrcChan = &g_strSocpStat.sEncSrcChan[RealChanId];
+        pEncSrcChan->eChnMode               = ((SOCP_CODER_SRC_CHAN_S *)pAttr)->eMode;
+        pEncSrcChan->ePriority              = ((SOCP_CODER_SRC_CHAN_S *)pAttr)->ePriority;
+        pEncSrcChan->eDataType              = ((SOCP_CODER_SRC_CHAN_S *)pAttr)->eDataType;
+        pEncSrcChan->eDataTypeEn            = ((SOCP_CODER_SRC_CHAN_S *)pAttr)->eDataTypeEn;
+        pEncSrcChan->eDebugEn               = ((SOCP_CODER_SRC_CHAN_S *)pAttr)->eDebugEn;
+        pEncSrcChan->u32DestChanID          = ((SOCP_CODER_SRC_CHAN_S *)pAttr)->u32DestChanID;
+        pEncSrcChan->u32BypassEn            = ((SOCP_CODER_SRC_CHAN_S *)pAttr)->u32BypassEn;
+        pEncSrcChan->sEncSrcBuf.Start    = start;
+        pEncSrcChan->sEncSrcBuf.End      = end;
+        pEncSrcChan->sEncSrcBuf.u32Write    = start;
+        pEncSrcChan->sEncSrcBuf.u32Read     = start;
+        pEncSrcChan->sEncSrcBuf.u32Length   = end - start + 1;//lint !e834
+        pEncSrcChan->sEncSrcBuf.u32IdleSize = 0;
+
+        if(SOCP_ENCSRC_CHNMODE_LIST == ((SOCP_CODER_SRC_CHAN_S *)pAttr)->eMode)
+        {
+            pEncSrcChan->sRdBuf.Start    = rdstart;
+            pEncSrcChan->sRdBuf.End      = rdend;
+            pEncSrcChan->sRdBuf.u32Write    = rdstart;
+            pEncSrcChan->sRdBuf.u32Read     = rdstart;
+    	    pEncSrcChan->sRdBuf.u32Length   = rdend - rdstart + 1;//lint !e834
+            pEncSrcChan->u32RdThreshold     = ((SOCP_CODER_SRC_CHAN_S *)pAttr)->sCoderSetSrcBuf.u32RDThreshold;
+        }
+    }
+
+    else if(ChanType == SOCP_CODER_DEST_CHAN)   // 编码目的通道
+    {
+        SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFADDR(RealChanId), (u32)start);
+        SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFRPTR(RealChanId), (u32)start);
+        SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFWPTR(RealChanId), (u32)start);
+
+        pEncDstChan = &g_strSocpStat.sEncDstChan[RealChanId];
+        pEncDstChan->sEncDstBuf.Start    = start;
+        pEncDstChan->sEncDstBuf.End      = end;
+        pEncDstChan->sEncDstBuf.u32Read     = (u32)start;
+        pEncDstChan->sEncDstBuf.u32Write    = (u32)start;
+        pEncDstChan->sEncDstBuf.u32Length   = end - start + 1;//lint !e834
+        pEncDstChan->bufThreshold  =   ((SOCP_CODER_DEST_CHAN_S *)pAttr)->sCoderSetDstBuf.u32Threshold;
+        pEncDstChan->u32Thrh       =   ((SOCP_CODER_DEST_CHAN_S *)pAttr)->u32EncDstThrh;
+
+        /* 表明该通道已经配置 */
+        pEncDstChan->u32SetStat = SOCP_CHN_SET;
+    }
+
+    else if(ChanType == SOCP_DECODER_SRC_CHAN)   // 解码源通道
+    {
+        SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFWPTR(RealChanId), (u32)start);
+        SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFADDR(RealChanId), (u32)start);
+        SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFRPTR(RealChanId), (u32)start);
+
+        pDecSrcChan = &g_strSocpStat.sDecSrcChan[RealChanId];
+        pDecSrcChan->u32ChanID = RealChanId;
+        pDecSrcChan->eDataTypeEn= ((SOCP_DECODER_SRC_CHAN_STRU *)pAttr)->eDataTypeEn;
+        pDecSrcChan->sDecSrcBuf.Start = start;
+        pDecSrcChan->sDecSrcBuf.End = end;
+        pDecSrcChan->sDecSrcBuf.u32Length = end - start + 1;//lint !e834
+        pDecSrcChan->sDecSrcBuf.u32Read = (u32)start;
+        pDecSrcChan->sDecSrcBuf.u32Write = (u32)start;
+        pDecSrcChan->u32SetStat = SOCP_CHN_SET;
+    }
+
+    else if(ChanType == SOCP_DECODER_DEST_CHAN)   // 解码目的通道
+    {
+        SOCP_REG_WRITE(SOCP_REG_DECDEST_BUFRPTR(RealChanId), (u32)start);
+        SOCP_REG_WRITE(SOCP_REG_DECDEST_BUFADDR(RealChanId), (u32)start);
+        SOCP_REG_WRITE(SOCP_REG_DECDEST_BUFWPTR(RealChanId), (u32)start);
+
+        pDecDstChan = &g_strSocpStat.sDecDstChan[RealChanId];
+        pDecDstChan->eDataType = ((SOCP_DECODER_DEST_CHAN_STRU *)pAttr)->eDataType;
+        pDecDstChan->sDecDstBuf.Start    = start;
+        pDecDstChan->sDecDstBuf.End      = end;
+        pDecDstChan->sDecDstBuf.u32Length   = end - start + 1;//lint !e834
+        pDecDstChan->sDecDstBuf.u32Read     = (u32)start;
+        pDecDstChan->sDecDstBuf.u32Write    = (u32)start;
+    }
+#endif
 }
 
 /*****************************************************************************
@@ -2909,6 +3145,9 @@ s32 bsp_socp_set_timeout(SOCP_TIMEOUT_EN_ENUM_UIN32 eTmOutEn, u32 u32Timeout)
     u32 u32newtime;
     u32 temp;
 
+#if (FEATURE_SOCP_DECODE_INT_TIMEOUT == FEATURE_ON)
+    DECODE_TIMEOUT_MODULE decode_timeout_module = DECODE_TIMEOUT_INT_TIMEOUT;
+#endif
 
     u32newtime = ((socp_version == SOCP_203_VERSION) || (socp_version == SOCP_204_VERSION)) ? SOCP_CLK_RATIO(u32Timeout) : u32Timeout;
 
@@ -2934,7 +3173,28 @@ s32 bsp_socp_set_timeout(SOCP_TIMEOUT_EN_ENUM_UIN32 eTmOutEn, u32 u32Timeout)
                 SOCP_REG_SETBITS(SOCP_REG_GBLRST, 4, 1, 0);
             }
 
+#if (FEATURE_SOCP_DECODE_INT_TIMEOUT == FEATURE_ON)
+
+            decode_timeout_module = (DECODE_TIMEOUT_MODULE)SOCP_REG_GETBITS(SOCP_REG_GBLRST, 1, 1);
+            if(decode_timeout_module == DECODE_TIMEOUT_INT_TIMEOUT)
+            {
+                if (u32newtime > 0xFF)
+                {
+                   socp_error("the value is too large!\n");
+                   return BSP_ERR_SOCP_INVALID_PARA;
+                }
+
+                SOCP_REG_WRITE(SOCP_REG_INTTIMEOUT, u32newtime);
+            }
+            else
+            {
+
+                SOCP_REG_WRITE(SOCP_REG_INTTIMEOUT, u32newtime);
+            }
+
+#else
 			SOCP_REG_WRITE(SOCP_REG_INTTIMEOUT, u32newtime);
+#endif
             break;
         }
 
@@ -2981,6 +3241,19 @@ s32 bsp_socp_set_timeout(SOCP_TIMEOUT_EN_ENUM_UIN32 eTmOutEn, u32 u32Timeout)
             break;
         }
 
+#if (FEATURE_SOCP_DECODE_INT_TIMEOUT == FEATURE_ON)
+        case SOCP_TIMEOUT_DECODE_TRF:
+        {
+            decode_timeout_module = (DECODE_TIMEOUT_MODULE)SOCP_REG_GETBITS(SOCP_REG_GBLRST, 1, 1);
+            if(decode_timeout_module == DECODE_TIMEOUT_INT_TIMEOUT)
+            {
+                return BSP_ERR_SOCP_INVALID_PARA;
+            }
+
+            SOCP_REG_WRITE(SOCP_REG_DEC_INT_TIMEOUT, u32newtime);
+			break;
+        }
+#endif
 
         default:
         {
@@ -4517,6 +4790,7 @@ void bsp_socp_set_enc_dst_threshold(bool mode,u32 u32DestChanID)
     return;
 }
 
+#ifdef CONFIG_DEFLATE
 /*****************************************************************************
 * 函 数 名  : bsp_socp_compress_enable
 *
@@ -4533,6 +4807,9 @@ s32 bsp_socp_compress_enable(u32 u32DestChanID)
     SOCP_ENCDST_CHAN_S *pChan ;
     u32 u32RealChanID;
     u32 SocpIdleState;
+ #ifndef FEATURE_SOCP_ADDR_64BITS
+    u32 start;
+ #endif
     u32 u32ChanType;
     u32 cnt=500;
     SOCP_CODER_DEST_CHAN_S attr;
@@ -4575,9 +4852,16 @@ s32 bsp_socp_compress_enable(u32 u32DestChanID)
     /*lint -restore +e732*/
 
     /*读写指针重置，当前数据丢弃*/
+#ifdef FEATURE_SOCP_ADDR_64BITS
 	SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFRPTR(u32RealChanID),0);
 	SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFWPTR(u32RealChanID), 0);
     pChan->sEncDstBuf.u32Read =0;
+#else
+    SOCP_REG_READ(SOCP_REG_ENCDEST_BUFADDR(u32RealChanID),start);
+    SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFRPTR(u32RealChanID),start);
+    SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFWPTR(u32RealChanID), start);
+    pChan->sEncDstBuf.u32Read = start;
+#endif
 
    // DEFLATE_REG_SETBITS(SOCP_REG_DEFLATE_GLOBALCTRL, 1, 1, 1);
     attr.u32EncDstThrh              =pChan->u32Thrh;
@@ -4698,6 +4982,7 @@ s32 bsp_socp_register_compress(socp_compress_ops_stru *ops)
     return BSP_OK;
 }
 
+#endif
 /*****************************************************************************
 * 函 数 名  : bsp_socp_mode_change_chip_bugfix
 *
@@ -5093,6 +5378,9 @@ u32 socp_is_encdst_chan_empty(void)
 
     return chanSet;
 }
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+module_init(socp_init);
+#endif
 
 
 
@@ -5141,6 +5429,20 @@ void bsp_socp_set_clk_autodiv_disable(void)
 *
 *
 *****************************************************************************/
+#if (FEATURE_SOCP_DECODE_INT_TIMEOUT == FEATURE_ON)
+s32 bsp_socp_set_decode_timeout_register(DECODE_TIMEOUT_MODULE module)
+{
+    if(module > DECODE_TIMEOUT_DEC_INT_TIMEOUT)
+    {
+        return BSP_ERR_SOCP_INVALID_PARA;
+    }
+    SOCP_REG_SETBITS(SOCP_REG_GBLRST, 1, 1, module);
+
+    return BSP_OK;
+
+}
+EXPORT_SYMBOL(bsp_socp_set_decode_timeout_register);
+#endif
 
 u32 bsp_get_socp_ind_dst_int_slice(void)
 {

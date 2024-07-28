@@ -64,6 +64,7 @@
 *****************************************************************************/
 /***************************AT的全局变量表 Begin******************************/
 /* AT与编译两次的PID对应表  */
+#if (2 <= MULTI_MODEM_NUMBER)
 AT_MODEM_PID_TAB_STRU                   g_astAtModemPidTab[] =
 {
     {I0_UEPS_PID_GRM,           I1_UEPS_PID_GRM,            I2_UEPS_PID_GRM,        0},
@@ -95,11 +96,14 @@ AT_MODEM_PID_TAB_STRU                   g_astAtModemPidTab[] =
     {I0_WUEPS_PID_WRR,          I1_WUEPS_PID_WRR,           0,                      0},
     {I0_WUEPS_PID_WCOM,         I1_WUEPS_PID_WCOM,          0,                      0},
     {I0_DSP_PID_WPHY,           I1_DSP_PID_WPHY,            0,                      0},
+#if ( FEATURE_MODEM1_SUPPORT_LTE == FEATURE_ON )
     {I0_MSP_L4_L4A_PID,         I1_MSP_L4_L4A_PID,          I0_MSP_L4_L4A_PID,      0},
     {I0_MSP_LDSP_PID,           I1_MSP_LDSP_PID,            I0_MSP_LDSP_PID,        0},
     {I0_MSP_SYS_FTM_PID,        I1_MSP_SYS_FTM_PID,         I0_MSP_SYS_FTM_PID,     0},
     {I0_PS_PID_IMSA,            I1_PS_PID_IMSA,             I0_PS_PID_IMSA,         0}
+#endif
 };
+#endif
 
 VOS_UINT32                              g_ulCtzuFlag = 0;
 
@@ -115,14 +119,18 @@ AT_PS_IPV6_IID_MGR_INFO_STRU            g_astAtPsIPv6IIDMgrInfo[MODEM_ID_BUTT] =
     {
         HI_LIST_HEAD_INIT(g_astAtPsIPv6IIDMgrInfo[0].stListHead)
      }
+#if (MULTI_MODEM_NUMBER > 1)
     ,
     {
         HI_LIST_HEAD_INIT(g_astAtPsIPv6IIDMgrInfo[1].stListHead)
     }
+#if (MULTI_MODEM_NUMBER > 2)
     ,
     {
         HI_LIST_HEAD_INIT(g_astAtPsIPv6IIDMgrInfo[2].stListHead)
     }
+#endif /* MULTI_MODEM_NUMBER > 2 */
+#endif /* FEATURE_ON == FEATURE_MULTI_MODEM */
 };
 
 /* PDP TYPE CHG管理信息 */
@@ -131,14 +139,18 @@ AT_PS_PDP_TYPE_CHG_MGR_INFO_STRU    g_astAtPsPdpTypeChgMgrInfo[MODEM_ID_BUTT] =
     {
         HI_LIST_HEAD_INIT(g_astAtPsPdpTypeChgMgrInfo[0].stListHead)
      }
+#if (MULTI_MODEM_NUMBER > 1)
     ,
     {
         HI_LIST_HEAD_INIT(g_astAtPsPdpTypeChgMgrInfo[1].stListHead)
     }
+#if (MULTI_MODEM_NUMBER > 2)
     ,
     {
         HI_LIST_HEAD_INIT(g_astAtPsPdpTypeChgMgrInfo[2].stListHead)
     }
+#endif /* MULTI_MODEM_NUMBER > 2 */
+#endif /* MULTI_MODEM_NUMBER > 1 */
 };
 
 /* AT模块与Client相关的上下文 */
@@ -200,11 +212,13 @@ VOS_UINT16                              g_usReportCregActParaFlg = VOS_FALSE;
 CREG_CGREG_CI_RPT_BYTE_ENUM             gucCiRptByte = CREG_CGREG_CI_RPT_TWO_BYTE;
 
 /*********************************NET End*************************************/
+#if (FEATURE_ON == FEATURE_LTE)
 NVIM_RSRP_CFG_STRU                      g_stRsrpCfg;
 NVIM_RSCP_CFG_STRU                      g_stRscpCfg;
 NVIM_ECIO_CFG_STRU                      g_stEcioCfg;
 
 AT_ACCESS_STRATUM_RELEASE_STRU          g_stReleaseInfo;
+#endif
 
 AT_SS_CUSTOMIZE_PARA_STRU               g_stAtSsCustomizePara;
 
@@ -219,11 +233,15 @@ AT_CLIENT_CFG_MAP_TAB_STRU              g_astAtClientCfgMapTbl[] =
     AT_CLIENT_CFG_ELEMENT(MODEM),
     AT_CLIENT_CFG_ELEMENT(NDIS),
     AT_CLIENT_CFG_ELEMENT(UART),
+#if (FEATURE_ON == FEATURE_AT_HSUART)
+    AT_CLIENT_CFG_ELEMENT(HSUART),
+#endif
     AT_CLIENT_CFG_ELEMENT(SOCK),
     AT_CLIENT_CFG_ELEMENT(APPSOCK),
 
     AT_CLIENT_CFG_ELEMENT(APP),
     AT_CLIENT_CFG_ELEMENT(APP1),
+#if (FEATURE_ON == FEATURE_VCOM_EXT)
     AT_CLIENT_CFG_ELEMENT(APP2),
     AT_CLIENT_CFG_ELEMENT(APP3),
     AT_CLIENT_CFG_ELEMENT(APP4),
@@ -278,13 +296,219 @@ AT_CLIENT_CFG_MAP_TAB_STRU              g_astAtClientCfgMapTbl[] =
     AT_CLIENT_CFG_ELEMENT(APP51),
     AT_CLIENT_CFG_ELEMENT(APP52)
 
+#endif
 };
 /*lint +e648 +e598 +e845 */
 
 const VOS_UINT8                         g_ucAtClientCfgMapTabLen = AT_ARRAY_SIZE(g_astAtClientCfgMapTbl);
 
+#if ((FEATURE_ON == FEATURE_UE_MODE_CDMA)&&(FEATURE_ON == FEATURE_CHINA_TELECOM_VOICE_ENCRYPT)&&(FEATURE_ON == FEATURE_CHINA_TELECOM_VOICE_ENCRYPT_TEST_MODE))
+
+VOS_UINT8    gucCurrEncVoiceDataWriteFileNum       = 0;
+VOS_UINT32   gulAtCurrEncVoiceDataCount            = 0;
+VOS_UINT8    gucAtCurrEncVoiceTestFileNum          = 0;
+TAF_CHAR     gacAtCurrDocName[AT_TEST_ECC_FILE_NAME_MAX_LEN];
+
+TAF_CHAR    *g_pacCurrEncVoiceDataWriteFilePath[] =
+            {
+                "",
+                "/data/hisi_logs/modem_log/ECC_TEST/Encrypted_call_data1.txt",
+                "/data/hisi_logs/modem_log/ECC_TEST/Encrypted_call_data2.txt",
+                "/data/hisi_logs/modem_log/ECC_TEST/Encrypted_call_data3.txt",
+                "/data/hisi_logs/modem_log/ECC_TEST/Encrypted_call_data4.txt",
+                "/data/hisi_logs/modem_log/ECC_TEST/Encrypted_call_data5.txt"
+            };
+
+#endif
 
 
+#if ( VOS_WIN32 == VOS_OS_VER )
+
+AT_USIMM_FILE_NUM_TO_ID_STRU g_aenAtSimFileNumToIdTab[]=
+{
+    {0x6F07, USIMM_GSM_EFIMSI_ID        },
+    {0x6F46, USIMM_GSM_EFSPN_ID         },
+    {0x6F31, USIMM_GSM_EFHPLMN_ID       },
+    {0x6F53, USIMM_GSM_EFLOCIGPRS_ID    },
+    {0x6f61, USIMM_GSM_EFOPLMNWACT_ID   },
+    {0x6f62, USIMM_GSM_EFHPLMNACT_ID    },
+    {0x6F7E, USIMM_GSM_EFLOCI_ID        }
+};
+
+VOS_UINT32 g_aenAtSimFileNumToIdTabLen = AT_ARRAY_SIZE(g_aenAtSimFileNumToIdTab);
+
+AT_USIMM_FILE_NUM_TO_ID_STRU g_aenAtUsimFileNumToIdTab[]=
+{
+    {0x3F00, USIMM_MF_ID                },
+    {0x2F00, USIMM_DIR_ID               },
+    {0x2FE2, USIMM_ICCID_ID             },
+    {0x2F05, USIMM_PL_ID                },
+    {0x2F06, USIMM_ARR_ID               },
+    {0x7FFF, USIMM_USIM_ID              },
+    {0x6F05, USIMM_USIM_EFLI_ID         },
+    {0x6F06, USIMM_USIM_EFARR_ID        },
+    {0x6F07, USIMM_USIM_EFIMSI_ID       },
+    {0x6F08, USIMM_USIM_EFKEYS_ID       },
+    {0x6F09, USIMM_USIM_EFKEYSPS_ID     },
+    {0x6F15, USIMM_USIM_EFCSP_ID        },
+    {0x6F2C, USIMM_USIM_EFDCK_ID        },
+    {0x6F31, USIMM_USIM_EFHPPLMN_ID     },
+    {0x6F32, USIMM_USIM_EFCNL_ID        },
+    {0x6F37, USIMM_USIM_EFACMMAX_ID     },
+    {0x6F38, USIMM_USIM_EFUST_ID        },
+    {0x6F39, USIMM_USIM_EFACM_ID        },
+    {0x6F3B, USIMM_USIM_EFFDN_ID        },
+    {0x6F3C, USIMM_USIM_EFSMS_ID        },
+    {0x6F3E, USIMM_USIM_EFGID1_ID       },
+    {0x6F3F, USIMM_USIM_EFGID2_ID       },
+    {0x6F40, USIMM_USIM_EFMSISDN_ID     },
+    {0x6F41, USIMM_USIM_EFPUCT_ID       },
+    {0x6F42, USIMM_USIM_EFSMSP_ID       },
+    {0x6F43, USIMM_USIM_EFSMSS_ID       },
+    {0x6F45, USIMM_USIM_EFCBMI_ID       },
+    {0x6F46, USIMM_USIM_EFSPN_ID        },
+    {0x6F47, USIMM_USIM_EFSMSR_ID       },
+    {0x6F48, USIMM_USIM_EFCBMID_ID      },
+    {0x6F49, USIMM_USIM_EFSDN_ID        },
+    {0x6F4B, USIMM_USIM_EFEXT2_ID       },
+    {0x6F4C, USIMM_USIM_EFEXT3_ID       },
+    {0x6F4D, USIMM_USIM_EFBDN_ID        },
+    {0x6F4E, USIMM_USIM_EFEXT5_ID       },
+    {0x6F4F, USIMM_USIM_EFCCP2_ID       },
+    {0x6F50, USIMM_USIM_EFCBMIR_ID      },
+    {0x6F55, USIMM_USIM_EFEXT4_ID       },
+    {0x6F56, USIMM_USIM_EFEST_ID        },
+    {0x6F57, USIMM_USIM_EFACL_ID        },
+    {0x6F58, USIMM_USIM_EFCMI_ID        },
+    {0x6F5B, USIMM_USIM_EFSTART_HFN_ID  },
+    {0x6F5C, USIMM_USIM_EFTHRESHOL_ID   },
+    {0x6F60, USIMM_USIM_EFPLMNWACT_ID   },
+    {0x6F61, USIMM_USIM_EFOPLMNWACT_ID  },
+    {0x6F62, USIMM_USIM_EFHPLMNwACT_ID  },
+    {0x6F73, USIMM_USIM_EFPSLOCI_ID     },
+    {0x6F78, USIMM_USIM_EFACC_ID        },
+    {0x6F7B, USIMM_USIM_EFFPLMN_ID      },
+    {0x6F7E, USIMM_USIM_EFLOCI_ID       },
+    {0x6F80, USIMM_USIM_EFICI_ID        },
+    {0x6F81, USIMM_USIM_EFOCI_ID        },
+    {0x6F82, USIMM_USIM_EFICT_ID        },
+    {0x6F83, USIMM_USIM_EFOCT_ID        },
+    {0x6FAD, USIMM_USIM_EFAD_ID         },
+    {0x6FB1, USIMM_USIM_EFVGCS_ID       },
+    {0x6FB2, USIMM_USIM_EFVGCSS_ID      },
+    {0x6FB3, USIMM_USIM_EFVBS_ID        },
+    {0x6FB4, USIMM_USIM_EFVBSS_ID       },
+    {0x6FB5, USIMM_USIM_EFEMLPP_ID      },
+    {0x6FB6, USIMM_USIM_EFAAEM_ID       },
+    {0x6FB7, USIMM_USIM_EFECC_ID        },
+    {0x6FC3, USIMM_USIM_EFHIDDENKEY_ID  },
+    {0x6FC4, USIMM_USIM_EFNETPAR_ID     },
+    {0x6FC5, USIMM_USIM_EFPNN_ID        },
+    {0x6FC6, USIMM_USIM_EFOPL_ID        },
+    {0x6FC7, USIMM_USIM_EFMBDN_ID       },
+    {0x6FC8, USIMM_USIM_EFEXT6_ID       },
+    {0x6FC9, USIMM_USIM_EFMBI_ID        },
+    {0x6FCA, USIMM_USIM_EFMWIS_ID       },
+    {0x6FCB, USIMM_USIM_EFCFIS_ID       },
+    {0x6FCC, USIMM_USIM_EFEXT7_ID       },
+    {0x6FCD, USIMM_USIM_EFSPDI_ID       },
+    {0x6FCE, USIMM_USIM_EFMMSN_ID       },
+    {0x6FCF, USIMM_USIM_EFEXT8_ID       },
+    {0x6FD0, USIMM_USIM_EFMMSICP_ID     },
+    {0x6FD1, USIMM_USIM_EFMMSUP_ID      },
+    {0x6FD2, USIMM_USIM_EFMMSUCP_ID     },
+    {0x6FD3, USIMM_USIM_EFNIA_ID        },
+    {0x6FD4, USIMM_USIM_EFVGCSCA_ID     },
+    {0x6FD5, USIMM_USIM_EFVBSCA_ID      },
+    {0x6FD6, USIMM_USIM_EFGBAP_ID       },
+    {0x6FD7, USIMM_USIM_EFMSK_ID        },
+    {0x6FD8, USIMM_USIM_EFMUK_ID        },
+    {0x6FD9, USIMM_USIM_EFEHPLMN_ID     },
+    {0x6FDA, USIMM_USIM_EFGBANL_ID      },
+    {0x6FDB, USIMM_USIM_EFEHPLMNPI_ID   },
+    {0x6FDC, USIMM_USIM_EFLRPLMNSI_ID   },
+    {0x6FDD, USIMM_USIM_EFNAFKCA_ID     },
+    {0x6FDE, USIMM_USIM_EFSPNI_ID       },
+    {0x6FDF, USIMM_USIM_EFPNNI_ID       },
+    {0x6FE2, USIMM_USIM_EFNCPIP_ID      },
+    {0x6FE3, USIMM_USIM_EFEPSLOCI_ID    },
+    {0x6FE4, USIMM_USIM_EFEPSNSC_ID     },
+    {0x6FE6, USIMM_USIM_EFUFC_ID        },
+    {0x6FE7, USIMM_USIM_EFUICCIARI_ID   },
+    {0x6FE8, USIMM_USIM_EFNASCONFIG_ID  },
+    {0x6FEC, USIMM_USIM_EFPWS_ID        },
+    {0x5F3A, USIMM_USIM_DFPHONEBOOK_ID  },
+    {0x4F22, USIMM_USIM_EFPSC_ID        },
+    {0x4F23, USIMM_USIM_EFCC_ID         },
+    {0x4F24, USIMM_USIM_EFPUID_ID       },
+    {0x4F30, USIMM_USIM_EFPBR_ID        },
+    {0x5F3B, USIMM_USIM_DFGSM_ACCESS_ID },
+    {0x4F20, USIMM_USIM_EFKC_ID         },
+    {0x4F52, USIMM_USIM_EFKCGPRS_ID     },
+    {0x4F63, USIMM_USIM_EFCPBCCH_ID     },
+    {0x4F64, USIMM_USIM_EFINVSCAN_ID    },
+    {0x5F3C, USIMM_USIM_DFMEXE_ID       },
+    {0x4F40, USIMM_USIM_EFMexE_ST_ID    },
+    {0x4F41, USIMM_USIM_EFORPK_ID       },
+    {0x4F42, USIMM_USIM_EFARPK_ID       },
+    {0x4F43, USIMM_USIM_EFTPRK_ID       },
+    {0x5F70, USIMM_USIM_DFSOLSA_ID      },
+    {0x4F30, USIMM_USIM_EFSAI_ID        },
+    {0x4F31, USIMM_USIM_EFSLL_ID        },
+    {0x5F40, USIMM_USIM_DFWLAN_ID       },
+    {0x4F41, USIMM_USIM_EFPSEUDO_ID     },
+    {0x4F42, USIMM_USIM_EFUPLMNWLAN_ID  },
+    {0x4F43, USIMM_USIM_EF0PLMNWLAN_ID  },
+    {0x4F44, USIMM_USIM_EFUWSIDL_ID     },
+    {0x4F45, USIMM_USIM_EFOWSIDL_ID     },
+    {0x4F46, USIMM_USIM_EFWRI_ID        },
+    {0x4F47, USIMM_USIM_EFHWSIDL_ID     },
+    {0x4F48, USIMM_USIM_EFWEHPLMNPI_ID  },
+    {0x4F49, USIMM_USIM_EFWHPI_ID       },
+    {0x4F4A, USIMM_USIM_EFWLRPLMN_ID    },
+    {0x4F4B, USIMM_USIM_EFHPLMNDAI_ID   },
+    {0x5F50, USIMM_USIM_DFHNB_ID        },
+    {0x4F81, USIMM_USIM_EFACSGL_ID      },
+    {0x4F82, USIMM_USIM_EFCSGT_ID       },
+    {0x4F83, USIMM_USIM_EFHNBN_ID       },
+    {0x4F84, USIMM_USIM_EFOCSGL_ID      },
+    {0x4F85, USIMM_USIM_EFOCSGT_ID      },
+    {0x4F86, USIMM_USIM_EFOHNBN_ID      },
+    {0X6F30, USIMM_GSM_EFPLMNSEL_ID     },
+    {0x6F53, USIMM_GSM_EFLOCIGPRS_ID    },
+    {0x6F20, USIMM_GSM_EFKC_ID          },
+    {0x6F52, USIMM_GSM_EFKCGPRS_ID      },
+    {0x7F66, USIMM_ATTUSIM_ID},
+    {0x6FD2, USIMM_ATTUSIM_EFTERMINALTBL_ID},
+    {0x4F34, USIMM_ATTUSIM_EFACTINGHPLMN_ID},
+    {0x4F36, USIMM_ATTUSIM_EFRATMODE_ID},
+    {0x4F40, USIMM_ATTUSIM_EFPRMENABLE_ID},
+    {0x4F41, USIMM_ATTUSIM_EFPRMPARA_ID},
+    {0x4F42, USIMM_ATTUSIM_EFPRMOMCLR_ID},
+    {0x4F43, USIMM_ATTUSIM_EFPRMOMC_ID},
+    {0x4F44, USIMM_ATTUSIM_EFPRMVERINFO_ID},
+
+    {0x6FFF, USIMM_USIM_EF5GS3GPPLOCI_ID},
+    {0x6F01, USIMM_USIM_EF5GAUTHKEYS_ID},
+    {0x6F02, USIMM_USIM_EF5GS3GPPNSC_ID},
+    {0x6F04, USIMM_USIM_EFUAC_AIC_ID},
+    {0x6FFD, USIMM_USIM_EFSTEERING_OF_UE_IN_VPLMN_ID}
+};
+
+VOS_UINT32 g_aenAtUsimFileNumToIdTabLen = AT_ARRAY_SIZE(g_aenAtUsimFileNumToIdTab);
+
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
+AT_USIMM_FILE_NUM_TO_ID_STRU g_aenAtCsimFileNumToIdTab[]=
+{
+    {0x6F22, USIMM_CSIM_EFIMSIM_ID                },
+    {0x6F47, USIMM_CSIM_EFECC_ID                  },
+};
+
+VOS_UINT32 g_aenAtCsimFileNumToIdTabLen = AT_ARRAY_SIZE(g_aenAtCsimFileNumToIdTab);
+
+#endif
+
+#endif
 
 /*****************************************************************************
   3 函数实现
@@ -312,7 +536,9 @@ VOS_VOID AT_InitUsimStatus(MODEM_ID_ENUM_UINT16 enModemId)
 VOS_VOID AT_InitPlatformRatList(MODEM_ID_ENUM_UINT16 enModemId)
 {
     AT_MODEM_SPT_RAT_STRU              *pstSptRat   = VOS_NULL_PTR;
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     VOS_UINT8                          *pucIsCLMode = VOS_NULL_PTR;
+#endif
     pstSptRat = AT_GetSptRatFromModemId(enModemId);
 
     /* 默认情况下单板只支持GSM */
@@ -321,9 +547,14 @@ VOS_VOID AT_InitPlatformRatList(MODEM_ID_ENUM_UINT16 enModemId)
     pstSptRat->ucPlatformSptLte        = VOS_FALSE;
     pstSptRat->ucPlatformSptUtralTDD   = VOS_FALSE;
 
+#if (FEATURE_ON == FEATURE_UE_MODE_NR)
+    pstSptRat->ucPlatformSptNR         = VOS_FALSE;
+#endif
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     pucIsCLMode  = AT_GetModemCLModeCtxAddrFromModemId(enModemId);
     *pucIsCLMode = VOS_FALSE;
+#endif
     return;
 
 }
@@ -337,11 +568,13 @@ VOS_VOID AT_InitCommPsCtx(VOS_VOID)
 
     TAF_MEM_SET_S(pstPsCtx, sizeof(AT_COMM_PS_CTX_STRU), 0, sizeof(AT_COMM_PS_CTX_STRU));
 
+#if (FEATURE_ON == FEATURE_IPV6)
     pstPsCtx->ucIpv6Capability = AT_IPV6_CAPABILITY_IPV4_ONLY;
 
     pstPsCtx->stIpv6BackProcExtCauseTbl.ulCauseNum = 0;
 
     pstPsCtx->ulIpv6AddrTestModeCfg = 0;
+#endif
 
     pstPsCtx->ucSharePdpFlag = VOS_FALSE;
 
@@ -660,8 +893,10 @@ VOS_VOID AT_InitModemSmsCtx(MODEM_ID_ENUM_UINT16 enModemId)
                (sizeof(AT_SMS_MT_BUFFER_STRU) * AT_SMSMT_BUFFER_MAX));
 
     /* 广播短信的语言选择和不存储直接上报PDU的缓存初始化 */
+#if ((FEATURE_ON == FEATURE_GCBS) || (FEATURE_ON == FEATURE_WCBS))
     TAF_MEM_SET_S(&(pstSmsCtx->stCbsDcssInfo), sizeof(pstSmsCtx->stCbsDcssInfo), 0x00, sizeof(pstSmsCtx->stCbsDcssInfo));
     TAF_MEM_SET_S(&(pstSmsCtx->stCbmBuffer), sizeof(pstSmsCtx->stCbmBuffer), 0x00, sizeof(pstSmsCtx->stCbmBuffer));
+#endif
 
     return;
 }
@@ -677,6 +912,9 @@ VOS_VOID AT_InitModemNetCtx(MODEM_ID_ENUM_UINT16 enModemId)
     pstNetCtx->ucCregType              = AT_CREG_RESULT_CODE_NOT_REPORT_TYPE;
     pstNetCtx->ucCgregType             = AT_CGREG_RESULT_CODE_NOT_REPORT_TYPE;
 
+#if (FEATURE_ON == FEATURE_UE_MODE_NR)
+    pstNetCtx->ucC5gregType            = AT_C5GREG_RESULT_CODE_NOT_REPORT_TYPE;
+#endif
 
     pstNetCtx->ucCopsFormatType         = AT_COPS_LONG_ALPH_TYPE;
     pstNetCtx->enPrefPlmnType           = MN_PH_PREF_PLMN_UPLMN;
@@ -689,7 +927,9 @@ VOS_VOID AT_InitModemNetCtx(MODEM_ID_ENUM_UINT16 enModemId)
     TAF_MEM_SET_S(&(pstNetCtx->stTimeInfo), sizeof(pstNetCtx->stTimeInfo), 0x00, sizeof(pstNetCtx->stTimeInfo));
     TAF_MEM_SET_S(&(pstNetCtx->stCgerepCfg), sizeof(pstNetCtx->stCgerepCfg), 0x00, sizeof(pstNetCtx->stCgerepCfg));
 
+#if(FEATURE_ON == FEATURE_LTE)
     pstNetCtx->ucCeregType           = AT_CEREG_RESULT_CODE_NOT_REPORT_TYPE;
+#endif
 
     pstNetCtx->stCsdfCfg.ucMode         = 1;   /* 1 DD-MMM-YYYY */
     pstNetCtx->stCsdfCfg.ucAuxMode      = 1;   /* 1 yy/MM/dd */
@@ -750,6 +990,7 @@ VOS_VOID AT_InitModemPsCtx(
         TAF_MEM_SET_S(&pstPsCtx->astCallEntity[ulCnt].stIpv4Info.stIpv4DhcpInfo,
                    sizeof(pstPsCtx->astCallEntity[ulCnt].stIpv4Info.stIpv4DhcpInfo), 0x00, sizeof(AT_IPV4_DHCP_PARAM_STRU));
 
+#if (FEATURE_ON == FEATURE_IPV6)
         pstPsCtx->astCallEntity[ulCnt].stIpv6Info.ucIpv6Cid   = AT_PS_CALL_INVALID_CID;
         pstPsCtx->astCallEntity[ulCnt].stIpv6Info.enIpv6State = AT_PDP_STATE_IDLE;
         pstPsCtx->astCallEntity[ulCnt].stIpv6Info.enWlanIpv6State = AT_PDP_STATE_IDLE;
@@ -759,6 +1000,7 @@ VOS_VOID AT_InitModemPsCtx(
                    sizeof(pstPsCtx->astCallEntity[ulCnt].stIpv6Info.stIpv6RaInfo), 0x00, sizeof(AT_IPV6_RA_INFO_STRU));
         TAF_MEM_SET_S(&pstPsCtx->astCallEntity[ulCnt].stIpv6Info.stIpv6DhcpInfo,
                    sizeof(pstPsCtx->astCallEntity[ulCnt].stIpv6Info.stIpv6DhcpInfo), 0x00, sizeof(AT_IPV6_DHCP_PARAM_STRU));
+#endif
         TAF_MEM_SET_S(&pstPsCtx->astCallEntity[ulCnt].stApnDataSysInfo,
                    sizeof(pstPsCtx->astCallEntity[ulCnt].stApnDataSysInfo), 0x00, sizeof(AT_PS_APN_DATA_SYS_INFO_STRU));
 
@@ -781,10 +1023,14 @@ VOS_VOID AT_InitModemPsCtx(
     /* 初始化IP地址与RABID的映射表 */
     TAF_MEM_SET_S(pstPsCtx->aulIpAddrRabIdMap, sizeof(pstPsCtx->aulIpAddrRabIdMap), 0x00, (sizeof(VOS_UINT32) * AT_PS_RABID_MAX_NUM));
 
+#if (FEATURE_ON == FEATURE_IMS)
     TAF_MEM_SET_S(&(pstPsCtx->stImsEmcRdp), sizeof(AT_IMS_EMC_RDP_STRU), 0x00, sizeof(AT_IMS_EMC_RDP_STRU));
+#endif
 
+#if (FEATURE_ON == FEATURE_IPV6)
     AT_InitPsIPv6IIDMgrInfoByModemId(enModemId);
     AT_InitPsPdpTypeChgMgrInfoByModemId(enModemId);
+#endif
 
     return;
 }
@@ -807,6 +1053,7 @@ VOS_VOID AT_InitModemPrivacyFilterCtx(
 
     return;
 }
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_VOID AT_InitModemCdmaModemSwitchCtx(
     MODEM_ID_ENUM_UINT16                enModemId
@@ -825,6 +1072,7 @@ VOS_VOID AT_InitModemCdmaModemSwitchCtx(
 
     return;
 }
+#endif
 
 VOS_VOID AT_InitModemImsCtx(MODEM_ID_ENUM_UINT16 enModemId)
 {
@@ -898,6 +1146,64 @@ VOS_VOID AT_InitReleaseInfo(VOS_VOID)
     return;
 }
 
+#if (FEATURE_ON == FEATURE_AT_HSUART)
+
+VOS_VOID AT_InitUartCtx(VOS_VOID)
+{
+    AT_UART_CTX_STRU                   *pstUartCtx = VOS_NULL_PTR;
+    VOS_UINT8                           ucCallId;
+
+    pstUartCtx     = AT_GetUartCtxAddr();
+
+    TAF_MEM_SET_S(pstUartCtx, (VOS_UINT32)sizeof(AT_UART_CTX_STRU), 0x00, (VOS_UINT32)sizeof(AT_UART_CTX_STRU));
+
+    /* 初始化UART可维可测信息 */
+    AT_InitHsUartStats();
+
+    /* 初始化UART波特率，帧格式默认值 */
+    pstUartCtx->stPhyConfig.enBaudRate            = AT_UART_DEFAULT_BAUDRATE;
+    pstUartCtx->stPhyConfig.stFrame.enFormat      = AT_UART_DEFAULT_FORMAT;
+    pstUartCtx->stPhyConfig.stFrame.enParity      = AT_UART_DEFAULT_PARITY;
+
+    /* 初始化UART LINE CTRL默认值 */
+    pstUartCtx->stLineCtrl.enDcdMode              = AT_UART_DEFAULT_DCD_MODE;
+    pstUartCtx->stLineCtrl.enDtrMode              = AT_UART_DEFAULT_DTR_MODE;
+    pstUartCtx->stLineCtrl.enDsrMode              = AT_UART_DEFAULT_DSR_MODE;
+
+    /* 初始化FLOW CTRL默认值 */
+    pstUartCtx->stFlowCtrl.enDceByDte             = AT_UART_DEFAULT_FC_DCE_BY_DTE;
+    pstUartCtx->stFlowCtrl.enDteByDce             = AT_UART_DEFAULT_FC_DTE_BY_DCE;
+
+    /* 初始化RI信号波形默认值 */
+    pstUartCtx->stRiConfig.ulSmsRiOnInterval      = AT_UART_DEFAULT_SMS_RI_ON_INTERVAL;
+    pstUartCtx->stRiConfig.ulSmsRiOffInterval     = AT_UART_DEFAULT_SMS_RI_OFF_INTERVAL;
+    pstUartCtx->stRiConfig.ulVoiceRiOnInterval    = AT_UART_DEFAULT_VOICE_RI_ON_INTERVAL;
+    pstUartCtx->stRiConfig.ulVoiceRiOffInterval   = AT_UART_DEFAULT_VOICE_RI_OFF_INTERVAL;
+    pstUartCtx->stRiConfig.ucVoiceRiCycleTimes    = AT_UART_DEFAULT_VOICE_RI_CYCLE_TIMES;
+
+    /* 初始化RI信号状态 */
+    pstUartCtx->stRiStateInfo.ulRunFlg            = VOS_FALSE;
+    pstUartCtx->stRiStateInfo.enType              = AT_UART_RI_TYPE_BUTT;
+
+    pstUartCtx->stRiStateInfo.hVoiceRiTmrHdl      = VOS_NULL_PTR;
+    pstUartCtx->stRiStateInfo.enVoiceRiTmrStatus  = AT_TIMER_STATUS_STOP;
+    pstUartCtx->stRiStateInfo.ulVoiceRiCycleCount = 0;
+
+    for (ucCallId = 0; ucCallId <= MN_CALL_MAX_NUM; ucCallId++)
+    {
+        pstUartCtx->stRiStateInfo.aenVoiceRiStatus[ucCallId] = AT_UART_RI_STATUS_STOP;
+    }
+
+    pstUartCtx->stRiStateInfo.hSmsRiTmrHdl        = VOS_NULL_PTR;
+    pstUartCtx->stRiStateInfo.ulSmsRiOutputCount  = 0;
+    pstUartCtx->stRiStateInfo.enSmsRiTmrStatus    = AT_TIMER_STATUS_STOP;
+
+    pstUartCtx->ulTxWmHighFlg                     = VOS_FALSE;
+    pstUartCtx->pWmLowFunc                        = VOS_NULL_PTR;
+
+    return;
+}
+#endif
 
 VOS_VOID AT_InitCommCtx(VOS_VOID)
 {
@@ -953,7 +1259,9 @@ VOS_VOID AT_InitModemCtx(MODEM_ID_ENUM_UINT16 enModemId)
     AT_InitModemImsCtx(enModemId);
 
     AT_InitModemPrivacyFilterCtx(enModemId);
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     AT_InitModemCdmaModemSwitchCtx(enModemId);
+#endif
     return;
 }
 
@@ -977,6 +1285,7 @@ VOS_VOID AT_InitCtx(VOS_VOID)
 
 MODEM_ID_ENUM_UINT16 AT_GetModemIDFromPid(VOS_UINT32 ulPid)
 {
+#if (MULTI_MODEM_NUMBER >= 2)
     VOS_UINT32                          ulModemPidTabLen;
     VOS_UINT32                          i;
 
@@ -995,13 +1304,18 @@ MODEM_ID_ENUM_UINT16 AT_GetModemIDFromPid(VOS_UINT32 ulPid)
             return MODEM_ID_1;
         }
 
+#if (3 == MULTI_MODEM_NUMBER)
         if (ulPid == g_astAtModemPidTab[i].ulModem2Pid)
         {
             return MODEM_ID_2;
         }
+#endif
     }
 
     return MODEM_ID_BUTT;
+#else
+    return MODEM_ID_0;
+#endif
 }
 
 
@@ -1033,6 +1347,7 @@ AT_COMM_PS_CTX_STRU* AT_GetCommPsCtxAddr(VOS_VOID)
     return &(g_stAtCommCtx.stPsCtx);
 }
 
+#if (FEATURE_ON == FEATURE_IMS)
 
 AT_IMS_EMC_RDP_STRU* AT_GetImsEmcRdpByClientId(VOS_UINT16 usClientId)
 {
@@ -1046,6 +1361,7 @@ AT_IMS_EMC_RDP_STRU* AT_GetImsEmcRdpByClientId(VOS_UINT16 usClientId)
 
     return &(AT_GetModemPsCtxAddrFromModemId(enModemId)->stImsEmcRdp);
 }
+#endif
 
 
 AT_COMM_PB_CTX_STRU* AT_GetCommPbCtxAddr(VOS_VOID)
@@ -1278,6 +1594,7 @@ AT_MODEM_IMS_CONTEXT_STRU* AT_GetModemImsCtxAddrFromClientId(
     return &(g_astAtModemCtx[enModemId].stAtImsCtx);
 }
 
+#if (FEATURE_ON == FEATURE_IPV6)
 
 VOS_UINT32 AT_GetPsIPv6IIDTestModeConfig(VOS_VOID)
 {
@@ -1359,6 +1676,7 @@ VOS_VOID AT_InitPsPdpTypeChgMgrInfoByModemId(MODEM_ID_ENUM_UINT16 enModemId)
 
     return;
 }
+#endif
 
 
 AT_CLIENT_CTX_STRU* AT_GetClientCtxAddr(
@@ -1426,6 +1744,7 @@ VOS_UINT32 AT_GetDestPid(
     VOS_UINT32                          ulRcvPid
 )
 {
+#if (1 < MULTI_MODEM_NUMBER)
     VOS_UINT32                          ulRslt;
     MODEM_ID_ENUM_UINT16                enModemId;
     VOS_UINT32                          i;
@@ -1463,6 +1782,7 @@ VOS_UINT32 AT_GetDestPid(
             PS_PRINTF_WARNING("<AT_GetDestPid> usClientId is %d, ulRcvPid is %d no modem1 pid. \n", usClientId, ulRcvPid);
         }
     }
+#endif
 
     return ulRcvPid;
 }
@@ -1497,6 +1817,12 @@ VOS_UINT8 AT_IsModemSupportRat(
         return pstSptRatList->ucPlatformSptGsm;
     }
 
+#if (FEATURE_ON == FEATURE_UE_MODE_NR)
+    if (TAF_MMA_RAT_NR == enRat)
+    {
+        return pstSptRatList->ucPlatformSptNR;
+    }
+#endif
 
     return VOS_FALSE;
 }
@@ -1631,6 +1957,7 @@ AT_MODEM_PRIVACY_FILTER_CTX_STRU* AT_GetModemPrivacyFilterCtxAddrFromModemId(
 {
     return &(g_astAtModemCtx[enModemId].stFilterCtx);
 }
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 AT_MODEM_CDMAMODEMSWITCH_CTX_STRU* AT_GetModemCdmaModemSwitchCtxAddrFromModemId(
     MODEM_ID_ENUM_UINT16                enModemId
@@ -1638,6 +1965,7 @@ AT_MODEM_CDMAMODEMSWITCH_CTX_STRU* AT_GetModemCdmaModemSwitchCtxAddrFromModemId(
 {
     return &(g_astAtModemCtx[enModemId].stCdmaModemSwitchCtx);
 }
+#endif
 
 AT_MODEM_MT_INFO_CTX_STRU* AT_GetModemMtInfoCtxAddrFromModemId(
     MODEM_ID_ENUM_UINT16                enModemId
@@ -1813,6 +2141,12 @@ VOS_VOID AT_AddUsedClientId2Tab(VOS_UINT16 usClientId)
         return;
     }
 
+#if (VOS_WIN32 == VOS_OS_VER)
+    if (AT_CLIENT_ID_SOCK == usClientId)
+    {
+        return;
+    }
+#endif
 
     if (pstPortBuffCfg->ucNum >= AT_MAX_CLIENT_NUM)
     {
@@ -1907,13 +2241,21 @@ VOS_UINT8 AT_IsSupportReleaseRst(
     AT_ACCESS_STRATUM_REL_ENUM_UINT8    enReleaseType
 )
 {
+#if (FEATURE_ON == FEATURE_LTE)
     if (enReleaseType <= g_stReleaseInfo.enAccessStratumRel)
     {
         return VOS_TRUE;
     }
+#endif
 
+#if(FEATURE_ON == FEATURE_UE_MODE_NR)
+    /* 目前AT_IsSupportReleaseRst调用时，入参均是Release 11，对于NR宏开启的场景，都需要返回VOS_TRUE */
+    return VOS_TRUE;
+#else
     return VOS_FALSE;
+#endif
 }
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT8* AT_GetModemCLModeCtxAddrFromModemId(
     MODEM_ID_ENUM_UINT16                enModemId
@@ -1921,6 +2263,7 @@ VOS_UINT8* AT_GetModemCLModeCtxAddrFromModemId(
 {
     return &(g_astAtModemCtx[enModemId].stPlatformCapList.ucIsCLMode);
 }
+#endif
 
 VOS_UINT8 AT_GetCgpsCLockEnableFlgByModemId(
     MODEM_ID_ENUM_UINT16                enModemId

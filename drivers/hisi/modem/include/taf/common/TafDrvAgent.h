@@ -530,7 +530,6 @@ enum DRV_AGENT_MSG_TYPE_ENUM
     DRV_AGENT_TSELRF_SET_REQ             = 0x0084,                              /* _H2ASN_MsgChoice DRV_AGENT_TSELRF_SET_REQ_STRU */
     DRV_AGENT_HKADC_GET_REQ              = 0x0086,                              /* _H2ASN_MsgChoice  */
     DRV_AGENT_TBAT_QRY_REQ               = 0x0088,
-    /* Added by f62575 for B050 Project, 2012-2-3, Begin   */
     DRV_AGENT_SECUBOOT_SET_REQ           = 0x008A,
 
     DRV_AGENT_SIMLOCK_NV_SET_REQ         = 0x008c,
@@ -590,10 +589,8 @@ enum DRV_AGENT_MSG_TYPE_ENUM
     DRV_AGENT_AUTHORITYID_QRY_CNF        = 0x0031,                              /* _H2ASN_MsgChoice DRV_AGENT_AUTHORITYID_QRY_CNF_STRU*/
     DRV_AGENT_GODLOAD_SET_CNF            = 0x0033,                              /* _H2ASN_MsgChoice DRV_AGENT_GODLOAD_SET_CNF_STRU*/
     DRV_AGENT_HWNATQRY_QRY_CNF           = 0x0035,                              /* _H2ASN_MsgChoice DRV_AGENT_HWNATQRY_QRY_CNF_STRU*/
-    /* Added by 傅映君/f62575 for CPULOAD&MFREELOCKSIZE处理过程移至C核, 2011/11/15, begin */
     DRV_AGENT_CPULOAD_QRY_CNF            = 0x0037,                              /* _H2ASN_MsgChoice AT_APPCTRL_STRU*/
     DRV_AGENT_MFREELOCKSIZE_QRY_CNF      = 0x0039,                              /* _H2ASN_MsgChoice AT_APPCTRL_STRU*/
-    /* Added by 傅映君/f62575 for CPULOAD&MFREELOCKSIZE处理过程移至C核, 2011/11/15, end */
 
     DRV_AGENT_MEMINFO_QRY_CNF            = 0x003A,                              /* _H2ASN_MsgChoice AT_APPCTRL_STRU*/
 
@@ -900,7 +897,6 @@ typedef struct
     DRV_AGENT_MFREELOCKSIZE_QRY_ERROR_ENUM_UINT32   enResult;
     VOS_INT32                                       lMaxFreeLockSize;
 }DRV_AGENT_MFREELOCKSIZE_QRY_CNF_STRU;
-/* Added by 傅映君/f62575 for CPULOAD&MFREELOCKSIZE处理过程移至C核, 2011/11/15, end */
 
 
 typedef struct
@@ -1944,7 +1940,6 @@ typedef struct
     AT_APPCTRL_STRU                                 stAtAppCtrl;                /* 消息头 */
     DRV_AGENT_HVPDH_ERR_ENUM_UINT32                 enResult;                   /* 命令执行结果 */
 }DRV_AGENT_HVPDH_CNF_STRU;
-/* Added by L47619 for V9R1 vSIM Project, 2013-8-27, end */
 
 
 typedef struct

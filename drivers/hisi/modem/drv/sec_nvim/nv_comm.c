@@ -197,7 +197,10 @@ u32 nv_read_from_mem(nv_rdwr_req *rreq, nv_item_info_s *item_info, nv_ctrl_info_
         return NV_ERROR;
     }
 
-    (void)memcpy_s((void*)rreq->pdata, rreq->size, (void*)(mdm_base+rreq->offset), rreq->size);
+    if(memcpy_s((void*)rreq->pdata, rreq->size, (void*)(mdm_base+rreq->offset), rreq->size))
+    {
+        nv_printf("memcpy error\n");
+    }
 
     return NV_OK;
 }

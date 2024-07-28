@@ -371,7 +371,7 @@ static inline void bsp_ipc_suspend(void){return ;}
 static inline void bsp_ipc_resume(void){return ;}
 #endif
  
-typedef s32 (*read_cb_func)(u32 channel_id , u32 len, void* context);
+typedef s32 (*read_cb_func)(u32 channel_id , u32 len, void* context);/*lint !e761 */
 #ifdef CONFIG_IPC_MSG
 /*****************************************************************************
 * º¯ Êý Ãû  : bsp_ipc_msg_register

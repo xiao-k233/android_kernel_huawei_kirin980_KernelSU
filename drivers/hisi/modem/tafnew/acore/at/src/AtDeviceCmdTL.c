@@ -60,6 +60,7 @@
 
 /* 定义了LTE与TDS私有装备AT命令 */
 AT_PAR_CMD_ELEMENT_STRU g_astAtDeviceCmdTLTbl[] = {
+#if(FEATURE_ON == FEATURE_LTE)
     /*BEGIN: LTE 快速校准装备AT命令 */
 	{AT_CMD_NVRDLEN,
 	 atSetNVRDLenPara,		 AT_SET_PARA_TIME,	VOS_NULL_PTR,		 AT_NOT_SET_TIME,  VOS_NULL_PTR, AT_NOT_SET_TIME,
@@ -74,6 +75,7 @@ AT_PAR_CMD_ELEMENT_STRU g_astAtDeviceCmdTLTbl[] = {
 	 (VOS_UINT8*)"^NVRDEX",(VOS_UINT8*)"(0-65535),(0-2048),(0-2048)"},
 
 
+#endif
 
     {AT_CMD_LTCOMMCMD,
     atSetLTCommCmdPara,     AT_SET_PARA_TIME,     atQryLTCommCmdPara,     AT_QRY_PARA_TIME, VOS_NULL_PTR, AT_NOT_SET_TIME,

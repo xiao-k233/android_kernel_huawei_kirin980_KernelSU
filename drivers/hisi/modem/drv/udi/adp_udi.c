@@ -69,6 +69,36 @@ static int udiAdpAcmInit(void);
 #define UDI_USB_NCM_NDIS_CAPA   (UDI_CAPA_READ_CB | UDI_CAPA_BUFFER_LIST)
 #define UDI_USB_NCM_CTRL_CAPA   (UDI_CAPA_READ_CB | UDI_CAPA_CTRL_OPT)
 #define UDI_UART_CAPA           (UDI_CAPA_BLOCK_READ | UDI_CAPA_BLOCK_WRITE)
+#ifndef CONFIG_USB_SUPPORT
+void* bsp_acm_open(u32 dev_id)
+{
+        return NULL;
+}
+
+s32 bsp_acm_close(void* handle)
+{
+        return 0;
+}
+
+s32 bsp_acm_write(void* handle, void *buf, u32 size)
+{
+        return 0;
+}
+
+s32 bsp_acm_read(void* handle, void *buf, u32 size)
+{
+        return 0;
+}
+
+s32 bsp_acm_ioctl(void* handle, u32 cmd, void *para)
+{
+        return 0;
+}
+
+void acm_adp_dump(void)
+{
+}
+#endif
 
 /* 各模块初始化函数定义 */
 void* g_udiInitFuncTable[(unsigned int)UDI_DEV_MAX+1] =
@@ -104,7 +134,7 @@ static int udiAcmAdpOpen(UDI_OPEN_PARAM_S *param, UDI_HANDLE handle)
 
 	UDI_UNUSED_PARAM(handle);
 
-	u32Type = UDI_GET_DEV_TYPE(param->devid);
+	u32Type = UDI_GET_DEV_TYPE((unsigned int)param->devid);
     filep = bsp_acm_open(u32Type);
 	if (!filep)
 	{

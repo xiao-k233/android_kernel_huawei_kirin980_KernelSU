@@ -56,6 +56,7 @@ extern "C"
 #if defined(_MSC_VER)
 #pragma pack(push, 4)
 #else
+#pragma pack(push)
 #pragma pack(4)
 #endif
 
@@ -140,11 +141,7 @@ typedef unsigned int       DRV_TIME;         /* type for file time fields */
     int mdrv_file_xcopy(const char *source,const char *dest);
     int mdrv_file_xdelete(const char *source);
 
-#if defined(_MSC_VER)
 #pragma pack(pop)
-#else
-#pragma pack()
-#endif
 
 #ifdef __cplusplus
 }

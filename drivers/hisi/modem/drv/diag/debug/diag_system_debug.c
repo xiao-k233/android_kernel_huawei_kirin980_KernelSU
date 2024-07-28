@@ -388,9 +388,16 @@ u32 diag_CreateDFR(char *name, u32 ulLen, DIAG_DFR_INFO_STRU *pDfr)
         return ERR_MSP_FAILURE;
     }
 
-    (void)memset_s(pDfr->pData, pDfr->ulLen, 0, ulLen);
+    if(memset_s(pDfr->pData, pDfr->ulLen, 0, ulLen))
+    {
+        diag_error("memset fail\n");
+    }
 
-    (void)memcpy_s(pDfr->name, sizeof(pDfr->name), name, strnlen(name, DIAG_DFR_NAME_MAX-1));
+    if(memcpy_s(pDfr->name, sizeof(pDfr->name), name, strnlen(name, DIAG_DFR_NAME_MAX-1)))
+    {
+        diag_error("memcpy fail\n");
+    }
+
     pDfr->name[DIAG_DFR_NAME_MAX-1] = 0;
 
     pDfr->ulCur = 0;
@@ -423,27 +430,45 @@ void diag_SaveDFR(DIAG_DFR_INFO_STRU *pDfr, u8 *pData, u32 ulLen)
     /* 拷贝开始标记和时间戳 */
     if((pDfr->ulCur + sizeof(DIAG_DFR_HEADER_STRU)) <= pDfr->ulLen)
     {
-        (void)memcpy_s(&(pDfr->pData[pDfr->ulCur]), pDfr->ulLen-pDfr->ulCur, &stDfrHeader, sizeof(stDfrHeader));
+        if(memcpy_s(&(pDfr->pData[pDfr->ulCur]), pDfr->ulLen-pDfr->ulCur, &stDfrHeader, sizeof(stDfrHeader)))
+       {
+            diag_error("memcpy fail\n");
+        }
     }
     else
     {
         ulSize = (pDfr->ulLen - pDfr->ulCur);
-        (void)memcpy_s(&(pDfr->pData[pDfr->ulCur]), ulSize, &stDfrHeader, ulSize);
-        (void)memcpy_s(&(pDfr->pData[0]), pDfr->ulCur,
-            (((u8*)&stDfrHeader)+ulSize), (sizeof(stDfrHeader) - ulSize));
+        if(memcpy_s(&(pDfr->pData[pDfr->ulCur]), ulSize, &stDfrHeader, ulSize))
+        {
+            diag_error("memcpy fail\n");
+        }
+        if(memcpy_s(&(pDfr->pData[0]), pDfr->ulCur,
+            (((u8*)&stDfrHeader)+ulSize), (sizeof(stDfrHeader) - ulSize)))
+       {
+            diag_error("memcpy fail\n");
+        }
     }
     pDfr->ulCur = (DFR_ALIGN_WITH_4BYTE(pDfr->ulCur + sizeof(DIAG_DFR_HEADER_STRU))) % pDfr->ulLen;
 
     /* 拷贝码流 */
     if((pDfr->ulCur + ulLen) <= pDfr->ulLen)
     {
-        (void)memcpy_s(&(pDfr->pData[pDfr->ulCur]), pDfr->ulLen-pDfr->ulCur, pData, ulLen);
+        if(memcpy_s(&(pDfr->pData[pDfr->ulCur]), pDfr->ulLen-pDfr->ulCur, pData, ulLen))
+       {
+            diag_error("memcpy fail\n");
+        }
     }
     else
     {
         ulSize = (pDfr->ulLen - pDfr->ulCur);
-        (void)memcpy_s(&(pDfr->pData[pDfr->ulCur]), ulSize, pData, ulSize);
-        (void)memcpy_s(&(pDfr->pData[0]), pDfr->ulCur, (pData + ulSize), (ulLen - ulSize));
+        if(memcpy_s(&(pDfr->pData[pDfr->ulCur]), ulSize, pData, ulSize))
+       {
+            diag_error("memcpy fail\n");
+        }
+        if(memcpy_s(&(pDfr->pData[0]), pDfr->ulCur, (pData + ulSize), (ulLen - ulSize)))
+       {
+            diag_error("memcpy fail\n");
+        }
     }
     pDfr->ulCur = (DFR_ALIGN_WITH_4BYTE(pDfr->ulCur + ulLen)) % pDfr->ulLen;
 
@@ -482,7 +507,10 @@ void diag_GetDFR(DIAG_DFR_INFO_STRU *pDfr)
 
     (void)memcpy_s(FilePath, sizeof(FilePath), DIAG_LOG_PATH, len);
 
-    (void)memcpy_s((FilePath + len), sizeof(FilePath)-len, pDfr->name, strnlen(pDfr->name,DIAG_DFR_NAME_MAX));
+    if(memcpy_s((FilePath + len), sizeof(FilePath)-len, pDfr->name, strnlen(pDfr->name,DIAG_DFR_NAME_MAX)))
+    {
+        diag_error("memcpy fail\n");
+    }
 
     pFile = mdrv_file_open(FilePath, "wb+");
     if(pFile == 0)

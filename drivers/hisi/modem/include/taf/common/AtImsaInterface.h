@@ -94,7 +94,7 @@ extern "C" {
 #define IMSA_AT_PDN_FAIL_CAUSE_WIFI_NW_CAUSE_SECTION_BEGIN      (0x10000)
 #define AT_IMSA_MAX_EMERGENCY_AID_LEN                   (256)
 
-#define AT_IMSA_USER_AGENT_STR_LEN          (16)
+#define AT_IMSA_USER_AGENT_STR_LEN          (32)
 
 #define IMSA_AT_DIALOG_NOTIFY_MAX_LEN                       (500)
 #define IMSA_AT_RTT_REASON_TEXT_MAX_LEN                     (64)
@@ -162,6 +162,8 @@ enum AT_IMSA_MSG_TYPE_ENUM
     ID_AT_IMSA_RTT_MODIFY_SET_REQ           = 0x0027,                           /* _H2ASN_MsgChoice AT_IMSA_RTT_MODIFY_SET_REQ_STRU */
     ID_AT_IMSA_TRANSPORT_TYPE_SET_REQ       = 0x0028,                           /* _H2ASN_MsgChoice AT_IMSA_TRANSPORT_TYPE_SET_REQ_STRU*/
     ID_AT_IMSA_TRANSPORT_TYPE_QRY_REQ       = 0x0029,                           /* _H2ASN_MsgChoice AT_IMSA_TRANSPORT_TYPE_QRY_REQ_STRU*/
+    ID_AT_IMSA_EMC_PDN_ACTIVIVATE_REQ       = 0x002A,
+    ID_AT_IMSA_EMC_PDN_DEACTIVATE_REQ       = 0x002B,
     /* IMSA->AT */
     ID_IMSA_AT_CIREG_SET_CNF                = 0x1001,                           /* _H2ASN_MsgChoice IMSA_AT_CIREG_SET_CNF_STRU */
     ID_IMSA_AT_CIREG_QRY_CNF                = 0x1002,                           /* _H2ASN_MsgChoice IMSA_AT_CIREG_QRY_CNF_STRU */
@@ -246,6 +248,8 @@ enum AT_IMSA_MSG_TYPE_ENUM
     ID_IMSA_AT_RTT_ERROR_IND                = 0x1038,                           /* _H2ASN_MsgChoice IMSA_AT_RTT_ERROR_IND_STRU */
     ID_IMSA_AT_TRANSPORT_TYPE_SET_CNF       = 0x1039,                           /*_H2ASN_MsgChoice IMSA_AT_TRANSPORT_TYPE_SET_CNF_STRU*/
     ID_IMSA_AT_TRANSPORT_TYPE_QRY_CNF       = 0x103A,                           /*_H2ASN_MsgChoice IMSA_AT_TRANSPORT_TYPE_QRY_CNF_STRU*/
+    ID_IMSA_AT_EMC_PDN_ACTIVATE_CNF         = 0x103B,
+    ID_IMSA_AT_EMC_PDN_DEACTIVATE_CNF       = 0x103C,
     ID_AT_IMSA_MSG_BUTT
 };
 typedef  VOS_UINT32  AT_IMSA_MSG_TYPE_ENUM_UINT32;
@@ -335,7 +339,7 @@ enum IMSA_AT_IMS_RAT_TYPE_ENUM
     IMSA_AT_IMS_RAT_TYPE_UTRAN          = 0x02,
     IMSA_AT_IMS_RAT_TYPE_GSM            = 0x03,
 
-    IMSA_AT_IMS_RAT_TYPE_BUTT
+    IMSA_AT_IMS_RAT_TYPE_BUTT           = 0xFF
 };
 typedef VOS_UINT8 IMSA_AT_IMS_RAT_TYPE_ENUM_UINT8;
 
@@ -355,8 +359,7 @@ enum IMSA_AT_IMS_REG_DOMAIN_TYPE_ENUM
     IMSA_AT_IMS_REG_DOMAIN_TYPE_WIFI    = 0x01,
     IMSA_AT_IMS_REG_DOMAIN_TYPE_UTRAN   = 0x02,
     IMSA_AT_IMS_REG_DOMAIN_TYPE_GSM     = 0x03,
-    IMSA_AT_IMS_REG_DOMAIN_TYPE_UNKNOWN = 0x04,
-    IMSA_AT_IMS_REG_DOMAIN_TYPE_BUTT
+    IMSA_AT_IMS_REG_DOMAIN_TYPE_UNKNOWN = 0xFF
 };
 typedef VOS_UINT8 IMSA_AT_IMS_REG_DOMAIN_TYPE_ENUM_UINT8;
 
@@ -907,6 +910,40 @@ typedef struct
     VOS_UINT8                           ucOpId;
     TAF_PDP_TYPE_ENUM_UINT8             enPdpType;
 } IMSA_AT_EMC_PDN_DEACTIVATE_IND_STRU;
+
+/*****************************************************************************
+ 结构名称  : IMSA_AT_EMC_PDN_ACTIVATE_CNF_STRU
+ 结构说明  : ID_IMSA_AT_EMC_PDN_ACTIVATE_CNF 消息结构
+*****************************************************************************/
+typedef struct
+{
+    VOS_MSG_HEADER                                             /* _H2ASN_Skip */
+    VOS_UINT32                          ulMsgId;               /* _H2ASN_Skip */
+    VOS_UINT16                          usClientId;
+    VOS_UINT8                           ucOpId;
+    VOS_UINT8                           ucReserved;
+    VOS_UINT32                          ulResult;
+    TAF_PDP_ADDR_STRU                   stPdpAddr;
+    TAF_PDP_DNS_STRU                    stIpv4Dns;
+    TAF_PDP_IPV6_DNS_STRU               stIpv6Dns;
+    VOS_UINT16                          usMtu;
+    VOS_UINT16                          usReserved;
+} IMSA_AT_EMC_PDN_ACTIVATE_CNF_STRU;
+
+/*****************************************************************************
+ 结构名称  : IMSA_AT_EMC_PDN_DEACTIVATE_CNF_STRU
+ 结构说明  : ID_IMSA_AT_EMC_PDN_DEACTIVATE_CNF 消息结构
+*****************************************************************************/
+typedef struct
+{
+    VOS_MSG_HEADER                                             /* _H2ASN_Skip */
+    VOS_UINT32                          ulMsgId;               /* _H2ASN_Skip */
+    VOS_UINT16                          usClientId;
+    VOS_UINT8                           ucOpId;
+    VOS_UINT8                           aucReserved[1];
+    VOS_UINT32                          ulResult;
+} IMSA_AT_EMC_PDN_DEACTIVATE_CNF_STRU;
+
 
 
 typedef struct
@@ -1703,6 +1740,10 @@ typedef struct
     AT_APPCTRL_STRU                     stAppCtrl;
     IMSA_AT_RTT_ERROR_STRU              stRttError;
 } IMSA_AT_RTT_ERROR_IND_STRU;
+
+
+typedef AT_IMSA_MSG_STRU AT_IMSA_EMC_PDN_ACTIVATE_REQ_STRU;
+typedef AT_IMSA_MSG_STRU AT_IMSA_EMC_PDN_DEACTIVATE_REQ_STRU;
 
 
 /*****************************************************************************

@@ -4,10 +4,10 @@ extern struct psam_device *g_psam_device;
 
 void psam_help(void)
 {
-	bsp_err("psam_ad_info 		打印单个ad描述符信息\n");
-	bsp_err("psam_dump_ad_info 	打印所有ad描述符信息\n\n");
+	bsp_err("psam_ad_info\n");
+	bsp_err("psam_dump_ad_info\n");
 
-	bsp_err("********ad队列的基本信息\n");
+	bsp_err("********\n");
 	bsp_err("ad0 virtual addr  0x%x\n",g_psam_device->adq0_info.vir_addr);
 
 	bsp_err("ad0 physical addr 0x%llx\n",g_psam_device->hal->get_ad0_base());
@@ -29,29 +29,29 @@ void psam_help(void)
 	bsp_err("dlrd long cnt  %d\n",((struct ipf_debug*)(g_psam_device->ipf_deb))->get_rd_cnt[1]);
     bsp_err("free ad numbers:  %d\n", g_psam_device->debug.adq_free_cnt);
 
-	bsp_err("********ad队列空满统计\n");
-	bsp_err("adq0 空的次数是 %d\n",g_psam_device->debug.adq0_epty_int1);
-	bsp_err("adq1 空的次数是 %d\n",g_psam_device->debug.adq1_epty_int1);
-	bsp_err("upoverflow 次数是 %d\n",g_psam_device->debug.lbdq_upoverflow);
-	bsp_err("lbdq_full 次数是 %d\n",g_psam_device->debug.lbdq_full);
-	bsp_err("lbdq_empty 次数是 %d\n\n",g_psam_device->debug.lbdq_empty);
+	bsp_err("********\n");
+	bsp_err("adq0 empty count%d\n",g_psam_device->debug.adq0_epty_int1);
+	bsp_err("adq1 empty count%d\n",g_psam_device->debug.adq1_epty_int1);
+	bsp_err("upoverflow count%d\n",g_psam_device->debug.lbdq_upoverflow);
+	bsp_err("lbdq_full count%d\n",g_psam_device->debug.lbdq_full);
+	bsp_err("lbdq_empty count%d\n\n",g_psam_device->debug.lbdq_empty);
 
-	bsp_err("********接口信息统计\n");
+	bsp_err("********\n");
 	bsp_err("call get_dlad_num cnt is: %d\n\n",g_psam_device->debug.get_dlad_num);
 
-	bsp_err("adq0 成功次数是 %d\n",g_psam_device->debug.cfg_dl_ad_succ[0]);
-	bsp_err("参数 get_dlad0_num 为NULL %d\n",g_psam_device->debug.cfg_get_ad_para_null[0]);
-	bsp_err("参数 ad0 desc 为NULL %d\n",g_psam_device->debug.dlad_desc_null[0]);
-	bsp_err("adq0 outpointer为0 %d\n\n",g_psam_device->debug.dlad_outptr_err[0]);
+	bsp_err("adq0 success count %d\n",g_psam_device->debug.cfg_dl_ad_succ[0]);
+	bsp_err("get_dlad0_num NULL %d\n",g_psam_device->debug.cfg_get_ad_para_null[0]);
+	bsp_err("ad0 desc NULL %d\n",g_psam_device->debug.dlad_desc_null[0]);
+	bsp_err("adq0 outpointer null %d\n\n",g_psam_device->debug.dlad_outptr_err[0]);
 
-	bsp_err("adq1 成功次数是 %d\n",g_psam_device->debug.cfg_dl_ad_succ[1]);
-	bsp_err("参数 get_dlad0_num 为NULL %d\n",g_psam_device->debug.cfg_get_ad_para_null[1]);
-	bsp_err("参数 ad1 desc 为NULL %d\n",g_psam_device->debug.dlad_desc_null[1]);
-	bsp_err("adq1 outpointer为0 %d\n\n",g_psam_device->debug.dlad_outptr_err[1]);
+	bsp_err("adq1 success count%d\n",g_psam_device->debug.cfg_dl_ad_succ[1]);
+	bsp_err("get_dlad0_num NULL %d\n",g_psam_device->debug.cfg_get_ad_para_null[1]);
+	bsp_err("ad1 desc NULL %d\n",g_psam_device->debug.dlad_desc_null[1]);
+	bsp_err("adq1 outpointer null %d\n\n",g_psam_device->debug.dlad_outptr_err[1]);
 
-	bsp_err("ad类型错误 %d\n",g_psam_device->debug.dlad_type_err);
-	bsp_err("ad个数错误 %d\n",g_psam_device->debug.cfg_dlad_num_err);
-	bsp_err("scr ad错误 %d\n",g_psam_device->debug.scr_ad_addr_exc);
+	bsp_err("ad wrong type %d\n",g_psam_device->debug.dlad_type_err);
+	bsp_err("ad count error %d\n",g_psam_device->debug.cfg_dlad_num_err);
+	bsp_err("scr ad error %d\n",g_psam_device->debug.scr_ad_addr_exc);
 }
 
 int psam_ad_info( unsigned int ad_type, unsigned int adq_ptr)
@@ -62,9 +62,7 @@ int psam_ad_info( unsigned int ad_type, unsigned int adq_ptr)
     }
 
  	bsp_err("===========DL AD%d Info==========\n",ad_type);
- 	bsp_err("AD位置:             %d\n",adq_ptr);
-// 	bsp_err("OutPtr0(phy_addr, use by hardware): 0x%llx\n",(long long unsigned int)g_psam_device->desc[ad_type][adq_ptr].u32OutPtr0);
-// 	bsp_err("OutPtr1(usrfield skb_addr default): 0x%llx\n",(long long unsigned int)g_psam_device->desc[ad_type][adq_ptr].u32OutPtr1);
+ 	bsp_err("AD pos:             %d\n",adq_ptr);
     bsp_err("************************\n");
     return 0;
 }

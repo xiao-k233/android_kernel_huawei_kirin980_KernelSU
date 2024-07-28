@@ -46,22 +46,6 @@
  *
  */
 
-/*****************************************************************************/
-/*                                                                           */
-/*                Copyright 1999 - 2003, Huawei Tech. Co., Ltd.              */
-/*                           ALL RIGHTS RESERVED                             */
-/*                                                                           */
-/* FileName: v_iddef.inc                                                     */
-/*                                                                           */
-/* Author:                                                                   */
-/*                                                                           */
-/* Version:  1.0                                                             */
-/*                                                                           */
-/* Date:                                                                     */
-/*                                                                           */
-/* Description: create this file                                             */
-/*                                                                           */
-/*****************************************************************************/
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -253,6 +237,8 @@ FID_Static_Table_Type g_aFidStaticTable[VOS_FID_BUTT] =
     {CPROC_FID_HRPD,        "CPROC_EVDO",   CPROC_HRPD_FidInit,     VOS_START_THIRD,    8192,   0  },
     {CPROC_FID_RM,          "CPROC_RM",     CPROC_RM_FidInit,       VOS_START_THIRD,    8192,   0  },
     {UEPS_FID_CNAS,         "CNAS_FID",     CNAS_FidInit,           VOS_START_THIRD,    16384,  0  },
+#endif
+#if ((FEATURE_ON == FEATURE_UE_MODE_CDMA) || (FEATURE_ON == FEATURE_PPP)) 
     {MSPS_FID_PPPC,         "PPPC_FID",     PPPC_FidInit,           VOS_START_THIRD,    16384,  0  },
 #endif
 #if ((FEATURE_ON == FEATURE_CSDR) || (FEATURE_ON == FEATURE_GSM_SDR))

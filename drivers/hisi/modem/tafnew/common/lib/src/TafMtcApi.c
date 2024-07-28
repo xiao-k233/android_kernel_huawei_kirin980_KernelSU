@@ -70,4 +70,254 @@
 /*****************************************************************************
    3 函数实现
 *****************************************************************************/
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+
+VOS_UINT32 MTC_SndMsg(
+    VOS_UINT32                          ulTaskId,
+    VOS_UINT32                          ulMsgId,
+    VOS_VOID                           *pData,
+    VOS_UINT32                          ulLength
+)
+{
+    TAF_PS_MSG_STRU                    *pstMsg   = VOS_NULL_PTR;
+    VOS_UINT32                          ulResult;
+
+    ulResult = VOS_OK;
+
+    /* 构造消息 */
+    pstMsg = (TAF_PS_MSG_STRU*)PS_ALLOC_MSG_WITH_HEADER_LEN(
+                                UEPS_PID_MTC,
+                                sizeof(MSG_HEADER_STRU) + ulLength);
+    if (VOS_NULL_PTR == pstMsg)
+    {
+        return VOS_ERR;
+    }
+
+    pstMsg->stHeader.ulReceiverPid      = UEPS_PID_MTC;
+    pstMsg->stHeader.ulMsgName          = ulMsgId;
+
+    /* 填写消息内容 */
+    TAF_MEM_CPY_S(pstMsg->aucContent, ulLength, pData, ulLength);
+
+    /* 发送消息 */
+    ulResult = PS_SEND_MSG(UEPS_PID_MTC, pstMsg);
+    if (VOS_OK != ulResult)
+    {
+        return VOS_ERR;
+    }
+
+    return VOS_OK;
+}
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
+
+VOS_UINT32 MTC_SetCdmaServiceConnStateInfo(
+    TAF_CTRL_STRU                      *pstCtrl,
+    TAF_MTC_CDMA_STATE_INFO_STRU       *pstCdmaState
+)
+{
+    TAF_MTC_CDMA_STATE_IND_STRU         stSetCdmaConnSt;
+    VOS_UINT32                          ulResult;
+
+    /* 初始化 */
+    ulResult = VOS_OK;
+    TAF_MEM_SET_S(&stSetCdmaConnSt, sizeof(stSetCdmaConnSt), 0x00, sizeof(TAF_MTC_CDMA_STATE_IND_STRU));
+
+    /* 构造ID_MSG_MTC_CDMA_CONN_STATUS消息 */
+    TAF_API_CTRL_HEADER(&stSetCdmaConnSt.stCtrl, pstCtrl->ulModuleId,
+                        pstCtrl->usClientId, pstCtrl->ucOpId);
+
+    TAF_MEM_CPY_S(&stSetCdmaConnSt.stCdmaState, sizeof(stSetCdmaConnSt.stCdmaState), pstCdmaState, sizeof(TAF_MTC_CDMA_STATE_INFO_STRU));
+
+    /* 发送消息 */
+    ulResult = MTC_SndMsg(UEPS_PID_MTC,
+                         ID_MSG_MTC_CDMA_CONN_STATE_IND,
+                         &stSetCdmaConnSt,
+                         sizeof(TAF_MTC_CDMA_STATE_IND_STRU));
+
+    return ulResult;
+}
+#endif
+
+MODULE_EXPORTED VOS_UINT32 MTC_SetModemServiceConnState(
+    TAF_CTRL_STRU                      *pstCtrl,
+    TAF_MTC_SRV_CONN_STATE_INFO_STRU   *pstModemConnSt
+)
+{
+    TAF_MTC_MODEM_CONN_STATUS_IND_STRU  stModemConnSt;
+    VOS_UINT32                          ulResult;
+
+    /* 初始化 */
+    ulResult = VOS_OK;
+    TAF_MEM_SET_S(&stModemConnSt, sizeof(stModemConnSt), 0x00, sizeof(TAF_MTC_MODEM_CONN_STATUS_IND_STRU));
+
+    /* 构造ID_MSG_MTC_CDMA_CONN_STATUS消息 */
+    TAF_API_CTRL_HEADER(&(stModemConnSt.stCtrl), pstCtrl->ulModuleId, pstCtrl->usClientId, pstCtrl->ucOpId);
+
+    TAF_MEM_CPY_S(&stModemConnSt.stModemConnStateInfo, sizeof(stModemConnSt.stModemConnStateInfo), pstModemConnSt, sizeof(TAF_MTC_SRV_CONN_STATE_INFO_STRU));
+
+    /* 发送消息 */
+    ulResult = MTC_SndMsg(UEPS_PID_MTC,
+                         ID_MSG_MTC_MODEM_SERVICE_CONN_STATE_IND,
+                         &stModemConnSt,
+                         sizeof(TAF_MTC_MODEM_CONN_STATUS_IND_STRU));
+
+    return ulResult;
+}
+
+
+VOS_UINT32 MTC_SetModemUsimmState(
+    TAF_CTRL_STRU                           *pstCtrl,
+    TAF_MTC_USIMM_CARD_SERVIC_ENUM_UINT16    enUsimState,
+    TAF_MTC_USIMM_CARD_SERVIC_ENUM_UINT16    enCsimState
+)
+{
+    TAF_MTC_USIMM_STATUS_IND_STRU       stUsimmState;
+    VOS_UINT32                          ulResult;
+
+    /* 初始化 */
+    ulResult = VOS_OK;
+    TAF_MEM_SET_S(&stUsimmState, sizeof(stUsimmState), 0x00, sizeof(TAF_MTC_USIMM_STATUS_IND_STRU));
+
+    /* 构造ID_MSG_MTC_CDMA_CONN_STATUS消息 */
+    TAF_API_CTRL_HEADER(&(stUsimmState.stCtrl), pstCtrl->ulModuleId, pstCtrl->usClientId, pstCtrl->ucOpId);
+
+    stUsimmState.enUsimState = enUsimState;
+    stUsimmState.enCsimState = enCsimState;
+
+    /* 发送消息 */
+    ulResult = MTC_SndMsg(UEPS_PID_MTC,
+                          ID_MSG_MTC_USIMM_STATE_IND,
+                          &stUsimmState,
+                          sizeof(TAF_MTC_USIMM_STATUS_IND_STRU));
+
+    return ulResult;
+}
+
+
+VOS_VOID MTC_SetPowerSaveInfo(
+    VOS_UINT32                          ulSndPid,
+    TAF_MTC_POWER_SAVE_ENUM_UINT8       enPowerSaveStatus
+)
+{
+    MTC_POWER_SAVE_IND_STRU             stPowerSaveInfo;
+
+    /* 初始化 */
+    TAF_MEM_SET_S(&stPowerSaveInfo, sizeof(stPowerSaveInfo), 0x00, sizeof(MTC_POWER_SAVE_IND_STRU));
+
+    /* 构造ID_MSG_MTC_POWER_SAVE_IND消息 */
+    stPowerSaveInfo.stCtrl.ulModuleId = ulSndPid;
+    stPowerSaveInfo.enPowerSaveStatus = enPowerSaveStatus;
+
+    /* 发送消息 */
+    MTC_SndMsg(UEPS_PID_MTC,
+               ID_MSG_MTC_POWER_SAVE_IND,
+               &stPowerSaveInfo,
+               sizeof(MTC_POWER_SAVE_IND_STRU));
+
+    return;
+}
+
+
+MODULE_EXPORTED VOS_VOID MTC_SetRatModeInfo(
+    TAF_CTRL_STRU                      *pstCtrl,
+    MTC_RATMODE_ENUM_UINT8              enRatMode
+)
+{
+    MTC_RAT_MODE_IND_STRU               stRatModeInfo;
+
+    /* 初始化 */
+    TAF_MEM_SET_S(&stRatModeInfo, sizeof(stRatModeInfo), 0x00, sizeof(MTC_RAT_MODE_IND_STRU));
+
+    /* 构造ID_MSG_MTC_RAT_MODE_IND消息 */
+    TAF_API_CTRL_HEADER(&(stRatModeInfo.stCtrl), pstCtrl->ulModuleId, pstCtrl->usClientId, pstCtrl->ucOpId);
+
+    stRatModeInfo.enRatMode = enRatMode;
+
+    /* 发送消息 */
+    MTC_SndMsg(UEPS_PID_MTC,
+               ID_MSG_MTC_RAT_MODE_IND,
+               &stRatModeInfo,
+               (VOS_UINT32)sizeof(MTC_RAT_MODE_IND_STRU));
+
+    return;
+}
+
+
+MODULE_EXPORTED VOS_VOID MTC_SetBeginSessionInfo(
+    TAF_CTRL_STRU                      *pstCtrl,
+    MTC_SESSION_TYPE_ENUM_UINT8         enSessionType
+)
+{
+    MTC_BEGIN_SESSION_IND_STRU          stSessionInfo;
+
+    /* 初始化 */
+    TAF_MEM_SET_S(&stSessionInfo, sizeof(stSessionInfo), 0x00, sizeof(MTC_BEGIN_SESSION_IND_STRU));
+
+    /* 构造ID_MSG_MTC_BEGIN_SESSION_IND消息 */
+    TAF_API_CTRL_HEADER(&(stSessionInfo.stCtrl), pstCtrl->ulModuleId, pstCtrl->usClientId, pstCtrl->ucOpId);
+
+    stSessionInfo.enSessionType = enSessionType;
+
+    /* 发送消息 */
+    MTC_SndMsg(UEPS_PID_MTC,
+               ID_MSG_MTC_BEGIN_SESSION_IND,
+               &stSessionInfo,
+               sizeof(MTC_BEGIN_SESSION_IND_STRU));
+
+    return;
+}
+
+
+MODULE_EXPORTED VOS_VOID MTC_SetEndSessionInfo(
+    TAF_CTRL_STRU                      *pstCtrl,
+    MTC_SESSION_TYPE_ENUM_UINT8         enSessionType
+)
+{
+    MTC_END_SESSION_IND_STRU            stEndSessionInfo;
+
+    /* 初始化 */
+    TAF_MEM_SET_S(&stEndSessionInfo, sizeof(stEndSessionInfo), 0x00, sizeof(MTC_END_SESSION_IND_STRU));
+
+    /* 构造ID_MSG_MTC_END_SESSION_IND消息 */
+    TAF_API_CTRL_HEADER(&(stEndSessionInfo.stCtrl), pstCtrl->ulModuleId, pstCtrl->usClientId, pstCtrl->ucOpId);
+
+    stEndSessionInfo.enSessionType  = enSessionType;
+    stEndSessionInfo.enCsRelAll     = VOS_FALSE;
+    stEndSessionInfo.enPsRelAll     = VOS_FALSE;
+
+    /* 发送消息 */
+    MTC_SndMsg(UEPS_PID_MTC,
+               ID_MSG_MTC_END_SESSION_IND,
+               &stEndSessionInfo,
+               sizeof(MTC_END_SESSION_IND_STRU));
+
+    return;
+}
+
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
+
+MODULE_EXPORTED VOS_VOID MTC_Set1xActiveFlg(
+    VOS_UINT8                  uc1xActiveFlg,
+    VOS_UINT8                  ucIsSwitchOnScene
+)
+{
+    MTC_1X_ACTIVE_FLG_IND_STRU               st1xActiveInfo;
+
+    /* 初始化 */
+    TAF_MEM_SET_S(&st1xActiveInfo, sizeof(st1xActiveInfo), 0x00, sizeof(MTC_1X_ACTIVE_FLG_IND_STRU));
+
+    /* 构造ID_MSG_MTC_RAT_MODE_IND消息 */
+    st1xActiveInfo.uc1xActiveFlg     = uc1xActiveFlg;
+    st1xActiveInfo.ucIsSwitchOnScene = ucIsSwitchOnScene;
+
+    /* 发送消息 */
+    MTC_SndMsg(UEPS_PID_MTC,
+               ID_MSG_MTC_1X_ACTIVE_IND,
+               &st1xActiveInfo,
+               (VOS_UINT32)sizeof(MTC_1X_ACTIVE_FLG_IND_STRU));
+
+    return;
+}
+#endif
+#endif
 

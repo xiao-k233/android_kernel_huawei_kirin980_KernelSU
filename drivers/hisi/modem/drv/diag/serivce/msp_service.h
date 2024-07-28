@@ -95,7 +95,7 @@ struct MSP_SERVICE_TABLE
 /*****************************************************************************
   7 Fuction Extern
 *****************************************************************************/
-u32 msp_ServiceProc(SOCP_DECODER_DST_ENUM_U32 enChanID,u8 *pucData, u32 ulSize,u8 *pucRBData, u32 ulRBSize);
+void msp_ServiceProc(SOCP_DECODER_DST_ENUM_U32 enChanID,u8 *pucData, u32 ulSize,u8 *pucRBData, u32 ulRBSize);
 void msp_ServiceInit(void);
 void msp_ServiceProcReg(diag_frame_sid_type ulType, MSP_SERVICE_FUNC pServiceFn);
 

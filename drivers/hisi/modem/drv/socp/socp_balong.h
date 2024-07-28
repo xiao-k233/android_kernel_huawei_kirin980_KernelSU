@@ -303,7 +303,7 @@ typedef int (*socp_task_entry)(void * data);
 
 
 #define SOCP_BBPLOG_CHN_SIZE          (0x2000)
-// modify by yangzhi 20130624
+
 #define SOCP_BBPLOG0_CHN_SIZE         (0x2000*8)
 #define SOCP_FIXEDID_BASE             (SOCP_DSPLOG_CHN - SOCP_FIXCHN_BASE)
 

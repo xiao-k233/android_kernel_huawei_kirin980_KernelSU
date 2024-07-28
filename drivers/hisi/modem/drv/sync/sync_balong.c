@@ -47,8 +47,10 @@
  */
 
 /*lint --e{537,718,746,958,959}*/
+#ifdef __KERNEL__
 #include <linux/time.h>
 #include <linux/delay.h>
+#endif
 #include <osl_spinlock.h>
 #include <osl_module.h>
 #include <bsp_ipc.h>
@@ -63,7 +65,11 @@
 #define sync_print_err(fmt, ...)  (bsp_err(fmt, ##__VA_ARGS__))
 #define SYNC_LOCK_ADDR           (SHM_BASE_ADDR+SHM_OFFSET_SYNC)
 #define SYNC_STATE_ADDR         (SYNC_LOCK_ADDR + 0x30)
+#ifdef __KERNEL__
 #define SYNC_SLEEP(a) msleep(a*10)
+#else
+#define SYNC_SLEEP(a) taskDelay(a)
+#endif
 struct sync_control
 {
 	char *g_pSyncLock;

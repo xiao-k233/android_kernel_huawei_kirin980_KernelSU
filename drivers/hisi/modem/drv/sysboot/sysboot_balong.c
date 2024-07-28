@@ -53,6 +53,7 @@
 
 #include <product_config.h>
 
+#ifdef CONFIG_HISI_BALONG_MODEM_MODULE
 #include <mdrv_module_init.h>
 
 /* modem driver init in kernel thread to make sure it runs in a kernel domain */
@@ -103,4 +104,5 @@ __init int bsp_modem_module_init(void)
 }
 
 module_init(bsp_modem_module_init);
+#endif
 

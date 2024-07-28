@@ -141,7 +141,7 @@ u32 diag_report_air(DRV_DIAG_AIR_IND_STRU *pstAir);
 u32 diag_report_trace(void *pMsg, u32 modemid);
 u32 diag_report_msg_trans(DRV_DIAG_TRANS_IND_STRU *pstData, u32 ulcmdid);
 u32 diag_report_cnf(DRV_DIAG_CNF_INFO_STRU *pstDiagInfo, void *pstData, u32 ulLen);
-u32 diag_report_drv_log(u32 level, char* fmt, va_list arg);
+u32 diag_report_drv_log(u32 level, const char* fmt);
 void diag_report_init(void);
 void diag_report_reset(void);
 char * diag_GetFileNameFromPath(char* pcFileName);

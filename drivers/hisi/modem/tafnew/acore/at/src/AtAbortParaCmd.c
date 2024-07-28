@@ -65,6 +65,7 @@
 /*****************************************************************************
   3 º¯ÊýÊµÏÖ
 *****************************************************************************/
+#if (FEATURE_ON == FEATURE_CSG)
 
 VOS_UINT32 AT_AbortCsgIdSearchPara(
     VOS_UINT8                           ucIndex
@@ -89,6 +90,7 @@ VOS_UINT32 AT_AbortCsgIdSearchPara(
 
     return AT_FAILURE;
 }
+#endif
 
 
 

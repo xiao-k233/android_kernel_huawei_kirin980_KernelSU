@@ -87,7 +87,7 @@ void bsp_hardtimer_load_value(u32 timer_id, u32 value)
 	spin_lock_irqsave(&core_timer_control.timer[timer_id].lock,flags);
 	if(value < 1)
 		value = 1;
-	core_timer_control.timer[timer_id].driver->ops->timer_set_init_value(&core_timer_control.timer[timer_id],value);
+	core_timer_control.timer[timer_id].driver->ops->timer_set_init_value((struct timer_device *)(uintptr_t)&core_timer_control.timer[timer_id],value);
 	core_timer_control.timer[timer_id].timer_ctrl.timeout = value;
 	spin_unlock_irqrestore(&core_timer_control.timer[timer_id].lock,flags);
 }
@@ -97,7 +97,7 @@ u32 bsp_get_timer_current_value(u32 timer_id)
 	u32 ret = 0;
 	unsigned long flags = 0;
 	spin_lock_irqsave(&core_timer_control.timer[timer_id].lock,flags);
-	ret = core_timer_control.timer[timer_id].driver->ops->timer_get_cur_value(&core_timer_control.timer[timer_id]);
+	ret = core_timer_control.timer[timer_id].driver->ops->timer_get_cur_value((struct timer_device *)(uintptr_t)&core_timer_control.timer[timer_id]);
 	spin_unlock_irqrestore(&core_timer_control.timer[timer_id].lock,flags);
 	return ret;
 }
@@ -108,7 +108,7 @@ int bsp_get_timer_rest_time(u32 timer_id, DRV_TIMER_UNIT_E unit,unsigned int *re
 	if(!check_timer_valid(timer_id)){
 		return BSP_ERROR;
 	}
-	if(!core_timer_control.timer[timer_id].driver->ops->check_timer_enabled(&core_timer_control.timer[timer_id]))/*if 0, it is to say not enabled*/
+	if(!core_timer_control.timer[timer_id].driver->ops->check_timer_enabled((struct timer_device *)(uintptr_t)&core_timer_control.timer[timer_id]))/*if 0, it is to say not enabled*/
 	{
 		*rest=0;/*osa timer request return 0 if not enabled*/
 		return BSP_OK;
@@ -135,7 +135,7 @@ void bsp_hardtimer_int_unmask(u32 timer_id)
 {
 	unsigned long flags = 0;
 	spin_lock_irqsave(&core_timer_control.timer[timer_id].lock,flags);
-	core_timer_control.timer[timer_id].driver->ops->timer_unmask(&core_timer_control.timer[timer_id]);
+	core_timer_control.timer[timer_id].driver->ops->timer_unmask((struct timer_device *)(uintptr_t)&core_timer_control.timer[timer_id]);
 	spin_unlock_irqrestore(&core_timer_control.timer[timer_id].lock,flags);
 }
 
@@ -143,17 +143,17 @@ void bsp_hardtimer_int_mask(u32 timer_id)
 {
 	unsigned long flags = 0;
 	spin_lock_irqsave(&core_timer_control.timer[timer_id].lock,flags);
-	core_timer_control.timer[timer_id].driver->ops->timer_mask(&core_timer_control.timer[timer_id]);
+	core_timer_control.timer[timer_id].driver->ops->timer_mask((struct timer_device *)(uintptr_t)&core_timer_control.timer[timer_id]);
 	spin_unlock_irqrestore(&core_timer_control.timer[timer_id].lock,flags);
 }
 u32 bsp_hardtimer_int_status(u32 timer_id)
 {
-	return core_timer_control.timer[timer_id].driver->ops->timer_int_status(&core_timer_control.timer[timer_id]);
+	return core_timer_control.timer[timer_id].driver->ops->timer_int_status((struct timer_device *)(uintptr_t)&core_timer_control.timer[timer_id]);
 }
 
 void bsp_hardtimer_int_clear(u32 timer_id)
 {
-	core_timer_control.timer[timer_id].driver->ops->timer_int_clear(&core_timer_control.timer[timer_id]);
+	core_timer_control.timer[timer_id].driver->ops->timer_int_clear((struct timer_device *)(uintptr_t)&core_timer_control.timer[timer_id]);
 }
 s32 bsp_hardtimer_disable(u32 timer_id)
 {
@@ -163,7 +163,7 @@ s32 bsp_hardtimer_disable(u32 timer_id)
 		return BSP_ERROR;
 	}
 	spin_lock_irqsave(&core_timer_control.timer[timer_id].lock,flags);
-	ret = core_timer_control.timer[timer_id].driver->ops->timer_disable(&core_timer_control.timer[timer_id]);
+	ret = core_timer_control.timer[timer_id].driver->ops->timer_disable((struct timer_device *)(uintptr_t)&core_timer_control.timer[timer_id]);
 	spin_unlock_irqrestore(&core_timer_control.timer[timer_id].lock,flags);
 	return ret;
 }
@@ -177,7 +177,7 @@ s32 bsp_hardtimer_config_init(struct bsp_hardtimer_control  *timer_ctrl)
 	}
 	spin_lock_irqsave(&core_timer_control.timer[timer_ctrl->timerId].lock,flags);
 	memcpy_s((void*)&core_timer_control.timer[timer_ctrl->timerId].timer_ctrl,(size_t)sizeof(struct bsp_hardtimer_control),(const void*)timer_ctrl,(size_t)sizeof(struct bsp_hardtimer_control));
-	ret = core_timer_control.timer[timer_ctrl->timerId].driver->ops->timer_init(&core_timer_control.timer[timer_ctrl->timerId]);
+	ret = core_timer_control.timer[timer_ctrl->timerId].driver->ops->timer_init((struct timer_device *)(uintptr_t)&core_timer_control.timer[timer_ctrl->timerId]);
 	spin_unlock_irqrestore(&core_timer_control.timer[timer_ctrl->timerId].lock,flags);
 	if(timer_ctrl->func)
 	{
@@ -285,7 +285,7 @@ s32 bsp_hardtimer_enable(u32 timer_id)
 		return BSP_ERROR;
 	}
 	spin_lock_irqsave(&core_timer_control.timer[timer_id].lock,flags);
-	ret = core_timer_control.timer[timer_id].driver->ops->timer_enable(&core_timer_control.timer[timer_id]);
+	ret = core_timer_control.timer[timer_id].driver->ops->timer_enable((struct timer_device *)(uintptr_t)&core_timer_control.timer[timer_id]);
 	spin_unlock_irqrestore(&core_timer_control.timer[timer_id].lock,flags);
 	return ret;
 }
@@ -309,7 +309,7 @@ u32 get_next_schedule_time(u32 *min_timer_id)
 	for(i=0;i<core_timer_control.wakeup_timer.count;i++)
 	{
 		request_id = core_timer_control.wakeup_timer.request_id[i];
-		if(!core_timer_control.timer[request_id].driver->ops->check_timer_enabled(&core_timer_control.timer[request_id]))
+		if(!core_timer_control.timer[request_id].driver->ops->check_timer_enabled((struct timer_device *)(uintptr_t)&core_timer_control.timer[request_id]))
 		{
 			ret = 0xFFFFFFFF;
 		}
@@ -437,7 +437,7 @@ static int timer_device_init(void){
 
 static int bsp_timer_probe(struct platform_device *dev){
 	s32 ret = 0;
-	(void)memset_s((void*)&core_timer_control,sizeof(struct timercore_ctrl_s),0x0,sizeof(struct timercore_ctrl_s));
+	(void)memset_s((void*)(uintptr_t)&core_timer_control,sizeof(struct timercore_ctrl_s),0x0,sizeof(struct timercore_ctrl_s));
 	spin_lock_init(&core_timer_control.list_lock);
 	arm_timer_drviver_init();
 	ret = timer_device_init();
@@ -452,6 +452,7 @@ static int bsp_timer_probe(struct platform_device *dev){
 	}
 }
 
+#ifdef CONFIG_PM
 
 static s32 timer_suspend_noirq(struct device *dev)
 {
@@ -461,7 +462,7 @@ static s32 timer_suspend_noirq(struct device *dev)
 	/*遍历timer，保存sr_flag为1，即为掉电区timer的sysctrl reg和load reg 寄存器值*/
 	for(i=0;i<TIMER_ID_MAX;i++){
 		if(core_timer_control.timer[i].sr_flag && core_timer_control.timer[i].driver->ops->suspend){
-			core_timer_control.timer[i].driver->ops->suspend(&core_timer_control.timer[i]);
+			core_timer_control.timer[i].driver->ops->suspend((struct timer_device *)(uintptr_t)&core_timer_control.timer[i]);
 		}/*core_timer_control[i].sr_flag*/
 		else
 			continue;
@@ -490,6 +491,9 @@ static const struct dev_pm_ops timer_pm_ops ={
 	.resume_noirq   = timer_resume_noirq,
 };
 #define BALONG_DEV_PM_OPS (&timer_pm_ops)
+#else
+#define BALONG_DEV_PM_OPS NULL
+#endif
 static struct platform_driver balong_timer_driver = {
 	.probe = bsp_timer_probe,
 	.driver = {
@@ -522,6 +526,9 @@ int __init hi_timer_init(void)
 	}
 	return ret;
 }
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+arch_initcall(hi_timer_init);
+#endif
 
 
 void bsp_timer_show(void){

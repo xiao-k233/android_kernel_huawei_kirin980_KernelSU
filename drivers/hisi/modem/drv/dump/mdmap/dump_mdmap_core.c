@@ -65,7 +65,6 @@
 #include <linux/slab.h>
 #include <linux/of.h>
 #include <linux/delay.h>
-#include <linux/wakelock.h>
 #include <linux/syscalls.h>
 #include <linux/preempt.h>
 #include <asm/string.h>

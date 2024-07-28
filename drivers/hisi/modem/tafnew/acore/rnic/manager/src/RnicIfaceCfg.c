@@ -246,6 +246,84 @@ VOS_VOID RNIC_IFACE_AdjNapiLbLevel(VOS_UINT8 ucRmNetId)
     return;
 }
 
+#if (FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
+
+VOS_VOID RNIC_IFACE_NapiSchedule(VOS_ULONG ulUsrData)
+{
+    rnic_rx_complete((VOS_UINT8)ulUsrData);
+    return;
+}
+
+
+VOS_INT RNIC_IFACE_RegRxHandler(RNIC_IFACE_CTX_STRU *pstIfaceCtx)
+{
+    struct ads_iface_rx_handler_s       stRxHandler;
+
+    TAF_MEM_SET_S(&stRxHandler, sizeof(stRxHandler),
+                  0x00, sizeof(struct ads_iface_rx_handler_s));
+
+    stRxHandler.user_data     = pstIfaceCtx->enRmNetId;
+    stRxHandler.rx_func       = RNIC_DataRxProc;
+    stRxHandler.rx_cmplt_func = RNIC_IFACE_NapiSchedule;
+
+    return ads_iface_register_rx_handler(pstIfaceCtx->enIfaceId, &stRxHandler);
+}
+
+
+VOS_VOID RNIC_IFACE_SetNetDevUp(
+    RNIC_IFACE_CTX_STRU                *pstIfaceCtx,
+    VOS_UINT8                           ucIpFamily
+)
+{
+    struct rnic_ps_iface_config_s       stPsIfaceCfg;
+
+    TAF_MEM_SET_S(&stPsIfaceCfg, sizeof(stPsIfaceCfg),
+                  0x00, sizeof(struct rnic_ps_iface_config_s));
+
+    stPsIfaceCfg.devid               = pstIfaceCtx->enRmNetId;
+    stPsIfaceCfg.ip_family           = ucIpFamily;
+
+    stPsIfaceCfg.info.iface_id       = pstIfaceCtx->enIfaceId;
+    stPsIfaceCfg.info.pdu_session_id = (RNIC_IPV4_ADDR == ucIpFamily) ?
+                                       pstIfaceCtx->stPsIfaceInfo.ucIpv4ExRabId :
+                                       pstIfaceCtx->stPsIfaceInfo.ucIpv6ExRabId;
+    stPsIfaceCfg.info.fc_head        = RNIC_GET_FC_HEAD_BY_MODEMID(pstIfaceCtx->stPsIfaceInfo.enModemId);
+    stPsIfaceCfg.info.modem_id       = (VOS_UINT8)pstIfaceCtx->stPsIfaceInfo.enModemId;
+
+    stPsIfaceCfg.data_tx_func        = (RNIC_IPV4_ADDR == ucIpFamily) ?
+                                       RNIC_V4DataTxProc : RNIC_V6DataTxProc;
+
+    rnic_set_dev_ps_iface_up(&stPsIfaceCfg);
+
+    return;
+}
+
+
+VOS_VOID RNIC_IFACE_SetNetDevDown(
+    RNIC_IFACE_CTX_STRU                *pstIfaceCtx,
+    VOS_UINT8                           ucIpFamily
+)
+{
+    struct rnic_ps_iface_config_s       stPsIfaceCfg;
+
+    TAF_MEM_SET_S(&stPsIfaceCfg, sizeof(stPsIfaceCfg),
+                  0x00, sizeof(struct rnic_ps_iface_config_s));
+
+    stPsIfaceCfg.devid               = pstIfaceCtx->enRmNetId;
+    stPsIfaceCfg.ip_family           = ucIpFamily;
+    stPsIfaceCfg.info.iface_id       = RNIC_INVALID_IFACE_ID;
+    stPsIfaceCfg.info.pdu_session_id = RNIC_INVALID_PDU_SESSION_ID;
+    stPsIfaceCfg.info.fc_head        = RNIC_INVALID_FC_HEAD;
+    stPsIfaceCfg.info.modem_id       = MODEM_ID_BUTT;
+    stPsIfaceCfg.data_tx_func        = VOS_NULL_PTR;
+
+    rnic_set_dev_ps_iface_down(&stPsIfaceCfg);
+
+    RNIC_IFACE_ResetNapiConfig(pstIfaceCtx->enRmNetId);
+
+    return;
+}
+#else
 
 VOS_VOID RNIC_IFACE_NapiSchedule(VOS_UINT32 ulUsrData)
 {
@@ -278,6 +356,7 @@ VOS_INT RNIC_IFACE_RegRxHandler(
                                  RNIC_DataRxProc,
                                  pstIfaceCtx->enRmNetId);
 
+#if (FEATURE_ON == FEATURE_RNIC_NAPI_GRO)
         /* NAPI特性打开才执行 */
         if (RNIC_FEATURE_ON == RNIC_GET_NAPI_FEATURE(pstIfaceCtx->enRmNetId))
         {
@@ -286,6 +365,7 @@ VOS_INT RNIC_IFACE_RegRxHandler(
                                    RNIC_IFACE_NapiSchedule,
                                    pstIfaceCtx->enRmNetId);
         }
+#endif
     }
 
     return VOS_OK;
@@ -306,11 +386,13 @@ VOS_VOID RNIC_IFACE_SetNetDevUp(
     stPsIfaceCfg.ip_family = ucIpFamily;
 
     /* 向网卡驱动挂载上行收包回调 */
+#if ((FEATURE_ON == FEATURE_IMS) && (FEATURE_ON == FEATURE_DELAY_MODEM_INIT))
     if (RNIC_PS_RAT_TYPE_IWLAN == pstIfaceCtx->stPsIfaceInfo.enRatType)
     {
         stPsIfaceCfg.data_tx_func = RNIC_VoWifiDataTxProc;
     }
     else
+#endif
     {
         stPsIfaceCfg.data_tx_func = (RNIC_IPV4_ADDR == ucIpFamily) ?
                                     RNIC_V4DataTxProc : RNIC_V6DataTxProc;
@@ -349,6 +431,7 @@ VOS_VOID RNIC_IFACE_SetNetDevDown(
 
     return;
 }
+#endif /* FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM */
 
 
 
@@ -364,6 +447,10 @@ VOS_VOID RNIC_IFACE_SetFeatureCfg(VOS_VOID)
         RNIC_IFACE_SetNapiCfg((VOS_UINT8)ulIndex);
         RNIC_IFACE_SetNapiLbCfg((VOS_UINT8)ulIndex);
 
+#if (FEATURE_OFF == FEATURE_DELAY_MODEM_INIT)
+        /* 注册设备上行丢包回调 */
+        RNIC_IFACE_RegTxDropCB((VOS_UINT8)ulIndex);
+#endif
     }
 
     return;
@@ -542,7 +629,11 @@ VOS_VOID RNIC_IFACE_PsIfaceUp(
         RNIC_IFACE_SetNetDevUp(pstIfaceCtx, RNIC_IPV6_ADDR);
     }
 
+#if (FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
+    RNIC_IFACE_RegRxHandler(pstIfaceCtx);
+#else
     RNIC_IFACE_RegRxHandler(pstIfaceCtx, ucIpFamilyMask);
+#endif
 
     enDsFlowTimerId = RNIC_GetDsflowTimerIdByNetId(ucRmNetId);
     RNIC_StartTimer(enDsFlowTimerId, TI_RNIC_DSFLOW_STATS_LEN);
@@ -599,6 +690,7 @@ VOS_VOID RNIC_IFACE_TetherInfo(
     RNIC_PS_IFACE_TETHER_INFO_STRU     *pstTetherInfo
 )
 {
+#if (FEATURE_ON == FEATURE_RNIC_NAPI_GRO)
     RNIC_DEV_ID_ENUM_UINT8              enRmNetId;
 
     if(VOS_NULL_PTR == pstTetherInfo)
@@ -642,6 +734,9 @@ VOS_VOID RNIC_IFACE_TetherInfo(
     }
 
     RNIC_IFACE_SetNapiCfg(enRmNetId);
+#else
+    (VOS_VOID)pstTetherInfo;
+#endif
 
     return;
 }

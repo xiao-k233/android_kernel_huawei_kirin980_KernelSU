@@ -46,31 +46,6 @@
  *
  */
 
-/*****************************************************************************/
-/*                                                                           */
-/*                Copyright 1999 - 2003, Huawei Tech. Co., Ltd.              */
-/*                           ALL RIGHTS RESERVED                             */
-/*                                                                           */
-/* FileName: linux_sem.c                                                     */
-/*                                                                           */
-/* Author: Xu Cheng                                                          */
-/*                                                                           */
-/* Version: 1.0                                                              */
-/*                                                                           */
-/* Date: 2011-07                                                             */
-/*                                                                           */
-/* Description: implement linux semaphore                                    */
-/*                                                                           */
-/* Others:                                                                   */
-/*                                                                           */
-/* History:                                                                  */
-/* 1. Date:                                                                  */
-/*    Author:                                                                */
-/*    Modification: Create this file                                         */
-/*                                                                           */
-/*                                                                           */
-/*****************************************************************************/
-
 #include "vos_config.h"
 #include "v_sem.h"
 #include "v_IO.h"
@@ -81,6 +56,7 @@
 #include "pam_tag.h"
 
 
+#if (VOS_LINUX == VOS_OS_VER) || defined(LLT_OS_LINUX)
 
 /*****************************************************************************
     协议栈打印打点方式下的.C文件宏定义
@@ -469,5 +445,6 @@ VOS_VOID VOS_show_sem_info( VOS_VOID )
     mdrv_debug("<VOS_show_sem_info> Max be used sem is %x.\n", vos_SemMaxSemId);
 }
 
+#endif
 
 

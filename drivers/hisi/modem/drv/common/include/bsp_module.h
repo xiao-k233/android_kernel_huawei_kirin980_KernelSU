@@ -45,6 +45,7 @@ typedef enum _module_level
 	/* bsp_drivers */
 	mod_level_pm_om_dump,
 	mod_level_clk,
+	mod_level_clk_gate,
 	mod_level_systimer,
 	mod_level_rsracc,
 	mod_level_wakelock,
@@ -78,6 +79,7 @@ typedef enum _module_level
 	mod_level_hwadp,
 	mod_level_softtimer,
 	mod_level_edma,
+	mod_level_mpu_backup,
 	mod_level_diag,
 	mod_level_hds,
 	mod_level_board_trace,
@@ -119,6 +121,7 @@ typedef enum _module_level
     mod_level_abb_former,
 	mod_level_abb,
 	mod_level_abb_latter,
+	mod_level_clk_auto_gate,
 	mod_level_remote_clk,
 	mod_level_onoff,
 	mod_level_hotplug,

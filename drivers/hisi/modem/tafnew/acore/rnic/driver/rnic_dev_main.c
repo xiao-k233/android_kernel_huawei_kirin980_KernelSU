@@ -54,6 +54,7 @@
 #include <linux/errno.h>
 #include <linux/etherdevice.h>
 #include <linux/skbuff.h>
+#include <linux/version.h>
 #include <net/sock.h>
 #include "rnic_dev.h"
 #include "rnic_dev_config.h"
@@ -91,6 +92,7 @@ STATIC const struct rnic_dev_name_param_s rnic_dev_name_param_table[] = {
 	RNIC_DEV_NAME_ELEMENT(RMNET4),
 	RNIC_DEV_NAME_ELEMENT(RMNET5),
 	RNIC_DEV_NAME_ELEMENT(RMNET6),
+#if ((FEATURE_ON == FEATURE_IMS) && (FEATURE_ON == FEATURE_DELAY_MODEM_INIT))
 	RNIC_DEV_NAME_ELEMENT(RMNET_IMS00),
 	RNIC_DEV_NAME_ELEMENT(RMNET_IMS10),
 	RNIC_DEV_NAME_ELEMENT(RMNET_EMC0),
@@ -109,12 +111,46 @@ STATIC const struct rnic_dev_name_param_s rnic_dev_name_param_table[] = {
 	RNIC_DEV_NAME_ELEMENT(RMNET_TUN12),
 	RNIC_DEV_NAME_ELEMENT(RMNET_TUN13),
 	RNIC_DEV_NAME_ELEMENT(RMNET_TUN14)
+#endif /* FEATURE_ON == FEATURE_IMS && FEATURE_ON == FEATURE_DELAY_MODEM_INIT */
 };
 
 
 /*****************************************************************************
  4. Function defintions
 *****************************************************************************/
+
+/*****************************************************************************
+ Prototype    : rnic_check_rmnet_data
+ Description  : Check device is used for normal data service.
+ Input        : devid: id of netdeivce
+ Output       : None
+ Return Value : bool
+*****************************************************************************/
+STATIC bool rnic_check_rmnet_data(uint8_t devid)
+{
+	if (devid <= RNIC_DEV_ID_DATA_MAX)
+		return true;
+
+	return false;
+}
+
+/*****************************************************************************
+ Prototype    : rnic_check_rmnet_iwlan
+ Description  : Check device is used for iwlan service.
+ Input        : devid: id of netdeivce
+ Output       : None
+ Return Value : bool
+*****************************************************************************/
+STATIC bool rnic_check_rmnet_iwlan(uint8_t devid)
+{
+#if ((FEATURE_ON == FEATURE_IMS) && (FEATURE_ON == FEATURE_DELAY_MODEM_INIT))
+	if (devid >= RNIC_DEV_ID_RMNET_R_IMS00 &&
+	    devid <= RNIC_DEV_ID_RMNET_R_IMS11)
+		return true;
+#endif
+
+	return false;
+}
 
 /*****************************************************************************
  Prototype    : rnic_dev_open
@@ -187,6 +223,7 @@ STATIC netdev_tx_t rnic_dev_start_xmit (struct sk_buff *skb,
 	return NETDEV_TX_OK;
 }
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0))
 /*****************************************************************************
  Prototype    : rnic_dev_change_mtu
  Description  : Mtu function of netdeivce.
@@ -197,21 +234,19 @@ STATIC netdev_tx_t rnic_dev_start_xmit (struct sk_buff *skb,
 *****************************************************************************/
 STATIC int rnic_dev_change_mtu(struct net_device *dev, int new_mtu)
 {
-	struct rnic_dev_priv_s *priv =
-				(struct rnic_dev_priv_s *)netdev_priv(dev);
+	struct rnic_dev_priv_s *priv = (struct rnic_dev_priv_s *)netdev_priv(dev);
+	int max_mtu;
 
-	if (RNIC_RMNET_R_IMS_IS_VALID(priv->devid)){
-		if (new_mtu > RNIC_R_IMS_ETH_DATA_LEN)
-			return -EINVAL;
-	} else {
-		if (new_mtu > ETH_DATA_LEN)
-			return -EINVAL;
-	}
+	max_mtu = rnic_check_rmnet_iwlan(priv->devid) ?
+		  RNIC_MAX_MTU : RNIC_DEFAULT_MTU;
+	if (new_mtu > max_mtu)
+		return -EINVAL;
 
 	dev->mtu = (unsigned int)new_mtu;
 
 	return 0;
 }
+#endif
 
 /*****************************************************************************
  Prototype    : rnic_dev_get_stats
@@ -229,10 +264,12 @@ STATIC struct net_device_stats *rnic_dev_get_stats(struct net_device *dev)
 }
 
 STATIC const struct net_device_ops rnic_dev_ops = {
-	.ndo_open			= rnic_dev_open,
-	.ndo_stop			= rnic_dev_stop,
+	.ndo_open		= rnic_dev_open,
+	.ndo_stop		= rnic_dev_stop,
 	.ndo_start_xmit		= rnic_dev_start_xmit,
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0))
 	.ndo_change_mtu		= rnic_dev_change_mtu,
+#endif
 	.ndo_get_stats		= rnic_dev_get_stats,
 };
 
@@ -309,21 +346,6 @@ STATIC const struct rnic_dev_name_param_s *rnic_get_name_param(uint8_t devid)
 	}
 
 	return name_param;
-}
-
-/*****************************************************************************
- Prototype    : rnic_check_rmnet_data
- Description  : Check device is used for normal data service.
- Input        : devid: id of netdeivce
- Output       : None
- Return Value : bool
-*****************************************************************************/
-STATIC bool rnic_check_rmnet_data(uint8_t devid)
-{
-	if (devid <= RNIC_DEV_ID_DATA_MAX)
-		return true;
-
-	return false;
 }
 
 /*****************************************************************************
@@ -427,6 +449,202 @@ STATIC int rnic_cpu_hotplug_notify(struct notifier_block *nfb,
 
 	return NOTIFY_OK;
 }
+
+/*****************************************************************************
+ Prototype    : rnic_cpuhp_init
+ Description  : rnic cpu hot plug init.
+ Input        : void
+ Output       : None
+ Return Value : void
+*****************************************************************************/
+STATIC void rnic_cpuhp_init(void)
+{
+	struct rnic_dev_context_s *dev_ctx = RNIC_DEV_CTX();
+	struct rnic_dev_priv_s *priv;
+	struct net_device *dev;
+	uint8_t devid;
+
+	RNIC_LOGH("enter");
+
+	/* only data netcard need care cpu hotplug */
+	for (devid = 0; devid < RNIC_DEV_ID_DATA_MAX; devid++) {
+		dev = dev_ctx->netdev[devid];
+		if (dev) {
+			priv = rnic_get_priv(devid);
+			if (priv->lb_cap_valid) {
+				priv->cpu_hotplug_notifier.notifier_call = rnic_cpu_hotplug_notify;
+				register_cpu_notifier(&priv->cpu_hotplug_notifier);
+			} else {
+				RNIC_LOGE("exist invalide cpumasks, devid: %d.", devid);
+				priv->cpu_hotplug_notifier.notifier_call = NULL;
+			}
+		}
+	}
+
+	return;
+}
+
+/*****************************************************************************
+ Prototype    : rnic_cpuhp_deinit
+ Description  : rnic cpu hot plug deinit.
+ Input        : void
+ Output       : None
+ Return Value : void
+*****************************************************************************/
+STATIC void rnic_cpuhp_deinit(void)
+{
+	struct rnic_dev_context_s *dev_ctx = RNIC_DEV_CTX();
+	struct rnic_dev_priv_s *priv;
+	struct net_device *dev;
+	uint8_t devid;
+
+	RNIC_LOGH("enter");
+
+	/* only data netcard need care cpu hotplug */
+	for (devid = 0; devid < RNIC_DEV_ID_DATA_MAX; devid++) {
+		dev = dev_ctx->netdev[devid];
+		if (dev) {
+			priv = (struct rnic_dev_priv_s *)netdev_priv(dev);
+			if (priv->cpu_hotplug_notifier.notifier_call)
+				unregister_cpu_notifier(&priv->cpu_hotplug_notifier);
+
+		}
+	}
+
+	return;
+}
+
+#else
+
+/*****************************************************************************
+ Prototype    : rnic_cpuhp_online
+ Description  : called when cpu step into RNIC_CPUHP_STATE from low state.
+ Input        : cpu: cpu id which state change
+ Output       : None
+ Return Value : always Return 0
+*****************************************************************************/
+STATIC int rnic_cpuhp_online(unsigned int cpu)
+{
+	struct rnic_dev_context_s *dev_ctx = RNIC_DEV_CTX();
+	struct rnic_dev_priv_s *priv;
+	struct net_device *dev;
+	uint8_t devid;
+
+	RNIC_LOGH("cpuid: %d.", cpu);
+
+	/* only data netcard need care cpu hotplug */
+	for (devid = 0; devid < RNIC_DEV_ID_DATA_MAX; devid++) {
+		dev = dev_ctx->netdev[devid];
+		if (dev) {
+			priv = (struct rnic_dev_priv_s *)netdev_priv(dev);
+			cpumask_set_cpu(cpu, priv->lb_cpumask_curr_avail);
+
+			/* This cpu is the expected load balance cpu,
+			 * then set it to lb_cpumask_orig
+			 */
+			if (test_bit((int)cpu, &priv->lb_cpu_bitmask) &&
+				priv->napi_lb_level_cfg[priv->lb_cur_level].lb_cpu_weight[cpu])
+				cpumask_set_cpu(cpu, priv->lb_cpumask_orig);
+
+			priv->lb_stats[cpu].hotplug_online_num++;
+		}
+	}
+
+	return 0;
+}
+
+/*****************************************************************************
+ Prototype    : rnic_cpuhp_online
+ Description  : called when cpu step into RNIC_CPUHP_STATE from high state.
+ Input        : cpu: cpu id which state change
+ Output       : None
+ Return Value : always Return 0
+*****************************************************************************/
+STATIC int rnic_cpuhp_perpare_down(unsigned int cpu)
+{
+	struct rnic_dev_context_s *dev_ctx = RNIC_DEV_CTX();
+	struct rnic_dev_priv_s *priv;
+	struct net_device *dev;
+	uint8_t devid;
+
+	RNIC_LOGH("cpuid: %d.", cpu);
+
+	/* only data netcard need care cpu hotplug */
+	for (devid = 0; devid < RNIC_DEV_ID_DATA_MAX; devid++) {
+		dev = dev_ctx->netdev[devid];
+		if (dev) {
+			priv = (struct rnic_dev_priv_s *)netdev_priv(dev);
+			cpumask_clear_cpu((int)cpu, priv->lb_cpumask_curr_avail);
+			cpumask_clear_cpu((int)cpu, priv->lb_cpumask_orig);
+			priv->lb_stats[cpu].hotplug_down_num++;
+		}
+	}
+
+	return 0;
+}
+
+/*****************************************************************************
+ Prototype    : rnic_cpuhp_init
+ Description  : rnic cpu hot plug init.
+ Input        : void
+ Output       : None
+ Return Value : void
+*****************************************************************************/
+STATIC void rnic_cpuhp_init(void)
+{
+	struct rnic_dev_context_s *dev_ctx = RNIC_DEV_CTX();
+	struct rnic_dev_priv_s *priv;
+	struct net_device *dev;
+	int32_t ret;
+	uint8_t devid;
+
+	RNIC_LOGH("enter");
+	RNIC_DEV_CTX()->online_state = CPUHP_INVALID;
+
+	/* only data netcard need care cpu hotplug */
+	for (devid = 0; devid < RNIC_DEV_ID_DATA_MAX; devid++) {
+		dev = dev_ctx->netdev[devid];
+		if (dev) {
+			priv = (struct rnic_dev_priv_s *)netdev_priv(dev);
+			if (!priv->lb_cap_valid) {
+				RNIC_LOGE("exist invalid cpumasks, devid: %d.", devid);
+				return;
+			}
+		}
+	}
+
+	ret = cpuhp_setup_state_nocalls(CPUHP_AP_ONLINE_DYN, "rnic:online", rnic_cpuhp_online, rnic_cpuhp_perpare_down);
+	if (ret < 0) {
+		RNIC_LOGE("cpuhp_setup_state_nocalls fail, ret: %d.", ret);
+	} else {
+		/* Care cpuhp_online_state,
+		 * Currently it equel CPUHP_AP_ONLINE_DYN, so just assigned ret to online_state;
+		 * When it equel a static STATE, please assigned the static STATE to online_state;
+		 */
+		RNIC_DEV_CTX()->online_state = (enum cpuhp_state)ret;
+	}
+
+	return;
+}
+
+/*****************************************************************************
+ Prototype    : rnic_cpuhp_deinit
+ Description  : rnic cpu hot plug deinit.
+ Input        : void
+ Output       : None
+ Return Value : void
+*****************************************************************************/
+STATIC void rnic_cpuhp_deinit(void)
+{
+	RNIC_LOGH("enter");
+
+	if (RNIC_DEV_CTX()->online_state == CPUHP_INVALID)
+		RNIC_LOGE("invalid online state");
+	else
+		cpuhp_remove_state(RNIC_DEV_CTX()->online_state);
+
+	return;
+}
 #endif
 
 /*****************************************************************************
@@ -443,14 +661,12 @@ STATIC void rnic_cleanup(void)
 	struct net_device *dev;
 	uint32_t devid;
 
+	rnic_cpuhp_deinit();
+
 	for (devid = 0; devid < RNIC_DEV_ID_BUTT; devid++) {
 		dev = dev_ctx->netdev[devid];
 		if (dev) {
 			priv = (struct rnic_dev_priv_s *)netdev_priv(dev);
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0))
-			if (priv->cpu_hotplug_notifier.notifier_call)
-				unregister_cpu_notifier(&priv->cpu_hotplug_notifier);
-#endif
 			rnic_cpumasks_deinit(priv);
 
 			unregister_netdev(dev);
@@ -505,7 +721,11 @@ int rnic_create_netdev(void)
 			rnic_dev_name_param_table[devid].prefix,
 			rnic_dev_name_param_table[devid].suffix);
 		dev->flags &= ~(IFF_BROADCAST | IFF_MULTICAST);
-		dev->mtu = ETH_DATA_LEN;
+		dev->mtu = RNIC_DEFAULT_MTU;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
+		dev->max_mtu = rnic_check_rmnet_iwlan(devid) ?
+			       RNIC_MAX_MTU : RNIC_DEFAULT_MTU;
+#endif
 		memcpy(dev->dev_addr, dst_mac, ETH_ALEN); /* unsafe_function_ignore: memcpy */
 		dev->netdev_ops = &rnic_dev_ops;
 
@@ -536,17 +756,8 @@ int rnic_create_netdev(void)
 		atomic_set(&priv->napi_cpu, 0);
 
 		if (rnic_check_rmnet_data(devid)) {
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0))
-			if (!rnic_cpumasks_init(priv)) {
-				priv->cpu_hotplug_notifier.notifier_call = rnic_cpu_hotplug_notify;
-				register_cpu_notifier(&priv->cpu_hotplug_notifier);
-			} else {
+			if (rnic_cpumasks_init(priv))
 				RNIC_LOGE("cpumasks init failed, devid: %d.", devid);
-				priv->cpu_hotplug_notifier.notifier_call = NULL;
-			}
-#else
-			rnic_cpumasks_init(priv);
-#endif
 		}
 
 
@@ -562,6 +773,8 @@ int rnic_create_netdev(void)
 		dev_ctx->netdev[devid] = dev;
 		dev_ctx->priv[devid] = priv;
 	}
+
+	rnic_cpuhp_init();
 
 	dev_ctx->ready = true;
 	if (dev_ctx->dev_notifier_func)
@@ -581,6 +794,7 @@ err_name_param:
 }
 /*lint -restore +e801*/
 
+#if (FEATURE_ON == FEATURE_DELAY_MODEM_INIT)
 /*****************************************************************************
  Prototype    : rnic_init.
  Description  : Init function of rnic.
@@ -610,8 +824,15 @@ STATIC void __exit rnic_exit(void)
 	rnic_cleanup();
 	RNIC_LOGH("succ.");
 }
+#endif /* FEATURE_DELAY_MODEM_INIT */
 
 module_param(rnic_dev_log_level, uint, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(rnic_dev_log_level, "rnic device log level");
+#if (FEATURE_ON == FEATURE_DELAY_MODEM_INIT)
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+module_init(rnic_init);
+module_exit(rnic_exit);
+#endif
+#endif
 
 

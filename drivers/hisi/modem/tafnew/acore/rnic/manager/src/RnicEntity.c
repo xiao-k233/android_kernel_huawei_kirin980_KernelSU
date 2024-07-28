@@ -57,6 +57,9 @@
 #include "RnicIfaceOndemand.h"
 #include "rnic_dev_i.h"
 
+#if (VOS_WIN32 == VOS_OS_VER)
+#include <stdio.h>
+#endif
 
 
 
@@ -82,6 +85,37 @@
    5 º¯ÊýÊµÏÖ
 ******************************************************************************/
 
+#if (FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
+
+VOS_INT RNIC_V4DataTxProc(IMM_ZC_STRU *pstImmZc, VOS_UINT8 ucRmNetId)
+{
+    RNIC_IFACE_CTX_STRU                *pstIfaceCtx = VOS_NULL_PTR;
+
+    pstIfaceCtx = RNIC_GET_IFACE_CTX_ADR(ucRmNetId);
+
+    IMM_ZcSetProtocol(pstImmZc, RNIC_NS_ETH_TYPE_IP);
+
+    return ads_iface_tx(pstIfaceCtx->enIfaceId, pstImmZc);
+}
+
+
+VOS_INT RNIC_V6DataTxProc(IMM_ZC_STRU *pstImmZc, VOS_UINT8 ucRmNetId)
+{
+    RNIC_IFACE_CTX_STRU                *pstIfaceCtx = VOS_NULL_PTR;
+
+    pstIfaceCtx = RNIC_GET_IFACE_CTX_ADR(ucRmNetId);
+
+    IMM_ZcSetProtocol(pstImmZc, RNIC_NS_ETH_TYPE_IPV6);
+
+    return ads_iface_tx(pstIfaceCtx->enIfaceId, pstImmZc);
+}
+
+
+VOS_INT RNIC_DataRxProc(VOS_ULONG ulUsrData, IMM_ZC_STRU *pstImmZc)
+{
+    return rnic_rx_handle((VOS_UINT8)ulUsrData, pstImmZc);
+}
+#else
 
 VOS_INT RNIC_V4DataTxProc(IMM_ZC_STRU *pstImmZc, VOS_UINT8 ucRmNetId)
 {
@@ -115,7 +149,9 @@ VOS_INT RNIC_DataRxProc(
 
     return rnic_rx_handle((VOS_UINT8)ulExParam, pstImmZc);
 }
+#endif /* FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM */
 
+#if ((FEATURE_ON == FEATURE_IMS) && (FEATURE_ON == FEATURE_DELAY_MODEM_INIT))
 
 VOS_UINT32 RNIC_SendCdsImsDataReq(
     IMM_ZC_STRU                        *pstImmZc,
@@ -297,6 +333,7 @@ VOS_UINT32 RNIC_RecvVoWifiDlData(
 
     return VOS_OK;
 }
+#endif /* FEATURE_ON == FEATURE_IMS && FEATURE_ON == FEATURE_DELAY_MODEM_INIT */
 
 
 VOS_VOID RNIC_TxDropProc(VOS_UINT8 ucRmNetId)

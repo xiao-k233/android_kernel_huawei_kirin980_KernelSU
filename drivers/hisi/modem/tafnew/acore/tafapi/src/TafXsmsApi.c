@@ -65,9 +65,11 @@
 /*****************************************************************************
   3 函数定义
 *****************************************************************************/
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 TAF_XSMS_GetReceiverPid(MN_CLIENT_ID_T  ClientId, VOS_UINT32 *pulReceiverPid)
 {
+#if ( MULTI_MODEM_NUMBER > 1 )
     MODEM_ID_ENUM_UINT16    enModemID;
 
     /* 调用接口获取Modem ID */
@@ -80,14 +82,19 @@ VOS_UINT32 TAF_XSMS_GetReceiverPid(MN_CLIENT_ID_T  ClientId, VOS_UINT32 *pulRece
     {
         *pulReceiverPid = I1_UEPS_PID_XSMS;
     }
+#if (MULTI_MODEM_NUMBER > 2)
     else if (MODEM_ID_2 == enModemID)
     {
         *pulReceiverPid = I2_UEPS_PID_XSMS;
     }
+#endif
     else
     {
         *pulReceiverPid = I0_UEPS_PID_XSMS;
     }
+#else
+    *pulReceiverPid = UEPS_PID_XSMS;
+#endif
 
     return VOS_OK;
 }
@@ -264,6 +271,7 @@ VOS_UINT32 TAF_XSMS_DeleteSmsReq(
         return VOS_ERR;
     }
 }
+#endif
 
 
 

@@ -96,6 +96,11 @@ static const struct file_operations     g_stModemStatus = {
 DMS_NLK_ENTITY_STRU                     g_stDmsNlkEntity = {0};
 
 /*lint -esym(528,g_stDmsNlkCfg)*/
+#if (FEATURE_ON == FEATURE_LOGCAT_SINGLE_CHANNEL)
+static struct netlink_kernel_cfg        g_stDmsNlkCfg = {
+    .input      = DMS_NLK_Input,
+};
+#endif
 
 VOS_UINT8                               g_ucDmsPrintModemLogType = 0;
 
@@ -189,7 +194,7 @@ VOS_VOID DMS_Init(VOS_VOID)
     mdrv_usb_reg_enablecb(DMS_UsbEnableCB);
     mdrv_usb_reg_disablecb(DMS_UsbDisableCB);
 
-    wake_lock_init(&g_stDmsMainInfo.stwakelock, WAKE_LOCK_SUSPEND, "dms_wakelock");
+    wakeup_source_init(&g_stDmsMainInfo.stwakelock, "dms_wakelock");
 
     DMS_ReadGetModemLogCfgNV();
 
@@ -497,6 +502,14 @@ ssize_t DMS_WritePortCfgFile(
 }
 
 
+#if (VOS_LINUX == VOS_OS_VER)
+#if (FEATURE_ON == FEATURE_DELAY_MODEM_INIT)
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+module_init(DMS_InitPorCfgFile);
+module_init(DMS_InitGetSliceFile);
+#endif
+#endif
+#endif
 
 
 VOS_UINT32 DMS_RegOmChanDataReadCB(
@@ -586,7 +599,7 @@ VOS_INT DMS_WriteOmData(
     ulMemNum      = (ulLength >= DMS_GET_NLK_THRESH_SIZE())?(ulLength / DMS_GET_NLK_DATA_SIZE()):0;
     ulLastMemSize = (ulLength >= DMS_GET_NLK_THRESH_SIZE())?(ulLength % DMS_GET_NLK_DATA_SIZE()):ulLength;
 
-    wake_lock(&g_stDmsMainInfo.stwakelock);
+    __pm_stay_awake(&g_stDmsMainInfo.stwakelock);
 
     /* 发送固定大小数据块 */
     for (ulCnt = 0; ulCnt < ulMemNum; ulCnt++)
@@ -601,7 +614,7 @@ VOS_INT DMS_WriteOmData(
         DMS_NLK_Send(DMS_GET_NLK_PHY_BEAR(enChan), DMS_GET_NLK_MSG_TYPE(enChan), pucMem, ulLastMemSize, enMode);
     }
 
-    wake_unlock(&g_stDmsMainInfo.stwakelock);
+    __pm_relax(&g_stDmsMainInfo.stwakelock);
 
     return VOS_OK;
 }
@@ -970,11 +983,44 @@ VOS_VOID DMS_NLK_Input(struct sk_buff *pstSkb)
     return;
 }
 
+#if (FEATURE_ON == FEATURE_LOGCAT_SINGLE_CHANNEL)
+
+VOS_INT __init DMS_NLK_Init(VOS_VOID)
+{
+    struct sock                        *pstSock      = VOS_NULL_PTR;
+    DMS_NLK_ENTITY_STRU                *pstNlkEntity = VOS_NULL_PTR;
+
+    DMS_PR_LOGI("entry,%u",VOS_GetSlice());
+
+    /* 初始化 netlink 实体 */
+    DMS_NLK_InitEntity();
+
+    /* 在内核态创建一个 netlink socket */
+    pstSock = netlink_kernel_create(&init_net, NETLINK_HW_LOGCAT, &g_stDmsNlkCfg);
+
+    if (VOS_NULL_PTR == pstSock)
+    {
+        DMS_PR_LOGE("[LINE: %d] Fail to create netlink socket.\n",
+            __LINE__);
+        DMS_DBG_NLK_CREATE_SOCK_FAIL_NUM(1);
+        return -ENOMEM;
+    }
+
+    /* 保存 socket */
+    pstNlkEntity = DMS_GET_NLK_ENTITY();
+    pstNlkEntity->pstSock = pstSock;
+
+    DMS_PR_LOGI("exit,%u",VOS_GetSlice());
+
+    return 0;
+}
+#else
 
 VOS_INT __init DMS_NLK_Init(VOS_VOID)
 {
     return 0;
 }
+#endif
 
 
 VOS_VOID __exit DMS_NLK_Exit(VOS_VOID)
@@ -1145,6 +1191,13 @@ VOS_VOID DMS_InitModemStatus(VOS_VOID)
 
 
 /* This function is called on driver initialization and exit */
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+module_init(DMS_InitModemStatusFile);
+module_init(DMS_NLK_Init);
+#if (FEATURE_ON == FEATURE_LOGCAT_SINGLE_CHANNEL)
+module_exit(DMS_NLK_Exit);
+#endif
+#endif
 
 
 

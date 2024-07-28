@@ -1,4 +1,50 @@
-
+/*
+ * Copyright (C) Huawei Technologies Co., Ltd. 2012-2019. All rights reserved.
+ * foss@huawei.com
+ *
+ * If distributed as part of the Linux kernel, the following license terms
+ * apply:
+ *
+ * * This program is free software; you can redistribute it and/or modify
+ * * it under the terms of the GNU General Public License version 2 and
+ * * only version 2 as published by the Free Software Foundation.
+ * *
+ * * This program is distributed in the hope that it will be useful,
+ * * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * * GNU General Public License for more details.
+ * *
+ * * You should have received a copy of the GNU General Public License
+ * * along with this program; if not, write to the Free Software
+ * * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+ *
+ * Otherwise, the following license terms apply:
+ *
+ * * Redistribution and use in source and binary forms, with or without
+ * * modification, are permitted provided that the following conditions
+ * * are met:
+ * * 1) Redistributions of source code must retain the above copyright
+ * *    notice, this list of conditions and the following disclaimer.
+ * * 2) Redistributions in binary form must reproduce the above copyright
+ * *    notice, this list of conditions and the following disclaimer in the
+ * *    documentation and/or other materials provided with the distribution.
+ * * 3) Neither the name of Huawei nor the names of its contributors may
+ * *    be used to endorse or promote products derived from this software
+ * *    without specific prior written permission.
+ *
+ * * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
 
 #ifndef  CSS_AT_INTERFACE_H
 #define  CSS_AT_INTERFACE_H
@@ -23,12 +69,18 @@ extern "C" {
 *****************************************************************************/
 #define MCC_INFO_VERSION_LEN                 (9)
 #define AT_CSS_MAX_MCC_ID_NUM                (17)
+/* Added for BlackCell Feature 2017-4-22 begin */
 #define AT_CSS_BLACK_CELL_LIST_VERSION_LEN   (9)
+/* Added for BlackCell Feature 2017-4-22 end */
+/* add for CloudLine Feature 2017-6-28 begin */
 #define AT_CSS_CLOUD_LINE_VERSION_LEN        (9)                 /* 云端预置高铁线路版本号字符串长度 */
 #define AT_CSS_PLMN_MAX_LINE_NUM             (64)                /* 云端预置高铁线路一个PLMN下包含的最大线路个数 */
 #define AT_CSS_TACLAC_MAX_LINE_NUM           (10)                /* 云端预置高铁线路一个TAC/LAC所对应的最大线路个数 */
+/* add for CloudLine Feature 2017-6-28 end */
 
+/* Added for EMC, 2018-1-9, begin */
 #define AT_CSS_MRU_MAX_NUM                   (10)                /* MRU可以存储的最大个数 */
+/* Added for EMC, 2018-1-9, end */
 
 /*****************************************************************************
   3 枚举定义
@@ -44,9 +96,11 @@ enum CSS_AT_MSG_TYPE_ENUM
     ID_AT_CSS_LINE_INDEX_LIST_SET_REQ         = 0x0005,                           /* _H2ASN_MsgChoice AT_CSS_LINE_INDEX_LIST_SET_REQ_STRU */
     ID_AT_CSS_LINE_DETAIL_SET_REQ             = 0x0006,                           /* _H2ASN_MsgChoice AT_CSS_LINE_DETAIL_SET_REQ_STRU */
     ID_AT_CSS_LINE_INDEX_LIST_QUERY_REQ       = 0x0007,                           /* _H2ASN_MsgChoice AT_CSS_LINE_INDEX_LIST_QUERY_REQ_STRU */
+    /* Added for EMC, 2018-1-9, begin */
     ID_AT_CSS_VZWMRUC_SET_REQ                 = 0x0008,                           /* _H2ASN_MsgChoice AT_CSS_VZWMRUC_SET_REQ_STRU */
     ID_AT_CSS_VZWMRUE_SET_REQ                 = 0x0009,                           /* _H2ASN_MsgChoice AT_CSS_VZWMRUE_SET_REQ_STRU */
     ID_AT_CSS_VZWMRUE_QUERY_REQ               = 0x000a,                           /* _H2ASN_MsgChoice AT_CSS_VZWMRUE_QUERY_REQ_STRU */
+    /* Added for EMC, 2018-1-9, end */
 
     /* CSS->AT */
     ID_CSS_AT_MCC_INFO_SET_CNF                = 0x1001,                           /* _H2ASN_MsgChoice CSS_AT_MCC_INFO_SET_CNF_STRU */
@@ -60,9 +114,11 @@ enum CSS_AT_MSG_TYPE_ENUM
     ID_CSS_AT_LINE_INDEX_LIST_QUERY_CNF       = 0x1009,                           /* _H2ASN_MsgChoice CSS_AT_LINE_INDEX_LIST_QUERY_CNF_STRU */
     ID_CSS_AT_LINE_PLMN_NOTIFY                = 0x100a,                           /* _H2ASN_MsgChoice CSS_AT_LINE_PLMN_NOTIFY_STRU */
     ID_CSS_AT_LINE_INDEX_NOTIFY               = 0x100b,                           /* _H2ASN_MsgChoice CSS_AT_LINE_INDEX_NOTIFY_STRU */
+    /* Added for VZW EMC, 2018-1-9, begin */
     ID_CSS_AT_VZWMRUC_SET_CNF                 = 0x100c,                           /* _H2ASN_MsgChoice CSS_AT_VZWMRUC_SET_CNF_STRU */
     ID_CSS_AT_VZWMRUE_SET_CNF                 = 0x100d,                           /* _H2ASN_MsgChoice CSS_AT_VZWMRUE_SET_CNF_STRU */
     ID_CSS_AT_VZWMRUE_QUERY_CNF               = 0x100e,                           /* _H2ASN_MsgChoice CSS_AT_VZWMRUE_QUERY_CNF_STRU */
+    /* Added for VZW EMC, 2018-1-9, end */
 
     ID_CSS_AT_MSG_BUTT
 };
@@ -89,6 +145,7 @@ enum AT_CSS_SET_MCC_OPERATE_TYPE_ENUM
 };
 typedef  VOS_UINT8  AT_CSS_SET_MCC_OPERATE_TYPE_ENUM_UINT8;
 
+/* Added for BlackCell Feature 2017-4-22 begin */
 
 enum AT_CSS_BLACK_CELL_LIST_OPERATE_TYPE_ENUM
 {
@@ -98,7 +155,9 @@ enum AT_CSS_BLACK_CELL_LIST_OPERATE_TYPE_ENUM
     AT_CSS_BLACK_CELL_LIST_TYPE_BUTT
 };
 typedef  VOS_UINT8  AT_CSS_BLACK_CELL_LIST_OPERATE_TYPE_ENUM_UINT8;
+/* Added for BlackCell Feature 2017-4-22 end */
 
+/* add for CloudLine Feature 2017-6-29 begin */
 /*****************************************************************************
 枚举名    : AT_CSS_LINE_INDEX_LIST_OPERATE_TYPE_ENUM
 结构说明  : 高铁索引表操作类型
@@ -137,10 +196,13 @@ enum AT_CSS_LINE_DETAIL_INFO_TYPE_ENUM
     AT_CSS_LINE_DETAIL_INFO_TACLAC_PAIR     = 0,           /* TACLAC对 */
     AT_CSS_LINE_DETAIL_INFO_HO_PATH,                       /* HO预置路径 */
     AT_CSS_LINE_DETAIL_INFO_HO_BAR,                        /* HO预置Bar路径 */
+    /* add for Cloudline Lte Feature 2018-4-16 begin */
     AT_CSS_LINE_DETAIL_INFO_LTE_HO_PATH,                   /* LTE预置路径 */
+    /* add for Cloudline Lte Feature 2018-4-16 end */
     AT_CSS_LINE_DETAIL_INFO_NO_INFO         = 0xFF         /* 表示没有消息信息，停止解析 */
 };
 typedef  VOS_UINT8  AT_CSS_LINE_DETAIL_INFO_TYPE_ENUM_UINT8;
+/* add for CloudLine Feature 2017-6-29 end */
 
 /*****************************************************************************
   4 类型定义
@@ -198,12 +260,16 @@ typedef struct
 {
     VOS_MSG_HEADER                                                                        /* _H2ASN_Skip */
     VOS_UINT32                                    ulMsgId;                                /* _H2ASN_Skip */
+    /* add for fill right clientId 2016-02-23, begin  */
     MODEM_ID_ENUM_UINT16                          usModemId;
+    /* add for fill right clientId 2016-02-23, end  */
     VOS_UINT16                                    usClientId;
     VOS_UINT8                                     ucSeq;                                  /* 流水号 */
     AT_CSS_SET_MCC_OPERATE_TYPE_ENUM_UINT8        ucOperateType;                          /* 操作类型 */
     VOS_UINT8                                     aucVersionId[MCC_INFO_VERSION_LEN];     /* 版本号，固定为xx.xx.xxx */
+    /* modified for fill right clientId 2016-02-23, begin  */
     VOS_UINT8                                     aucRsv[1];
+    /* modified for fill right clientId 2016-02-23, end  */
 
     /*
         1)aucMccINfoBuff里存储的是MCC的信息，存储区的真实大小是ulMccInfoBuffLen里记录的字节数；
@@ -275,6 +341,7 @@ typedef struct
     VOS_UINT8                           aucMccInfoBuff[4];
 } AT_CSS_MCC_INFO_SET_REQ_STRU;
 
+/* Added for BlackCell Feature 2017-4-22 begin */
 
 typedef struct
 {
@@ -331,6 +398,7 @@ typedef struct
     VOS_UINT16                          usClientId;
     VOS_UINT8                           aucRsv[2];
 } AT_CSS_BLACK_CELL_LIST_QUERY_REQ_STRU;
+/* Added for BlackCell Feature 2017-4-22 end */
 
 typedef struct
 {
@@ -362,6 +430,7 @@ typedef struct
 } CSS_AT_BLACK_CELL_MCC_INFO_STRU;
 
 
+/* Added for BlackCell Feature 2017-4-22 begin */
 
 typedef struct
 {
@@ -394,7 +463,9 @@ typedef struct
     VOS_UINT8                           aucVersionId[AT_CSS_BLACK_CELL_LIST_VERSION_LEN];       /* 版本号，固定为xx.xx.xxx */
     CSS_AT_BLACK_CELL_MCC_INFO_STRU     stMccInfo;                                              /* 黑小区MCC信息 */
 } CSS_AT_BLACK_CELL_MCC_NOTIFY_STRU;
+/* Added for BlackCell Feature 2017-4-22 end */
 
+/* add for CloudLine Feature 2017-6-29 begin */
 
 
 typedef struct
@@ -582,8 +653,10 @@ typedef struct
     CSS_AT_PLMN_ID_STRU                 stPlmnId;                           /* plmn id */
 } CSS_AT_LINE_INDEX_NOTIFY_STRU;
 
+/* add for CloudLine Feature 2017-6-29 end */
 
 
+/* Added for VZW EMC, 2018-1-9, begin */
 
 typedef struct
 {
@@ -654,6 +727,7 @@ typedef struct
     AT_CSS_MRU_STRU                     astMru[AT_CSS_MRU_MAX_NUM];
 } CSS_AT_VZWMRUE_QUERY_CNF_STRU;
 
+/* Added for VZW EMC, 2018-1-9, end */
 
 /*****************************************************************************
   5 全局变量声明

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Huawei Technologies Co., Ltd. 2012-2015. All rights reserved.
+ * Copyright (C) Huawei Technologies Co., Ltd. 2012-2019. All rights reserved.
  * foss@huawei.com
  *
  * If distributed as part of the Linux kernel, the following license terms
@@ -101,7 +101,18 @@ VOS_UINT8     g_aucMagicCookie[] = {0x63,0x82,0x53,0x63};
   3 Function
 *****************************************************************************/
 extern VOS_UINT32 Ndis_SendMacFrm(const VOS_UINT8  *pucBuf, VOS_UINT32 ulLen, VOS_UINT8 ucRabId);
+/*****************************************************************************
+ Function Name   : IP_CalcCRC16
+ Description     : 计算CRC 16校验和
+ Input           : VOS_UINT8 *pucData : crc src buf
+                   VOS_UINT16 usLen : src buf len
+ Output          :
+ Return          : the crc16 result of Src buf
+                   (PS: the result is network byte order)
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT16  IP_CalcCRC16(VOS_UINT8 *pucData, VOS_UINT16 usLen)
 {
     VOS_UINT32    ulCheckSum  = 0;
@@ -135,7 +146,16 @@ VOS_UINT16  IP_CalcCRC16(VOS_UINT8 *pucData, VOS_UINT16 usLen)
 
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_SendDhcpToEth
+ Description     : 将DHCP包封装成Ethnet帧发送到Ethnet上
+ Input           :
+ Output          :
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IPV4_DHCP_SendDhcpToEth(const IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalyse,
                                            const NDIS_IPV4_INFO_STRU           *pstIpV4Entity,
                                            VOS_UINT16                           usDhcpLen,
@@ -242,7 +262,16 @@ VOS_VOID IPV4_DHCP_SendDhcpToEth(const IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAna
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_FormDhcpHdrStru
+ Description     : form dhcp packet fix header
+ Input           : VOS_UINT8 *pucDhcpData : 调用者保证长度大于DHCP固定头长度
+ Output          :
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IPV4_DHCP_FormDhcpHdrStru(const IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalyse,VOS_UINT8 *pucDhcpData)
 {
     IPV4_DHCP_PROTOCL_STRU    *pstDhcpHdr;
@@ -274,7 +303,16 @@ VOS_VOID IPV4_DHCP_FormDhcpHdrStru(const IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpA
 }
 
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_FormOption
+ Description     : 生成Option选项
+ Input           :
+ Output          : pusOptionLen : formed option len
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IPV4_DHCP_FormOption(const NDIS_IPV4_INFO_STRU *pstIpV4Entity,
                                       VOS_UINT8               *pucOption,
                                       VOS_UINT8                ucDhcpType,
@@ -412,7 +450,16 @@ VOS_VOID IPV4_DHCP_FormOption(const NDIS_IPV4_INFO_STRU *pstIpV4Entity,
 
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_FormOfferMsg
+ Description     : 生成DHCP OFFER消息，
+ Input           :
+ Output          :
+ Return          : 成功返回PS_SUCC;失败返回PS_FAIL
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32 IPV4_DHCP_FormOfferMsg(const IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalyse,
                                          const NDIS_IPV4_INFO_STRU     *pstIpV4Entity,
                                          VOS_UINT16                    *pusLen)
@@ -450,7 +497,16 @@ VOS_UINT32 IPV4_DHCP_FormOfferMsg(const IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAn
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_FormAckMsg
+ Description     : 生成DHCP ACK消息
+ Input           :
+ Output          :
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IPV4_DHCP_FormAckMsg(const IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalyse,
                                         const NDIS_IPV4_INFO_STRU           *pstIpV4Entity,
                                         VOS_UINT16                          *pusLen)
@@ -487,7 +543,16 @@ VOS_VOID IPV4_DHCP_FormAckMsg(const IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalys
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_FormNakMsg
+ Description     : 生成DHCP NACK消息
+ Input           :
+ Output          :
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IPV4_DHCP_FormNackMsg(const IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalyse,
                                         const NDIS_IPV4_INFO_STRU       *pstIpV4Entity,
                                         VOS_UINT16                      *pusLen)
@@ -542,7 +607,16 @@ VOS_VOID IPV4_DHCP_FormNackMsg(const IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnaly
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_FindIPV4Entity
+ Description     : 根据DHCP Client MAC Addr查找相应的IPV4实体;
+                   由调用者保证入参ExRabId对应一个NDIS实体
+ Input           : VOS_UINT8 ucRabId
+ Output          :
+ Return          : NDIS_IPV4_INFO_STRU
 
+ History         :
+*****************************************************************************/
 NDIS_IPV4_INFO_STRU * IPV4_DHCP_FindIPV4Entity(VOS_UINT8 ucExRabId)
 {
     NDIS_ENTITY_STRU         *pstNdisEntity;
@@ -559,7 +633,16 @@ NDIS_IPV4_INFO_STRU * IPV4_DHCP_FindIPV4Entity(VOS_UINT8 ucExRabId)
     return pstIpv4Info;
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_DiscoverMsgProc
+ Description     : 处理DHCP DISCOVER消息
+ Input           :
+ Output          :
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IPV4_DHCP_DiscoverMsgProc(IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalyse, VOS_UINT8 ucRabId)
 {
 
@@ -598,7 +681,16 @@ VOS_VOID IPV4_DHCP_DiscoverMsgProc(IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalyse
 
     return;
 }
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_SelectingRequestMsgProc
+ Description     : 处理Selecting状态下的请求消息
+ Input           :
+ Output          :
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IPV4_DHCP_SelectingRequestMsgProc(const IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalyse,
                                                        NDIS_IPV4_INFO_STRU       *pstIpV4Entity,
                                                        VOS_UINT8  ucRabId)
@@ -635,7 +727,16 @@ VOS_VOID IPV4_DHCP_SelectingRequestMsgProc(const IPV4_DHCP_ANALYSE_RESULT_STRU *
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_OtherRequestMsgProc
+ Description     : 处理非Selecting状态下的请求消息
+ Input           :
+ Output          :
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IPV4_DHCP_OtherRequestMsgProc( const IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalyse,
                                                    const NDIS_IPV4_INFO_STRU    *pstIpV4Entity,
                                                    VOS_UINT8  ucRabId)
@@ -669,7 +770,16 @@ VOS_VOID IPV4_DHCP_OtherRequestMsgProc( const IPV4_DHCP_ANALYSE_RESULT_STRU *pst
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_InitRebootRequestProc
+ Description     : 处理Client 在Init-Reboot状态下的请求消息
+ Input           :
+ Output          :
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IPV4_DHCP_InitRebootRequestProc( const IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalyse,
                                                     NDIS_IPV4_INFO_STRU    *pstIpV4Entity,
                                                     VOS_UINT8  ucRabId)
@@ -703,7 +813,16 @@ VOS_VOID IPV4_DHCP_InitRebootRequestProc( const IPV4_DHCP_ANALYSE_RESULT_STRU *p
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_RequestMsgProc
+ Description     : 处理DHCP REQUEST消息
+ Input           :
+ Output          :
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IPV4_DHCP_RequestMsgProc(IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalyse, VOS_UINT8 ucRabId)
 {
     NDIS_IPV4_INFO_STRU      *pstIpV4Entity;
@@ -757,7 +876,16 @@ VOS_VOID IPV4_DHCP_RequestMsgProc(IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalyse,
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_ReleaseMsgProc
+ Description     : 处理DHCP RELEASE消息
+ Input           :
+ Output          :
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IPV4_DHCP_ReleaseMsgProc(const IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalyse, VOS_UINT8 ucRabId)
 {
     NDIS_IPV4_INFO_STRU      *pstIpV4Entity;
@@ -783,7 +911,16 @@ VOS_VOID IPV4_DHCP_ReleaseMsgProc(const IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAn
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_ProcDhcpMsg
+ Description     : 处理DHCP数据报
+ Input           :
+ Output          :
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IPV4_DHCP_ProcDhcpMsg(IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalyse, VOS_UINT8 ucRabId)
 {
     NDIS_IPV4_INFO_STRU             *pstIpV4Entity;
@@ -846,7 +983,16 @@ VOS_VOID IPV4_DHCP_ProcDhcpMsg(IPV4_DHCP_ANALYSE_RESULT_STRU *pstDhcpAnalyse, VO
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_AnalyseDhcpPkt
+ Description     : 解析DHCP报文
+ Input           :
+ Output          : IPV4_DHCP_ANALYSE_RESULT_STRU *pstAnalyseRst : DHCP报文解析结果
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IPV4_DHCP_AnalyseDhcpPkt( VOS_UINT8                     *pucDhcp,
                                             VOS_UINT32                     ulDhcpLen,
                                             IPV4_DHCP_ANALYSE_RESULT_STRU *pstAnalyseRst)
@@ -918,7 +1064,15 @@ VOS_VOID IPV4_DHCP_AnalyseDhcpPkt( VOS_UINT8                     *pucDhcp,
     return ;
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_DhcpPktIPInfoCheck
+ Description     : DHCP报文IP层信息检查
+ Input           : VOS_UINT8  *pucIpPkt 指向IP头开始的位置
+ Output          :
+ Return          : VOS_VOID
 
+ History         :
+*****************************************************************************/
 VOS_UINT32 IPV4_DHCP_DhcpPktIPInfoCheck(VOS_UINT8  *pucIpPkt, VOS_UINT32  ulIpMemLen)
 {
     ETH_IPFIXHDR_STRU       *pstIpHdr;
@@ -962,7 +1116,15 @@ VOS_UINT32 IPV4_DHCP_DhcpPktIPInfoCheck(VOS_UINT8  *pucIpPkt, VOS_UINT32  ulIpMe
     return PS_TRUE;
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_DhcpPktUdpInfoCheck
+ Description     : DHCP报文UDP信息检查
+ Input           : VOS_UINT8  *pucIpPkt 指向UDP头开始的位置
+ Output          :
+ Return          : VOS_VOID
 
+ History         :
+*****************************************************************************/
 VOS_UINT32 IPV4_DHCP_DhcpPktUdpInfoCheck(VOS_UINT8  *pucUdp, VOS_UINT32  ulUdpMemLen)
 {
     ETH_UDPHDR_STRU         *pstUdpHdr;
@@ -991,7 +1153,15 @@ VOS_UINT32 IPV4_DHCP_DhcpPktUdpInfoCheck(VOS_UINT8  *pucUdp, VOS_UINT32  ulUdpMe
     return PS_TRUE;
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_DhcpPktDhcpInfoCheck
+ Description     : DHCP报文UDP信息检查
+ Input           : VOS_UINT8  *pucIpPkt 指向UDP头开始的位置
+ Output          :
+ Return          : VOS_VOID
 
+ History         :
+*****************************************************************************/
 VOS_UINT32 IPV4_DHCP_DhcpPktDhcpInfoCheck(VOS_UINT8  *pucDhcp, VOS_UINT32  ulDhcpMemLen)
 {
     IPV4_DHCP_PROTOCL_STRU      *pstDhcpFixHdr;
@@ -1048,7 +1218,15 @@ VOS_UINT32 IPV4_DHCP_DhcpPktDhcpInfoCheck(VOS_UINT8  *pucDhcp, VOS_UINT32  ulDhc
 }
 
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_IsDhcpPacket
+ Description     : 判断是否是DHCP报文
+ Input           : VOS_UINT8  *pucIpPkt 指向IP头开始的位置
+ Output          :
+ Return          : VOS_VOID
 
+ History         :
+*****************************************************************************/
 VOS_UINT32 IPV4_DHCP_IsDhcpPacket(VOS_UINT8  *pucIpPkt, VOS_UINT32  ulPktMemLen)
 {
     ETH_IPFIXHDR_STRU       *pstIpHdr;
@@ -1092,7 +1270,16 @@ VOS_UINT32 IPV4_DHCP_IsDhcpPacket(VOS_UINT8  *pucIpPkt, VOS_UINT32  ulPktMemLen)
 
 
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_ProcDhcpPkt
+ Description     : 处理DHCP报文
+ Input           : VOS_UINT8  *pucIpPkt 指向IP头开始的位置
+ Output          :
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IPV4_DHCP_ProcDhcpPkt(VOS_UINT8  *pucIpPkt, VOS_UINT8 ucRabId, VOS_UINT32 ulPktMemLen)
 {
     IPV4_DHCP_ANALYSE_RESULT_STRU    stDhcpRst;
@@ -1138,7 +1325,16 @@ VOS_VOID IPV4_DHCP_ProcDhcpPkt(VOS_UINT8  *pucIpPkt, VOS_UINT8 ucRabId, VOS_UINT
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IPV4_DHCP_ShowDebugInfo
+ Description     : 打印DHCP Server调试信息
+ Input           :
+ Output          :
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IPV4_DHCP_ShowDebugInfo(VOS_VOID)
 {
     PS_PRINTF_ERR("Recv Dhcp Packet              :    %d \r\n",g_stDhcpStatStru.ulRecvDhcpPkt);

@@ -130,6 +130,7 @@ bool nv_img_is_white_file(const s8 * pfile)
              NV_ERROR
              BSP_ERR_NV_NO_FILE 失败，需要调用者复位系统
 *****************************************************************************/
+#define MAX_DIR_DEPTH 5
 u32 nv_img_check_white_list(const s8 * source, u32 depth)
 {
     s32 ret;
@@ -144,6 +145,11 @@ u32 nv_img_check_white_list(const s8 * source, u32 depth)
     struct rfile_stat_stru s_stat;
     RFILE_DIRENT_STRU * pdirent;
 
+
+    if (depth >= MAX_DIR_DEPTH) {
+        nv_printf("depth err\n");
+        return NV_OK;
+    }
 
     /* 获取当前文件信息 */
     ret = bsp_stat((s8 *)source, &s_stat);
@@ -770,11 +776,54 @@ void nv_img_remove_all_file(void)
  输出参数  : 无
  返 回 值  :
 *****************************************************************************/
+#if (defined CONFIG_TZDRIVER) && (defined CONFIG_LOAD_SEC_IMAGE)
 u32 nv_img_load_file(u32 type, unsigned long offset, u32 length)
 {
     u32 runaddr = (u32)(unsigned long)SHD_DDR_V2P(offset);
     return (u32)bsp_load_modem_single_image((enum SVC_SECBOOT_IMG_TYPE)type, runaddr, length);
 }
+#else
+u32 nv_img_load_file(u32 type, unsigned long offset, u32 length)
+{
+    u32 ret;
+    u8 * path;
+    FILE * fp;
+
+    switch(type)
+    {
+        case NVM:
+        case NVM_S:
+            path = (u8 *)g_nv_path.file_path[NV_IMG_RDWR];
+            break;
+        case MBN_R:
+            path = (u8 *)g_nv_path.file_path[NV_MBN_COMM];
+            break;
+        case MBN_A:
+            path = (u8 *)g_nv_path.file_path[NV_MBN];
+            break;
+        default:
+            nv_printf("invalid type(%d)!\n", type);
+            return NV_ERROR;
+    }
+
+    fp = nv_file_open((s8 *)path, (s8*)NV_FILE_READ);
+    if(NULL == fp)
+    {
+        nv_record("open %s file failed!\n", (s8 *)path);
+        return BSP_ERR_NV_NO_FILE;
+    }
+
+    ret = (u32)nv_file_read((u8*)offset, 1, length, fp);
+    (void)nv_file_close(fp);
+    if(ret != length)
+    {
+        nv_record("open %s file failed!\n", (s8 *)path);
+        return BSP_ERR_NV_READ_FILE_FAIL;
+    }
+
+    return NV_OK;
+}
+#endif
 
 /*****************************************************************************
  函 数 名  : nv_img_reload

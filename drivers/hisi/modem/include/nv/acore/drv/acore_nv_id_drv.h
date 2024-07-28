@@ -56,40 +56,9 @@ extern "C" {
 #endif
 #endif
 
-//[NV elf编译项目]去除重复定义 xuziheng/306651 20171207
-#ifndef NV_DEFINE
-
-#ifndef s8
-typedef signed char          s8;
-#endif
-#ifndef u8
-typedef unsigned char        u8;
-#endif
-#ifndef s16
-typedef signed short         s16;
-#endif
-#ifndef u16
-typedef unsigned short       u16;
-#endif
-#ifndef s32
-typedef signed int           s32;
-#endif
-#ifndef u32
-typedef unsigned int         u32;
-#endif
-#ifndef s64
-typedef signed long long     s64;
-#endif
-#ifndef u64
-typedef unsigned long long   u64;
-#endif
-
-#endif
-
 /*
  *  NV ID 的添加按从小到大排列
  */
-
 typedef enum
 {
     NV_ID_DRV_USB_FEATURE                  = 0xd123,    //NV_USB_FEATURE
@@ -99,7 +68,7 @@ typedef enum
     NV_ID_DRV_DLOCK                        = 0xd155,    //DRV_DLOCK_CFG_STRU
 	NV_ID_DRV_PDLOCK_AP					   = 0xd192,	//DRV_PDLOCK_AP_CFG_STRU
 	
-	//定义在ccore_nv_id_drv.h中 xuziheng/306651 20171207
+	//定义在ccore_nv_id_drv.h中
 #ifndef NV_DEFINE
     NV_ID_DRV_DVS_CONFIG                   = 0xd157,    //ST_DVS_CONFIG_STRU
 #endif

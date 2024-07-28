@@ -73,6 +73,7 @@ extern VOS_MSG_HOOK_FUNC                vos_MsgHook;
 /*****************************************************************************
   3 º¯ÊýÊµÏÖ
 *****************************************************************************/
+#if (FEATURE_ON == FEATURE_DELAY_MODEM_INIT)
 
 VOS_LONG ADS_UL_SetAffinity(VOS_VOID)
 {
@@ -112,6 +113,7 @@ VOS_LONG ADS_UL_SetAffinity(VOS_VOID)
 
     return ret;
 }
+#endif
 
 
 VOS_UINT32 ADS_UL_PidInit(enum VOS_INIT_PHASE_DEFINE enPhase)
@@ -166,7 +168,9 @@ VOS_VOID ADS_UL_FidTask(
         return;
     }
 
+#if (FEATURE_ON == FEATURE_DELAY_MODEM_INIT)
     ADS_UL_SetAffinity();
+#endif
 
     g_ulAdsULTaskId         = ulTaskID;
     g_ulAdsULTaskReadyFlag  = 1;

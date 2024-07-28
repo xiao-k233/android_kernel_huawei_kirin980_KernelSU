@@ -63,75 +63,75 @@ extern "C" {
 *****************************************************************************/
 typedef struct
 {
-    u16 usNVSecBootEnableFlag; /*Range:[0,1]*/
+    unsigned short usNVSecBootEnableFlag; /*Range:[0,1]*/
 }NV_SECBOOT_ENABLE_FLAG;
 
 /* USB Feature for usb id:50075 */
 typedef struct
 {
-    u8 flags;
-    u8 reserve1;
-    u8 hibernation_support;/**/
-    u8 pc_driver;
-    u8 detect_mode;/*0=pmu detect; 1=no detect(for fpga&cpe); 2=car module vbus detect */
-    u8 enable_u1u2_workaround;
-    u8 usb_gpio_support:4;
-    u8 usb_mode:4;
-    u8 network_card;
+    unsigned char flags;
+    unsigned char reserve1;
+    unsigned char hibernation_support;/**/
+    unsigned char pc_driver;
+    unsigned char detect_mode;/*0=pmu detect; 1=no detect(for fpga&cpe); 2=car module vbus detect */
+    unsigned char enable_u1u2_workaround;
+    unsigned char usb_gpio_support:4;
+    unsigned char usb_mode:4;
+    unsigned char network_card;
 } NV_USB_FEATURE;
 
 typedef struct
 {
-    u32 smp_sch; 
+    unsigned int smp_sch; 
 }DRV_USB_DBG_STRU;
 
 /* C核单独复位按需开关特性配置NV项 = 0xd134 */
 typedef struct
 {
-    u32 is_feature_on:1;         /* bit0, 整个C核单独复位功能是否打开 */
-    u32 is_connected_ril:1;      /* bit1, 是否和RIL对接 */
-    u32 reserve:30;              /* bit 2-31*/
+    unsigned int is_feature_on:1;         /* bit0, 整个C核单独复位功能是否打开 */
+    unsigned int is_connected_ril:1;      /* bit1, 是否和RIL对接 */
+    unsigned int reserve:30;              /* bit 2-31*/
 } DRV_CCORE_RESET_STRU;
 
 /* NVID=0xd144 begin */
 typedef struct
 {
-    u32 mdm_dump     :1;     /* modem_dump.bin */
-    u32 mdm_sram     :1;     /* modem_sram.bin */
-    u32 mdm_share    :1;     /* modem_share.bin */
-    u32 mdm_ddr      :1;     /* modem_ddr.bin */
-    u32 lphy_tcm     :1;     /* lphy_tcm.bin */
-    u32 lpm3_tcm     :1;     /* lpm3_tcm.bin */
-    u32 ap_etb       :1;     /* ap_etb.bin */
-    u32 mdm_etb      :1;     /* modem_etb.bin */
-    u32 reset_log    :1;     /*reset.log*/
-    u32 cphy_tcm     :1;     /* cphy_tcm.bin */
-    u32 mdm_secshare :1;     /* secshare.bin */
-    u32 mdm_dts      :1;     /* modem_dts.bin */    
-    u32 llram_share  :1;     /* modem_llram.bin */
-    u32 reserved2   :19;
+    unsigned int mdm_dump     :1;     /* modem_dump.bin */
+    unsigned int mdm_sram     :1;     /* modem_sram.bin */
+    unsigned int mdm_share    :1;     /* modem_share.bin */
+    unsigned int mdm_ddr      :1;     /* modem_ddr.bin */
+    unsigned int lphy_tcm     :1;     /* lphy_tcm.bin */
+    unsigned int lpm3_tcm     :1;     /* lpm3_tcm.bin */
+    unsigned int ap_etb       :1;     /* ap_etb.bin */
+    unsigned int mdm_etb      :1;     /* modem_etb.bin */
+    unsigned int reset_log    :1;     /*reset.log*/
+    unsigned int cphy_tcm     :1;     /* cphy_tcm.bin */
+    unsigned int mdm_secshare :1;     /* secshare.bin */
+    unsigned int mdm_dts      :1;     /* modem_dts.bin */    
+    unsigned int llram_share  :1;     /* modem_llram.bin */
+    unsigned int reserved2   :19;
 }DUMP_FILE_BITS;
 
 typedef struct
 {
     union
     {
-        u32         file_value;
+        unsigned int         file_value;
         DUMP_FILE_BITS  file_bits;
     } file_list;
-    u32             file_cnt; /* 记录异常文件份数 */
+    unsigned int             file_cnt; /* 记录异常文件份数 */
 }DUMP_FILE_CFG_STRU;
 
 typedef struct
 {
-    u32 enable;        /*总线挂死寄存器解析使能标志, 0, 去使能;  1, 使能*/
-    u32 reset_enable;  /*复位使能标志, 0, 去使能; 1, 使能*/
+    unsigned int enable;        /*总线挂死寄存器解析使能标志, 0, 去使能;  1, 使能*/
+    unsigned int reset_enable;  /*复位使能标志, 0, 去使能; 1, 使能*/
 }DRV_PDLOCK_AP_CFG_STRU;
 
 typedef struct
 {
-    u32 enable;        /*总线挂死寄存器解析使能标志, 0, 去使能;  1, 使能*/
-    u32 reset_enable;  /*复位使能标志, 0, 去使能; 1, 使能*/
+    unsigned int enable;        /*总线挂死寄存器解析使能标志, 0, 去使能;  1, 使能*/
+    unsigned int reset_enable;  /*复位使能标志, 0, 去使能; 1, 使能*/
 }DRV_DLOCK_CFG_STRU;
 /* dlock = 0xd155 */
 
@@ -140,47 +140,47 @@ typedef struct
 /* 0xD14d */
 typedef struct
 {
-    u32 product         :2;
-    u32 reset           :1;
-    u32 save_bakup      :1;
-    u32 save_image      :1;
-    u32 save_ddr        :1;
-    u32 resume_bakup    :1;  /*Range:[0,1]*/
-    u32 resume_img      :1;  /*Range:[0,1]*/
-    u32 reserved        :24;
+    unsigned int product         :2;
+    unsigned int reset           :1;
+    unsigned int save_bakup      :1;
+    unsigned int save_image      :1;
+    unsigned int save_ddr        :1;
+    unsigned int resume_bakup    :1;  /*Range:[0,1]*/
+    unsigned int resume_img      :1;  /*Range:[0,1]*/
+    unsigned int reserved        :24;
 }NV_DEBUG_CFG_STRU;
 
 /*NV ID = 0xd157 DVS使能控制及hpm读值配置*/
-//[NV elf编译项目] 结构定义重复 xuziheng/306651 20171209
+//[NV elf编译项目] 结构定义重复
 #ifndef NV_DEFINE
 typedef struct {
-    u32 dvs_en;
-    u32 hpm_delay;
+    unsigned int dvs_en;
+    unsigned int hpm_delay;
 }ST_DVS_CONFIG_STRU;
 #endif
 
 typedef struct
 {
-    u32 enable;         /*mbb ap侧noc err probe解析使能标志, 0, 去使能;  1, 使能*/
-    u32 reset_enable;   /*mbb ap侧复位使能标志, 0, 去使能; 1, 使能*/
+    unsigned int enable;         /*mbb ap侧noc err probe解析使能标志, 0, 去使能;  1, 使能*/
+    unsigned int reset_enable;   /*mbb ap侧复位使能标志, 0, 去使能; 1, 使能*/
 }DRV_NOC_AP_CFG_STRU;
 
 typedef struct
 {
-    u32 enable;         /*mbb ap侧bus err probe解析使能标志, 0, 去使能;  1, 使能*/
-	u32 reset_enable;   /*mbb ap侧复位使能标志, 0, 去使能; 1, 使能*/
+    unsigned int enable;         /*mbb ap侧bus err probe解析使能标志, 0, 去使能;  1, 使能*/
+	unsigned int reset_enable;   /*mbb ap侧复位使能标志, 0, 去使能; 1, 使能*/
 }DRV_BUS_ERR_AP_CFG_STRU;
 
 typedef struct
 {
-    u32 enable;        /*mbb ap侧dmss解析使能标志, 0, 去使能;  1, 使能*/
-    u32 reset_enable;  /*mbb ap侧dmss复位使能标志, 0, 不使能;  1, 使能*/
+    unsigned int enable;        /*mbb ap侧dmss解析使能标志, 0, 去使能;  1, 使能*/
+    unsigned int reset_enable;  /*mbb ap侧dmss复位使能标志, 0, 不使能;  1, 使能*/
 }DRV_DMSS_CFG_STRU;
 
 typedef struct {
-    u32 ulRatePeriod;   /* 流控周期单位ms , 取值必须1~0xFFFFFFFF */
-    u32 ulRateEn[2];    /* 流量控制使能，每个bit对应1个通道，ulFlowEn[0]对应channel 0~31 bit0 :channel 0，ulFlowEn[1]对应channel 32~63 bit32:chan32，0不使能，1使能 */
-    u32 ulRateThr[64];  /* 流量控制阈值，对应64个通道，取值0~0xFFFFFFFF，0：通道始终进行限流，通道优先级始终保持最低 */
+    unsigned int ulRatePeriod;   /* 流控周期单位ms , 取值必须1~0xFFFFFFFF */
+    unsigned int ulRateEn[2];    /* 流量控制使能，每个bit对应1个通道，ulFlowEn[0]对应channel 0~31 bit0 :channel 0，ulFlowEn[1]对应channel 32~63 bit32:chan32，0不使能，1使能 */
+    unsigned int ulRateThr[64];  /* 流量控制阈值，对应64个通道，取值0~0xFFFFFFFF，0：通道始终进行限流，通道优先级始终保持最低 */
 }DRV_DIAG_RATE_STRU;
 
 #ifdef __cplusplus

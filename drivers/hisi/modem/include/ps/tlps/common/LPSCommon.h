@@ -1,4 +1,50 @@
-
+/*
+ * Copyright (C) Huawei Technologies Co., Ltd. 2012-2019. All rights reserved.
+ * foss@huawei.com
+ *
+ * If distributed as part of the Linux kernel, the following license terms
+ * apply:
+ *
+ * * This program is free software; you can redistribute it and/or modify
+ * * it under the terms of the GNU General Public License version 2 and
+ * * only version 2 as published by the Free Software Foundation.
+ * *
+ * * This program is distributed in the hope that it will be useful,
+ * * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * * GNU General Public License for more details.
+ * *
+ * * You should have received a copy of the GNU General Public License
+ * * along with this program; if not, write to the Free Software
+ * * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+ *
+ * Otherwise, the following license terms apply:
+ *
+ * * Redistribution and use in source and binary forms, with or without
+ * * modification, are permitted provided that the following conditions
+ * * are met:
+ * * 1) Redistributions of source code must retain the above copyright
+ * *    notice, this list of conditions and the following disclaimer.
+ * * 2) Redistributions in binary form must reproduce the above copyright
+ * *    notice, this list of conditions and the following disclaimer in the
+ * *    documentation and/or other materials provided with the distribution.
+ * * 3) Neither the name of Huawei nor the names of its contributors may
+ * *    be used to endorse or promote products derived from this software
+ * *    without specific prior written permission.
+ *
+ * * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
 
 #ifndef __LPSCOMMON_H__
 #define __LPSCOMMON_H__
@@ -85,8 +131,10 @@ BYTE4  消息号:0~255
 #define PS_MSG_ID_BASE                  0x0500
 #define PS_MSG_ID_END                   0x2000
 
+/* V7R2DT  add rrc dt message base address, 2014/05/12 begin */
 /* RRC的路测消息ID是从0x8D00-0x8DFF */
 #define PS_DT_MSG_ID_BASE                  0x8D00
+/* V7R2DT  add rrc dt message base address, 2014/05/12 end */
 
 /* Modem errlog report, relation event lps-om message base address begin */
 #define PS_ERR_LOG_MSG_ID_BASE             0x8E00
@@ -150,6 +198,7 @@ enum LTE_SECU_KEY_INDEX_ENUM
     I1_LTE_SECU_SCG_LASTEST_PDCP_UP_CIPHER_KEY_INDEX              = 20,
     I1_LTE_SECU_SCG_LRRC_KDF_OUTPUT_INDEX                         = 21,
 
+    /* begin, add for ENDC, */
     /* modem0 EN-DC support */
     I0_LTE_SECU_NR_SCG_PDCP_UP_CIPHER_KEY_INDEX                      = 22,
     I0_LTE_SECU_NR_SCG_LASTEST_PDCP_UP_CIPHER_KEY_INDEX              = 23,
@@ -159,6 +208,7 @@ enum LTE_SECU_KEY_INDEX_ENUM
     I1_LTE_SECU_NR_SCG_PDCP_UP_CIPHER_KEY_INDEX                      = 25,
     I1_LTE_SECU_NR_SCG_LASTEST_PDCP_UP_CIPHER_KEY_INDEX              = 26,
     I1_LTE_SECU_NR_SCG_LRRC_KDF_OUTPUT_INDEX                         = 27,
+    /* end, add for ENDC, */
 
     LTE_SECU_KEY_BUTT
 
@@ -348,46 +398,69 @@ enum PS_MSG_ID_SECTION_ENUM
     PS_MSG_ID_ESM_TO_ESM_OM_BASE  = PS_MSG_ID_EMM_TO_EMM_OM_BASE + 0x60,
     PS_MSG_ID_ERABM_TO_ERABM_OM_BASE= PS_MSG_ID_ESM_TO_ESM_OM_BASE + 0x20,
 
+    /*软调信息添加 BEGIN*/
     TRRC_DEBUG_MSG_BASE = PS_MSG_ID_ERABM_TO_ERABM_OM_BASE+0x20 ,   /*0x1d15*/
+    /*软调信息添加 END*/
 
     PS_MSG_ID_LNAS_TO_OM_BASE       = TRRC_DEBUG_MSG_BASE + 0x20,
 
+    /* begin 2013-08-01 Modify DCM */
     PS_MSG_ID_OM_TO_EMM_BASE       = PS_MSG_ID_LNAS_TO_OM_BASE + 0x20,
     PS_MSG_ID_EMM_TO_OM_BASE       = PS_MSG_ID_OM_TO_EMM_BASE + 0x20,
 
     PS_MSG_ID_OM_TO_ESM_BASE       = PS_MSG_ID_EMM_TO_OM_BASE + 0x20,
     PS_MSG_ID_ESM_TO_OM_BASE       = PS_MSG_ID_OM_TO_ESM_BASE + 0x20,
+    /* end 2013-08-01 Modify DCM */
 
+    /* begin for ims 2014-1-6 */
     PS_MSG_ID_IMSA_TO_IMSA_OM_BASE  = PS_MSG_ID_ESM_TO_OM_BASE + 0x20,
+    /* end for ims 2014-1-6 */
 
+    /*DSDS feature,2014-7-18,begin*/
     PS_MSG_ID_DSDS_DEBUG_BASE  = PS_MSG_ID_IMSA_TO_IMSA_OM_BASE + 0x80,/*0x1e55*/
 
     PS_MSG_ID_IMSA_TO_ERRC_BASE = PS_MSG_ID_DSDS_DEBUG_BASE + 0x20,
+    /*DSDS feature,2014-7-18,end*/
+    /* begin 2015-06-24 for css,begin */
     PS_MSG_ID_LPHY_TO_CSS_BASE  = PS_MSG_ID_IMSA_TO_ERRC_BASE + 0x20, /* 0x1e95 */
+    /* begin 2015-06-24 for css,end */
+    /* 2015-5-27 begin */
     /* KPI大数据信息 */
     PS_MSG_ID_TL_KPI_BASE       = PS_MSG_ID_LPHY_TO_CSS_BASE + 0x20,
     PS_MSG_ID_TL_PTL_BASE       = PS_MSG_ID_TL_KPI_BASE + 0x100,
+    /* 2015-5-27 end */
+
 
     PS_MSG_ID_TL_DBG_BASE       = PS_MSG_ID_TL_PTL_BASE + 0x200,
     PS_MSG_ID_TL_DT_BASE        = PS_MSG_ID_TL_DBG_BASE + 0x200,
 
+
+    /* begin for dhcp 2015-06-18 */
     /*CDS和Dhcp之间的消息接口取值范围*/
     PS_MSG_ID_DHCP_TO_CDS_BASE = PS_MSG_ID_TL_DT_BASE + 0x100,
     PS_MSG_ID_CDS_TO_DHCP_BASE = PS_MSG_ID_DHCP_TO_CDS_BASE + 0x20,
+    /* end for dhcp 2015-06-18 */
     /* ... ... */
 
+    /* begin 2015-09-28 for LPP ,begin */
     /* LPP和LRRC之间的消息借口取值范围 */
     PS_MSG_ID_LPP_TO_LRRC_BASE = PS_MSG_ID_CDS_TO_DHCP_BASE + 0x20,
     PS_MSG_ID_LRRC_TO_LPP_BASE = PS_MSG_ID_LPP_TO_LRRC_BASE + 0X20,
+    /* begin 2015-09-28 for LPP ,begin */
 
+    /* F-Project Phase I 2015-12-10 begin */
     /* EMM给IMSA发送消息BASE */
     PS_MSG_ID_EMM_TO_IMSA_BASE = PS_MSG_ID_LRRC_TO_LPP_BASE + 0x20,
+    /* F-Project Phase I 2015-12-10 end */
+    /* begin 2016-01-28 for vowifi phaseII,begin */
     PS_MSG_ID_ERRC_TO_IMSA_BASE = PS_MSG_ID_EMM_TO_IMSA_BASE + 0x20,
+    /* begin 2016-01-28 for vowifi phaseII,end */
+    /* V7R2DT  add rrc dt message base address, 2014/05/12 begin */
 
     /*L2发给IMSA消息的基址*/
     PS_MSG_ID_L2_TO_IMSA_BASE = PS_MSG_ID_ERRC_TO_IMSA_BASE + 0x20,
 
-    /* zhangdongfeng, 00353461 , add it for cellular prefer project, begin in 2016-09-28 */
+    /* add it for cellular prefer project, begin in 2016-09-28 */
     /* IMSA和CAS之间的消息接口取值范围 */
     PS_MSG_ID_IMSA_TO_CAS_BASE   = PS_MSG_ID_L2_TO_IMSA_BASE + 0x20, /* 0x2525 */
     PS_MSG_ID_CAS_TO_IMSA_BASE   = PS_MSG_ID_IMSA_TO_CAS_BASE + 0x20,
@@ -399,22 +472,28 @@ enum PS_MSG_ID_SECTION_ENUM
     /* IMSA和GRR之间的消息接口取值范围 */
     PS_MSG_ID_IMSA_TO_GRR_BASE   = PS_MSG_ID_WRR_TO_IMSA_BASE + 0x20,
     PS_MSG_ID_GRR_TO_IMSA_BASE   = PS_MSG_ID_IMSA_TO_GRR_BASE + 0x20,
-    /* zhangdongfeng, 00353461 , add it for cellular prefer project, end in 2016-09-28 */
+    /* add it for cellular prefer project, end in 2016-09-28 */
 
+    /* moded for GUNAS reconstruct 2018-03-09, begin */
     /* LMM和REGM之间的消息接口取值范围 */
     PS_MSG_ID_LMM_TO_REGM_BASE   = PS_MSG_ID_GRR_TO_IMSA_BASE + 0x20,
     PS_MSG_ID_REGM_TO_LMM_BASE   = PS_MSG_ID_LMM_TO_REGM_BASE + 0x40,
+    /* moded for GUNAS reconstruct 2018-03-09, end */
 
+    /* TC interface with LRRC */
     PS_MSG_ID_TC_TO_LRRC_BASE   = PS_MSG_ID_REGM_TO_LMM_BASE + 0x20,
     PS_MSG_ID_LRRC_TO_TC_BASE   = PS_MSG_ID_TC_TO_LRRC_BASE + 0x40,
 
     /* RRC的路测消息ID是从0x8D00-0x8DFF */
     PS_MSG_ID_RRC_TO_DT_BASE  = PS_DT_MSG_ID_BASE,
+    /* V7R2DT  add rrc dt message base address, 2014/05/12 end */
 
     /* Modem errlog report, relation event lps-om message base address begin */
     PS_MSG_ID_LPSOM_PS_BASE   = PS_ERR_LOG_MSG_ID_BASE,
+    /* Modem errlog report, relation event lps-om message base address end */ 
     PS_MSG_ID_LPSOM_EMM_BASE  = PS_MSG_ID_LPSOM_PS_BASE + 0x40,
 };
+/* 2015-5-27 begin */
 
 enum TL_KPI_MSG_ID_SECTION_ENUM
 {
@@ -425,7 +504,9 @@ enum TL_KPI_MSG_ID_SECTION_ENUM
     TL_KPI_MSG_ID_TDS_L2_BASE  = TL_KPI_MSG_ID_LTE_L2_BASE  + 0x20,
     TL_KPI_MSG_ID_BUTT
 };
+/* 2015-5-27 end */
 
+/* keyinfo report 2015-08-28 begin */
 
 enum TL_DBG_MSG_ID_SECTION_ENUM
 {
@@ -436,6 +517,7 @@ enum TL_DBG_MSG_ID_SECTION_ENUM
     TL_DBG_MSG_ID_TDS_L2_BASE  = TL_DBG_MSG_ID_LTE_L2_BASE  + 0x20,
     TL_DBG_MSG_ID_BUTT
 };
+/* keyinfo report 2015-08-28 begin */
 
 
 enum TL_PTL_MSG_ID_SECTION_ENUM
@@ -529,10 +611,18 @@ enum UE_FUNC_MODULE_ID_ENUM
     UE_MODULE_NDIS_DL           = 0xF215,
     UE_MODULE_NDIS_COM          = 0xF216,
 
+    /*ims begin */
     UE_MODULE_IMSA_ID           = 0xF217,
+    /*ims end */
+    /* Add FOR LPP begin */
     UE_MODULE_LPP_ID           = 0xF218,
+    /* Add FOR LPP end */
+    /* Add FOR LCS begin */
     UE_MODULE_LCS_ID           = 0xF219,
+    /* Add FOR LCS end */
+    /* Added for GU_BACK_OFF,2016-04-09,Begin */
     UE_MODULE_BACKOFF_ID       = 0xF21a
+    /* Added for GU_BACK_OFF,2016-04-09,Begin */
 };
 typedef VOS_UINT32 UE_FUNC_MODULE_ID_ENUM_UINT32;
 #endif
@@ -600,7 +690,9 @@ enum LRRC_COMM_ACCESS_STRATUM_REL_ENUM
     LRRC_COMM_ACCESS_STRATUM_REL11                 = 3,
     LRRC_COMM_ACCESS_STRATUM_REL12                 = 4,
     LRRC_COMM_ACCESS_STRATUM_REL13                 = 5,
+    /*Added for R14_CR_PHASEI 2017-04-01 begin */
     LRRC_COMM_ACCESS_STRATUM_REL14                 = 6,
+    /*Added for R14_CR_PHASEI 2017-04-01 end */
     LRRC_COMM_ACCESS_STRATUM_REL_SPARE1            = 7
 };
 typedef VOS_UINT8 LRRC_COMM_ACCESS_STRATUM_REL_ENUM_UINT8;

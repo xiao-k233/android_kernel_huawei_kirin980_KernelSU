@@ -85,7 +85,6 @@ void NM_CTRL_SendMsg(void* pDataBuffer, unsigned int len)
     NM_CTRL_CDEV_DATA_STRU             *pstListEntry    = VOS_NULL_PTR;
     NM_CTRL_CDEV_DATA_STRU             *pstCurEntry     = VOS_NULL_PTR;
     NM_MSG_STRU                        *pstRnicNmMsg    = VOS_NULL_PTR;
-    unsigned long                       flags           = 0;
 
     pstRnicNmMsg = (NM_MSG_STRU *)pDataBuffer;
 
@@ -111,9 +110,12 @@ void NM_CTRL_SendMsg(void* pDataBuffer, unsigned int len)
     pstListEntry->ulLen = len;
     memcpy(pstListEntry->aucData, pDataBuffer, len); /* unsafe_function_ignore: memcpy */
 
+#if ( FEATURE_ON == FEATURE_DEBUG_PRINT_ADDRESS )
+    NM_CTRL_LOGI("list addr %pK data addr %pK", pstListEntry, pstListEntry->aucData);
+#endif
 
     /* 获取信号量 */
-    spin_lock_irqsave(&(g_stNmCtrlCtx.stListLock), flags);
+    mutex_lock(&(g_stNmCtrlCtx.stListLock));
 
     if ( ID_NM_BIND_PID_CONFIG_IND != pstRnicNmMsg->enMsgId)
     {
@@ -141,7 +143,7 @@ void NM_CTRL_SendMsg(void* pDataBuffer, unsigned int len)
     g_stNmCtrlCtx.ulDataFlg = true;
 
     /* 释放信号量 */
-    spin_unlock_irqrestore(&(g_stNmCtrlCtx.stListLock), flags);
+    mutex_unlock(&(g_stNmCtrlCtx.stListLock));
 
     wake_up_interruptible(&(g_stNmCtrlCtx.stReadInq));
 
@@ -182,11 +184,10 @@ int NM_CTRL_Release(struct inode *node, struct file *filp)
     LIST_HEAD_STRU                     *pstNextPtr  = VOS_NULL_PTR;
     LIST_HEAD_STRU                     *pstCurPtr   = VOS_NULL_PTR;
     NM_CTRL_CDEV_DATA_STRU             *pstCurEntry = VOS_NULL_PTR;
-    unsigned long                       flags       = 0;
     int                                 ret         = 0;
 
     /* 获取信号量 */
-    spin_lock_irqsave(&(g_stNmCtrlCtx.stListLock), flags);
+    mutex_lock(&(g_stNmCtrlCtx.stListLock));
 
     list_for_each_safe(pstCurPtr, pstNextPtr, &(g_stNmCtrlCtx.stListHead))
     {
@@ -205,7 +206,7 @@ int NM_CTRL_Release(struct inode *node, struct file *filp)
     g_stNmCtrlCtx.ulDataFlg = false;
 
     /* 释放信号量 */
-    spin_unlock_irqrestore(&(g_stNmCtrlCtx.stListLock), flags);
+    mutex_unlock(&(g_stNmCtrlCtx.stListLock));
 
     NM_CTRL_LOGI("Enter.");
 
@@ -231,6 +232,9 @@ int NM_CTRL_Read_List_Entry(LIST_HEAD_STRU *pstCurPtr, char __user *buf, size_t 
         size = pstCurEntry->ulLen;
     }
 
+#if ( FEATURE_ON == FEATURE_DEBUG_PRINT_ADDRESS )
+    NM_CTRL_LOGI("list addr %pK data addr %pK", pstCurEntry, pstCurEntry->aucData);
+#endif
 
     /* read data to user space */
     if (copy_to_user(buf, (void*)(pstCurEntry->aucData), (unsigned long)size))
@@ -253,8 +257,7 @@ int NM_CTRL_Read_List_Entry(LIST_HEAD_STRU *pstCurPtr, char __user *buf, size_t 
 
 ssize_t NM_CTRL_Read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
 {
-    unsigned long                       flags       = 0;
-    int                                 ret         = 0;
+    int ret = 0;
 
     NM_CTRL_LOGI("Enter size_t(%lu).", (unsigned long)size);
 
@@ -271,7 +274,7 @@ ssize_t NM_CTRL_Read(struct file *filp, char __user *buf, size_t size, loff_t *p
     }
 
     /* 获取信号量 */
-    spin_lock_irqsave(&(g_stNmCtrlCtx.stListLock), flags);
+     mutex_lock(&(g_stNmCtrlCtx.stListLock));
 
     /* 读取数据链表，读空stListHead之后，再读stLowPriListHead */
     if (!list_empty(&(g_stNmCtrlCtx.stListHead)))/*lint !e64 */
@@ -297,7 +300,7 @@ ssize_t NM_CTRL_Read(struct file *filp, char __user *buf, size_t size, loff_t *p
     }
 
     /* 释放信号量 */
-    spin_unlock_irqrestore(&(g_stNmCtrlCtx.stListLock), flags);
+    mutex_unlock(&(g_stNmCtrlCtx.stListLock));
 
     return ret;
 }
@@ -399,7 +402,7 @@ int __init NM_CTRL_Init(VOS_VOID)
     INIT_LIST_HEAD(&(g_stNmCtrlCtx.stListHead));/*lint !e64 */
     INIT_LIST_HEAD(&(g_stNmCtrlCtx.stLowPriListHead));/*lint !e64 */
 
-    spin_lock_init(&(g_stNmCtrlCtx.stListLock));
+    mutex_init(&(g_stNmCtrlCtx.stListLock));
 
     /* init wait queue */
     init_waitqueue_head(&(g_stNmCtrlCtx.stReadInq));
@@ -501,6 +504,7 @@ STATIC const struct file_operations nm_bind_pid_ops = {
 	.write = nm_bind_pid_write,
 };
 
+#if (FEATURE_ON == FEATURE_DELAY_MODEM_INIT)
 /*****************************************************************************
  Prototype    : nm_bind_pid_init
  Description  : Init function of bind pid proc file.
@@ -522,6 +526,7 @@ int __init nm_bind_pid_init(void)
 
 	return 0;
 }
+#endif /* FEATURE_DELAY_MODEM_INIT */
 
 /*****************************************************************************
  Prototype    : nm_bind_pid_exit
@@ -537,5 +542,13 @@ STATIC void __exit nm_bind_pid_exit(void)
 }
 
 
+#if (VOS_LINUX == VOS_OS_VER)
+#if (FEATURE_ON == FEATURE_DELAY_MODEM_INIT)
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+module_init(NM_CTRL_Init);
+module_init(nm_bind_pid_init);
+#endif
+#endif
+#endif
 
 

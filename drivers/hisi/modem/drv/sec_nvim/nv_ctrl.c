@@ -59,6 +59,7 @@
 #define THIS_MODU mod_nv
 
 struct file_ops_table_stru  g_nv_ops = {
+#ifdef FEATURE_NV_EMMC_ON
     .fo = nv_emmc_open,
     .fc = nv_emmc_close,
     .frm= nv_emmc_remove,
@@ -68,6 +69,7 @@ struct file_ops_table_stru  g_nv_ops = {
     .ff = nv_emmc_ftell,
     .fa = nv_emmc_access,
     .fu = nv_emmc_update_info,
+#endif
 };
 
 /*
@@ -78,11 +80,13 @@ u32 nv_file_init(void)
 {
     u32 ret;
 
+#ifdef FEATURE_NV_EMMC_ON
     ret = nv_emmc_init();
     if(ret)
     {
         return ret;
     }
+#endif
     return NV_OK;
 
 }
@@ -272,7 +276,6 @@ u32 nv_file_seek(FILE* fp,u32 offset,s32 whence)
         ret = bsp_lseek((u32)(unsigned long)(fd->fd), (long)offset, whence);
         if(ret < 0)
         {
-            nv_printf("seek file fail, fp:0x%pK\n", fd->fd);
             return NV_ERROR;
         }
         return NV_OK;

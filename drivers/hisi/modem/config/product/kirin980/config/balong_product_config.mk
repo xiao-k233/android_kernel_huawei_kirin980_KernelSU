@@ -54,8 +54,9 @@ ifeq ($(strip $(MODEM_LOGCAT_INUSER)),true)
  include $(current_dir)/balong_product_config_modem_netlink.mk
 endif
 
-ifeq ($(strip $(MODEM_LOG_FILTER_NVCONTROL)),true)
+ifeq ($(strip $(modem_log_filter_nv_control)),true)
  include $(current_dir)/balong_product_config_modem_log_filter.mk
+$(info cust modem_log_filter_nv_control is true)
 endif
 
 ifeq ($(strip $(MODEM_CHR_INUSER)),true)

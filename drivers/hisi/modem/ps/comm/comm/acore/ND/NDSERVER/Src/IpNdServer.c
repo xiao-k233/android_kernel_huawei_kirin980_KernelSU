@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Huawei Technologies Co., Ltd. 2012-2015. All rights reserved.
+ * Copyright (C) Huawei Technologies Co., Ltd. 2012-2019. All rights reserved.
  * foss@huawei.com
  *
  * If distributed as part of the Linux kernel, the following license terms
@@ -155,12 +155,10 @@ VOS_UINT8* IP_NDSERVER_GetTeDetectIp( const VOS_UINT8* pucPrefixAddr )
     VOS_UINT32  ulIndex = g_astNdServerTeDetectBuf.ulHead;
     while(ulIndex != g_astNdServerTeDetectBuf.ulTail)
     {
-        /* modify by jiqiang 2014.04.13 pclint 960 begin */
         /*lint -e960*/
         if((IP_TRUE == g_astNdServerTeDetectBuf.astTeIpBuf[ulIndex].ulValid)
             && (0 == IP_MEM_CMP(pucPrefixAddr, g_astNdServerTeDetectBuf.astTeIpBuf[ulIndex].aucTeGlobalAddr, ND_IP_IPV6_PREFIX_LENGTH)))
         /*lint +e960*/
-        /* modify by jiqiang 2014.04.13 pclint 960 end */
         {
             g_astNdServerTeDetectBuf.astTeIpBuf[ulIndex].ulValid = IP_FALSE;
 
@@ -179,7 +177,16 @@ VOS_UINT8* IP_NDSERVER_GetTeDetectIp( const VOS_UINT8* pucPrefixAddr )
     return IP_NULL_PTR;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_SetLocalParam
+ Description     : 设置本地网络参数
+ Input           : None
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_SetLocalParam( VOS_VOID )
 {
     /* M标识，0，主机不能通过DHCPv6获取IPv6地址 */
@@ -218,7 +225,15 @@ VOS_VOID IP_NDSERVER_SetLocalParam( VOS_VOID )
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_DebugInit
+ Description     : 清除统计信息
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_DebugInit(VOS_VOID)
 {
     VOS_UINT32                          ulIndex;
@@ -234,7 +249,17 @@ VOS_VOID IP_NDSERVER_DebugInit(VOS_VOID)
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_IsTimerNameValid
+ Description     : 判断定时器名是否合法
+ Input           : ulIndex     --- ND SERVER数据体索引号
+                   enTimerType --- 定时器类型
+ Output          : None
+ Return          : VOS_UINT32
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32  IP_NDSERVER_IsTimerNameValid
 (
     VOS_UINT32                          ulIndex,
@@ -262,7 +287,17 @@ VOS_UINT32  IP_NDSERVER_IsTimerNameValid
     return IP_FALSE;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_GetTimer
+ Description     : 获取定时器
+ Input           : enTimerType------------------定时器类型
+                   ulIndex----------------------定时器索引号
+ Output          : None
+ Return          : IP_TIMER_STRU*
 
+ History         :
+
+*****************************************************************************/
 IP_TIMER_STRU*  IP_NDSERVER_GetTimer
 (
     VOS_UINT32                          ulIndex,
@@ -287,7 +322,16 @@ IP_TIMER_STRU*  IP_NDSERVER_GetTimer
     return pstTimerInfo;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_GetTimerLen
+ Description     : 获取定时器时长
+ Input           : enTimerType------------------定时器类型
+ Output          : None
+ Return          : VOS_UINT32
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32  IP_NDSERVER_GetTimerLen
 (
     NDSER_TIMER_ENUM_UINT32              enTimerType
@@ -317,7 +361,17 @@ VOS_UINT32  IP_NDSERVER_GetTimerLen
     return ulTimerLen;
 }
 /*lint -e550*/
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_PrintTimeStartInfo
+ Description     : 打印定时器启动信息
+ Input           : enTimerType------------------定时器类型
+                   ulIndex----------------------定时器索引号
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID  IP_NDSERVER_PrintTimeStartInfo
 (
     VOS_UINT32                          ulIndex,
@@ -349,7 +403,16 @@ VOS_VOID  IP_NDSERVER_PrintTimeStartInfo
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_PrintTimeStopInfo
+ Description     : 打印定时器关闭信息
+ Input           : enTimerType------------------定时器类型
+                   ulIndex----------------------定时器索引号
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID  IP_NDSERVER_PrintTimeStopInfo
 (
     VOS_UINT32                          ulIndex,
@@ -381,7 +444,15 @@ VOS_VOID  IP_NDSERVER_PrintTimeStopInfo
     return;
 }
 /*lint +e550*/
-
+/*****************************************************************************
+ Function Name  : IP_NDSERVER_TimerStart
+ Discription    : 启动某一承载的某种类型的定时器
+ Input          : VOS_UINT32             ulIndex
+                  NDSER_TIMER_ENUM_UINT32 enTimerType
+ Output         : VOS_VOID
+ Return         : None
+ History:
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_TimerStart
 (
     VOS_UINT32                          ulIndex,
@@ -452,7 +523,15 @@ VOS_VOID IP_NDSERVER_TimerStart
     return;
 }
 
-
+/*****************************************************************************
+ Function Name  : IP_NDSERVER_TimerStop
+ Discription    : 停止某一承载某种类型定时器
+ Input          : VOS_UINT32             ulIndex
+                  NDSER_TIMER_ENUM_UINT32 enTimerType
+ Output         : VOS_VOID
+ Return         : None
+ History:
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_TimerStop
 (
     VOS_UINT32                          ulIndex,
@@ -504,7 +583,16 @@ VOS_VOID IP_NDSERVER_TimerStop
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_Init
+ Description     : ND SERVER模块的初始化
+ Input           : None
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_Init( VOS_VOID )
 {
     VOS_UINT32                          ulIndex;
@@ -586,7 +674,16 @@ VOS_UINT32  APP_NdServer_Pid_InitFunc( enum VOS_INIT_PHASE_DEFINE ePhase)
     return 0;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_Stop
+ Description     : 清除ND SERVER相关信息
+ Input           : ulIndex --- ND SERVER结构索引号
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_Stop(VOS_UINT32 ulIndex)
 {
     IP_NDSERVER_ADDR_INFO_STRU         *pstInfoAddr = IP_NULL_PTR;
@@ -621,7 +718,16 @@ VOS_VOID IP_NDSERVER_Stop(VOS_UINT32 ulIndex)
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_ClearDlPktQue
+ Description     : 释放下行缓存队列中的PKT
+ Input           : VOS_UINT8 ucRabId
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_ClearDlPktQue(VOS_UINT32 ulIndex)
 {
     IMM_ZC_STRU                        *pstImmZc    = VOS_NULL_PTR;
@@ -645,7 +751,16 @@ VOS_VOID IP_NDSERVER_ClearDlPktQue(VOS_UINT32 ulIndex)
     return;
 }
 
+/*****************************************************************************
+ Function Name   : NdSer_Ipv6PdnRel
+ Description     : 处理NDIS发来的Ipv6PdnRel
+ Input           : VOS_UINT8 ucRabId
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID NdSer_Ipv6PdnRel(VOS_UINT8 ucExRabId)
 {
     VOS_UINT32                          ulIndex;
@@ -668,7 +783,16 @@ VOS_VOID NdSer_Ipv6PdnRel(VOS_UINT8 ucExRabId)
     return;
 }
 
+/*****************************************************************************
+ Function Name   : NdSer_Ipv6PdnValid
+ Description     : 供NDIS调用，查询对应承载的ND SERVER实体是否还有效
+ Input           : VOS_UINT8 ucRabId
+ Output          : None
+ Return          : VOS_UINT32
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32 NdSer_Ipv6PdnValid(VOS_UINT8 ucRabId)
 {
     VOS_UINT32                          ulIndex;
@@ -682,7 +806,16 @@ VOS_UINT32 NdSer_Ipv6PdnValid(VOS_UINT8 ucRabId)
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ Function Name   : NdSer_GetMacFrm
+ Description     : 供NDIS调用，获取ND SERVER对应实体的完整MAC帧头
+ Input           : VOS_UINT8 ucIndex
+ Output          : None
+ Return          : VOS_UINT8*
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT8* NdSer_GetMacFrm(VOS_UINT8 ucIndex, VOS_UINT8 *enTeAddrState)
 {
     IP_NDSERVER_ADDR_INFO_STRU         *pstInfoAddr  = IP_NULL_PTR;
@@ -699,7 +832,16 @@ VOS_UINT8* NdSer_GetMacFrm(VOS_UINT8 ucIndex, VOS_UINT8 *enTeAddrState)
     return IP_NDSERVER_ADDRINFO_GET_MACFRAME(ucIndex);
 }
 
+/*****************************************************************************
+ Function Name   : NdSer_MacAddrInvalidProc
+ Description     : 供NDIS调用，当未获得PC MAC地址时，缓存下行IP包
+ Input           : VOS_UINT8 ucIndex
+ Output          : None
+ Return          : VOS_UINT8*
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID NdSer_MacAddrInvalidProc(IMM_ZC_STRU *pstImmZc, VOS_UINT8 ucIndex)
 {
     IMM_ZC_STRU                        *pstQueHead;
@@ -743,7 +885,16 @@ VOS_VOID NdSer_MacAddrInvalidProc(IMM_ZC_STRU *pstImmZc, VOS_UINT8 ucIndex)
     return;
 }
 
+/*****************************************************************************
+ Function Name  : IP_NDSERVER_FindIpv6EffectivePrefix
+ Description    : 查找第一个可用的IPv6前缀
+ Input          : pstConfigParaInd ---- ESM_IP_NW_PARA_IND_STRU消息指针
+ Output         : pulPrefixIndex   ---- 前缀索引指针
+ Return Value   : VOS_UINT32
 
+ History        :
+
+*****************************************************************************/
 VOS_UINT32 IP_NDSERVER_FindIpv6EffectivePrefix
 (
     const AT_NDIS_IPV6_PDN_INFO_STRU            *pstConfigParaInd,
@@ -771,7 +922,16 @@ VOS_UINT32 IP_NDSERVER_FindIpv6EffectivePrefix
     return IP_FAIL;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_GetNwPara
+ Description     : 从ID_ESM_IP_NW_PARA_IND中获取网络参数
+ Input           : pstNwParaInd--------------消息指针
+ Output          : pstNwParamTmp-------------网络参数指针
+ Return          : VOS_UINT32
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32 IP_NDSERVER_GetNwPara
 (
     ESM_IP_IPV6_NW_PARA_STRU           *pstNwParamTmp,
@@ -839,7 +999,16 @@ VOS_UINT32 IP_NDSERVER_GetNwPara
     return IP_SUCC;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_FormRaHeaderMsg
+ Description     : RA报文头固定部分设置
+ Input           : ulIndex --- ND SERVER实体索引
+ Output          : pucData --- 报文缓冲指针
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_FormRaHeaderMsg
 (
     VOS_UINT32                          ulIndex,
@@ -885,7 +1054,18 @@ VOS_VOID IP_NDSERVER_FormRaHeaderMsg
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_FormRaOptMsg
+ Description     : RA报文选项部分设置
+ Input           : ulIndex --- ND SERVER实体索引
+                   pucMacAddr- 源链路层地址
+ Output          : pucData --- 报文缓冲指针
+                   pulLen ---- 报文长度指针
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_FormRaOptMsg
 (
     VOS_UINT32                          ulIndex,
@@ -976,7 +1156,17 @@ VOS_VOID IP_NDSERVER_FormRaOptMsg
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_FormEtherHeaderMsg
+ Description     : IPv6报头设置
+ Input           : aucSrcMacAddr --- 源MAC地址
+                   aucDstMacAddr --- 目的MAC地址
+ Output          : pucData --- 报文缓冲指针
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_FormEtherHeaderMsg
 (
     const VOS_UINT8                    *aucSrcMacAddr,
@@ -1005,7 +1195,19 @@ VOS_VOID IP_NDSERVER_FormEtherHeaderMsg
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_FormRaMsg
+ Description     : 生成路由公告消息
+ Input           : ulIndex ------- 处理RA发包实体索引
+                   pstNdMsgData -- 目的信息参数
+ Output          : pucSendBuff --- 发送RA报文缓冲
+                   pulSendLen ---- 发送报文长度
 
+ Return          : VOS_VOID
+
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_FormRaMsg
 (
     VOS_UINT32                          ulIndex,
@@ -1096,7 +1298,17 @@ VOS_VOID IP_NDSERVER_FormRaMsg
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_SendRaMsg
+ Description     : 发送路由公告消息
+ Input           : ulIndex ------- 处理RA发包实体索引
+                   pstNdMsgData -- 目的信息参数
+ Output          :
+ Return          : VOS_UINT32
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32 IP_NDSERVER_SendRaMsg
 (
     VOS_UINT32                          ulIndex,
@@ -1124,7 +1336,17 @@ VOS_UINT32 IP_NDSERVER_SendRaMsg
 
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_FormNaHeaderMsg
+ Description     : NA报文头固定部分设置
+ Input           : pucTargetIPAddr --- 目的IP地址
+                   ucSolicitFlag   --- 请求标志
+ Output          : pucData --- 报文缓冲指针
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_FormNaHeaderMsg
 (
     const VOS_UINT8                    *pucTargetIPAddr,
@@ -1160,7 +1382,17 @@ VOS_VOID IP_NDSERVER_FormNaHeaderMsg
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_FormNaOptMsg
+ Description     : NA报文选项部分设置
+ Input           : pucMacAddr- 源链路层地址
+ Output          : pucData --- 报文缓冲指针
+                   pulLen ---- 报文长度指针
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_FormNaOptMsg
 (
     const VOS_UINT8                    *pucMacAddr,
@@ -1185,7 +1417,19 @@ VOS_VOID IP_NDSERVER_FormNaOptMsg
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_FormNaMsg
+ Description     : 生成邻居公告消息
+ Input           : ulIndex ------- 处理NA发包实体索引
+                   pstNdMsgData -- 目的信息参数
+ Output          : pucSendBuff --- 发送NA报文缓冲
+                   pulSendLen ---- 发送报文长度
 
+ Return          : VOS_VOID
+
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_FormNaMsg
 (
     const IP_ND_MSG_STRU               *pstNdMsgData,
@@ -1289,7 +1533,17 @@ VOS_VOID IP_NDSERVER_FormNaMsg
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_SendNaMsg
+ Description     : 发送邻居公告消息
+ Input           : ulIndex ------- 处理NA发包实体索引
+                   pstNdMsgData -- 目的信息参数
+ Output          :
+ Return          : VOS_UINT32
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32 IP_NDSERVER_SendNaMsg
 (
     VOS_UINT32                          ulIndex,
@@ -1315,7 +1569,16 @@ VOS_UINT32 IP_NDSERVER_SendNaMsg
     return Ndis_SendMacFrm(pucSendBuff, ulSendLen, (VOS_UINT8)ulEpsbId);
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_FormNsHeaderMsg
+ Description     : NS报文头固定部分设置
+ Input           : ulIndex --- ND SERVER实体索引
+ Output          : pucData --- 报文缓冲指针
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_FormNsHeaderMsg
 (
     VOS_UINT32                          ulIndex,
@@ -1350,7 +1613,17 @@ VOS_VOID IP_NDSERVER_FormNsHeaderMsg
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_FormNsOptMsg
+ Description     : NS报文选项部分设置
+ Input           : pucMacAddr- 源链路层地址
+ Output          : pucData --- 报文缓冲指针
+                   pulLen ---- 报文长度指针
+ Return          :
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_FormNsOptMsg
 (
     const VOS_UINT8                    *pucMacAddr,
@@ -1375,7 +1648,18 @@ VOS_VOID IP_NDSERVER_FormNsOptMsg
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_FormNsMsg
+ Description     : 生成地址解析邻居请求消息
+ Input           : ulIndex ------- 处理NS发包实体索引
+ Output          : pucSendBuff --- 发送NS报文缓冲
+                   pulSendLen ---- 发送报文长度
 
+ Return          : VOS_VOID
+
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_FormNsMsg
 (
     VOS_UINT32                          ulIndex,
@@ -1440,7 +1724,16 @@ VOS_VOID IP_NDSERVER_FormNsMsg
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_SendNsMsg
+ Description     : 发送地址解析邻居请求消息
+ Input           : ulIndex ------- 处理NS发包实体索引
+ Output          :
+ Return          : VOS_UINT32
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32 IP_NDSERVER_SendNsMsg
 (
     VOS_UINT32                          ulIndex,
@@ -1539,7 +1832,15 @@ VOS_UINT32 NdSer_CheckIpv6PdnInfo(const AT_NDIS_IPV6_PDN_INFO_STRU *pstIpv6PdnIn
     return PS_FAIL;
 }
 
+/*****************************************************************************
+ Function Name   : NdSer_Ipv6PdnInfoCfg
+ Description     : 处理NDIS发来的Ipv6PdnInfoCfg
+ Input           : VOS_UINT8 ucRabId, AT_NDIS_IPV6_PDN_INFO_STRU *pstIpv6PdnInfo
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+*****************************************************************************/
 VOS_VOID NdSer_Ipv6PdnInfoCfg(VOS_UINT8 ucExRabId, const AT_NDIS_IPV6_PDN_INFO_STRU *pstIpv6PdnInfo)
 {
     VOS_UINT32                          ulIndex       = IP_NULL;
@@ -1639,7 +1940,18 @@ VOS_VOID NdSer_Ipv6PdnInfoCfg(VOS_UINT8 ucExRabId, const AT_NDIS_IPV6_PDN_INFO_S
 }
 
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_DecodeRsData
+ Description     : 对RS包进行格式转换
+ Input           : pucSrcData ----------- 源报文指针
+                   pstDestData ---------- 目的转换结构指针
+                   ulIcmpv6HeadOffset --- ICMPv6报头偏移量
+ Output          : None
+ Return          : VOS_UINT32
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32  IP_NDSERVER_DecodeRsData
 (
     VOS_UINT8                          *pucSrcData,
@@ -1723,7 +2035,18 @@ VOS_UINT32  IP_NDSERVER_DecodeRsData
     return IP_SUCC;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_RsMsgProc
+ Description     : 处理RS消息
+ Input           : ulIndex  -------------- 处理消息实体索引
+                   pucSrcData ------------ IP数据报
+                   ulIcmpv6HeadOffset ---- ICMPv6报文头偏移量
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_RsMsgProc
 (
     VOS_UINT32                          ulIndex,
@@ -1768,7 +2091,18 @@ VOS_VOID IP_NDSERVER_RsMsgProc
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_DecodeNsData
+ Description     : 对NS包进行格式转换
+ Input           : pucSrcData ----------- 源报文指针
+                   pstDestData ---------- 目的转换结构指针
+                   ulIcmpv6HeadOffset --- ICMPv6报头偏移量
+ Output          : None
+ Return          : VOS_UINT32
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32  IP_NDSERVER_DecodeNsData
 (
     VOS_UINT8                          *pucSrcData,
@@ -1856,7 +2190,17 @@ VOS_UINT32  IP_NDSERVER_DecodeNsData
     return IP_SUCC;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_IsSelfIPAddr
+ Description     : 判断是否是自己的IP地址
+ Input           : ulIndex  -------------- 处理消息实体索引
+                   aucIPAddr ------------  IP地址指针
+ Output          : None
+ Return          : VOS_UINT32
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32 IP_NDSERVER_IsSelfIPAddr
 (
     VOS_UINT32                          ulIndex,
@@ -1905,7 +2249,17 @@ VOS_UINT32 IP_NDSERVER_IsSelfIPAddr
     }
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_EqualAdvertisedPrefix
+ Description     : 判断是否符合已公告的全球前缀
+ Input           : ulIndex  -------------- 处理消息实体索引
+                   aucIPAddr ------------  IP地址指针
+ Output          : None
+ Return          : VOS_UINT32
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32 IP_NDSERVER_EqualAdvertisedPrefix
 (
     VOS_UINT32                          ulIndex,
@@ -1929,7 +2283,17 @@ VOS_UINT32 IP_NDSERVER_EqualAdvertisedPrefix
     }
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_RcvTeDetectionAddr
+ Description     : 收到重复地址检测地址
+ Input           : ulIndex  -------------- ND SERVER实体索引
+                   aucIPAddr ------------  IP地址指针
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_RcvTeDetectionAddr
 (
     VOS_UINT32                          ulIndex,
@@ -1940,12 +2304,10 @@ VOS_VOID IP_NDSERVER_RcvTeDetectionAddr
 
     IP_ASSERT(ulIndex < IP_NDSERVER_ADDRINFO_MAX_NUM);
     pstTeInfo = IP_NDSERVER_ADDRINFO_GET_TEINFO(ulIndex);
-    /* modify by jiqiang 2014.04.13 pclint 960 begin */
     /*lint -e960*/
     if ((IP_NDSERVER_TE_ADDR_REACHABLE == pstTeInfo->enTeAddrState)
             && (IP_NULL == IP_MEM_CMP(pstTeInfo->aucTeGlobalAddr, aucIPAddr, IP_IPV6_ADDR_LEN)))
     /*lint +e960*/
-    /* modify by jiqiang 2014.04.13 pclint 960 end */
     {
         return;
     }
@@ -1962,7 +2324,18 @@ VOS_VOID IP_NDSERVER_RcvTeDetectionAddr
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_NsMsgProc
+ Description     : 处理NS消息
+ Input           : ulIndex  -------------- 处理消息实体索引
+                   pucSrcData ------------ IP数据报
+                   ulIcmpv6HeadOffset ---- ICMPv6报文头偏移量
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_NsMsgProc
 (
     VOS_UINT32                          ulIndex,
@@ -2059,7 +2432,18 @@ VOS_VOID IP_NDSERVER_NsMsgProc
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_DecodeNaData
+ Description     : 对NA包进行格式转换
+ Input           : pucSrcData ----------- 源报文指针
+                   pstDestData ---------- 目的转换结构指针
+                   ulIcmpv6HeadOffset --- ICMPv6报头偏移量
+ Output          : None
+ Return          : VOS_UINT32
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32  IP_NDSERVER_DecodeNaData
 (
     VOS_UINT8                          *pucSrcData,
@@ -2151,7 +2535,18 @@ VOS_UINT32  IP_NDSERVER_DecodeNaData
     return IP_SUCC;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_EqualSavedTeAddr
+ Description     : 判断是否是已保存的TE地址
+ Input           : ulIndex  -------------  ND SERVER实体索引
+                   aucIPAddr ------------  IP地址指针
+                   aucMACAddr -----------  MAC地址指针
+ Output          : None
+ Return          : VOS_UINT32
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32 IP_NDSERVER_EqualSavedTeAddr
 (
     VOS_UINT32                          ulIndex,
@@ -2164,13 +2559,11 @@ VOS_UINT32 IP_NDSERVER_EqualSavedTeAddr
     IP_ASSERT_RTN(ulIndex < IP_NDSERVER_ADDRINFO_MAX_NUM, IP_FALSE);
     pstTeInfo = IP_NDSERVER_ADDRINFO_GET_TEINFO(ulIndex);
 
-    /* modify by jiqiang 2014.03.19 pclint 960 begin */
     /*lint -e960*/
     if ((IP_NDSERVER_TE_ADDR_REACHABLE == pstTeInfo->enTeAddrState)
             && (IP_NULL == IP_MEM_CMP(pstTeInfo->aucTeGlobalAddr, aucIPAddr, IP_IPV6_ADDR_LEN))
             && (IP_NULL == IP_MEM_CMP(pstTeInfo->aucTeLinkLayerAddr, aucMACAddr, IP_MAC_ADDR_LEN)))
     /*lint +e960*/
-    /* modify by jiqiang 2014.03.19 pclint 960 end */
     {
         return IP_TRUE;
     }
@@ -2179,7 +2572,16 @@ VOS_UINT32 IP_NDSERVER_EqualSavedTeAddr
         return IP_FALSE;
     }
 }
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_SendDlPkt
+ Description     : 发送下行缓存的IPV6数据包
+ Input           : ulIndex  -------------  ND SERVER实体索引
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_SendDlPkt(VOS_UINT32 ulIndex)
 {
     IMM_ZC_STRU                        *pstImmZc    = VOS_NULL_PTR;
@@ -2220,7 +2622,19 @@ VOS_VOID IP_NDSERVER_SendDlPkt(VOS_UINT32 ulIndex)
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_UpdateTeAddrInfo
+ Description     : 收到重复地址检测地址
+ Input           : ulIndex  -------------  ND SERVER实体索引
+                   aucGlobalIPAddr ------  全球IP地址指针
+                   aucMACAddr -----------  MAC地址指针
+                   aucLinkLocalIPAddr ---  链路本地IP地址指针
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_UpdateTeAddrInfo
 (
     VOS_UINT32                          ulIndex,
@@ -2276,7 +2690,18 @@ VOS_VOID IP_NDSERVER_UpdateTeAddrInfo
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_NaMsgProc
+ Description     : 处理NA消息
+ Input           : ulIndex  -------------- 处理消息实体索引
+                   pucSrcData ------------ IP数据报
+                   ulIcmpv6HeadOffset ---- ICMPv6报文头偏移量
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_NaMsgProc
 (
     VOS_UINT32                          ulIndex,
@@ -2347,7 +2772,18 @@ VOS_VOID IP_NDSERVER_NaMsgProc
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_BuildTooBigICMPPkt
+ Description     : 形成向PC回复的超长包响应
+ Input           : pucSrcData ----------- 源报文指针
+                   pstDestData ---------- 目的转换结构指针
+                   ulIcmpv6HeadOffset --- ICMPv6报头偏移量
+ Output          : None
+ Return          : VOS_UINT32
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32  IP_NDSERVER_BuildTooBigICMPPkt
 (
     VOS_UINT32                          ulIndex,
@@ -2476,7 +2912,18 @@ VOS_VOID IP_NDSERVER_ProcTooBigPkt(VOS_UINT8 ucRabId, VOS_UINT8 *pucSrcData, VOS
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_FormEchoReply
+ Description     : 形成向PC回复的ECHO REPLY
+ Input           : pucSrcData ----------- 源报文指针
+                   pstDestData ---------- 目的转换结构指针
+                   ulIcmpv6HeadOffset --- ICMPv6报头偏移量
+ Output          : None
+ Return          : VOS_UINT32
 
+ History         :
+
+*****************************************************************************/
 VOS_UINT32  IP_NDSERVER_FormEchoReply
 (
     VOS_UINT32                          ulIndex,
@@ -2554,7 +3001,18 @@ VOS_UINT32  IP_NDSERVER_FormEchoReply
     return IP_SUCC;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_EchoRequestMsgProc
+ Description     : 处理ECHO REQUEST消息
+ Input           : ulIndex  -------------- 处理消息实体索引
+                   pucSrcData ------------ IP数据报
+                   ulIcmpv6HeadOffset ---- ICMPv6报文头偏移量
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_EchoRequestMsgProc
 (
     VOS_UINT32                          ulIndex,
@@ -2610,7 +3068,16 @@ VOS_VOID IP_NDSERVER_EchoRequestMsgProc
     return;
 }
 
+/*****************************************************************************
+ Function Name   : NdSer_NdAndEchoPktProc
+ Description     : 接收PC发送的ND和ECHO REQUEST报文
+ Input           : pRcvMsg
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID NdSer_NdAndEchoPktProc(VOS_VOID *pRcvMsg)
 {
     ADS_NDIS_DATA_IND_STRU             *pstAdsNdisMsg  = (ADS_NDIS_DATA_IND_STRU*)pRcvMsg;
@@ -2733,10 +3200,8 @@ VOS_UINT32  IP_NDSERVER_SendDhcp6Reply
         return PS_FAIL;
     }
 
-    /*20160122 V722 coverity --begin*/
     IP_MEM_SET_S(&stIpv6DhcpDnsOpt, sizeof(IPV6_DHCP_DNS_OPTION_STRU), 0, sizeof(IPV6_DHCP_DNS_OPTION_STRU));
     IP_MEM_SET_S(&stDhcpDuidLLOpt, sizeof(IPV6_PKT_DHCP_DUID_LL_OPT_STRU), 0, sizeof(IPV6_PKT_DHCP_DUID_LL_OPT_STRU));
-    /*20160122 V722 coverity --end*/
 
     usReqDhcpOptLen     = usReqIp6PktLen - ((IP_IPV6_HEAD_LEN + IP_UDP_HEAD_LEN) + IP_UDP_DHCP_HDR_SIZE) ;
     usReplyUdpDataLen   = IP_UDP_HEAD_LEN
@@ -2933,7 +3398,16 @@ VOS_UINT32  IP_NDSERVER_SendDhcp6Reply
 /*lint +e778*/
 /*lint +e572*/
 
+/*****************************************************************************
+ Function Name   : NdSer_DhcpV6PktProc
+ Description     : 处理DHCPV6报文
+ Input           :
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID NdSer_DhcpV6PktProc(VOS_VOID *pRcvMsg)
 {
     VOS_UINT16                          usSrcPort;
@@ -3011,7 +3485,16 @@ VOS_VOID NdSer_DhcpV6PktProc(VOS_VOID *pRcvMsg)
     return;
 }
 
+/*****************************************************************************
+ Function Name  : IP_NDSERVER_ProcTimerMsgNsExp
+ Description    : 发送邻居请求后，等待邻居公告超时
+ Input          : pMsg -------- 消息指针
+ Output         : VOS_VOID
+ Return Value   : VOS_VOID
 
+ History        :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_ProcTimerMsgNsExp
 (
     const VOS_VOID                     *pMsg
@@ -3086,7 +3569,16 @@ VOS_VOID IP_NDSERVER_ProcTimerMsgNsExp
     return;
 }
 
+/*****************************************************************************
+ Function Name  : IP_NDSERVER_ProcTimerMsgPeriodicNsExp
+ Description    : 周期性邻居请求超时
+ Input          : pMsg -------- 消息指针
+ Output         : VOS_VOID
+ Return Value   : VOS_VOID
 
+ History        :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_ProcTimerMsgPeriodicNsExp
 (
     const VOS_VOID                     *pMsg
@@ -3141,7 +3633,16 @@ VOS_VOID IP_NDSERVER_ProcTimerMsgPeriodicNsExp
     return;
 }
 
+/*****************************************************************************
+ Function Name  : IP_NDSERVER_ProcTimerMsgPeriodicNsExp
+ Description    : 收到重复地址检测后等待定时器超时
+ Input          : pMsg -------- 消息指针
+ Output         : VOS_VOID
+ Return Value   : VOS_VOID
 
+ History        :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_ProcTimerMsgFirstNsExp
 (
     const VOS_VOID                     *pMsg
@@ -3183,7 +3684,16 @@ VOS_VOID IP_NDSERVER_ProcTimerMsgFirstNsExp
     return;
 }
 
+/*****************************************************************************
+ Function Name  : IP_NDSERVER_ProcTimerMsgRaExp
+ Description    : 收到重复地址检测前周期发送路由公告超时
+ Input          : pMsg -------- 消息指针
+ Output         : VOS_VOID
+ Return Value   : VOS_VOID
 
+ History        :
+
+*****************************************************************************/
 VOS_VOID IP_NDSERVER_ProcTimerMsgRaExp
 (
     const VOS_VOID                     *pMsg
@@ -3193,8 +3703,10 @@ VOS_VOID IP_NDSERVER_ProcTimerMsgRaExp
     IP_NDSERVER_ADDR_INFO_STRU         *pstInfoAddr  = IP_NULL_PTR;
     VOS_UINT8                           aucDstIPAddr[IP_IPV6_ADDR_LEN] = {IP_NULL};
     IMM_ZC_STRU                        *pstImmZc    = VOS_NULL_PTR;
+#if (VOS_OS_VER != VOS_WIN32)
     VOS_UINT8                          *pucData;
     VOS_INT32                           lLockKey;
+#endif
     /* 打印进入该函数 */
     IPND_INFO_LOG(NDIS_NDSERVER_PID, "IP_NDSERVER_ProcTimerMsgRaExp is entered.");
 
@@ -3222,6 +3734,7 @@ VOS_VOID IP_NDSERVER_ProcTimerMsgRaExp
     /* 启动路由公告定时器 */
     IP_NDSERVER_TimerStart(ulIndex, IP_ND_SERVER_TIMER_RA);
 
+#if (VOS_OS_VER != VOS_WIN32)
     /************ 下行IP包的目的地址作为NS包的目标地址，进行地址解析 **********/
     /* send NS for Address Resolution */
     lLockKey = VOS_SplIMP();
@@ -3246,11 +3759,20 @@ VOS_VOID IP_NDSERVER_ProcTimerMsgRaExp
         IPND_ERROR_LOG(NDIS_NDSERVER_PID, "IP_NDSERVER_ProcTimerMsgRaExp, IP_NDSERVER_SendNsMsg return NULL");
         return;
     }
+#endif
 
     return;
 }
 
+/*****************************************************************************
+ Function Name  : IP_NDSERVER_TimerMsgDistr
+ Description    : ND SERVER TIMER消息分发函数
+ Input          : VOS_VOID *pRcvMsg
+ Output         : VOS_VOID
+ Return Value   : NDSER_TIMER_ENUM_UINT32
 
+ History        :
+*****************************************************************************/
 NDSER_TIMER_ENUM_UINT32 IP_NDSERVER_TimerMsgDistr(const VOS_VOID *pRcvMsg )
 {
     VOS_UINT32                          ulIndex         = IP_NULL;
@@ -3310,7 +3832,7 @@ NDSER_TIMER_ENUM_UINT32 IP_NDSERVER_TimerMsgDistr(const VOS_VOID *pRcvMsg )
 }
 
 
-VOS_VOID APP_NdServer_PidMsgProc(const MsgBlock *pRcvMsg)
+VOS_VOID APP_NdServer_PidMsgProc(MsgBlock *pRcvMsg)
 {
     if (VOS_NULL_PTR == pRcvMsg)
     {
@@ -3329,7 +3851,15 @@ VOS_VOID APP_NdServer_PidMsgProc(const MsgBlock *pRcvMsg)
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_CmdHelp
+ Description     : IP NDSERVER模块命令显示
+ Input           : None
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+*****************************************************************************/
 VOS_VOID  IP_NDSERVER_CmdHelp( VOS_VOID )
 {
     PS_PRINTF_ERR("\r\n");
@@ -3343,7 +3873,16 @@ VOS_VOID  IP_NDSERVER_CmdHelp( VOS_VOID )
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_ShowLocalNwParamInfo
+ Description     : 显示本地保存的网络参数信息
+ Input           : None
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID  IP_NDSERVER_ShowLocalNwParamInfo( VOS_VOID )
 {
     PS_PRINTF_ERR("************************本地保存的网络参数信息***********************\r\n");
@@ -3362,7 +3901,16 @@ VOS_VOID  IP_NDSERVER_ShowLocalNwParamInfo( VOS_VOID )
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_ShowAddrInfo
+ Description     : 显示某实体地址参数信息
+ Input           : ulIndex --- 实体索引
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID  IP_NDSERVER_ShowAddrInfo( VOS_UINT32 ulIndex )
 {
     IP_NDSERVER_ADDR_INFO_STRU         *pstInfoAddr = IP_NULL_PTR;
@@ -3519,7 +4067,16 @@ VOS_VOID  IP_NDSERVER_ShowAddrInfo( VOS_UINT32 ulIndex )
     return;
 }
 
+/*****************************************************************************
+ Function Name   : IP_NDSERVER_ShowStatInfo
+ Description     : 显示报文统计信息
+ Input           : ulIndex --- 实体索引
+ Output          : None
+ Return          : VOS_VOID
 
+ History         :
+
+*****************************************************************************/
 VOS_VOID  IP_NDSERVER_ShowStatInfo( VOS_UINT32 ulIndex )
 {
     IP_NDSERVER_PACKET_STATISTICS_INFO_STRU    *pstPktStatInfo = IP_NULL_PTR;

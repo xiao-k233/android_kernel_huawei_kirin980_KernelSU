@@ -135,6 +135,7 @@ typedef enum _mdrv_errno_e
 	DRV_ERRNO_MIPI                       = 0x10ad,   /*mipi 触发复位 */
 	DRV_ERRNO_TSENSOR                    = 0x10ae,   /*tsensor 高温触发复位*/
     DRV_ERRNO_DDR_TMON_EXC               = 0x10af,  /*DDR 超温异常*/
+    DRV_ERRNO_MPU_BACKUP_FATAL             = 0x1FFE,
     DRV_ERRNO_BUTT                       = 0x1FFF
 }mdrv_errno_enum;
 

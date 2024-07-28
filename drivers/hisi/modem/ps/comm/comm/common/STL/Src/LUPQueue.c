@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Huawei Technologies Co., Ltd. 2012-2015. All rights reserved.
+ * Copyright (C) Huawei Technologies Co., Ltd. 2012-2019. All rights reserved.
  * foss@huawei.com
  *
  * If distributed as part of the Linux kernel, the following license terms
@@ -66,7 +66,21 @@
 /*****************************************************************************
   3 Function
 *****************************************************************************/
+/*****************************************************************************
+ 函 数 名  : LUP_IsQueEmpty
+ 功能描述  : 检测队列是否为空
+ 输入参数  : LUP_QUEUE_STRU *pstQue -- 环形队列结构指针
+ 输出参数  : 无
+ 返 回 值  : PS_TRUE    -- 队列为空
+             PS_FALSE   -- 队列不空
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2009年3月10日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 MODULE_EXPORTED VOS_UINT32 LUP_IsQueEmpty(const LUP_QUEUE_STRU *pstQue)
 {
     OSA_ASSERT_RTN (VOS_NULL_PTR != pstQue, PS_TRUE);
@@ -80,7 +94,21 @@ MODULE_EXPORTED VOS_UINT32 LUP_IsQueEmpty(const LUP_QUEUE_STRU *pstQue)
 }
 
 
+/*****************************************************************************
+ 函 数 名  : LUP_IsQueFull
+ 功能描述  : 检测队列是否已经满
+ 输入参数  : LUP_QUEUE_STRU *pstQue -- 环形队列结构指针
+ 输出参数  : 无
+ 返 回 值  : PS_TRUE    -- 队列为满
+             PS_FALSE   -- 队列未满
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2009年3月10日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 MODULE_EXPORTED VOS_UINT32 LUP_IsQueFull(const LUP_QUEUE_STRU *pstQue)
 {
     OSA_ASSERT_RTN (VOS_NULL_PTR != pstQue, PS_TRUE);
@@ -93,7 +121,20 @@ MODULE_EXPORTED VOS_UINT32 LUP_IsQueFull(const LUP_QUEUE_STRU *pstQue)
     return PS_FALSE;
 }
 
+/*****************************************************************************
+ 函 数 名  : LUP_QueCnt
+ 功能描述  : 返回队列中的个数
+ 输入参数  : LUP_QUEUE_STRU *pstQue
+ 输出参数  : 无
+ 返 回 值  : VOS_UINT32
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年3月11日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 MODULE_EXPORTED VOS_UINT32 LUP_QueCnt(const LUP_QUEUE_STRU *pstQue)
 {
     OSA_ASSERT_RTN (VOS_NULL_PTR != pstQue, 0);
@@ -101,7 +142,20 @@ MODULE_EXPORTED VOS_UINT32 LUP_QueCnt(const LUP_QUEUE_STRU *pstQue)
     return TTF_MOD_SUB(pstQue->ulTail, pstQue->ulHead, pstQue->ulMaxNum);
 }
 
+/*****************************************************************************
+ 函 数 名  : LUP_PeekQueHead
+ 功能描述  : 查看队列中的头节点
+ 输入参数  : LUP_QUEUE_STRU *pstQue -- 环形队列结构指针
+ 输出参数  : VOS_VOID **ppNode -- 队列头节点
+ 返 回 值  : PS_SUCC -- 成功，其它为相应错误码
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2009年3月10日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 MODULE_EXPORTED VOS_UINT32 LUP_PeekQueHead(const LUP_QUEUE_STRU *pstQue, VOS_VOID **ppNode)
 {
     VOS_UINT32 ulHead = 0;
@@ -120,7 +174,22 @@ MODULE_EXPORTED VOS_UINT32 LUP_PeekQueHead(const LUP_QUEUE_STRU *pstQue, VOS_VOI
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ 函 数 名  : LUP_EnQue
+ 功能描述  : 入队操作，在队列尾部插入接点
+ 输入参数  : LUP_QUEUE_STRU *pstQue -- 环形队列结构指针
+             VOS_VOID *pNode -- 入队节点内容
+ 输出参数  : 无
+ 返 回 值  : PS_SUCC -- 成功，其它为相应错误码
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2009年3月10日
+    修改内容   : 新生成函数
+  2.日    期   : 2017年5月23日
+    修改内容   : 增加多核版本
+*****************************************************************************/
 MODULE_EXPORTED VOS_UINT32 LUP_EnQue(LUP_QUEUE_STRU *pstQue, VOS_VOID *pNode)
 {
     VOS_UINT32          ulTail;
@@ -136,13 +205,28 @@ MODULE_EXPORTED VOS_UINT32 LUP_EnQue(LUP_QUEUE_STRU *pstQue, VOS_VOID *pNode)
 
     pstQue->pBuff[ulTail] = pNode;
 
+#if (VOS_RTOSCK == VOS_OS_VER)
+#endif
 
     pstQue->ulTail = ulTail;
 
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ 函 数 名  : LUP_DeQue
+ 功能描述  : 出队操作，取出头接点
+ 输入参数  : LUP_QUEUE_STRU *pstQue -- 环形队列结构指针
+ 输出参数  : VOS_VOID **ppNode -- 获取的头节点
+ 返 回 值  : PS_SUCC -- 成功，其它为相应错误码
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2009年3月10日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 MODULE_EXPORTED VOS_UINT32 LUP_DeQue(LUP_QUEUE_STRU *pstQue, VOS_VOID **ppNode)
 {
     OSA_ASSERT_RTN (VOS_NULL_PTR != pstQue, PS_PTR_NULL);
@@ -159,7 +243,19 @@ MODULE_EXPORTED VOS_UINT32 LUP_DeQue(LUP_QUEUE_STRU *pstQue, VOS_VOID **ppNode)
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ 函 数 名  : LUP_DeQueTail
+ 功能描述  : 特殊操作: 从tail端出队操作，取出尾节点
+ 输入参数  : LUP_QUEUE_STRU *pstQue -- 环形队列结构指针
+ 输出参数  : VOS_VOID **ppNode -- 获取的头节点
+ 返 回 值  : PS_SUCC -- 成功，其它为相应错误码
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2017年3月16日
+    修改内容   : 新生成函数
+*****************************************************************************/
 MODULE_EXPORTED VOS_UINT32 LUP_DeQueTail(LUP_QUEUE_STRU *pstQue, VOS_VOID **ppNode)
 {
     OSA_ASSERT_RTN (VOS_NULL_PTR != pstQue, PS_PTR_NULL);
@@ -176,7 +272,21 @@ MODULE_EXPORTED VOS_UINT32 LUP_DeQueTail(LUP_QUEUE_STRU *pstQue, VOS_VOID **ppNo
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ 函 数 名  : LUP_BatchDeQue
+ 功能描述  : 一次性把队列中的节点全部取出来，放在用户指定的缓冲中
+ 输入参数  : LUP_QUEUE_STRU *pstQue -- 环形队列结构指针
+ 输出参数  : pulBuf -- 批量出队
+             pulNum -- 个数
+ 返 回 值  : PS_SUCC -- 成功，其它为相应错误码
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年2月14日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT32 LUP_BatchDeQue(LUP_QUEUE_STRU *pstQue, VOS_VOID **ppBuf,VOS_UINT32 *pulNum)
 {
     VOS_UINT32    ulCnt;
@@ -227,7 +337,19 @@ VOS_UINT32 LUP_BatchDeQue(LUP_QUEUE_STRU *pstQue, VOS_VOID **ppBuf,VOS_UINT32 *p
 }
 
 /*lint -e715*/
+/*****************************************************************************
+ 函 数 名  : LUP_CreateQue
+ 功能描述  : 创建队列
+ 输入参数  : VOS_UINT32 ulMaxNodeNum -- 队列容纳的最大节点数
+ 输出参数  : LUP_QUEUE_STRU **ppQue  指向生成队列指针的指针
+ 返 回 值  : PS_SUCC -- 成功，其它为相应错误码
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2009年3月10日
+    修改内容   : 新生成函数
+*****************************************************************************/
 MODULE_EXPORTED VOS_UINT32 LUP_CreateQue(VOS_UINT32 ulPid, LUP_QUEUE_STRU **ppQue,
                                 VOS_UINT32 ulMaxNodeNum)
 {
@@ -268,7 +390,21 @@ MODULE_EXPORTED VOS_UINT32 LUP_CreateQue(VOS_UINT32 ulPid, LUP_QUEUE_STRU **ppQu
     return  PS_SUCC;
 }
 
+/*****************************************************************************
+ 函 数 名  : LUP_DestroyQue
+ 功能描述  : 销毁队列，释放内存
+ 输入参数  : LUP_QUEUE_STRU **ppQue  指向待销毁队列指针的指针
+ 输出参数  : 无
+ 返 回 值  : VOS_UINT32
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2009年3月10日
+    修改内容   : 新生成函数
+
+
+*****************************************************************************/
 MODULE_EXPORTED VOS_UINT32 LUP_DestroyQue(VOS_UINT32 ulPid, LUP_QUEUE_STRU **ppQue)
 {
     LUP_QUEUE_STRU     *pstQue;
@@ -294,7 +430,20 @@ MODULE_EXPORTED VOS_UINT32 LUP_DestroyQue(VOS_UINT32 ulPid, LUP_QUEUE_STRU **ppQ
 }
 /*lint +e715*/
 
+/*****************************************************************************
+ 函 数 名  : LUP_EnQuetoHead
+ 功能描述  : 入队操作，在队列头部插入接点，如果队列满，则将队尾节点移除
+ 输入参数  : LUP_QUEUE_STRU *pstQue -- 环形队列结构指针
+             VOS_VOID *pNode -- 入队节点内容
+ 输出参数  : VOS_VOID** ppTailNode -- 当队列满时，返回尾节点
+ 返 回 值  : PS_SUCC -- 成功，其它为相应错误码
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2009年10月20日
+    修改内容   : 新生成函数
+*****************************************************************************/
 VOS_UINT32 LUP_EnQuetoHead(LUP_QUEUE_STRU *pstQue, VOS_VOID *pNode, VOS_VOID** ppTailNode)
 {
     OSA_ASSERT_RTN (VOS_NULL_PTR != pstQue, PS_PTR_NULL);
@@ -318,5 +467,174 @@ VOS_UINT32 LUP_EnQuetoHead(LUP_QUEUE_STRU *pstQue, VOS_VOID *pNode, VOS_VOID** p
     return PS_SUCC;
 }
 
+#if ((VOS_RTOSCK == VOS_OS_VER) || (VOS_WIN32 == VOS_OS_VER))
+/*lint -e715*/
+/*****************************************************************************
+ 函 数 名  : LUP_CreateSafeQue
+ 功能描述  : 创建LUP安全队列
+ 输入参数  : VOS_UINT32 ulMaxNodeNum -- 队列容纳的最大节点数
+ 输出参数  : LUP_QUEUE_STRU **ppQue  指向生成队列指针的指针
+ 返 回 值  : PS_SUCC -- 成功，其它为相应错误码
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2016年9月27日
+    修改内容   : 新生成函数
+*****************************************************************************/
+MODULE_EXPORTED VOS_UINT32 LUP_CreateSafeQue(VOS_UINT32 ulPid, LUP_QUEUE_STRU **ppQue,
+                                VOS_UINT32 ulMaxNodeNum)
+{
+    LUP_QUEUE_STRU  *pstQue     = VOS_NULL_PTR;
+    VOS_UINT8       *pBuffer    = VOS_NULL_PTR;
+
+    if (0 == ulMaxNodeNum)
+    {
+        return PS_PARA_ERR;
+    }
+
+    if (VOS_NULL_PTR == ppQue)
+    {
+        return PS_PTR_NULL;
+    }
+
+    pBuffer = (VOS_UINT8*)PS_MEM_ALLOC(ulPid, (ulMaxNodeNum + 1)* sizeof(VOS_VOID*));
+    if (VOS_NULL_PTR == pBuffer)
+    {
+        return PS_MEM_ALLOC_FAIL;
+    }
+
+    pstQue = (LUP_QUEUE_STRU *)PS_MEM_ALLOC(ulPid, sizeof(LUP_QUEUE_STRU));
+    if (VOS_NULL_PTR == pstQue)
+    {
+        (VOS_VOID)PS_MEM_FREE(ulPid, pBuffer);
+        return PS_MEM_ALLOC_FAIL;
+    }
+
+    pstQue->ulHead      = ulMaxNodeNum;
+    pstQue->ulTail      = ulMaxNodeNum;
+    pstQue->ulMaxNum    = ulMaxNodeNum+1;
+    /*lint -e826*/
+    pstQue->pBuff       = (VOS_VOID **)pBuffer;
+    /*lint +e826*/
+    VOS_SpinLockInit(&(pstQue->stSpinLock));
+    *ppQue              = pstQue;
+
+    return PS_SUCC;
+}
+/*lint +e715*/
+
+/*****************************************************************************
+ 函 数 名  : LUP_EnSafeQue
+ 功能描述  : LUP安全入队操作，在队列尾部插入接点
+ 输入参数  : LUP_QUEUE_STRU *pstQue -- 环形队列结构指针
+             VOS_VOID *pNode -- 入队节点内容
+ 输出参数  : 无
+ 返 回 值  : PS_SUCC -- 成功，其它为相应错误码
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2016年9月27日
+    修改内容   : 新生成函数
+*****************************************************************************/
+MODULE_EXPORTED VOS_UINT32 LUP_EnSafeQue(LUP_QUEUE_STRU *pstQue, VOS_VOID *pNode)
+{
+    VOS_UINT32          ulTail;
+    VOS_UINT32          ulLockLevel;
+
+    OSA_ASSERT_RTN (VOS_NULL_PTR != pstQue, PS_PTR_NULL);
+    OSA_ASSERT_RTN (VOS_NULL_PTR != pNode, PS_PTR_NULL);
+
+    VOS_SpinLockIntLock(&(pstQue->stSpinLock), ulLockLevel);
+    ulTail = TTF_MOD_ADD(pstQue->ulTail, 1, pstQue->ulMaxNum);
+    if (pstQue->ulHead == ulTail)
+    {
+        VOS_SpinUnlockIntUnlock(&(pstQue->stSpinLock), ulLockLevel);
+        return PS_QUE_FULL;
+    }
+
+    pstQue->pBuff[ulTail] = pNode;
+    pstQue->ulTail = ulTail;
+    VOS_SpinUnlockIntUnlock(&(pstQue->stSpinLock), ulLockLevel);
+
+    return PS_SUCC;
+}
+
+/*****************************************************************************
+ 函 数 名  : LUP_DeSafeQue
+ 功能描述  : LUP安全出队操作，取出头接点
+ 输入参数  : LUP_QUEUE_STRU *pstQue -- 环形队列结构指针
+ 输出参数  : VOS_VOID **ppNode -- 获取的头节点
+ 返 回 值  : PS_SUCC -- 成功，其它为相应错误码
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2016年9月27日
+    修改内容   : 新生成函数
+*****************************************************************************/
+MODULE_EXPORTED VOS_UINT32 LUP_DeSafeQue(LUP_QUEUE_STRU *pstQue, VOS_VOID **ppNode)
+{
+    VOS_UINT32          ulLockLevel;
+
+    OSA_ASSERT_RTN (VOS_NULL_PTR != pstQue, PS_PTR_NULL);
+    OSA_ASSERT_RTN(VOS_NULL_PTR != ppNode, PS_PTR_NULL);
+
+    VOS_SpinLockIntLock(&(pstQue->stSpinLock), ulLockLevel);
+    if (pstQue->ulHead == pstQue->ulTail)
+    {
+        VOS_SpinUnlockIntUnlock(&(pstQue->stSpinLock), ulLockLevel);
+        return  PS_QUE_EMPTY;
+    }
+
+    pstQue->ulHead  = TTF_MOD_ADD(pstQue->ulHead, 1, pstQue->ulMaxNum);
+    *ppNode         = pstQue->pBuff[pstQue->ulHead];
+    VOS_SpinUnlockIntUnlock(&(pstQue->stSpinLock), ulLockLevel);
+
+    return PS_SUCC;
+}
+
+/*****************************************************************************
+ 函 数 名  : LUP_PeekSafeQueHead
+ 功能描述  : 安全查看队列中的头节点
+ 输入参数  : LUP_QUEUE_STRU *pstQue -- 环形队列结构指针
+ 输出参数  : VOS_VOID **ppNode -- 队列头节点
+ 返 回 值  : PS_SUCC -- 成功，其它为相应错误码
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2018年9月14日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
+
+MODULE_EXPORTED VOS_UINT32 LUP_PeekSafeQueHead(LUP_QUEUE_STRU *pstQue, VOS_VOID **ppNode)
+{
+    VOS_UINT32 ulHead = 0;
+    VOS_UINT32          ulLockLevel;
+
+    OSA_ASSERT_RTN (VOS_NULL_PTR != pstQue, PS_PTR_NULL);
+    OSA_ASSERT_RTN (VOS_NULL_PTR != ppNode, PS_PARA_ERR);
+
+    VOS_SpinLockIntLock(&(pstQue->stSpinLock), ulLockLevel);
+
+    if (PS_TRUE == LUP_IsQueEmpty(pstQue))
+    {
+
+        VOS_SpinUnlockIntUnlock(&(pstQue->stSpinLock), ulLockLevel);
+
+        return  PS_QUE_EMPTY;
+    }
+
+    ulHead  = TTF_MOD_ADD(pstQue->ulHead, 1, pstQue->ulMaxNum);
+    *ppNode = pstQue->pBuff[ulHead];
+
+    VOS_SpinUnlockIntUnlock(&(pstQue->stSpinLock), ulLockLevel);
+
+    return PS_SUCC;
+}
+#endif
 
 

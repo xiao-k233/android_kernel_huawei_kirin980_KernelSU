@@ -505,10 +505,12 @@ const AT_STRING_TYPE_STRU gastAtStringTab[]=
     {AT_STRING_IP,(TAF_UINT8*)"\"IP\""},
     {AT_STRING_IPv4,    (VOS_UINT8*)"\"IPv4\""},
     {AT_STRING_PPP,(TAF_UINT8*)"\"PPP\""},
+#if (FEATURE_ON == FEATURE_IPV6)
     {AT_STRING_IPV6,(VOS_UINT8*)"\"IPV6\""},
     {AT_STRING_IPV4V6,(VOS_UINT8*)"\"IPV4V6\""},
     {AT_STRING_IPv6,    (VOS_UINT8*)"\"IPv6\""},
     {AT_STRING_IPv4v6,  (VOS_UINT8*)"\"IPv4v6\""},
+#endif
 
     {AT_STRING_0E0,(TAF_UINT8*)"\"0E0\""},
     {AT_STRING_1E2,(TAF_UINT8*)"\"1E2\""},
@@ -525,9 +527,11 @@ const AT_STRING_TYPE_STRU gastAtStringTab[]=
 
     {AT_STRING_CREG,(TAF_UINT8*)"+CREG: "},
     {AT_STRING_CGREG,(TAF_UINT8*)"+CGREG: "},
+#if(FEATURE_ON == FEATURE_LTE)
     {AT_STRING_CEREG,(TAF_UINT8*)"+CEREG: "},
 
     {AT_STRING_SIB16TIME, (VOS_UINT8 *)"^SIB16TIME: "},
+#endif
     {AT_STRING_SRVST,(TAF_UINT8*)"^SRVST: "},
     {AT_STRING_MODE,(TAF_UINT8*)"^MODE: "},
     {AT_STRING_RSSI,(TAF_UINT8*)"^RSSI: "},
@@ -554,6 +558,7 @@ const AT_STRING_TYPE_STRU gastAtStringTab[]=
 
     {AT_STRING_NETSCAN, (VOS_UINT8 *)"^NETSCAN: "},
 
+#if (FEATURE_ON == FEATURE_IMS)
     {AT_STRING_CIREPH, (VOS_UINT8 *)"+CIREPH"},
     {AT_STRING_CIREPI, (VOS_UINT8 *)"+CIREPI"},
     {AT_STRING_CIREGU, (VOS_UINT8 *)"+CIREGU"},
@@ -564,7 +569,9 @@ const AT_STRING_TYPE_STRU gastAtStringTab[]=
 
     {AT_STRING_ECONFSTATE, (VOS_UINT8 *)"^ECONFSTATE:"},
 
+#endif
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     {AT_STRING_CDISP,       (TAF_UINT8*)"^CDISP: "},
     {AT_STRING_CCONNNUM,    (TAF_UINT8*)"^CCONNNUM: "},
     {AT_STRING_CCALLEDNUM,  (TAF_UINT8*)"^CCALLEDNUM: "},
@@ -573,8 +580,12 @@ const AT_STRING_TYPE_STRU gastAtStringTab[]=
     {AT_STRING_CSIGTONE,    (TAF_UINT8*)"^CSIGTONE: "},
     {AT_STRING_CLCTR,       (TAF_UINT8*)"^CLCTR: "},
     {AT_STRING_CCWAC,       (TAF_UINT8*)"^CCWAC: "},
+#endif
     {AT_STRING_FILECHANGE, (VOS_UINT8 *)"^FILECHANGE:"},
 
+#if((FEATURE_ON == FEATURE_LTE) && (FEATURE_ON == FEATURE_LTE_MBMS))
+    {AT_STRING_MBMSEV,      (VOS_UINT8 *)"^MBMSEV:"},
+#endif
 
     {AT_STRING_SRCHEDPLMNINFO, (VOS_UINT8 *)"^SRCHEDPLMNINFO:"},
 
@@ -585,7 +596,9 @@ const AT_STRING_TYPE_STRU gastAtStringTab[]=
     {AT_STRING_CMOLRG,      (VOS_UINT8 *)"+CMOLRG: "},
     {AT_STRING_CMTLR,       (VOS_UINT8 *)"+CMTLR: "},
 
+#if (FEATURE_ON == FEATURE_IMS)
     {AT_STRING_DMCN,        (VOS_UINT8 *)"^DMCN"},
+#endif
 
     {AT_STRING_IMS_REG_FAIL,   (VOS_UINT8 *)"^IMSREGFAIL: "},
 
@@ -626,7 +639,9 @@ const AT_STRING_TYPE_STRU gastAtStringTab[]=
 
     {AT_STRING_IMPU,          (VOS_UINT8 *)"^IMPU: "},
 
+#if (FEATURE_ON == FEATURE_DSDS)
     {AT_STRING_DSDSSTATE,     (VOS_UINT8 *)"^DSDSSTATE: "},
+#endif
 
     {AT_STRING_TEMPPROTECT,   (VOS_UINT8 *)"^TEMPPROTECT: "},
 
@@ -641,6 +656,10 @@ const AT_STRING_TYPE_STRU gastAtStringTab[]=
     {AT_STRING_ULFREQRPT,      (VOS_UINT8 *)"^ULFREQRPT"},
 
     {AT_STRING_PSEUDBTS,      (VOS_UINT8 *)"^PSEUDBTS"},
+#if (FEATURE_ON == FEATURE_UE_MODE_NR)
+    {AT_STRING_C5GREG,        (TAF_UINT8*)"+C5GREG: "},
+    {AT_STRING_CSERSSI,       (VOS_UINT8*)"^CSERSSI:"},
+#endif
     {AT_STRING_NDISSTAT,      (VOS_UINT8 *)"^NDISSTAT"},
     {AT_STRING_NDISSTATEX,    (VOS_UINT8 *)"^NDISSTATEX"},
 
@@ -708,7 +727,9 @@ CBTCPM_RCV_FUNC                         g_apAtPortDataRcvFuncTab[AT_PHY_PORT_MAX
                                                 = {VOS_NULL_PTR, VOS_NULL_PTR, VOS_NULL_PTR, VOS_NULL_PTR};
 
 
+#if (FEATURE_ON == FEATURE_SECURITY_SHELL)
 AT_SP_WORD_CTX_STRU                     g_stSpWordCtx = {0};
+#endif
 
 AT_PS_INTERNAL_TIMEOUT_RESULT_STRU            g_astAtInterTimeoutResultTab[] =
 {
@@ -719,7 +740,13 @@ AT_PS_INTERNAL_TIMEOUT_RESULT_STRU            g_astAtInterTimeoutResultTab[] =
     {AT_WAIT_WLAN_ACT_PDN_CNF_TIMER,        AT_PS_RcvTiWlanActPdnCnfExpired         },
     {AT_WAIT_WLAN_DEACT_PDN_CNF_TIMER,      AT_PS_RcvTiWlanDeActPdnCnfExpired       },
     {AT_PROTECT_PDN_IN_DATA_SYS_TIMER,      AT_PS_RcvTiProtectPdnInDataSysExpired   },
+#if (FEATURE_ON == FEATURE_AT_HSUART)
+    {AT_VOICE_RI_TIMER,                     AT_RcvTiVoiceRiExpired                  },
+    {AT_SMS_RI_TIMER,                       AT_RcvTiSmsRiExpired                    },
+#endif
+#if(FEATURE_ON == FEATURE_LTE)
     {AT_SHUTDOWN_TIMER,                     AT_RcvTiShutDownExpired                 },
+#endif
     {AT_AUTH_PUBKEY_TIMER,                  AT_RcvTiAuthPubkeyExpired               },
 };
 
@@ -820,14 +847,18 @@ TAF_UINT32 At_ClientIdToUserBroadCastId (
     {
         *pucIndexId = AT_BROADCAST_CLIENT_INDEX_MODEM_0;
     }
+#if (MULTI_MODEM_NUMBER > 1)
     else if(MODEM_ID_1 == enModemId)
     {
         *pucIndexId = AT_BROADCAST_CLIENT_INDEX_MODEM_1;
     }
+#if (MULTI_MODEM_NUMBER > 2)
     else
     {
         *pucIndexId = AT_BROADCAST_CLIENT_INDEX_MODEM_2;
     }
+#endif
+#endif
 
     return AT_SUCCESS;
 }
@@ -2507,7 +2538,145 @@ VOS_UINT32 AT_HandleSimLockDataWriteCmd(
     return AT_SUCCESS;
 }
 
+#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
 
+VOS_UINT32 AT_HandleApSndApduCmd(
+    VOS_UINT8                           ucIndex,
+    VOS_UINT8                          *pucData,
+    VOS_UINT16                          usLen
+)
+{
+    VOS_UINT16                          usCmdlen;
+    VOS_UINT16                          usPos;
+    VOS_UINT16                          usLoop;
+    VOS_UINT16                          usCommaCnt;
+    VOS_UINT16                          usFirstCommaPos;
+    VOS_UINT16                          usFirstParaLen;
+    VOS_UINT16                          usSecondParaLen;
+    VOS_UINT32                          ulLengthValue;
+    VOS_UINT32                          ulResult;
+    VOS_UINT8                           ucHeadChar;
+    VOS_UINT8                           ucTailChar;
+
+    /* CISA命令只能从AP侧接收处理，其它端口不可以 */
+    if (VOS_TRUE != AT_IsApPort(ucIndex))
+    {
+        return AT_FAILURE;
+    }
+
+    usCmdlen = (VOS_UINT16)VOS_StrLen("AT^CISA=");
+
+    /* 待处理的字符串头部不是"AT^CISA="直接返回AT_FAILURE */
+    if (0 != VOS_StrNiCmp((VOS_CHAR *)pucData, "AT^CISA=", usCmdlen))
+    {
+        return AT_FAILURE;
+    }
+
+    /* 不支持AT^CISA=?命令 */
+    if (0 == VOS_StrNiCmp((VOS_CHAR *)pucData, "AT^CISA=?", VOS_StrLen("AT^CISA=?")))
+    {
+        At_FormatResultData(ucIndex, AT_ERROR);
+
+        return AT_SUCCESS;
+    }
+
+    /* 获取命令(不包含命令前缀AT)名称及长度 */
+    usPos = (VOS_UINT16)VOS_StrLen("AT");
+
+    g_stATParseCmd.stCmdName.usCmdNameLen = (VOS_UINT16)VOS_StrLen("^CISA");
+
+    TAF_MEM_CPY_S(g_stATParseCmd.stCmdName.aucCmdName,
+               AT_CMD_NAME_LEN + 1,
+               (pucData + usPos),
+               g_stATParseCmd.stCmdName.usCmdNameLen);
+
+    g_stATParseCmd.stCmdName.aucCmdName[g_stATParseCmd.stCmdName.usCmdNameLen] = '\0';
+
+    usPos += g_stATParseCmd.stCmdName.usCmdNameLen;
+
+    usPos += (VOS_UINT16)VOS_StrLen("=");
+
+    /* 获取命令中的逗号位置和个数 */
+    usCommaCnt      = 0;
+    usFirstCommaPos = 0;
+    for ( usLoop = usPos; usLoop < usLen; usLoop++ )
+    {
+        if (',' == *(pucData + usLoop))
+        {
+            usCommaCnt++;
+
+            /* 记录下第一个逗号的位置 */
+            if (0 == usFirstCommaPos)
+            {
+                usFirstCommaPos = usLoop + 1;
+            }
+        }
+    }
+
+    /* 若逗号个数不为1，则AT命令结果返回失败 */
+    if (1 != usCommaCnt)
+    {
+        AT_WARN_LOG("AT_HandleApSndApduCmd: usCommaCnt != 1!");
+
+        At_FormatResultData(ucIndex, AT_CME_INCORRECT_PARAMETERS);
+
+        return AT_SUCCESS;
+    }
+
+    /* 第二个参数是由引号包含起来的 */
+    ucHeadChar      = *(pucData + usFirstCommaPos);
+    ucTailChar      = *(pucData + usLen - VOS_StrLen("\""));
+    if ( ('"' != ucHeadChar)
+      || ('"' != ucTailChar) )
+    {
+        AT_WARN_LOG("AT_HandleApSndApduCmd: <command> not a string");
+
+        At_FormatResultData(ucIndex, AT_CME_INCORRECT_PARAMETERS);
+
+        return AT_SUCCESS;
+    }
+
+    /* 计算两个参数的长度 */
+    usFirstParaLen  = (usFirstCommaPos - usPos) - (VOS_UINT16)VOS_StrLen(",");
+    usSecondParaLen = usLen - usFirstCommaPos - (VOS_UINT16)(2 * VOS_StrLen("\""));
+
+    if (AT_FAILURE == atAuc2ul(pucData + usCmdlen, usFirstParaLen, &ulLengthValue))
+    {
+        AT_WARN_LOG("AT_HandleApSndApduCmd: <length> value invalid");
+
+        At_FormatResultData(ucIndex, AT_CME_INCORRECT_PARAMETERS);
+
+        return AT_SUCCESS;
+    }
+    /* 设置命令类型，操作类型和参数个数 */
+    g_stATParseCmd.ucCmdOptType = AT_CMD_OPT_SET_PARA_CMD;
+    gucAtCmdFmtType             = AT_EXTEND_CMD_TYPE;
+
+    /* 在扩展命令表中匹配此命令 */
+    ulResult = atMatchCmdName(ucIndex, g_stATParseCmd.ucCmdFmtType);
+
+    if(ERR_MSP_SUCCESS != ulResult)
+    {
+        At_FormatResultData(ucIndex, ulResult);
+
+        return AT_SUCCESS;
+    }
+
+    ulResult = AT_SetCISAPara(ucIndex,
+                              ulLengthValue,
+                              (pucData + usFirstCommaPos + VOS_StrLen("\"")),
+                              usSecondParaLen);
+
+    if (AT_WAIT_ASYNC_RETURN != ulResult)
+    {
+        At_FormatResultData(ucIndex, ulResult);
+    }
+
+    return AT_SUCCESS;
+}
+#endif
+
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 AT_HandleApXsmsSndCmd(
     VOS_UINT8                           ucIndex,
@@ -2795,6 +2964,7 @@ VOS_UINT32 AT_HandleApXsmsWriteCmd(
 
     return AT_SUCCESS;
 }
+#endif
 
 VOS_UINT32 At_HandleApModemSpecialCmd(
     VOS_UINT8                           ucIndex,
@@ -2824,6 +2994,13 @@ VOS_UINT32 At_HandleApModemSpecialCmd(
         return AT_SUCCESS;
     }
 
+#if (FEATURE_ON == FEATURE_SC_NETWORK_UPDATE)
+    /* 处理AT^SIMLOCKNWDATAWRITE=<layer>,<total>,<index>,<simlock_data>,[hmac]设置命令(参数<simlock_data>超长) */
+    if (AT_SUCCESS == AT_HandleSimLockNWDataWriteCmd(ucIndex, pucData, usLen))
+    {
+        return AT_SUCCESS;
+    }
+#endif
 
     /* 处理AT^SIMLOCKDATAWRITE=<simlock_data_write>设置命令(参数<simlock_data_write>超长) */
     if (AT_SUCCESS == AT_HandleSimLockDataWriteCmd(ucIndex, pucData, usLen))
@@ -2831,7 +3008,15 @@ VOS_UINT32 At_HandleApModemSpecialCmd(
         return AT_SUCCESS;
     }
 
+#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
+    /* 处理AT^CISA=<length>,<command> */
+    if (AT_SUCCESS == AT_HandleApSndApduCmd(ucIndex, pucData, usLen))
+    {
+        return AT_SUCCESS;
+    }
+#endif
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     if (AT_SUCCESS == AT_HandleApXsmsSndCmd(ucIndex, pucData, usLen))
     {
         return AT_SUCCESS;
@@ -2841,6 +3026,7 @@ VOS_UINT32 At_HandleApModemSpecialCmd(
     {
         return AT_SUCCESS;
     }
+#endif
 
     /* 删除对^EOPLMN设置命令的特殊解析 */
 
@@ -2945,6 +3131,20 @@ VOS_VOID At_SetMode(VOS_UINT8 ucIndex, AT_MODE_TYPE Mode, VOS_UINT8 ucSubMode)
         gastAtClientTab[ucIndex].DataState = AT_DATA_STOP_STATE;
     }
 
+#if (FEATURE_ON == FEATURE_AT_HSUART)
+    /*
+     * HSUART端口由DATA模式切换到CMD/ONLINE_CMD模式:
+     * 清除HSUART的缓存队列数据, 防止当前缓存队列满时, 主动上报的命令丢失
+     */
+    if (VOS_TRUE == AT_CheckHsUartUser(ucIndex))
+    {
+        if ( (AT_DATA_MODE == gastAtClientTab[ucIndex].Mode)
+          && ((AT_ONLINE_CMD_MODE == Mode) || (AT_CMD_MODE == Mode)) )
+        {
+            AT_HSUART_ClearDataBuff(ucIndex);
+        }
+    }
+#endif
 
     /* 退出数传模式 */
     if ( ( (AT_ONLINE_CMD_MODE == gastAtClientTab[ucIndex].Mode)
@@ -3083,9 +3283,11 @@ VOS_VOID At_InterTimerOutProc(
             ulResult = AT_ERROR;
             break;
 
+#if(FEATURE_ON == FEATURE_LTE)
         case AT_CMD_SET_TMODE:
             ulResult = AT_ERROR;
             break;
+#endif
 
         case AT_CMD_COPS_ABORT_PLMN_LIST:
             ulResult = AT_ABORT;
@@ -3277,7 +3479,11 @@ VOS_VOID AT_RcvTiS0Expired(
 
 VOS_VOID AT_RcvTiShutDownExpired(REL_TIMER_MSG *pstTmrMsg)
 {
+#if (VOS_WIN32 == VOS_OS_VER)
+    mdrv_sysboot_shutdown(0);
+#else
     mdrv_sysboot_shutdown();
+#endif
     return;
 }
 
@@ -3918,6 +4124,7 @@ VOS_UINT32 At_ProcXmlText ( TAF_UINT8 ucIndex, TAF_UINT8 *pData, TAF_UINT16 usLe
 }
 
 /* 删除^EOPLMN设置命令的参数解析函数，使用通用AT参数解析器解析 */
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 TAF_UINT32 At_CheckCurrRatModeIsCL (
     VOS_UINT8                           ucIndex
@@ -3949,6 +4156,7 @@ TAF_UINT32 At_CheckCurrRatModeIsCL (
         return VOS_FALSE;
     }
 }
+#endif
 
 VOS_UINT32 AT_ConvertMtaResult(
     MTA_AT_RESULT_ENUM_UINT32           enResult

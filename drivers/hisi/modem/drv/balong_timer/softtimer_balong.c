@@ -50,7 +50,8 @@
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
-#include <linux/wakelock.h>
+#include <linux/device.h>
+#include <linux/pm_wakeup.h>
 #include <osl_module.h>
 #include <osl_sem.h>
 #include <osl_list.h>
@@ -86,7 +87,7 @@ struct softtimer_ctrl
 	u64 start_slice;
 	slice_curtime get_curtime;
 	slice_value   get_slice_value;
-	struct     wake_lock     wake_lock;
+	struct     wakeup_source     wake_lock;
 };
 /*lint --e{64,456}*/
 static struct softtimer_ctrl timer_control[2];	/*timer_control[0] wake, timer_control[1] normal*/
@@ -96,7 +97,7 @@ u32 check_softtimer_support_type(enum wakeup type){
 static void start_hard_timer(struct softtimer_ctrl *ptimer_control, u32 ulvalue )
 {
 	ptimer_control->softtimer_start_value = ulvalue;
-	(void)ptimer_control->get_curtime(&ptimer_control->start_slice);
+	(void)ptimer_control->get_curtime((u64*)(uintptr_t)&ptimer_control->start_slice);
 	bsp_hardtimer_disable(ptimer_control->hard_timer_id);
 	bsp_hardtimer_load_value(ptimer_control->hard_timer_id,ulvalue);
 	bsp_hardtimer_enable(ptimer_control->hard_timer_id);
@@ -139,7 +140,7 @@ void bsp_softtimer_add(struct softtimer_list * timer)
 		spin_unlock_irqrestore(&(timer_control[timer->wake_type].timer_list_lock),flags);
 		return;
 	}
-	(void)timer_control[timer->wake_type].get_curtime(&now_slice);
+	(void)timer_control[timer->wake_type].get_curtime((u64*)(uintptr_t)&now_slice);
 	timer->expect_cb_slice = timer->count_num + now_slice;
 	list_for_each_entry(p,&(timer_control[timer->wake_type].timer_list_head),entry)
 	{
@@ -180,7 +181,7 @@ s32 bsp_softtimer_delete(struct softtimer_list * timer)
 		return BSP_ERROR;
 	}
 	spin_lock_irqsave(&(timer_control[timer->wake_type].timer_list_lock),flags);
-	(void)timer_control[timer->wake_type].get_curtime(&now_slice);
+	(void)timer_control[timer->wake_type].get_curtime((u64*)(uintptr_t)&now_slice);
 	if (list_empty(&timer->entry))
 	{
 		spin_unlock_irqrestore(&(timer_control[timer->wake_type].timer_list_lock),flags);
@@ -372,7 +373,7 @@ int  softtimer_task_func(void* data)
 		osl_sem_down(&ptimer_control->soft_timer_sem);
 		 /* coverity[lock_acquire] */
 		spin_lock_irqsave(&ptimer_control->timer_list_lock,flags);
-		(void)ptimer_control->get_curtime(&now_slice);
+    (void)ptimer_control->get_curtime((u64*)(uintptr_t)&now_slice);
 		ptimer_control->softtimer_start_value = ELAPESD_TIME_INVAILD;
 		list_for_each_entry_safe(p,q,&(ptimer_control->timer_list_head),entry)
 		{
@@ -389,7 +390,7 @@ int  softtimer_task_func(void* data)
 					temp2 = bsp_get_slice_value();
 					p->run_cb_delta = get_timer_slice_delta(temp1,temp2);
 					spin_lock_irqsave(&ptimer_control->timer_list_lock,flags);
-					(void)ptimer_control->get_curtime(&now_slice);
+                (void)ptimer_control->get_curtime((u64*)(uintptr_t)&now_slice);
 				}
 				else
 				{
@@ -410,7 +411,7 @@ int  softtimer_task_func(void* data)
 			stop_hard_timer(ptimer_control);
 		}
 		if(ACORE_SOFTTIMER_ID==ptimer_control->hard_timer_id)
-			wake_unlock(&ptimer_control->wake_lock); /*lint !e455*/
+       	__pm_relax(&ptimer_control->wake_lock); /*lint !e455*/
 		if(debug_wakeup_timer.wakeup_flag)
 		{
 			softtimer_print("wakeup timer name:%s,wakeup_timer_id:%d",debug_wakeup_timer.wakeup_timer_name,debug_wakeup_timer.wakeup_timer_id);
@@ -433,7 +434,7 @@ OSL_IRQ_FUNC(static irqreturn_t,softtimer_interrupt_call_back,irq,dev)
 	unsigned long flags=0;
 
 	ptimer_control = dev;
-	(void)ptimer_control->get_curtime(&now_slice);
+    (void)ptimer_control->get_curtime((u64*)(uintptr_t)&now_slice);
 	readValue = bsp_hardtimer_int_status(ptimer_control->hard_timer_id);
 	if (0 != readValue)
 	{
@@ -465,7 +466,7 @@ OSL_IRQ_FUNC(static irqreturn_t,softtimer_interrupt_call_back,irq,dev)
 		}
 		spin_unlock_irqrestore(&ptimer_control->timer_list_lock,flags); /*lint !e550*/
 		if(ACORE_SOFTTIMER_ID==ptimer_control->hard_timer_id)
-			wake_lock(&ptimer_control->wake_lock);  /*lint !e454*/
+			__pm_stay_awake(&ptimer_control->wake_lock);  /*lint !e454*/
 		osl_sem_up(&ptimer_control->soft_timer_sem);  /*lint !e456*/
 	}
 	return IRQ_HANDLED; /*lint !e454*/ /*lint !e456*/
@@ -544,7 +545,7 @@ int  bsp_softtimer_init(void)
 			softtimer_print("bsp_hardtimer_alloc error,softtimer init failed 2\n");
 			return BSP_ERROR;
 		}
-		wake_lock_init(&timer_control[SOFTTIMER_WAKE].wake_lock, WAKE_LOCK_SUSPEND, "softtimer_wake");
+		wakeup_source_init(&timer_control[SOFTTIMER_WAKE].wake_lock, "softtimer_wake");
 		timer_control[SOFTTIMER_WAKE].get_curtime = bsp_slice_getcurtime;
 		timer_control[SOFTTIMER_WAKE].get_slice_value = bsp_get_slice_value;
 		mdrv_timer_debug_register(timer_control[SOFTTIMER_WAKE].hard_timer_id,(FUNCPTR_1)get_softtimer_int_stat,0);
@@ -577,7 +578,7 @@ int  bsp_softtimer_init(void)
 			timer_control[SOFTTIMER_NOWAKE].get_curtime = bsp_slice_getcurtime_hrt;
 			timer_control[SOFTTIMER_NOWAKE].get_slice_value = bsp_get_slice_value_hrt;
 		}
-		wake_lock_init(&timer_control[SOFTTIMER_NOWAKE].wake_lock, WAKE_LOCK_SUSPEND, "softtimer_nowake");
+		wakeup_source_init(&timer_control[SOFTTIMER_NOWAKE].wake_lock, "softtimer_nowake");
 	 }
 	 softtimer_print("softtimer init success\n");
 	return BSP_OK;
@@ -589,7 +590,7 @@ s32 show_list(u32 wake_type)
 	unsigned long flags = 0;
 	u64 now_slice = 0;
 	softtimer_print("softttimer wakeup %d times\n",timer_control[wake_type].wake_times);
-	(void)timer_control[wake_type].get_curtime(&now_slice);
+	(void)timer_control[wake_type].get_curtime((u64*)(uintptr_t)&now_slice);
 	softtimer_print("id name  expect_cb  now_slice  cb_cost  emerg\n");
 	softtimer_print("----------------------------------------------------------------------------------\n");
 	spin_lock_irqsave(&(timer_control[wake_type].timer_list_lock),flags);
@@ -608,5 +609,8 @@ EXPORT_SYMBOL(bsp_softtimer_add);
 EXPORT_SYMBOL(bsp_softtimer_free);
 EXPORT_SYMBOL(check_softtimer_support_type);
 EXPORT_SYMBOL(show_list);
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+arch_initcall(bsp_softtimer_init);
+#endif
 
 

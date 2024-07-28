@@ -61,14 +61,18 @@
 #include "diag_acore_common.h"
 #include "bsp_version.h"
 
+#ifdef BSP_CONFIG_PHONE_TYPE
 #include <linux/mtd/hisi_nve_interface.h>
 #include "adrv.h"
+#endif
 
+#if(FEATURE_SOCP_MEM_RESERVED == FEATURE_ON)
 #include <linux/device.h>
 #include <linux/platform_device.h>
 #include <linux/of.h>
 #include <linux/of_fdt.h>
 #include <linux/of_reserved_mem.h>
+#endif
 
 #define    THIS_FILE_ID        MSP_FILE_ID_DIAG_MSGBBP_C
 
@@ -78,6 +82,7 @@ DIAG_TRANS_HEADER_STRU g_stBbpTransHead = {{VOS_NULL, VOS_NULL}, 0};
 DIAG_BBP_DS_ADDR_INFO_STRU g_stBbpDsAddrInfo={DIAG_BBP_DS_ENABLE,BBP_SOCP_SIZE,BBP_SOCP_ADDR};
 DIAG_BBP_DS_ADDR_INFO_STRU g_stBbpXdataDsAddrInfo={DIAG_BBP_XDATA_DS_DISABLE ,0,0};
 VOS_UINT32 diag_BbpDrxDdrEnable(void);
+#if(FEATURE_SOCP_MEM_RESERVED == FEATURE_ON)
 
 static int  bbpds_probe(struct platform_device *pdev)
 {
@@ -112,6 +117,7 @@ static struct platform_driver bbpds_driver = {
 
 };
 /*lint -restore +e785 +e64*/
+#endif
 
 DIAG_BBP_PROC_FUN_STRU g_DiagBbpFunc[] = {
     {diag_DrxSampleGetChnSizeProc        ,DIAG_CMD_BBP_SAMPLE_CHNSIZE_REQ       ,0},
@@ -165,8 +171,10 @@ VOS_VOID diag_DsSendChanInfoToLrm(DIAG_FRAME_INFO_STRU *pData)
             psDrxDsInfo->ulAddr     = g_stBbpXdataDsAddrInfo.ulAddr;
             psDrxDsInfo->ulSize     = g_stBbpXdataDsAddrInfo.ulSize;
             psDrxDsInfo->ulenable   = g_stBbpXdataDsAddrInfo.ulenable;
+#ifdef BSP_CONFIG_PHONE_TYPE
             atfd_hisi_service_access_register_smc( ACCESS_REGISTER_FN_MAIN_ID, (VOS_UINT64)g_stBbpXdataDsAddrInfo.ulAddr,
                 (VOS_UINT64)g_stBbpXdataDsAddrInfo.ulSize, ACCESS_REGISTER_FN_SUB_ID_DDR_MODEM_SEC);
+#endif
         break;
 
         default:
@@ -301,6 +309,7 @@ DIAG_ERROR:
     return ulRet;
 }
 
+#ifdef BSP_CONFIG_PHONE_TYPE
 #define NVME_WRITE                 0
 #define NVME_READ                  1
 #define NVME_MDMLOG_NUM          285
@@ -386,6 +395,7 @@ int set_mdmlog_nvme(void)
 
     return VOS_OK;
 }
+#endif
 
 /*lint -save -e423 */
 /*****************************************************************************
@@ -400,7 +410,9 @@ int set_mdmlog_nvme(void)
 VOS_VOID diag_BbpMsgInit(VOS_VOID)
 {
     VOS_UINT32 ulRet;
+#ifdef BSP_CONFIG_PHONE_TYPE
     const BSP_VERSION_INFO_S *VerInfo;
+#endif
 
     /* 创建节点保护信号量, Diag Trans Bbp */
     ulRet = VOS_SmBCreate("DTB", 1, VOS_SEMA4_FIFO,&g_stBbpTransHead.TransSem);
@@ -416,6 +428,7 @@ VOS_VOID diag_BbpMsgInit(VOS_VOID)
     DIAG_MsgProcReg(DIAG_MSG_TYPE_BBP,diag_BbpMsgProc);
     diag_crit("diag modem:modem_reserver define !");
 
+#if(FEATURE_SOCP_MEM_RESERVED == FEATURE_ON)
     printk(KERN_ERR"diag modem:modem_reserver define!\n");
 
     ulRet= platform_driver_register(&bbpds_driver);
@@ -423,7 +436,9 @@ VOS_VOID diag_BbpMsgInit(VOS_VOID)
     {
         diag_error("diag_BbpMsgInit bbpds_driver failed.\n");
     }
+#endif
 
+#ifdef BSP_CONFIG_PHONE_TYPE
     VerInfo = bsp_get_version_info();
     if(NULL == VerInfo)
     {
@@ -439,6 +454,7 @@ VOS_VOID diag_BbpMsgInit(VOS_VOID)
             diag_crit("diag_BbpMsgInit: set_mdmlog_nvme success.\n");
         }
     }
+#endif
 
     return;
 }
@@ -481,6 +497,7 @@ VOS_UINT32 diag_BbpDrxDdrEnable(void)
     return 0;
 }
 
+#if(FEATURE_SOCP_MEM_RESERVED == FEATURE_ON)
 
 /*****************************************************************************
 * 函 数 名  : modem_cdma_bbpds_reserve_area
@@ -536,6 +553,7 @@ static int modem_cdma_bbpds_reserve_area(struct reserved_mem *rmem)
 /*lint -e611 -esym(611,*)*/
 RESERVEDMEM_OF_DECLARE(modem_cdma_bbpds_region, "modem_xmode_region", modem_cdma_bbpds_reserve_area);
 /*lint -e611 +esym(611,*)*/
+#endif
 
 
 

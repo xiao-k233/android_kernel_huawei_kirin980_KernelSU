@@ -52,18 +52,27 @@
 #include "TafTypeDef.h"
 #include "si_pb.h"
 #include "product_config.h"
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+#include "UsimmApi.h"
+#endif
 
+#if (OSA_CPU_ACPU == VOS_OSA_CPU)
 #include "si_pih.h"
+#endif
 
 /*****************************************************************************
     协议栈打印打点方式下的.C文件宏定义
 *****************************************************************************/
 #define      THIS_FILE_ID     PS_FILE_ID_PBAPI_C
 
+#if (FEATURE_ON == FEATURE_PHONE_SC)
 
+#if ((OSA_CPU_ACPU == VOS_OSA_CPU) || (defined(DMT)))
+#if (FEATURE_ON == FEATURE_SCI_SWITCH_OPTIMIZE)
 
 VOS_UINT32 SI_PB_GetReceiverPid(MN_CLIENT_ID_T  ClientId, VOS_UINT32 *pulReceiverPid)
 {
+#if (MULTI_MODEM_NUMBER > 1)
     MODEM_ID_ENUM_UINT16                enModemID;
     SI_PIH_CARD_SLOT_ENUM_UINT32        enSlotId;
 
@@ -92,10 +101,47 @@ VOS_UINT32 SI_PB_GetReceiverPid(MN_CLIENT_ID_T  ClientId, VOS_UINT32 *pulReceive
     {
         *pulReceiverPid = I2_MAPS_PB_PID;
     }
+#else
+    *pulReceiverPid = I0_MAPS_PIH_PID;
+#endif
 
     return VOS_OK;
 }
 
+#else
+
+VOS_UINT32 SI_PB_GetReceiverPid(MN_CLIENT_ID_T  ClientId, VOS_UINT32 *pulReceiverPid)
+{
+#if ( MULTI_MODEM_NUMBER > 1 )
+    MODEM_ID_ENUM_UINT16    enModemID;
+
+    /* 调用接口获取Modem ID */
+    if(VOS_OK != AT_GetModemIdFromClient(ClientId,&enModemID))
+    {
+        return VOS_ERR;
+    }
+
+    if(MODEM_ID_1 == enModemID)
+    {
+        *pulReceiverPid = I1_MAPS_PB_PID;
+    }
+#if (MULTI_MODEM_NUMBER == 3)
+    else if (MODEM_ID_2 == enModemID)
+    {
+        *pulReceiverPid = I2_MAPS_PB_PID;
+    }
+#endif /* MULTI_MODEM_NUMBER == 3 */
+    else
+    {
+        *pulReceiverPid = I0_MAPS_PB_PID;
+    }
+#else
+    *pulReceiverPid = MAPS_PB_PID;
+#endif
+
+    return VOS_OK;
+}
+#endif
 
 
 SI_UINT32 SI_PB_Read(  MN_CLIENT_ID_T           ClientId,
@@ -357,7 +403,9 @@ VOS_UINT32 SI_PB_GetSPBFlag(VOS_VOID)
     return VOS_FALSE;   /*返回状态关闭*/
 }
 
+#endif
 
+#if (OSA_CPU_ACPU == VOS_OSA_CPU)
 
 VOS_VOID SI_PB_InitContent(VOS_UINT8 ucLen, VOS_UINT8 ucValue,VOS_UINT8 *pucMem)
 {
@@ -370,8 +418,92 @@ VOS_VOID SI_PB_InitContent(VOS_UINT8 ucLen, VOS_UINT8 ucValue,VOS_UINT8 *pucMem)
 
     return;
 }
+#endif
 
+#if ((OSA_CPU_CCPU == VOS_OSA_CPU)||(defined(DMT)))
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
+
+VOS_UINT32 SI_PB_GetXeccNumber(
+    SI_PIH_CARD_SLOT_ENUM_UINT32        enSlotId,
+    SI_PB_ECC_DATA_STRU                *pstEccData
+)
+{
+    VOS_UINT32                          ulResult;
+    VOS_UINT32                          ulNum;
+    VOS_UINT8                          *pucTemp;
+    VOS_UINT8                           ucPBOffset=0;
+    VOS_UINT32                          i;
+    VOS_UINT32                          j;
+    VOS_UINT32                          copyLen;
+
+    /* 输入参数检测 */
+    if (VOS_NULL_PTR == pstEccData)
+    {
+        PB_ERROR_LOG("SI_PB_GetXeccNumber Error: Para is incorrect.");
+
+        return VOS_ERR;
+    }
+
+    PAM_MEM_SET_S(pstEccData, sizeof(SI_PB_ECC_DATA_STRU), 0, sizeof(SI_PB_ECC_DATA_STRU));
+
+    ulResult = SI_PB_LocateRecord(enSlotId, PB_XECC, 1, 1, &ucPBOffset);
+
+    /* 当前电话本不存在或者初始化未完成 */
+    if (VOS_OK != ulResult)
+    {
+        PB_ERROR_LOG("SI_PB_GetXeccNumber Error: SI_PB_LocateRecord Return Failed");
+
+        pstEccData->bEccExists = SI_PB_CONTENT_INVALID;
+        pstEccData->ulReocrdNum= VOS_NULL;
+
+        return VOS_ERR;
+    }
+
+    pstEccData->bEccExists = SI_PB_CONTENT_VALID;
+
+    if (VOS_NULL_PTR == gastPBContent[enSlotId][ucPBOffset].pContent)
+    {
+        PB_ERROR_LOG("SI_PB_GetXeccNumber Error: pContent is NULL");
+
+        return VOS_ERR;
+    }
+
+    ulNum = ((gastPBContent[enSlotId][ucPBOffset].usTotalNum>USIM_MAX_ECC_RECORDS)?USIM_MAX_ECC_RECORDS:gastPBContent[enSlotId][ucPBOffset].usTotalNum);
+
+    pucTemp = gastPBContent[enSlotId][ucPBOffset].pContent;
+
+    copyLen = PAM_GetMin(gastPBContent[enSlotId][ucPBOffset].ucNumberLen, USIM_ECC_LEN);
+
+    for (i = 0, j = 0; i < ulNum; i++)   /* 根据数据结构最大长度循环 */
+    {
+        ulResult = SI_PB_CheckEccValidity(enSlotId, pucTemp);
+
+        if (VOS_ERR == ulResult)     /* 当前记录内容无效 */
+        {
+            PB_INFO_LOG("SI_PB_GetXeccNumber Info: The Ecc Number is Empty");
+        }
+        else                                /* 转换当前记录内容 */
+        {
+            PB_INFO_LOG("SI_PB_GetXeccNumber Info: The Ecc Number is Not Empty");
+
+            PAM_MEM_CPY_S(pstEccData->astEccRecord[j].aucEccCode, sizeof(pstEccData->astEccRecord[j].aucEccCode), pucTemp, copyLen);
+
+            j++;
+        }
+
+        pucTemp += gastPBContent[enSlotId][ucPBOffset].ucRecordLen;
+    }
+
+    pstEccData->ulReocrdNum = j;
+
+    return VOS_OK;
+}
+#endif
+
+#endif
+
+#endif /* (FEATURE_ON == FEATURE_PHONE_SC) */
 
 
 

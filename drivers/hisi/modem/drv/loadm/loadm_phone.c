@@ -80,6 +80,12 @@ extern int VOS_ModuleInit(void);
 
 DECLARE_COMPLETION(modem_sysboot_start_complete);
 
+#ifndef BSP_CONFIG_PHONE_TYPE
+int bsp_need_loadmodem(void)
+{
+	return 1;
+}
+#endif
 
 
 int modem_sysboot_start_init(void)
@@ -299,6 +305,10 @@ static void __exit his_modem_exit_driver(void)
 }
 /* cov_verified_stop */
 
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+module_init(his_modem_init_driver);
+module_exit(his_modem_exit_driver);
+#endif
 MODULE_DESCRIPTION("HIS Balong  Modem load ");
 MODULE_LICENSE("GPL");
 

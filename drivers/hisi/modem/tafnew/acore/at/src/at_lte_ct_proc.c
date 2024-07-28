@@ -78,8 +78,13 @@
 #define    THIS_FILE_ID        MSP_FILE_ID_AT_LTE_CT_PROC_C
 /*lint +e767 */
 
+#if(FEATURE_ON == FEATURE_UE_MODE_NR)
+extern AT_MT_INFO_STRU                         g_stMtInfoCtx;
+#else
 extern AT_DEVICE_CMD_CTRL_STRU                 g_stAtDevCmdCtrl;
+#endif
 
+#if(FEATURE_OFF == FEATURE_UE_MODE_NR)
 /******************************************************************************
  */
 /* 功能描述: 打开上行信道
@@ -144,6 +149,7 @@ VOS_UINT32 atSetFTXONPara(VOS_UINT8 ucClientId)
 
     return AT_ERROR;
 }
+#endif
 
 VOS_UINT32 atSetFTXONParaCnfProc(VOS_UINT8 ucClientId, VOS_VOID *pMsgBlock)
 {
@@ -475,7 +481,9 @@ VOS_UINT32 atSetFCHANPara(VOS_UINT8 ucClientId)
     stFCHANSetReq.ulChannel = (gastAtParaList[2].ulParaValue);
 
     stFCHANSetReq.usListeningPathFlg = (VOS_UINT16)(gastAtParaList[3].ulParaValue);
+#if(FEATURE_OFF == FEATURE_UE_MODE_NR)
     (VOS_VOID)AT_SetGlobalFchan((VOS_UINT8)(gastAtParaList[0].ulParaValue));
+#endif
 
     
     ulRst = atSendFtmDataMsg(I0_MSP_SYS_FTM_PID, ID_MSG_FTM_SET_FCHAN_REQ,ucClientId, (VOS_VOID*)(&stFCHANSetReq), sizeof(stFCHANSetReq));
@@ -504,7 +512,9 @@ VOS_UINT32 atSetFCHANParaCnfProc(VOS_UINT8 ucClientId, VOS_VOID *pMsgBlock)
     
     if(ERR_MSP_SUCCESS == pstCnf->ulErrCode)
     {
+#if(FEATURE_OFF == FEATURE_UE_MODE_NR)
        (VOS_VOID)AT_SetGlobalFchan((VOS_UINT8)(pstCnf->enFchanMode));
+#endif
     }
     
 
@@ -1027,10 +1037,27 @@ VOS_UINT32 atQryFRSSIParaCnfProc(VOS_UINT8 ucClientId, VOS_VOID *pMsgBlock)
     usLength = 0;
 
     /* 适配V7R5版本4RX接收，GU只报一个值，其他报0，L根据FTM上报结果，支持4RX接收上报4个值，不支持时上报1个值 */
+#if (FEATURE_ON == FEATURE_LTE_4RX)
+    usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
+                                       (VOS_CHAR *)pgucLAtSndCodeAddr,
+                                       (VOS_CHAR *)pgucLAtSndCodeAddr + usLength,
+                                        "^FRSSI:%d,%d,%d,%d",
+                                        pstCnf->lValue1,
+                                        pstCnf->lValue2,
+                                        pstCnf->lValue3,
+                                        pstCnf->lValue4);
+#elif (FEATURE_LTE_8RX == FEATURE_ON)
+        usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
+                                       (VOS_CHAR *)pgucLAtSndCodeAddr,
+                                       (VOS_CHAR *)pgucLAtSndCodeAddr + usLength,
+                                        "^FRSSI:%d",
+                                        pstCnf->lValue1);
+#else
     usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
                                        (VOS_CHAR *)pgucLAtSndCodeAddr,
                                        (VOS_CHAR *)pgucLAtSndCodeAddr + usLength,
                                         "^FRSSI:%d", pstCnf->lValue1);
+#endif
 
     CmdErrProc(ucClientId, pstCnf->ulErrCode,usLength, pgucLAtSndCodeAddr);
     return AT_FW_CLIENT_STATUS_READY;
@@ -1250,6 +1277,7 @@ VOS_UINT32 atRdTbatCnf(VOS_UINT8 ucClientId, VOS_VOID *pMsgBlock)
     return AT_OK;
 }
 
+#if(FEATURE_OFF == FEATURE_UE_MODE_NR)
 
 VOS_UINT32 At_ProcLteTxCltInfoReport(VOS_VOID *pMsgBlock)
 {
@@ -1282,5 +1310,6 @@ VOS_UINT32 At_ProcLteTxCltInfoReport(VOS_VOID *pMsgBlock)
 
     return VOS_TRUE;
 }
+#endif
 
 

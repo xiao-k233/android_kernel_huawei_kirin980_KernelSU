@@ -55,6 +55,10 @@
 #include "PsCommonDef.h"
 #include "TafPsApi.h"
 
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+#include "TafDsmMntn.h"
+#include "TafDsmComFunc.h"
+#endif
 
 
 
@@ -890,6 +894,96 @@ VOS_UINT32 TAF_PS_GetDynamicTftInfo(
     return ulResult;
 }
 
+#if (FEATURE_ON == FEATURE_UE_MODE_NR)
+
+VOS_UINT32 TAF_PS_Set5QosInfo(
+    VOS_UINT32                          ulModuleId,
+    VOS_UINT16                          usExClientId,
+    VOS_UINT8                           ucOpId,
+    TAF_5G_QOS_EXT_STRU                *pst5gQosInfo
+)
+{
+    VOS_UINT32                          ulResult;
+    TAF_PS_SET_5G_QOS_INFO_REQ_STRU     stSet5QosInfoReq;
+
+    /* 初始化 */
+    ulResult = VOS_OK;
+    TAF_MEM_SET_S(&stSet5QosInfoReq, sizeof(stSet5QosInfoReq), 0x00, sizeof(TAF_PS_SET_5G_QOS_INFO_REQ_STRU));
+
+    /* 构造ID_MSG_TAF_PS_SET_5G_QOS_INFO_REQ消息 */
+    stSet5QosInfoReq.stCtrl.ulModuleId = ulModuleId;
+    stSet5QosInfoReq.stCtrl.usClientId = TAF_PS_GET_CLIENTID_FROM_EXCLIENTID(usExClientId);
+    stSet5QosInfoReq.stCtrl.ucOpId     = ucOpId;
+    stSet5QosInfoReq.st5QosInfo        = *pst5gQosInfo;
+
+    /* 发送消息 */
+    ulResult = TAF_PS_SndDsmMsg(TAF_PS_GET_MODEMID_FROM_EXCLIENTID(usExClientId),
+                                ID_MSG_TAF_PS_SET_5G_QOS_INFO_REQ,
+                                &stSet5QosInfoReq,
+                                sizeof(TAF_PS_SET_5G_QOS_INFO_REQ_STRU));
+
+    return ulResult;
+}
+
+
+VOS_UINT32 TAF_PS_Get5gQosInfo(
+    VOS_UINT32                          ulModuleId,
+    VOS_UINT16                          usExClientId,
+    VOS_UINT8                           ucOpId
+)
+{
+    VOS_UINT32                          ulResult;
+    TAF_PS_GET_5G_QOS_INFO_REQ_STRU     stGet5gQosInfoReq;
+
+    /* 初始化 */
+    ulResult = VOS_OK;
+    TAF_MEM_SET_S(&stGet5gQosInfoReq, sizeof(stGet5gQosInfoReq), 0x00, sizeof(TAF_PS_GET_5G_QOS_INFO_REQ_STRU));
+
+    /* 构造ID_MSG_TAF_PS_GET_SEC_PDP_CONTEXT_INFO_REQ消息 */
+    stGet5gQosInfoReq.stCtrl.ulModuleId = ulModuleId;
+    stGet5gQosInfoReq.stCtrl.usClientId = TAF_PS_GET_CLIENTID_FROM_EXCLIENTID(usExClientId);
+    stGet5gQosInfoReq.stCtrl.ucOpId     = ucOpId;
+
+    /* 发送消息 */
+    ulResult = TAF_PS_SndDsmMsg(TAF_PS_GET_MODEMID_FROM_EXCLIENTID(usExClientId),
+                                ID_MSG_TAF_PS_GET_5G_QOS_INFO_REQ,
+                                &stGet5gQosInfoReq,
+                                sizeof(TAF_PS_GET_5G_QOS_INFO_REQ_STRU));
+
+    return ulResult;
+}
+
+
+VOS_UINT32 TAF_PS_GetDynamic5gQosInfo(
+    VOS_UINT32                          ulModuleId,
+    VOS_UINT16                          usExClientId,
+    VOS_UINT8                           ucOpId,
+    VOS_UINT8                           ucCid
+)
+{
+    VOS_UINT32                                              ulResult;
+    TAF_PS_GET_DYNAMIC_5G_QOS_INFO_REQ_STRU                 stGetDynamic5gQosInfoReq;
+
+    /* 初始化 */
+    ulResult = VOS_OK;
+    TAF_MEM_SET_S(&stGetDynamic5gQosInfoReq, sizeof(stGetDynamic5gQosInfoReq), 0x00, sizeof(TAF_PS_GET_DYNAMIC_5G_QOS_INFO_REQ_STRU));
+
+    /* 构造ID_MSG_TAF_PS_GET_DYNAMIC_EPS_QOS_INFO_REQ消息 */
+    stGetDynamic5gQosInfoReq.stCtrl.ulModuleId = ulModuleId;
+    stGetDynamic5gQosInfoReq.stCtrl.usClientId = TAF_PS_GET_CLIENTID_FROM_EXCLIENTID(usExClientId);
+    stGetDynamic5gQosInfoReq.stCtrl.ucOpId     = ucOpId;
+    stGetDynamic5gQosInfoReq.ucCid             = ucCid;
+
+    /* 发送消息 */
+    ulResult = TAF_PS_SndDsmMsg(TAF_PS_GET_MODEMID_FROM_EXCLIENTID(usExClientId),
+                                ID_MSG_TAF_PS_GET_DYNAMIC_5G_QOS_INFO_REQ,
+                                &stGetDynamic5gQosInfoReq,
+                                sizeof(TAF_PS_GET_DYNAMIC_5G_QOS_INFO_REQ_STRU));
+
+    return ulResult;
+}
+
+#endif
 
 
 VOS_UINT32 TAF_PS_SetEpsQosInfo(
@@ -1223,6 +1317,7 @@ VOS_UINT32 TAF_PS_GetDynamicDnsInfo(
     return ulResult;
 }
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 TAF_PS_SetCtaInfo(
     VOS_UINT32                          ulModuleId,
@@ -1280,7 +1375,9 @@ VOS_UINT32 TAF_PS_GetCtaInfo(
 
 
 
+#endif
 
+#if (FEATURE_ON == FEATURE_IMS)
 
 VOS_UINT32 TAF_PS_SetImsPdpCfg(
     VOS_UINT32                          ulModuleId,
@@ -1310,7 +1407,9 @@ VOS_UINT32 TAF_PS_SetImsPdpCfg(
 
     return ulResult;
 }
+#endif
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 TAF_PS_SetCdmaDormantTimer(
     VOS_UINT32                          ulModuleId,
@@ -1420,7 +1519,38 @@ VOS_UINT32 TAF_PS_GetMipMode(
     return ulResult;
 }
 
+#endif
 
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+
+VOS_UINT32 TAF_PS_GetModuleIdByCid(
+    VOS_UINT8                           ucCid,
+    MODEM_ID_ENUM_UINT16                enModemId
+)
+{
+    TAF_DSM_DSM_ID_GROUP_STRU           stDsmIdGroup;
+
+    TAF_MEM_SET_S(&stDsmIdGroup, sizeof(TAF_DSM_DSM_ID_GROUP_STRU), 0x00, sizeof(TAF_DSM_DSM_ID_GROUP_STRU));
+
+    if (VOS_FALSE == TAF_DSM_GetDsmGroupIdByModemId(ucCid, &stDsmIdGroup, enModemId))
+    {
+        return 0;
+    }
+
+    return TAF_DSM_GetDsmCtxAddrByModemId(enModemId)->stDsmConnCtx.pastSessionEntityCtx[stDsmIdGroup.ucDsmSessionId]->pstPdnEntityList[stDsmIdGroup.ucPrimDsmId]->pastBearer[stDsmIdGroup.ucSecDsmId]->stClientInfo.aulModuleId[ucCid];
+}
+
+
+VOS_UINT8 TAF_PS_FindCidForDial(VOS_UINT32  ulAppPid)
+{
+    MODEM_ID_ENUM_UINT16                enModemId;
+
+    enModemId = NAS_MULTIINSTANCE_GetCurrInstanceModemId(WUEPS_PID_TAF);
+
+    return TAF_DSM_FindCidForDialByModemId(enModemId, ulAppPid);
+}
+
+#endif
 
 
 MODULE_EXPORTED VOS_UINT32 TAF_PS_GetCidSdfParaInfo(
@@ -1430,12 +1560,19 @@ MODULE_EXPORTED VOS_UINT32 TAF_PS_GetCidSdfParaInfo(
     TAF_SDF_PARA_QUERY_INFO_STRU       *pstSdfQueryInfo
 )
 {
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+    VOS_UINT8                           ucNum;
+    VOS_UINT16                          usModemId;
+#endif
     VOS_UINT32                          ulResult;
     TAF_PS_SDF_INFO_REQ_STRU            stSdfInfoReq;
 
     ulResult  = VOS_ERR;
     TAF_MEM_SET_S(&stSdfInfoReq, sizeof(stSdfInfoReq), 0x00, sizeof(TAF_PS_SDF_INFO_REQ_STRU));
 
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+    usModemId = TAF_PS_GET_MODEMID_FROM_EXCLIENTID(usExClientId);
+#endif
 
     if (VOS_NULL_PTR == pstSdfQueryInfo)
     {
@@ -1446,6 +1583,23 @@ MODULE_EXPORTED VOS_UINT32 TAF_PS_GetCidSdfParaInfo(
     TAF_MEM_SET_S(pstSdfQueryInfo, sizeof(TAF_SDF_PARA_QUERY_INFO_STRU), 0x00, sizeof(TAF_SDF_PARA_QUERY_INFO_STRU));
 
 /* 同步方式目前仅支持C核 */
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+    for (ucNum = 0; ucNum <= TAF_MAX_CID_NV; ucNum++)
+    {
+        if (VOS_OK == TAF_DSM_GetSdfParaInfoByModemId(usModemId, ucNum,
+                              &(pstSdfQueryInfo->astSdfPara[pstSdfQueryInfo->ulSdfNum])))
+        {
+            pstSdfQueryInfo->ulSdfNum ++;
+        }
+    }
+    ulResult = VOS_OK;
+
+    /* 同步消息勾包 */
+    TAF_DSM_TraceSyncMsgByModemId(usModemId,
+                                  ID_MSG_TAF_PS_GET_CID_SDF_REQ,
+                                  (VOS_UINT8 *)pstSdfQueryInfo,
+                                  sizeof(TAF_SDF_PARA_QUERY_INFO_STRU));
+#endif
 
     return ulResult;
 }
@@ -1479,6 +1633,20 @@ MODULE_EXPORTED VOS_UINT32 TAF_PS_GetUnusedCid(
     }
 
 /* 同步方式目前仅支持C核 */
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+    /* 需找可用于拨号的CID */
+    *puCid = TAF_DSM_FindCidForDialByModemId(enModemId, ulModuleId);
+
+    if ( TAF_INVALID_CID == *puCid )
+    {
+        ulResult = VOS_ERR;
+    }
+
+    /* 同步消息勾包 */
+    TAF_DSM_TraceSyncMsgByModemId(enModemId, ID_MSG_TAF_PS_GET_UNUSED_CID_REQ,
+                                  puCid,
+                                  sizeof(VOS_UINT8));
+#endif
 
     return ulResult;
 }

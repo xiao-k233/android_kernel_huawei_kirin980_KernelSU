@@ -53,7 +53,7 @@
 /*                                                                           */
 /* FileName: OmRingBuffer.h                                                  */
 /*                                                                           */
-/* Author: Windriver                                                         */
+/*                                                                           */
 /*                                                                           */
 /* Version: 1.0                                                              */
 /*                                                                           */
@@ -65,7 +65,7 @@
 /*                                                                           */
 /* History:                                                                  */
 /* 1. Date:                                                                  */
-/*    Author: H59254                                                         */
+/*    Author:                                                                */
 /*    Modification: Adapt this file                                          */
 /*                                                                           */
 /*                                                                           */
@@ -91,22 +91,21 @@ typedef struct
     char acRsv[4];
     char *buf;      /* pointer to start of buffer */
 } OM_RING;
-
 typedef OM_RING * OM_RING_ID;
 
+typedef struct {
+    char *buffer;
+    char *rb_buffer;
+    int size;
+    int rb_size;
+}rw_buffer_s;
+
 OM_RING_ID diag_RingBufferCreate( int nbytes );
-
 void diag_RingBufferFlush( OM_RING_ID ringId );
-
-int diag_RingBufferGet( OM_RING_ID rngId, char *buffer, int maxbytes );
-
-int diag_RingBufferPut( OM_RING_ID rngId, char *buffer, int nbytes );
-
-bool diag_RingBufferIsEmpty( OM_RING_ID ringId );
-
-int diag_RingBufferFreeBytes( OM_RING_ID ringId);
-
-int diag_RingBufferNBytes( OM_RING_ID ringId );
+s32 diag_RingBufferGet( OM_RING_ID rngId, rw_buffer_s rw_buff, u8 *buffer, int data_len);
+s32 diag_RingBufferPut( OM_RING_ID rngId, rw_buffer_s rw_buffer, const u8 *buffer, int data_len);
+void diag_get_idle_buffer(OM_RING_ID ring_buffer, rw_buffer_s *rw_buff);
+void diag_get_data_buffer(OM_RING_ID ring_buffer, rw_buffer_s *rw_buff);
 
 
 #ifdef __cplusplus

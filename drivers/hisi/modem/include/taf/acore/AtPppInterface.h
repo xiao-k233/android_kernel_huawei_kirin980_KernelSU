@@ -85,75 +85,20 @@ extern "C" {
   4 STRUCT定义
 *****************************************************************************/
 
-/*对应PPP_AUTH_PAP_CONTENT_STRU，用于消息方式交互*/
-typedef struct
-{
-    VOS_UINT16  usPapReqLen;                            /*request长度: 24.008要求在[3,253]字节*/
-    VOS_UINT8   aucReserve[2];                          /* 对齐保留 */
-    VOS_UINT8   aucPapReqBuf[PPP_PAP_REQ_BUF_MAX_LEN];  /*request*/
-} AT_PPP_AUTH_PAP_CONTENT_STRU;
+typedef PPPA_AUTH_PAP_CONTENT_STRU AT_PPP_AUTH_PAP_CONTENT_STRU;
 
-/*对应PPP_AUTH_CHAP_CONTENT_STRU，用于消息方式交互*/
-typedef struct
-{
-    VOS_UINT16  usChapChallengeLen;                     /*challenge长度: 24.008要求在[3,253]字节*/
-    VOS_UINT16  usChapResponseLen;                      /*response长度: 24.008要求在[3,253]字节*/
-    VOS_UINT8   aucChapChallengeBuf[PPP_CHAP_CHALLENGE_BUF_MAX_LEN];  /*challenge,153B*/
-    VOS_UINT8   aucChapResponseBuf[PPP_CHAP_RESPONSE_BUF_MAX_LEN];    /*response,205B*/
-    VOS_UINT8   aucReserve[2];
-} AT_PPP_AUTH_CHAP_CONTENT_STRU;
+typedef PPPA_AUTH_CHAP_CONTENT_STRU AT_PPP_AUTH_CHAP_CONTENT_STRU;
 
-/*对应PPP_REQ_AUTH_CONFIG_INFO_STRU，用于消息方式交互*/
-typedef struct
-{
-    PPP_AUTH_TYPE_ENUM_UINT8  ucAuthType;
-    VOS_UINT8                 aucReserve[3];              /* 对齐保留 */
+typedef PPPA_REQ_AUTH_CONFIG_INFO_STRU AT_PPP_REQ_AUTH_CONFIG_INFO_STRU;
 
-    union
-    {
-        AT_PPP_AUTH_PAP_CONTENT_STRU  PapContent;
-        AT_PPP_AUTH_CHAP_CONTENT_STRU ChapContent;
-    } AuthContent;
-} AT_PPP_REQ_AUTH_CONFIG_INFO_STRU;
+typedef PPPA_REQ_IPCP_CONFIG_INFO_STRU AT_PPP_REQ_IPCP_CONFIG_INFO_STRU;
 
-/*对应PPP_REQ_IPCP_CONFIG_INFO_STRU，用于消息方式交互*/
-typedef struct
-{
-    VOS_UINT16  usIpcpLen;                              /*Ipcp帧长度*/
-    VOS_UINT8   aucReserve[2];                          /* 对齐保留 */
-    VOS_UINT8   aucIpcp[PPP_IPCP_FRAME_BUF_MAX_LEN];    /*Ipcp帧*/
-} AT_PPP_REQ_IPCP_CONFIG_INFO_STRU;
-
-/*对应PPP_REQ_CONFIG_INFO_STRU，用于消息方式交互*/
-typedef struct
-{
-    AT_PPP_REQ_AUTH_CONFIG_INFO_STRU stAuth;
-    AT_PPP_REQ_IPCP_CONFIG_INFO_STRU stIPCP;
-} AT_PPP_REQ_CONFIG_INFO_STRU;
+typedef PPPA_PDP_ACTIVE_CONFIG_STRU AT_PPP_REQ_CONFIG_INFO_STRU;
 
 /*PCO中携带的IPCP信息*/
-typedef struct
-{
-    VOS_UINT32                          bitOpPriDns    : 1;             /*Primary DNS server Address*/
-    VOS_UINT32                          bitOpSecDns    : 1;             /*Secondary DNS server Address*/
-    VOS_UINT32                          bitOpGateWay   : 1;             /*Peer IP address*/
-    VOS_UINT32                          bitOpPriNbns   : 1;             /*Primary WINS DNS address*/
-    VOS_UINT32                          bitOpSecNbns   : 1;             /*Seocndary WINS DNS address*/
-    VOS_UINT32                          bitOpSpare     : 27;            /*Secondary DNS server Address*/
+typedef PPPA_PCO_IPV4_ITEM_STRU AT_PPP_PCO_IPV4_ITEM_STRU;
 
-    VOS_UINT8                           aucPriDns[IPV4_ADDR_LEN];
-    VOS_UINT8                           aucSecDns[IPV4_ADDR_LEN];
-    VOS_UINT8                           aucGateWay[IPV4_ADDR_LEN];
-    VOS_UINT8                           aucPriNbns[IPV4_ADDR_LEN];
-    VOS_UINT8                           aucSecNbns[IPV4_ADDR_LEN];
-} AT_PPP_PCO_IPV4_ITEM_STRU;
-
-/*对应PPP_IND_CONFIG_INFO_STRU，用于消息方式交互*/
-typedef struct
-{
-    VOS_UINT8                           aucIpAddr[IPV4_ADDR_LEN];       /*主机IP地址*/
-    AT_PPP_PCO_IPV4_ITEM_STRU           stPcoIpv4Item;                  /*PCO信息*/
-} AT_PPP_IND_CONFIG_INFO_STRU;
+typedef PPPA_PDP_ACTIVE_RESULT_STRU AT_PPP_IND_CONFIG_INFO_STRU;
 
 
 /*****************************************************************************
@@ -164,9 +109,7 @@ typedef struct
   6 函数声明
 *****************************************************************************/
 
-/* 这两个接口使用到新的结构体，因此不放在PppInterface.h */
 extern VOS_UINT32 At_RcvTeConfigInfoReq(VOS_UINT16 usPppId, AT_PPP_REQ_CONFIG_INFO_STRU *pstPppReqConfigInfo);
-extern VOS_UINT32 Ppp_RcvConfigInfoInd(PPP_ID usPppId, AT_PPP_IND_CONFIG_INFO_STRU *pPppIndConfigInfo);
 extern VOS_UINT32 At_RcvPppReleaseInd(VOS_UINT16 usPppId);
 extern VOS_UINT32 At_PsRab2PppId(VOS_UINT8 ucExRabId, VOS_UINT16 *pusPppId);
 extern VOS_UINT32 At_PppId2PsRab(VOS_UINT16 usPppId, VOS_UINT8 *pucExRabId);

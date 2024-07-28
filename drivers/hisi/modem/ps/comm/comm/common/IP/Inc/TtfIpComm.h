@@ -49,19 +49,14 @@
 #ifndef __TTFIPCOMM_H__
 #define __TTFIPCOMM_H__
 
+#include "vos.h"
+#include "TTFComm.h"
+#include "TtfLinkInterface.h"
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
 #endif
 #endif
-
-
-/*****************************************************************************
-  1 其他头文件包含
-*****************************************************************************/
-#include "vos.h"
-#include "TtfLinkInterface.h"
-#include "TTFComm.h"
 
 #pragma pack(4)
 
@@ -274,22 +269,26 @@ extern VOS_UINT16 TTF_GetIpDataTraceLen
     VOS_UINT16                          usSduLen
 );
 
-extern VOS_VOID TTF_TraceMaskIpAddr
-(
-    VOS_UINT32                          ulPid,
-    VOS_UINT8                          *pucData,
-    VOS_UINT16                          usDataLen
-);
+/*
+ * TTF勾取非敏感的IP地址 (因为IPV4在某些国际是否是个人数据还存在争议,
+ * 因此modem建议掩掉IP地址的后几位, IPv4掩掉后8bit, IPV6掩掉后88bit)
+ * ipData指向ip协议起始的位置，必须是连续的内存; dataLen为缓冲区实际长度，函数会对dataLen进行校验
+ */
+VOS_VOID TTF_MaskIpAddrTraces(VOS_UINT32 pid, VOS_UINT8 *ipData, VOS_UINT16 dataLen);
 
-extern VOS_VOID TTF_FilterIpv4AddrSensitiveInfo
-(
-    VOS_UINT8                          *pucIpAddr
-);
+/*
+ * 将IPV4地址的敏感信息脱敏处理，IPv4掩掉后8bit。
+ * 外部输入保证ipAddr指向空间满足IPV4 4字节存储大小
+ */
+VOS_VOID TTF_FilterIpv4AddrSensitiveInfo(VOS_UINT8 *ipAddr);
 
-extern VOS_VOID TTF_FilterIpv6AddrSensitiveInfo
-(
-    VOS_UINT8                          *pucIpAddr
-);
+
+/*
+ * 将IPV6地址的敏感信息脱敏处理，IPV6掩掉后88bit。
+ * 外部输入保证ipAddr指向空间满足IPV6 16字节存储大小
+ */
+VOS_VOID TTF_FilterIpv6AddrSensitiveInfo(VOS_UINT8 *ipAddr);
+
 
 #pragma pack()
 

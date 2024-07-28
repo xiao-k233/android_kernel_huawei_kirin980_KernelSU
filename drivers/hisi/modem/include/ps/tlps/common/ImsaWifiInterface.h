@@ -1,4 +1,50 @@
-
+/*
+ * Copyright (C) Huawei Technologies Co., Ltd. 2012-2019. All rights reserved.
+ * foss@huawei.com
+ *
+ * If distributed as part of the Linux kernel, the following license terms
+ * apply:
+ *
+ * * This program is free software; you can redistribute it and/or modify
+ * * it under the terms of the GNU General Public License version 2 and
+ * * only version 2 as published by the Free Software Foundation.
+ * *
+ * * This program is distributed in the hope that it will be useful,
+ * * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * * GNU General Public License for more details.
+ * *
+ * * You should have received a copy of the GNU General Public License
+ * * along with this program; if not, write to the Free Software
+ * * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+ *
+ * Otherwise, the following license terms apply:
+ *
+ * * Redistribution and use in source and binary forms, with or without
+ * * modification, are permitted provided that the following conditions
+ * * are met:
+ * * 1) Redistributions of source code must retain the above copyright
+ * *    notice, this list of conditions and the following disclaimer.
+ * * 2) Redistributions in binary form must reproduce the above copyright
+ * *    notice, this list of conditions and the following disclaimer in the
+ * *    documentation and/or other materials provided with the distribution.
+ * * 3) Neither the name of Huawei nor the names of its contributors may
+ * *    be used to endorse or promote products derived from this software
+ * *    without specific prior written permission.
+ *
+ * * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
 
 
 #ifndef __IMSA_WIFI_INTERFACE_H__
@@ -36,7 +82,7 @@ extern "C" {
 #define IMSA_WIFI_IPV4_ADDR_LEN         (4)
 #define IMSA_WIFI_IPV6_ADDR_LEN         (16)
 
-/* added by Liqingtao for vowifi emc, begin in 2016-07-15 */
+/* added for vowifi emc, begin in 2016-07-15 */
 #define IMSA_WIFI_NONCID_SCHEME_URI_LEN 128
 #define IMSA_WIFI_CIVICLOC_COUNTRY_LEN  4
 
@@ -52,13 +98,17 @@ extern "C" {
 #define IMSA_WIFI_COORDINATE_LONGITUDE_LEN 16
 #define IMSA_WIFI_COORDINATE_ALTITUDE_LEN  16
 #define IMSA_WIFI_TIMESTAMP_LEN              24
-/* added by Liqingtao for vowifi emc, end in 2016-07-15 */
+/* added for vowifi emc, end in 2016-07-15 */
+/*for Boston VoWIFI Phase II,begin 2017-04-08*/
 #define IMSA_WIFI_EXTENTION_VER_MAXNUM  6
+/*for Boston VoWIFI Phase II,end 2017-04-08*/
 
 #define  WIFI_IMSA_SSID_LEN             33
 #define  IMSA_WIFI_MAX_IPV4_EPDG_NUM            2
 #define  IMSA_WIFI_MAX_IPV6_EPDG_NUM            2
+/* for vowifi P-CSCF Restoration 2018-07-25 begin */
 #define WIFI_PCSCF_ADDR_MAX_NUM                 4
+/* for vowifi P-CSCF Restoration 2018-07-25 end */
 /*****************************************************************************
   3 Massage Declare
 *****************************************************************************/
@@ -96,13 +146,21 @@ enum WIFI_IMSA_MSG_ID_ENUM
     ID_WIFI_IMSA_IMS_PDN_DEACTIVATE_IND = 0x0007,           /* _H2ASN_MsgChoice WIFI_IMSA_IMS_PDN_DEACTIVATE_IND_STRU */
     ID_IMSA_WIFI_LOCATION_UPDATE_IND    = 0x0008,           /* _H2ASN_MsgChoice WIFI_IMSA_LOCATION_UPDATE_IND_STRU */
 
+    /* Added for ATT_VT_WIFI, 2017-04-22, Begin */
     ID_WIFI_IMSA_OPEN_VOWIFI_RSP        = 0x0009,           /* _H2ASN_MsgChoice WIFI_IMSA_OPEN_VOWIFI_RSP_STRU */
+    /* Added for ATT_VT_WIFI, 2017-04-22, End */
+    /*for vowifi emc && normal conn concurent,begin 2017-08-11*/
     ID_WIFI_IMSA_ABNORMAL_HOLD_STATE_IND = 0x000A,         /*  _H2ASN_MsgChoice WIFI_IMSA_ABNORMAL_HOLD_STATE_IND_STRU  */
+    /*for vowifi emc && normal conn concurent,end 2017-08-11*/
+    /*for Boston R1 WiFi,begin 2017-12-07*/
 
     ID_WIFI_IMSA_VOWIFI_SWITCH_IND       = 0x000B,         /* _H2ASN_MsgChoice WIFI_IMSA_VOWIFI_SWITCH_IND_STRU */
     ID_WIFI_IMSA_RTP_FAIL_IND             = 0x000C,         /* _H2ASN_MsgChoice WIFI_IMSA_RTP_FAIL_IND_STRU */
+    /*for Boston R1 WiFi,end 2017-12-07*/
+    /* for vowifi P-CSCF Restoration 2018-07-25 begin */
     ID_WIFI_IMSA_IMS_PDN_MODIFY_IND       = 0X000D,         /* _H2ASN_MsgChoice WIFI_IMSA_IMS_MODIFY_IND_STRU */
     ID_WIFI_IMSA_IMS_PDN_ACTIVATE_CNF_V1  = 0x000E,         /* _H2ASN_MsgChoice WIFI_IMSA_IMS_PDN_ACTIVATE_CNF_V1_STRU*/
+    /* for vowifi P-CSCF Restoration 2018-07-25 end */
 
     /* IMSA发给WIFI的消息 */
     ID_IMSA_WIFI_POWERON_CNF            = 0x0100,           /* _H2ASN_MsgChoice IMSA_WIFI_POWERON_CNF_STRU */
@@ -112,19 +170,31 @@ enum WIFI_IMSA_MSG_ID_ENUM
     ID_IMSA_WIFI_IMS_AUDIO_INFO_IND     = 0x0104,           /* _H2ASN_MsgChoice IMSA_WIFI_IMS_AUDIO_INFO_IND_STRU */
     ID_IMSA_WIFI_IMS_VEDIO_INFO_IND     = 0x0105,           /* _H2ASN_MsgChoice IMSA_WIFI_IMS_VEDIO_INFO_IND_STRU */
 
+    /* Added for ATT_VT_WIFI, 2017-04-22, Begin */
     ID_IMSA_WIFI_OPEN_VOWIFI_IND        = 0x0106,           /* _H2ASN_MsgChoice IMSA_WIFI_OPEN_VOWIFI_IND_STRU */
     ID_IMSA_WIFI_CLOSE_VOWIFI_IND       = 0x0107,           /* _H2ASN_MsgChoice IMSA_WIFI_CLOSE_VOWIFI_IND_STRU */
+    /* Added for ATT_VT_WIFI, 2017-04-22, End */
 
     ID_IMSA_WIFI_CELLULAR_OPEN_IND      = 0x0108,           /* _H2ASN_MsgChoice IMSA_WIFI_CELLULAR_OPEN_IND_STRU */
+    /* DCM Project,begin 2017-11-22 */
     ID_IMSA_WIFI_LOCATION_UPDATE_REQ    = 0x0109,           /* _H2ASN_MsgChoice IMSA_WIFI_LOCATION_UPDATE_REQ_STRU */
+    /* DCM Project,end 2017-11-22 */
 
     ID_IMSA_WIFI_DNS_QUERY_NTF          = 0x010A,           /* _H2ASN_MsgChoice IMSA_WIFI_DNS_QUERY_NTF_STRU */
 
+    /* added for R1 DATA DEVICE PHASE1, 2017-12-13, begin */
     ID_IMSA_WIFI_EPDG_INFO_IND          = 0x010B,           /* _H2ASN_MsgChoice IMSA_WIFI_EPDG_INFO_IND_STRU */
+    /* added for R1 DATA DEVICE PHASE1, 2017-12-13, end */
+    /*for Boston R1 WiFi,begin 2017-12-07*/
     ID_IMSA_WIFI_THRESHOLD_CONF_NTF     = 0x010C,           /* _H2ASN_MsgChoice IMSA_WIFI_THRESHOLD_CONF_NTF_STRU */
+    /*for Boston R1 WiFi,end 2017-12-07*/
     ID_IMSA_WIFI_RTT_INFO_IND           = 0x010D,
+    /* NV_Refresh_After_Sim_Switch Project,begin 2017-12-27 */
     ID_IMSA_WIFI_NV_REFRESH_IND         = 0x010e,           /* _H2ASN_MsgChoice IMSA_WIFI_NV_REFRESH_IND_STRU*/
+    /* NV_Refresh_After_Sim_Switch Project,end 2017-12-27 */
+    /* for vowifi P-CSCF Restoration 2018-07-25 begin */
     ID_IMSA_WIFI_IMS_PDN_ACTIVATE_REQ_V1= 0x010f,           /* _H2ASN_MsgChoice IMSA_WIFI_IMS_PDN_ACTIVATE_REQ_V1_STRU*/
+    /* for vowifi P-CSCF Restoration 2018-07-25 end */
     ID_WIFI_IMSA_MSG_BUTT
 };
 typedef VOS_INT32 WIFI_IMSA_MSG_ID_ENUM_INT32;
@@ -156,6 +226,7 @@ enum IMSA_WIFI_PDN_RELEASE_TYPE_ENUM
 };
 typedef VOS_INT8 IMSA_WIFI_PDN_RELEASE_TYPE_ENUM_INT8;
 
+/* add it for vowifi emc, begin in 2016-07-23 */
 /*****************************************************************************
  枚举名称: IMSA_WIFI_PDN_RELEASE_TYPE_ENUM
  枚举说明: PDP类型
@@ -169,6 +240,7 @@ enum IMSA_WIFI_SERVICE_TYPE_ENUM
     IMSA_WIFI_SERVICE_TYPE_BUTT
 };
 typedef VOS_INT8 IMSA_WIFI_SERVICE_TYPE_ENUM_INT8;
+/* add it for vowifi emc, end in 2016-07-23 */
 
 
 /*****************************************************************************
@@ -185,6 +257,7 @@ enum WIFI_QUALITY_LEVEL_ENUM
 };
 typedef VOS_INT8 WIFI_IMSA_QUALITY_LEVEL_ENUM_INT8;
 
+/* add it for wifi pdn abnormal process, begin in 2016-08-09 */
 /*****************************************************************************
     枚举名    : WIFI_IMSA_SERVICE_STATUS_ENUM
     枚举说明  : WIFI上报的AP服务状态
@@ -199,6 +272,7 @@ enum WIFI_IMSA_SERVICE_STATUS_ENUM
 };
 typedef VOS_INT8 WIFI_IMSA_SERVICE_STATUS_ENUM_INT8;
 
+/* add it for wifi pdn abnormal process, end in 2016-08-09 */
 
 /*****************************************************************************
     枚举名    : WIFI_IMSA_PDN_ACT_RESULT_ENUM
@@ -236,17 +310,24 @@ enum WIFI_IMSA_PDN_ACT_RESULT_ENUM
     WIFI_IMSA_PDN_ACT_RESULT_CONNECTION_REACHED,
     WIFI_IMSA_PDN_ACT_RESULT_PROTECLE_ERROR,
     WIFI_IMSA_PDN_ACT_RESULT_INTERNAL_ADDRESS_ERROR,
+    /*for Boston VoWIFI Phase II,begin 2017-04-08*/
     WIFI_IMSA_PDN_ACT_RESULT_IPV4_ADDRESS_CONFLICT = 0x1C, /* 双vowifi下分配相同IPV4地址时错误码 */
     WIFI_IMSA_PDN_ACTIVE_RESULT_CERT_ERROR         = 0x1D, /* 证书验证错误 */
+    /*for Boston VoWIFI Phase II,end 2017-04-08*/
+    /*for vowifi emc && normal conn concurent,begin 2017-08-11*/
     WIFI_IMSA_PDN_ACTIVE_RESULT_BEARS_CONCURRENT_NOT_SUPPORT = 0x1E, /*不支持承载并发*/
+    /*for vowifi emc && normal conn concurent,end 2017-08-11*/
+    /* Added for R1 wifi throt, 2018-1-3, begin */
     WIFI_IMSA_PDN_ACTIVE_RESULT_SHUTDOWN            = 0x1F,
     WIFI_IMSA_PDN_ACTIVE_RESULT_DONE_ERROR             = 0x20,
     WIFI_IMSA_PDN_ACTIVE_RESULT_REDIRECT_FAILURE       = 0x21,
+    /* for WIFI power opt 2018-04-16 begin */
     WIFI_IMSA_PDN_ACTIVE_RESULT_INNER_ERROR_DIR_RETRY  = 0x31,
+    /* for WIFI power opt 2018-04-16 end */
     /*!!!错误码从这里跳到50了，增删原因值时需要同步修改函数: IMSA_CONN_InitWifiPdnRejTblList   */
     WIFI_IMSA_PDN_ACT_RESULT_ROAM_FORBID = 0x32,
     WIFI_IMSA_PDN_ACT_RESULT_HIFI_STATUS_OVERTIME = 0x33,
-    WIFI_IMSA_PDN_ACT_RESULT_IKED_ABNORMAL = 0x34,
+    WIFI_IMSA_PDN_ACT_RESULT_IKED_ABNORMAL = 0x34,       /*52, IKED异常，向MAPCON返回23原因值,转义为52*/
     WIFI_IMSA_PDN_ACT_RESULT_UNKNOWN_NETWORK_ERROR = 0x35,
     WIFI_IMSA_PDN_ACT_RESULT_SWITCH_CACHE_MAX_REACHED   = 0x36,
     WIFI_IMSA_PDN_ACT_RESULT_APN_MAX_REACHED            = 0x37,
@@ -360,8 +441,12 @@ enum WIFI_IMSA_PDN_DEACT_CAUSE_ENUM
     WIFI_IMSA_PDN_DEACT_CAUSE_IKED_RESET,                     /* IKED异常重启 */
     WIFI_IMSA_PDN_DEACT_CAUSE_REKEY_ERROR,                    /* REKEY失败 */
     WIFI_IMSA_PDN_DEACT_CAUSE_MAPCON_TEAR,                    /* MAPCON自主释放隧道 */
+    /*for vowifi emc && normal conn concurent,begin 2017-08-11*/
     WIFI_IMSA_PDN_DEACT_CAUSE_BEARS_CONCURRENT_NOT_SUPPORT, /*不支持承载并发*/
+    /*for vowifi emc && normal conn concurent,end 2017-08-11*/
+    /* for vowifi P-CSCF Restoration 2018-07-25 begin */
     WIFI_IMSA_PDN_DEACT_CAUSE_REACTIVATION_REQUESTED,         /* PCSCF Restoration */
+    /* for vowifi P-CSCF Restoration 2018-07-25 end */
 
     WIFI_IMSA_PDN_DEACT_CAUSE_BUTT
 };
@@ -388,6 +473,7 @@ enum WIFI_IMS_ACCESS_TYPE_ENUM
 typedef VOS_INT32 WIFI_IMS_ACCESS_TYPE_ENUM_INT32;
 
 
+/* define power off reason, begin in 2016-09-26 */
 /*****************************************************************************
     枚举名    : IMSA_WIFI_POWEROFF_REASON_ENUM
     枚举说明  : WIFI释放原因类型枚举
@@ -403,6 +489,8 @@ enum IMSA_WIFI_POWEROFF_REASON_ENUM
     IMSA_WIFI_POWEROFF_REASON_BUTT
 };
 typedef VOS_INT8 IMSA_WIFI_POWEROFF_REASON_ENUM_INT8;
+/* define power off reason, end in 2016-09-26 */
+/*for vowifi emc && normal conn concurent,begin 2017-08-11*/
 /*****************************************************************************
     枚举名    : IMSA_WIFI_TUNNEL_HOLD_STATUS_ENUM
     枚举说明  : 隧道保持模式状态，进入/退出
@@ -416,7 +504,9 @@ enum IMSA_WIFI_TUNNEL_HOLD_STATUS_ENUM
 typedef VOS_INT8 IMSA_WIFI_TUNNEL_HOLD_STATUS_ENUM_INT8;
 
 
+/*for vowifi emc && normal conn concurent,end 2017-08-11*/
 
+/* modify for wifi roaming, begin in 2018-03-26 */
 /*****************************************************************************
     枚举名    : IMSA_WIFI_INTER_ROAMING_STATUS_ENUM
     枚举说明  : WIFI国际漫游状态
@@ -430,7 +520,9 @@ enum IMSA_WIFI_INTER_ROAMING_STATUS_ENUM
     IMSA_WIFI_INTER_ROAMING_STATUS_BUTT
 };
 typedef VOS_INT8 IMSA_WIFI_INTER_ROAMING_STATUS_ENUM_INT8;
+/* modify for wifi raoming, end in 2018-03-26*/
 
+/* for vowifi P-CSCF Restoration 2018-07-25 begin */
 /*****************************************************************************
  结构名称: WIFI_IMSA_PDN_MODIFY_TYPE_ENUM
  结构说明: WIFI PDN修改类型
@@ -443,6 +535,7 @@ enum WIFI_IMSA_PDN_MODIFY_TYPE_ENUM
     WIFI_IMSA_PDN_MODIFY_TYPE_BUTT
 };
 typedef VOS_INT8 WIFI_IMSA_PDN_MODIFY_TYPE_ENUM_INT8;
+/* for vowifi P-CSCF Restoration 2018-07-25 end */
 
 /*****************************************************************************
   5 STRUCT
@@ -471,7 +564,9 @@ typedef struct
     VOS_INT32                          usRemoteRTPPort;       /* 0表示尚未获得 */
     VOS_INT32                          usRemoteRTCPPort;
     IMSA_WIFI_IP_ADDRESS_STRU          stRemoteAddr;
+   /*for vowifi emc && normal conn concurent,begin 2017-08-11*/
     IMSA_WIFI_IP_ADDRESS_STRU          stLocalAddr;
+   /*for vowifi emc && normal conn concurent,end 2017-08-11*/
 } IMSA_WIFI_MEDIA_INFO_STRU;
 
 
@@ -563,6 +658,7 @@ typedef struct
 typedef struct
 {
     WIFI_IMSA_MSG_ID_ENUM_INT32         lMsgId;            /*_H2ASN_Skip*/
+    /*for Boston VoWIFI Phase II,begin 2017-04-08*/
     VOS_INT8                            cFunctionVersion;/*基础版本号，表示AP支持该版本号对应特性以及以下版本号对应特性*/
 
 
@@ -585,8 +681,11 @@ typedef struct
     */
     VOS_INT8                            cExtentionNum;/*有效扩展版本号个数*/
     VOS_INT8                            cExtentionVersion[IMSA_WIFI_EXTENTION_VER_MAXNUM];/*扩展版本号，用于表示合入相对于基线版本号有跳跃的vowifi特性对应的版本号*/
+    /*for Boston VoWIFI Phase II,end 2017-04-08*/
+    /*for Boston R1 WiFi,begin 2017-12-07*/
     VOS_INT8                            cVoWiFiSwitch;       /*1: 代表VoWiFi打开；0:代表VoWiFi关闭  */
     VOS_INT8                            acRsv[3];
+    /*for Boston R1 WiFi,end 2017-12-07*/
 } WIFI_IMSA_POWERON_REQ_STRU;
 
 
@@ -648,6 +747,7 @@ typedef struct
 typedef struct
 {
     WIFI_IMSA_MSG_ID_ENUM_INT32        lMsgId;            /*_H2ASN_Skip*/
+    /*for Boston VoWIFI Phase II,begin 2017-04-08*/
     VOS_INT8                            cFunctionVersion;/*基础版本号，表示modem支持该版本号对应特性以及以下版本号对应特性*/
 
     /*扩展版本号主要解决版本跳跃问题:
@@ -678,6 +778,7 @@ typedef struct
 
     VOS_INT8                           acExtentionVersion[IMSA_WIFI_EXTENTION_VER_MAXNUM];/*扩展版本号，用于表示合入相对于基线版本号有跳跃的vowifi特性对应的版本号*/
 
+    /*for Boston VoWIFI Phase II,end 2017-04-08*/
 
 } IMSA_WIFI_POWERON_CNF_STRU;
 
@@ -702,6 +803,7 @@ typedef struct
     VOS_INT8                           acReserve[4];
 } IMSA_WIFI_POWEROFF_CNF_STRU;
 
+/* for vowifi P-CSCF Restoration 2018-07-25 begin */
 /*****************************************************************************
  结构名称: IMSA_WIFI_PDP_IPV4_PCSCF_V1_STRU
  结构说明: IPv4 P-CSCF地址结构体
@@ -772,7 +874,9 @@ typedef struct
     IMSA_WIFI_PDP_IPV6_PCSCF_V1_STRU    stIPv6PcscfV1;
     IMSA_WIFI_AP_MAC_STRU               stApMac;
     VOS_INT32                           lPdnReActTimerLen; /* 以秒为单位的重新发起WifiPdn建立过程的定时器 */
+    /*for Boston VoWIFI Phase II,begin 2017-04-08*/
     VOS_INT32                           lWiFiMtu; /* WIFI下带MTU */
+    /*for Boston VoWIFI Phase II,end 2017-04-08*/
     VOS_INT32                           lNetworkReason;
 } WIFI_IMSA_IMS_PDN_ACTIVATE_CNF_V1_STRU;
 /*****************************************************************************
@@ -792,6 +896,7 @@ typedef struct
     IMSA_WIFI_PDP_IPV6_PCSCF_V1_STRU    stIPv6PcscfV1;
     IMSA_WIFI_AP_MAC_STRU               stApMac;
 }WIFI_IMSA_IMS_PDN_MODIFY_IND_STRU;
+/* for vowifi P-CSCF Restoration 2018-07-25 end */
 
 /*****************************************************************************
  结构名称: IMSA_WIFI_IMS_PDN_ACTIVATE_REQ_STRU
@@ -833,7 +938,9 @@ typedef struct
     IMSA_WIFI_PDP_IPV6_PCSCF_STRU       stIPv6Pcscf;
     IMSA_WIFI_AP_MAC_STRU               stApMac;
     VOS_INT32                           lPdnReActTimerLen; /* 以秒为单位的重新发起WifiPdn建立过程的定时器 */
+    /*for Boston VoWIFI Phase II,begin 2017-04-08*/
     VOS_INT32                           lWiFiMtu; /* WIFI下带MTU */
+    /*for Boston VoWIFI Phase II,end 2017-04-08*/
     VOS_INT32                           lNetworkReason;
 } WIFI_IMSA_IMS_PDN_ACTIVATE_CNF_STRU;
 
@@ -858,8 +965,10 @@ typedef struct
     IMSA_WIFI_PDP_APN_STRU              stApn;
     VOS_INT8                            cIsLocal;          /* 1：本地释放，0：与网侧交互 */
     VOS_INT8                            cServiceType;      /* 0：普通APN上的普通业务，1：普通APN上的紧急业务, 2: 紧急APN上的紧急业务 */
+    /*for Boston VoWIFI Phase II,begin 2017-04-08*/
     VOS_INT8                            cIsHandover;/* 指示是否是切换导致的承载释放,1，切换释放，0，普通释放 */
     VOS_INT8                            acReserve[1];
+    /*for Boston VoWIFI Phase II,end 2017-04-08*/
 } IMSA_WIFI_IMS_PDN_DEACTIVATE_REQ_STRU;
 
 
@@ -899,8 +1008,10 @@ typedef struct
     WIFI_IMSA_SERVICE_STATUS_ENUM_INT8 enServiceStatus;
     VOS_INT8                           acReserve[2];
     IMSA_WIFI_AP_MAC_STRU              stApMac;
+    /*for vowifi ATT project phaseII,begin 2017-07-20*/
     VOS_CHAR                           acSsid[WIFI_IMSA_SSID_LEN];
     VOS_CHAR                           acReserve1[3];
+    /*for vowifi ATT project phaseII,end 2017-07-20*/
 } WIFI_IMSA_STATE_IND_STRU;
 
 /*****************************************************************************
@@ -923,7 +1034,9 @@ typedef struct
 {
     WIFI_IMSA_MSG_ID_ENUM_INT32        lMsgId;
     VOS_INT8                           cAudioInfoCnt;
+    /*for vowifi emc && normal conn concurent,begin 2017-08-11*/
     IMSA_WIFI_SERVICE_TYPE_ENUM_INT8   enServiceType;/*0,普通APN上的普通WIFI业务；1，普通APN上的紧急WIFI业务；3，紧急APN上的WIFI紧急业务*/
+    /*for vowifi emc && normal conn concurent,end 2017-08-11*/
     VOS_INT8                           acReserved[2];
     IMSA_WIFI_MEDIA_INFO_STRU          stMediaInfo[4];
 } IMSA_WIFI_IMS_AUDIO_INFO_IND_STRU;
@@ -936,7 +1049,9 @@ typedef struct
 {
     WIFI_IMSA_MSG_ID_ENUM_INT32        lMsgId;
     VOS_INT8                           cRttInfoCnt;
+    /*for vowifi emc && normal conn concurent,begin 2017-08-11*/
     IMSA_WIFI_SERVICE_TYPE_ENUM_INT8   enServiceType;/*0,普通APN上的普通WIFI业务；1，普通APN上的紧急WIFI业务；3，紧急APN上的WIFI紧急业务*/
+    /*for vowifi emc && normal conn concurent,end 2017-08-11*/
     VOS_INT8                           acReserved[2];
     IMSA_WIFI_MEDIA_INFO_STRU          stMediaInfo[4];
 } IMSA_WIFI_IMS_RTT_INFO_IND_STRU;
@@ -1001,6 +1116,7 @@ typedef struct
     VOS_INT8                           acReserve[4];      /* 保留位 */
 } IMSA_WIFI_CLOSE_VOWIFI_IND_STRU;
 
+/* 2017-08-31 begin */
 /*****************************************************************************
  结构名    : IMSA_WIFI_CELLULAR_OPEN_IND_STRU
  结构说明  : IMSA通知MAPCON当前Celluar开机消息结构
@@ -1015,16 +1131,21 @@ typedef struct
     VOS_INT8                           cWiFiTunnelStatus; /* 1: WiFi Tunnel Exist; 0:WiFi Tunnel non-exist */
     VOS_INT8                           acReserve[2];      /* 保留位 */
 } IMSA_WIFI_CELLULAR_OPEN_IND_STRU;
+/* 2017-08-31 end*/
+/* DCM Project,begin 2017-11-22 */
 typedef struct
 {
     WIFI_IMSA_MSG_ID_ENUM_INT32        lMsgId;            /*_H2ASN_Skip*/
     VOS_INT8                           acReserve[4];      /* 保留位 */
 } IMSA_WIFI_LOCATION_UPDATE_REQ_STRU;
+/* DCM Project,end 2017-11-22 */
+/* NV_Refresh_After_Sim_Switch Project,begin 2017-12-27 */
 typedef struct
 {
     WIFI_IMSA_MSG_ID_ENUM_INT32        lMsgId;            /*_H2ASN_Skip*/
     VOS_INT8                           acReserve[4];      /* 保留位 */
 } IMSA_WIFI_NV_REFRESH_IND_STRU;
+/* NV_Refresh_After_Sim_Switch Project,end 2017-12-27 */
 typedef struct
 {
     VOS_UINT8                           aucIpV4Addr[IMSA_WIFI_IPV4_ADDR_LEN];
@@ -1061,6 +1182,7 @@ typedef struct
 
 typedef struct
 {
+   /*for vowifi ATT project phaseII,begin 2017-07-20*/
    VOS_CHAR acCountry[IMSA_WIFI_CIVICLOC_COUNTRY_LEN];/*国家码信息*/
    VOS_CHAR acState[IMSA_WIFI_CIVICLOC_STATE_LEN];/*州信息*/
    VOS_CHAR acCity[IMSA_WIFI_CIVICLOC_CITY_LEN];/*市信息*/
@@ -1068,6 +1190,7 @@ typedef struct
    VOS_CHAR acRadius[IMSA_WIFI_CIVICLOC_RADIUS_LEN];/*radius信息*/
    VOS_CHAR acCountryA5[IMSA_WIFI_CIVICLOC_COUNTRY_A5_LEN];
    VOS_CHAR acRoadStreet[IMSA_WIFI_CIVICLOC_ROADSTREET_LEN];/*街道信息*/
+   /*for vowifi ATT project phaseII,end 2017-07-20*/
    VOS_CHAR acOtherAddress[IMSA_WIFI_CIVICLOC_OTHER_ADDRESS_LEN];
 }stCivicLocInfo;
 
@@ -1084,8 +1207,10 @@ typedef struct
     VOS_UINT32                       ulMsgId;
     VOS_INT8                         cIsCivicLocInfoExist;
     VOS_INT8                         cIsCoordinateLocInfoExist;
+    /* modify for wifi roaming, begin in 2018-03-26 */
     IMSA_WIFI_INTER_ROAMING_STATUS_ENUM_INT8  cWifiInterRoamingFlag; /* 0:不支持特性；1:没有国际漫游； 2:国际漫游 */
     VOS_INT8                         cReserved;
+    /* modify for wifi raoming, end in 2018-03-26*/
     stCivicLocInfo                   stCivicLocInfo;
     stCoordinateLocInfo              stCoordinateLocInfo;
     VOS_CHAR                         acRetentionExpiry[IMSA_WIFI_TIMESTAMP_LEN];
@@ -1103,11 +1228,12 @@ typedef struct
     VOS_INT8                            acReserve[4];
 } WIFI_IMSA_MSG_STRU;
 
+/*for vowifi emc && normal conn concurent,begin 2017-08-11*/
 /*****************************************************************************
  结构名称: WIFI_IMSA_ABNORMAL_HOLD_STATE_IND_STRU
  结构说明: WIFI丢网,MAPCON通知IMSA进入或退出隧道保持消息
 *****************************************************************************/
-/*与郑玮讨论接口调整，将保留字段放到结构体int8类型后面*/
+/*讨论接口调整，将保留字段放到结构体int8类型后面*/
 typedef struct
 {
     WIFI_IMSA_MSG_ID_ENUM_INT32                      lMsgId;
@@ -1115,6 +1241,7 @@ typedef struct
     VOS_INT8                                         cReserve;
     VOS_INT16                                        sAbNormalTime;
 }WIFI_IMSA_ABNORMAL_HOLD_STATE_IND_STRU;
+/*for vowifi emc && normal conn concurent,end 2017-08-11*/
 
 
 /*****************************************************************************

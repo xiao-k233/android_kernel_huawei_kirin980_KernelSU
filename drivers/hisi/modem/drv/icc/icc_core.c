@@ -57,13 +57,18 @@ struct icc_dynamic_info dynamic_info[ICC_DYNAMIC_CHAN_NUM_MAX];
 extern unsigned long     pcie_icc_ep_bar_phyaddr, pcie_icc_ep_bar_viraddr;
 extern unsigned long     pcie_icc_rc_bar_phyaddr, pcie_icc_rc_bar_viraddr;
 extern unsigned int pcie_linkdown_flag;
-u32 fifo_put_with_header(struct icc_channel_fifo *fifo, u8 *head_buf, u32 head_len, u8 *data_buf, u32 data_len)
+static u32 g_icc_dts_fifo_size[ICC_CHN_ID_MAX];
+static u32 fifo_put_with_header(struct icc_channel_fifo *fifo, u32 channel_id, u8 *head_buf, u32 head_len, u8 *data_buf, u32 data_len)
 {
 	s32 tail_idle_size = 0;
 	u32 write           = fifo->write;
 	u32 read            = fifo->read;
 	char* base_addr       = (char*)((char*)fifo + sizeof(struct icc_channel_fifo)); 
-	u32 buf_len         = fifo->size;
+	u32 buf_len = g_icc_dts_fifo_size[GET_CHN_ID(channel_id)];
+
+	if (write >= buf_len || read >= buf_len) {
+		return (u32)ICC_ERR;
+	}
 
 	/*空闲缓冲区大小*/
 	if (read > write)
@@ -113,15 +118,18 @@ u32 fifo_put_with_header(struct icc_channel_fifo *fifo, u8 *head_buf, u32 head_l
 	return data_len + head_len;
 }
 
-u32 fifo_get(struct icc_channel_fifo *fifo, u8 *data_buf, u32 data_len, u32 *read)
+u32 fifo_get(struct icc_channel_fifo *fifo, u32 channel_id, u8 *data_buf, u32 data_len, u32 *read)
 {
 	s32 total_idle_size = 0;
 	s32 tail_idle_size  = 0;/*lint !e14 */
 	u32 write           = fifo->write;
 	char* base_addr      = (char*)fifo + sizeof(struct icc_channel_fifo);
-	u32 buf_len         = fifo->size;
+	u32 buf_len         = g_icc_dts_fifo_size[GET_CHN_ID(channel_id)];
 	u32 readed_len      = 0;
 
+	if (write >= buf_len || data_len > buf_len || *read >= buf_len) {
+		return (u32)ICC_ERR;
+	}
 	/*空闲缓冲区大小*/
 	if (*read > write)
 	{
@@ -166,13 +174,17 @@ u32 fifo_get(struct icc_channel_fifo *fifo, u8 *data_buf, u32 data_len, u32 *rea
 
 
 /*数据包完整性需要保证 */
-u32 fifo_get_with_header(struct icc_channel_fifo *fifo, u8 *data_buf, u32 data_buf_len)
+static u32 fifo_get_with_header(struct icc_channel_fifo *fifo, u32 channel_id, u8 *data_buf, u32 data_buf_len)
 {
 	u32 read_len = 0;
 	u32 read     = fifo->read;
+	u32 buf_len = g_icc_dts_fifo_size[GET_CHN_ID(channel_id)];
 	struct icc_channel_packet packet = {0};
 
-	read_len = fifo_get(fifo, (u8 *)&packet, sizeof(packet), &read);
+	if (read >= buf_len) {
+		return (u32)ICC_ERR;
+	}
+	read_len = fifo_get(fifo, channel_id, (u8 *)&packet, sizeof(packet), &read);
 	if(read_len != sizeof(packet))/*读包头错误*/
 	{
 		icc_print_error("get packet err, read_len:0x%x, packet_size: 0x%lx \n", read_len, sizeof(packet));
@@ -185,7 +197,7 @@ u32 fifo_get_with_header(struct icc_channel_fifo *fifo, u8 *data_buf, u32 data_b
 		return (u32)ICC_ERR;
 	}
 
-	read_len = fifo_get(fifo, data_buf, packet.len, &read);
+	read_len = fifo_get(fifo, channel_id, data_buf, packet.len, &read);
 	if(read_len != packet.len)   /*读数据错误*/
 	{
 		icc_print_error("get data err, read_len:0x%x, packet.len: 0x%x \n", read_len, packet.len);
@@ -276,6 +288,7 @@ s32 bsp_icc_get_first_package_lenth(u32 channel_id)
 	s32 tail_idle_size  = 0;/*lint !e14 */
     u32 buf_len         = 0;
     char* base_addr     = NULL;
+	errno_t err = EOK;
     struct icc_channel_packet packet = {0};
 
 	u32 real_channel_id = GET_CHN_ID(channel_id);
@@ -309,12 +322,21 @@ s32 bsp_icc_get_first_package_lenth(u32 channel_id)
 
 	if ((s32)sizeof(packet) <= tail_idle_size)
 	{
-		(void)memcpy_s((void *)&packet, sizeof(packet), (void *)(read + base_addr), (s32)sizeof(packet));/*lint !e124 */
+		err = memcpy_s((void *)&packet, sizeof(packet), (void *)(read + base_addr), (s32)sizeof(packet));/*lint !e124 */
+		if (err != EOK) {
+			icc_print_error("memcpy faild, err = %d\n", err);
+		}
 	}
 	else
 	{
-		(void)memcpy_s((void *)&packet, sizeof(packet), (void *)(read + base_addr), (u32)tail_idle_size);/* [false alarm]:屏蔽Fortify误报 *//*lint !e124 */
-		(void)memcpy_s(((void *)&packet + tail_idle_size), sizeof(packet)- tail_idle_size, (void *)base_addr, (u32)sizeof(packet) - (u32)tail_idle_size);/*lint !e124 */
+		err = memcpy_s((void *)&packet, sizeof(packet), (void *)(read + base_addr), (u32)tail_idle_size);/* [false alarm]:屏蔽Fortify误报 *//*lint !e124 */
+		if (err != EOK) {
+			icc_print_error("memcpy faild, err = %d\n", err);
+		}
+		err = memcpy_s(((void *)&packet + tail_idle_size), sizeof(packet)- tail_idle_size, (void *)base_addr, (u32)sizeof(packet) - (u32)tail_idle_size);/*lint !e124 */
+		if (err != EOK) {
+			icc_print_error("memcpy faild, err = %d\n", err);
+		}
 	}
 	return packet.len;
 }
@@ -361,7 +383,7 @@ static s32 data_send(u32 cpuid, u32 channel_id, u8* data, u32 data_len)
 	}
 
     /* 将包头及负载放入fifo */
-	len = fifo_put_with_header(channel->fifo_send, (u8*)&packet, sizeof(struct icc_channel_packet), data, data_len);
+	len = fifo_put_with_header(channel->fifo_send, channel_id, (u8 *)&packet, sizeof(struct icc_channel_packet), data, data_len);
 	len -=  sizeof(struct icc_channel_packet);
 	if(data_len != len)
 	{
@@ -403,7 +425,7 @@ void handle_channel_recv_data(struct icc_channel *channel)
 
 	spin_lock_irqsave(&(channel->read_lock), flags); /*lint !e123 */
 	read     = channel->fifo_recv->read;
-	read_len = fifo_get(channel->fifo_recv, (u8*)&packet, sizeof(packet), &read);
+	read_len = fifo_get(channel->fifo_recv, (channel->id << 16), (u8 *)&packet, sizeof(packet), &read);
 
 	if(read_len != sizeof(packet)) 
 	{
@@ -443,7 +465,7 @@ void handle_channel_recv_data(struct icc_channel *channel)
 
 	if (vector->read_cb)
 	{
-		icc_print_debug("cb func:%p id:0x%x\n", vector->read_cb, packet.channel_id);
+		icc_print_debug("cb id:0x%x\n", packet.channel_id);
 		icc_debug_before_recv(&packet);
 		(void)vector->read_cb(packet.channel_id, packet.len, vector->read_context);
 		icc_debug_after_recv(&packet);
@@ -499,7 +521,7 @@ s32 icc_task_private_func(void *obj)
 	}
 }
 
-void icc_task_shared_func(void const *obj)
+int icc_task_shared_func(void *obj)
 
 {
 	struct icc_channel *channel = NULL;
@@ -525,7 +547,7 @@ void icc_task_shared_func(void const *obj)
 		icc_wake_unlock(&g_icc_ctrl.wake_lock);
 		osl_sem_down(&g_icc_ctrl.shared_task_sem);
 	}
-	return ; /*lint !e527 */
+	return ICC_OK; /*lint !e527 */
 }
 
 void icc_notask_sharedipc_func(void)
@@ -646,7 +668,7 @@ struct icc_channel *icc_channel_init(struct icc_init_info *info, s32 *ret)
 
 		/* coverity[overwrite_var] */
 		if(ICC_ERR == osl_task_init((char *)channel->name, ICC_TASK_PRIVATE_PRI, ICC_TASK_STK_SIZE,
-			(void *)icc_task_private_func, (void*)channel, &channel->private_task_id)) /*lint !e611 */
+			(OSL_TASK_FUNC)icc_task_private_func, (void*)channel, &channel->private_task_id)) /*lint !e611 */
 		{
 			*ret = ICC_CREATE_TASK_FAIL; /* [false alarm]:fortify */
 			goto error_task; /*lint !e801 */
@@ -697,7 +719,7 @@ error_task:
 error_vector:
 	icc_safe_free(channel);
 error_channel:
-	icc_print_error("chan init errno=0x%p,chan_id=0x%x\n",ret, info->real_channel_id);
+	icc_print_error("chan init chan_id=0x%x\n",info->real_channel_id);
 	return NULL;
 }
 
@@ -780,7 +802,7 @@ static int icc_channels_node_init(struct device_node *node)
 		init_info.ipc_send_irq_id = dts_cfg.tx_ipc;
 		init_info.ipc_recv_irq_id = dts_cfg.rx_ipc;
 		init_info.func_size = dts_cfg.func_size;
-
+		g_icc_dts_fifo_size[dts_cfg.id] = dts_cfg.size;
 
 
 		if (1 == dts_cfg.rx_fifo_first) /* 本核上，本通道，先是接收后是发送 */
@@ -821,7 +843,6 @@ static int icc_channels_node_init(struct device_node *node)
 		icc_print_notice("id 0x%x size 0x%x mode 0x%x\n", init_info.real_channel_id, init_info.fifo_size, init_info.mode);
 		icc_print_notice("tx_ipc %d rx_ipc %d\n", init_info.ipc_send_irq_id, init_info.ipc_recv_irq_id);
 		icc_print_notice("func_size 0x%x\n", init_info.func_size);
-		icc_print_notice("fifo_send addr 0x%p fifo_recv addr 0x%p\n", init_info.send_addr, init_info.recv_addr);
 		icc_print_notice("skip %d\n", skip);
 		icc_print_notice("<channel cfg end>\n");
 
@@ -917,7 +938,7 @@ s32 bsp_icc_init(void)
 		goto icc_channels_init_err; /*lint !e801 */
 	}
 
-	icc_wake_lock_init(&g_icc_ctrl.wake_lock, WAKE_LOCK_SUSPEND, "icc_wake");
+	icc_wake_lock_init(&g_icc_ctrl.wake_lock, "icc_wake");
 
 	ret = icc_debug_init(ICC_STATIC_CHN_ID_MAX);
 	if(ICC_OK != ret)
@@ -981,6 +1002,7 @@ s32 bsp_icc_dynamic_event_register(u32 destcore, struct icc_dynamic_para *parame
 	struct icc_channel *channel = NULL;
 	struct icc_channel_vector *vector = NULL;
 	struct icc_init_info init_info = {0};
+	errno_t err = EOK;
 	
 	if(count >= ICC_DYNAMIC_CHAN_NUM_MAX)
 	{
@@ -1024,7 +1046,10 @@ s32 bsp_icc_dynamic_event_register(u32 destcore, struct icc_dynamic_para *parame
 	
 	/* coverity[overrun-local] */
 	/* coverity[secure_coding] */
-	memcpy_s(dynamic_info[count].name, ICC_CHAN_NAME_LEN_MAX, parameter->name, (sizeof(dynamic_info[count].name)-1));
+	err = memcpy_s(dynamic_info[count].name, ICC_CHAN_NAME_LEN_MAX, parameter->name, (sizeof(dynamic_info[count].name)-1));
+	if (err != EOK) {
+		icc_print_error("memcpy faild, err = %d\n", err);
+	}
 	dynamic_info[count].real_channel_id = dynamic_channel_id; /* [false alarm]:fortify */
 	channel_id = dynamic_info[count].real_channel_id; /* [false alarm]:fortify */
 	dynamic_info[count].fifo_size = parameter->size; /* [false alarm]:fortify */
@@ -1156,7 +1181,6 @@ s32 bsp_icc_event_register(u32 channel_id, read_cb_func read_cb,   void *read_co
 	vector = &(g_icc_ctrl.channels[GET_CHN_ID(channel_id)]->vector[GET_FUNC_ID(channel_id)]);
 	if(vector->read_cb != NULL || vector->write_cb != NULL)
 	{
-		icc_print_error("%p reged\n", read_cb);
 		return ICC_REGISTER_CB_FAIL;
 	}
 
@@ -1222,10 +1246,15 @@ s32 bsp_icc_send(u32 cpuid, u32 channel_id, u8* data, u32 data_len)
 	   || (GET_FUNC_ID(channel_id) >= g_icc_ctrl.channels[GET_CHN_ID(channel_id)]->func_size) ||
 	   (data_len >= g_icc_ctrl.channels[GET_CHN_ID(channel_id)]->fifo_send->size - sizeof(struct icc_channel_packet)))
 	{
-		icc_print_error("para err,cpuid=0x%x, chan_id=0x%x, data=%p, data_len=0x%x\n", cpuid, channel_id, data, data_len);
+		icc_print_error("para err,cpuid=0x%x, chan_id=0x%x, data_len=0x%x\n", cpuid, channel_id, data_len);
 		return ICC_INVALID_PARA;
 	}
 
+	if (g_icc_ctrl.channels[GET_CHN_ID(channel_id)]->fifo_send->size != g_icc_dts_fifo_size[GET_CHN_ID(channel_id)]) {
+		icc_print_error("icc send fail! ddr_fifo_size is 0x%x, g_icc_dts_fifo_size is 0x%x\n",
+			g_icc_ctrl.channels[GET_CHN_ID(channel_id)]->fifo_send->size, g_icc_dts_fifo_size[GET_CHN_ID(channel_id)]);
+		return ICC_CHA_FIFO_SIZE_FAIL;
+	}
 	if (1 == (icc_ccore_is_reseting(cpuid)))
 	{
 	    return BSP_ERR_ICC_CCORE_RESETTING;
@@ -1258,12 +1287,16 @@ s32 bsp_icc_read(u32 channel_id, u8 *buf, u32 buf_len)
 	{
 		return 0;
 	}
-
+	if (g_icc_ctrl.channels[real_channel_id]->fifo_recv->size != g_icc_dts_fifo_size[real_channel_id]) {
+		icc_print_error("icc read fail! ddr_fifo_size is 0x%x, g_icc_dts_fifo_size is 0x%x\n",
+			g_icc_ctrl.channels[real_channel_id]->fifo_recv->size, g_icc_dts_fifo_size[real_channel_id]);
+		return ICC_CHA_FIFO_SIZE_FAIL;
+	}
 	spin_lock_irqsave(&(g_icc_ctrl.channels[real_channel_id]->read_lock), flags);
 	/*fifo中消息不完整*/
 	if(fifo_read_space_get(g_icc_ctrl.channels[real_channel_id]->fifo_recv) >= sizeof(struct icc_channel_packet))
 	{
-		read_len = fifo_get_with_header(g_icc_ctrl.channels[real_channel_id]->fifo_recv, buf, buf_len);
+		read_len = fifo_get_with_header(g_icc_ctrl.channels[real_channel_id]->fifo_recv, channel_id, buf, buf_len);
 		icc_debug_in_read_cb(channel_id, buf, buf_len, g_icc_ctrl.channels[real_channel_id]->fifo_recv->read, g_icc_ctrl.channels[real_channel_id]->fifo_recv->write);
 		if((u32)ICC_ERR == read_len)
 		{
@@ -1278,7 +1311,7 @@ s32 bsp_icc_read(u32 channel_id, u8 *buf, u32 buf_len)
 	return ret;
 
 out:
-	icc_print_error("errno=0x%x,buffer=%p,len%d,read_len%d\n", ret, buf, buf_len, read_len);
+	icc_print_error("errno=0x%x,len%d,read_len%d\n", ret, buf_len, read_len);
 
 	return ret;
 }
@@ -1289,4 +1322,7 @@ EXPORT_SYMBOL(bsp_icc_event_register);  /*lint !e19 */
 EXPORT_SYMBOL(bsp_icc_event_unregister);/*lint !e19 */
 EXPORT_SYMBOL(bsp_icc_dynamic_event_register);/*lint !e19 */
 EXPORT_SYMBOL(icc_channel_empty);/*lint !e19 */
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+arch_initcall(bsp_icc_init);            /*lint !e19 !e132 !e578*/
+#endif
 

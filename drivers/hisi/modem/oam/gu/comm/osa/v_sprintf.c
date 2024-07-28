@@ -46,31 +46,6 @@
  *
  */
 
-/*****************************************************************************/
-/*                                                                           */
-/*                Copyright 1999 - 2003, Huawei Tech. Co., Ltd.              */
-/*                           ALL RIGHTS RESERVED                             */
-/*                                                                           */
-/* FileName: v_sprintf.c                                                     */
-/*                                                                           */
-/* Author:                                                                   */
-/*                                                                           */
-/* Version: 1.0                                                              */
-/*                                                                           */
-/* Date:                                                                     */
-/*                                                                           */
-/* Description: copy this file from Dopra                                    */
-/*                                                                           */
-/*                                                                           */
-/* Others:                                                                   */
-/*                                                                           */
-/* History:                                                                  */
-/* 1. Date:                                                                  */
-/*    Author:                                                                */
-/*    Modification:                                                          */
-/*                                                                           */
-/*****************************************************************************/
-
 
 #include "v_IO.h"
 #include "v_private.h"
@@ -83,6 +58,7 @@
 #define    THIS_FILE_ID        PS_FILE_ID_V_SPRINTF_C
 #define    THIS_MODU           mod_pam_osa
 
+#if (VOS_RTOSCK != VOS_OS_VER)
 /*****************************************************************************
  Function   : VOS_vsprintf_s
  Description:
@@ -103,7 +79,11 @@ VOS_INT VOS_vsprintf_s(VOS_CHAR * str, VOS_SIZE_T ulDestSize, const VOS_CHAR *fo
         return -1;
     }
 
+#if (VOS_LINUX == VOS_OS_VER) || defined(LLT_OS_LINUX)
     return (VOS_INT)vscnprintf(str, (VOS_UINT32)(ulDestSize), (const VOS_CHAR *) format, argument);
+#else
+    return (VOS_INT)vsnprintf_s(str, (VOS_UINT32)ulDestSize, (VOS_UINT32)(ulDestSize - 1), (const VOS_CHAR *) format, argument);
+#endif
 }
 
 /*****************************************************************************
@@ -134,7 +114,11 @@ VOS_INT VOS_sprintf_s(VOS_CHAR *str, VOS_SIZE_T ulDestSize, const VOS_CHAR *fmt,
     /*lint -e586*/
     va_start(arg, fmt);
     /*lint +e586*/
+#if (VOS_LINUX == VOS_OS_VER) || defined(LLT_OS_LINUX)
     nc = (VOS_INT)vscnprintf(str, (VOS_UINT32)(ulDestSize), (const VOS_CHAR *) fmt, arg);
+#else
+    nc = (VOS_INT)vsnprintf_s(str, (VOS_UINT32)ulDestSize, (VOS_UINT32)(ulDestSize - 1), (const VOS_CHAR *) fmt, arg);
+#endif
 
     /*lint -e586*/
     va_end(arg);
@@ -142,6 +126,7 @@ VOS_INT VOS_sprintf_s(VOS_CHAR *str, VOS_SIZE_T ulDestSize, const VOS_CHAR *fmt,
     return (nc);
     /*lint +e530 */
 }
+#endif
 
 #define LENGTH_OF_PRINT_LINE_BUF        (1024)
 

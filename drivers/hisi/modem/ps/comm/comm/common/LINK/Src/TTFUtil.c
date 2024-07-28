@@ -46,17 +46,14 @@
  *
  */
 
-
-
-
-/******************************************************************************
-   1 头文件包含
-******************************************************************************/
 #include "TTFUtil.h"
 #include "PsTypeDef.h"
 #include "TTFComm.h"
 #include "mdrv.h"
 #include "securec.h"
+
+
+
 
 /*****************************************************************************
     协议栈打印打点方式下的.C文件宏定义
@@ -581,6 +578,28 @@ VOS_VOID PSACORE_MEM_MOVE_EX(VOS_VOID *Dest, VOS_SIZE_T ulDestSize, const VOS_VO
     }
 }
 /*lint -restore */
+
+/*
+ * TTF 安全函数返回值校验，校验失败会触发复位。
+ * 支持函数： memset_s memcpy_s memmove_s
+ */
+MODULE_EXPORTED VOS_VOID TtfSfChk(VOS_BOOL result, VOS_UINT32 fileNo, VOS_UINT32 lineNo)
+{    
+    if (result) {
+        mdrv_om_system_error((VOS_INT32)TTF_MEM_CPY_FAIL_ERROR, (VOS_INT32)fileNo, (VOS_INT32)lineNo, VOS_NULL_PTR, 0);
+    }
+}
+
+/*
+ * TTF Acore安全函数返回值校验，校验失败会打印错误，不能复位。
+ * 支持函数： memset_s memcpy_s memmove_s
+ */
+MODULE_EXPORTED VOS_VOID TtfAcoreSfChk(VOS_BOOL result, VOS_UINT32 fileNo, VOS_UINT32 lineNo)
+{    
+    if (result) {
+        TTF_LOG3(VOS_CPU_ID_ACPU, 0, PS_PRINT_ERROR, "SafeFunc return value check fail!", result, fileNo, lineNo);
+    }
+}
 
 
 

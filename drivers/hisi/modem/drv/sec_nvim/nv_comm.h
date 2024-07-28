@@ -65,7 +65,8 @@ extern "C" {
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/err.h>
-#include <linux/wakelock.h>
+#include <linux/device.h>
+#include <linux/pm_wakeup.h>
 #include <linux/dma-mapping.h>
 #include <product_config.h>
 #include <osl_thread.h>
@@ -213,7 +214,7 @@ struct nv_global_ctrl_info_stru
     u32 task_proc_count;
     struct list_head stList;
     bool statis_sw;
-    struct wake_lock wake_lock;
+    struct wakeup_source wake_lock;
     u32 opState;
     u32 pmState;
     bool pmSw;

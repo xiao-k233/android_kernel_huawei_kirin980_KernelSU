@@ -236,7 +236,6 @@ u32 nv_check_mode_crc(factory_crc_check_info_t check_info)
     for(index = 0; index < check_info.valild_band_count; index++)
     {
 
-        nv_debug_printf("next single band nv addr = %pK\n", check_item_temp);
 
         /*如未使能该band的检查 或者配置可用数量为0，则不做检查*/
         if((SINGAL_NV_ENABLE != check_item_temp->uhwEnable)||(0 == check_item_temp->uhwValidCount))
@@ -407,7 +406,13 @@ u32 nv_read_item_from_factory(u32 modem_id, u32 itemid, u32 offset, u8 *pdata, u
 
     if( modem_id > item_info->modem_num)
     {
+#if (FEATURE_OFF == FEATURE_MULTI_MODEM)
+        ret = BSP_ERR_NV_INVALID_MDMID_ERR;
+        nv_record("nv read factory modem id error modem_id %d mod num %d!\n", (u32)modem_id, item_info->modem_num);
+        goto nv_readEx_err;
+#else
         modem_id = 1;
+#endif
     }
 
     /*calc item offset */

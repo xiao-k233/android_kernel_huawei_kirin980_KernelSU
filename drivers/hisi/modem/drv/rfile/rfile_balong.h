@@ -82,7 +82,8 @@ extern "C" {
 #include <linux/hrtimer.h>
 #include <linux/kthread.h>
 #include <linux/delay.h>
-#include <linux/wakelock.h>
+#include <linux/device.h>
+#include <linux/pm_wakeup.h>
 
 #else /* __VXWORKS__ */
 #include <stdio.h>
@@ -264,7 +265,7 @@ struct bsp_rfile_main_stru
     struct list_head        fplist;               /* C核打开文件链表头 */
     struct list_head        dplist;               /* C核打开目录链表头 */
     u8                      data[RFILE_LEN_MAX];    /* 缓存ICC通道读取的数据 */
-    struct wake_lock        wake_lock;
+    struct wakeup_source    wake_lock;
     u32                     pmState;                /*低功耗状态*/
     u32                     opState;                /*操作状态*/
 

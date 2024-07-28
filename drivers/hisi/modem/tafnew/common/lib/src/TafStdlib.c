@@ -149,6 +149,13 @@ LOCAL VOS_UINT16 g_ausTafStdLeapMonthTab[] = {
 };
 
 
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+LOCAL VOS_UINT16 g_ausMonthDay[2][TAF_STD_MAX_MONTH_DAY_COUNT] =
+{
+    {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365}, /* normal year */
+    {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366}  /* leap year */
+};
+#endif
 
 /*****************************************************************************
   6 函数定义
@@ -319,7 +326,7 @@ VOS_UINT32 TAF_STD_ConvertStrToDecInt(
 {
     VOS_UINT32                          ulTmp;
     VOS_UINT32                          ultotal;
-    VOS_UINT8                           ulLength;
+    VOS_UINT32                          ulLength;
 
     ulTmp       = 0;
     ultotal     = 0;
@@ -1410,6 +1417,7 @@ VOS_UINT8 TAF_STD_TransformBcdImsi1112ToDeciDigit(
     return (VOS_UINT8)usImsi1112;
 }
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT16 TAF_STD_TransformCLBcdMncToDeciDigit(
     VOS_UINT16                          usBcdMnc
@@ -1428,6 +1436,7 @@ VOS_UINT16 TAF_STD_TransformCLBcdMncToDeciDigit(
     return usMnc;
 }
 
+#endif
 
 VOS_UINT32 TAF_STD_TransformDeciDigitToBcdMcc(
     VOS_UINT32                          ulDeciDigitMcc
@@ -1864,6 +1873,191 @@ VOS_UINT32 TAF_STD_Convert8BitToUcs2(
     return ulUcs2Len;
 }
 
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+
+VOS_UINT32 TAF_STD_ConvertStrToUcs2(
+    TAF_STD_STR_WITH_ENCODING_TYPE_STRU            *pstSrcStr,
+    VOS_UINT16                                     *pusUcs2Str,
+    VOS_UINT32                                      ulUcs2BuffLen,
+    VOS_UINT32                                     *pulUcs2Len
+)
+{
+    VOS_UINT8                                      *pucUnpackBuff       = VOS_NULL_PTR;
+    MODEM_ID_ENUM_UINT16                            enModemId;
+
+    if ((VOS_NULL_PTR == pstSrcStr )
+     || (VOS_NULL_PTR == pusUcs2Str)
+     || (VOS_NULL_PTR == pulUcs2Len)
+     || (VOS_NULL_PTR == pstSrcStr->pucStr))
+    {
+        return TAF_ERR_NULL_PTR;
+    }
+
+    MN_INFO_LOG1("TAF_STD_ConvertStrToUcs2: encoding", pstSrcStr->enCoding);
+
+    switch (pstSrcStr->enCoding)
+    {
+        case TAF_STD_ENCODING_7BIT:
+            /* 7bit: 先解码成8bit,再将8bit变为16bit的UCS2 */
+            enModemId   = NAS_MULTIINSTANCE_GetCurrInstanceModemId(WUEPS_PID_TAF);
+
+            pucUnpackBuff   = (VOS_UINT8*)NAS_MULTIINSTANCE_MemAlloc(enModemId, WUEPS_PID_TAF, ulUcs2BuffLen * sizeof(VOS_UINT8));
+
+            if (VOS_NULL_PTR == pucUnpackBuff)
+            {
+                return TAF_ERR_ERROR;
+            }
+
+            if (VOS_ERR == TAF_STD_UnPack7Bit(pstSrcStr->pucStr, ulUcs2BuffLen, 0, pucUnpackBuff))
+            {
+                NAS_MULTIINSTANCE_MemFree(enModemId, WUEPS_PID_TAF, pucUnpackBuff);
+                MN_ERR_LOG("TAF_STD_ConvertStrToUcs2: Unpack fail");
+                return TAF_ERR_ERROR;
+            }
+
+            *pulUcs2Len = ulUcs2BuffLen;
+
+            /* 去除7Bit压缩时填充位 */
+            if (0x0d == (pucUnpackBuff[*pulUcs2Len - 1]))
+            {
+                (*pulUcs2Len)--;
+            }
+
+            /* DefaultAlpha->Ascii */
+            TAF_STD_ConvertDefAlphaToAscii(pucUnpackBuff, *pulUcs2Len, pucUnpackBuff, pulUcs2Len);
+
+            /* 单字节转双字节 */
+            *pulUcs2Len = TAF_STD_Convert8BitToUcs2(pucUnpackBuff, *pulUcs2Len, pusUcs2Str, ulUcs2BuffLen);
+
+            NAS_MULTIINSTANCE_MemFree(enModemId, WUEPS_PID_TAF, pucUnpackBuff);
+            break;
+
+        case TAF_STD_ENCODING_8BIT:
+            TAF_STD_Convert8BitToUcs2(pstSrcStr->pucStr, ulUcs2BuffLen, pusUcs2Str, ulUcs2BuffLen);
+            *pulUcs2Len = pstSrcStr->ulLen;
+            break;
+
+        case TAF_STD_ENCODING_UCS2:
+            TAF_MEM_CPY_S(pusUcs2Str, ulUcs2BuffLen, pstSrcStr->pucStr, pstSrcStr->ulLen);
+
+            /* 输入为大端 内部为小端，需要转换 */
+            (VOS_VOID)TAF_STD_ChangeEndian((VOS_UINT8*)pusUcs2Str, ulUcs2BuffLen, (VOS_UINT8*)pusUcs2Str, sizeof(VOS_UINT16));
+
+            /* Ucs2Len指UINT16的UCS2码的个数， pstSrcStr->ulLen指码流字节数 */
+            *pulUcs2Len = pstSrcStr->ulLen / 2;
+            break;
+
+        case TAF_STD_ENCODING_UTF8:
+            /* 增加编码转换失败原因值 */
+            return TAF_STD_ConvertUtf8ToUcs2(pstSrcStr->pucStr, pstSrcStr->ulLen, pusUcs2Str, ulUcs2BuffLen, pulUcs2Len);
+
+        default:
+            return TAF_ERR_ERROR;
+    }
+
+    return TAF_ERR_NO_ERROR;
+}
+
+
+VOS_UINT32 TAF_STD_ConvertUcs2ToStr(
+    TAF_STD_STR_WITH_ENCODING_TYPE_STRU            *pstDstStr,
+    VOS_UINT16                                     *pusUcs2Str,
+    VOS_UINT32                                      ulUcs2Len,
+    VOS_UINT32                                      ulDstStrBuffLen
+)
+{
+    VOS_UINT8                          *pucBuffStr  = VOS_NULL_PTR;
+    VOS_UINT32                          ulUcs2BuffLen;
+    VOS_UINT32                          ulAllocBuffLen;
+    VOS_UINT32                          ul8BitLen;
+    VOS_UINT32                          ulRslt;
+    MODEM_ID_ENUM_UINT16                enModemId;
+
+    if ((VOS_NULL_PTR == pstDstStr )
+     || (VOS_NULL_PTR == pusUcs2Str)
+     || (VOS_NULL_PTR == pstDstStr->pucStr))
+    {
+        return TAF_ERR_NULL_PTR;
+    }
+
+    MN_INFO_LOG1("TAF_STD_ConvertUcs2ToStr: encoding", pstDstStr->enCoding);
+
+    pstDstStr->ulLen = 0;
+    TAF_MEM_SET_S(pstDstStr->pucStr, ulDstStrBuffLen, 0, ulDstStrBuffLen);
+
+    switch (pstDstStr->enCoding)
+    {
+        case TAF_STD_ENCODING_UCS2:
+            pstDstStr->ulLen = TAF_MIN((ulUcs2Len * sizeof(VOS_UINT16)), ulDstStrBuffLen);
+            TAF_MEM_CPY_S(pstDstStr->pucStr, ulDstStrBuffLen, pusUcs2Str, pstDstStr->ulLen);
+
+            /* TODO: 增加CHR上报 */
+            /* 内部是小端序，拷贝输出时候需要转成大端序 */
+            ulRslt = TAF_STD_ChangeEndian(pstDstStr->pucStr, pstDstStr->ulLen, pstDstStr->pucStr, sizeof(VOS_UINT16));
+
+            return ulRslt;
+
+        case TAF_STD_ENCODING_8BIT:
+            pstDstStr->ulLen = TAF_STD_ConvertUcs2To8Bit(pusUcs2Str, ulUcs2Len, pstDstStr->pucStr, ulDstStrBuffLen);
+            break;
+
+        case TAF_STD_ENCODING_7BIT:
+            /* 7Bit支持扩展表后最多用2个字节表示一个Unicode */
+            ul8BitLen      = 0;
+            ulUcs2BuffLen  = ulUcs2Len * 2;
+            ulAllocBuffLen = ulUcs2BuffLen * 2;
+
+            enModemId   = NAS_MULTIINSTANCE_GetCurrInstanceModemId(WUEPS_PID_TAF);
+
+            /* 申请2倍缓存分开使用 */
+            pucBuffStr    = (VOS_UINT8*)NAS_MULTIINSTANCE_MemAlloc(enModemId, WUEPS_PID_TAF, ulAllocBuffLen * sizeof(VOS_UINT8));
+            if (VOS_NULL_PTR == pucBuffStr)
+            {
+                return TAF_ERR_ERROR;
+            }
+            TAF_MEM_SET_S(pucBuffStr, ulUcs2BuffLen * sizeof(VOS_UINT8), 0, ulUcs2Len * sizeof(VOS_UINT8));
+
+            /* 先转成8Bit编码 */
+            ulUcs2Len = TAF_STD_ConvertUcs2To8Bit(pusUcs2Str, ulUcs2Len, pucBuffStr, ulUcs2BuffLen);
+
+            /* 转成DefaultAlpha，使用后半段缓存 */
+            if (MN_ERR_NO_ERROR != TAF_STD_ConvertAsciiToDefAlpha(pucBuffStr, ulUcs2Len, pucBuffStr + ulUcs2BuffLen, &ul8BitLen, ulUcs2BuffLen))
+            {
+                NAS_MULTIINSTANCE_MemFree(enModemId, WUEPS_PID_TAF, pucBuffStr);
+                MN_ERR_LOG("TAF_STD_ConvertUcs2ToStr: Ascii->DefAlpha fail");
+                return TAF_ERR_ERROR;
+            }
+
+            ul8BitLen = TAF_MIN(((ulDstStrBuffLen * TAF_STD_BIT_LEN_8_BIT) / TAF_STD_BIT_LEN_7_BIT), ul8BitLen);
+
+            /* 压缩成7Bit编码 */
+            if (VOS_OK != TAF_STD_Pack7Bit(pucBuffStr + ulUcs2BuffLen, ul8BitLen, 0, pstDstStr->pucStr, &(pstDstStr->ulLen)))
+            {
+                NAS_MULTIINSTANCE_MemFree(enModemId, WUEPS_PID_TAF, pucBuffStr);
+                MN_ERR_LOG("TAF_STD_ConvertUcs2ToStr: pack fail");
+                return TAF_ERR_ERROR;
+            }
+
+            /* 23038 6.1.2.3.1，最后7Bit如果没有数据需要填CR以免被识别成@ */
+            if (7 == ul8BitLen % 8)
+            {
+                *(pstDstStr->pucStr + pstDstStr->ulLen - 1) |= 0x1A;
+            }
+
+            NAS_MULTIINSTANCE_MemFree(enModemId, WUEPS_PID_TAF, pucBuffStr);
+            break;
+
+        case TAF_STD_ENCODING_UTF8:
+            pstDstStr->ulLen = TAF_STD_ConvertUcs2ToUtf8(pusUcs2Str, ulUcs2Len, pstDstStr->pucStr, ulDstStrBuffLen);
+            break;
+
+        default:
+            return TAF_ERR_ERROR;
+    }
+
+    return TAF_ERR_NO_ERROR;
+}
+#endif
 
 
 VOS_UINT32 TAF_STD_IsSuitableEncodeForUcs2(
@@ -1927,6 +2121,81 @@ VOS_UINT32 TAF_STD_IsSuitableEncodeForUcs2(
     return TAF_ERR_NO_ERROR;
 }
 
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+
+VOS_UINT32 TAF_STD_ConvertStrEncodingType(
+    TAF_STD_STR_WITH_ENCODING_TYPE_STRU            *pstSrcStr,
+    TAF_STD_ENCODING_TYPE_ENUM_U8                   enDstCoding,
+    VOS_UINT32                                      ulDstBuffLen,
+    TAF_STD_STR_WITH_ENCODING_TYPE_STRU            *pstDstStr
+)
+{
+    VOS_UINT16                                     *pusUcs2Str      = VOS_NULL_PTR;
+    VOS_UINT32                                      ulUcs2Len;
+    VOS_UINT32                                      ulUcs2BuffLen;
+    VOS_UINT32                                      ulRslt;
+    MODEM_ID_ENUM_UINT16                            enModemId;
+
+    enModemId   = NAS_MULTIINSTANCE_GetCurrInstanceModemId(WUEPS_PID_TAF);
+
+    if ((VOS_NULL_PTR == pstSrcStr)
+     || (VOS_NULL_PTR == pstDstStr)
+     || (VOS_NULL_PTR == pstSrcStr->pucStr)
+     || (VOS_NULL_PTR == pstDstStr->pucStr))
+    {
+        return TAF_ERR_NULL_PTR;
+    }
+
+    /* 计算申请Unicode内存大小 */
+    /* pstSrcStr->Len指字节数， ulUcs2Len指UCS2编码数， 前者UINT8 后者UINT16 */
+    if (TAF_STD_ENCODING_7BIT == pstSrcStr->enCoding)
+    {
+        ulUcs2Len = pstSrcStr->ulLen * 8 / 7;
+    }
+    else
+    {
+        ulUcs2Len = pstSrcStr->ulLen;
+    }
+    ulUcs2BuffLen = ulUcs2Len;
+
+    pusUcs2Str    = (VOS_UINT16*)NAS_MULTIINSTANCE_MemAlloc(enModemId, WUEPS_PID_TAF, ulUcs2BuffLen * sizeof(VOS_UINT16));
+    if (VOS_NULL_PTR == pusUcs2Str)
+    {
+        return TAF_ERR_ERROR;
+    }
+    TAF_MEM_SET_S(pusUcs2Str, ulUcs2BuffLen * sizeof(VOS_UINT16), 0, ulUcs2BuffLen * sizeof(VOS_UINT16));
+
+    /* 将输入码流转为Unicode(UCS2)格式 */
+    ulRslt = TAF_STD_ConvertStrToUcs2(pstSrcStr, pusUcs2Str, ulUcs2BuffLen, &ulUcs2Len);
+
+    if (TAF_ERR_NO_ERROR != ulRslt)
+    {
+        NAS_MULTIINSTANCE_MemFree(enModemId, WUEPS_PID_TAF, pusUcs2Str);/*lint !e516 */
+        return ulRslt;
+    }
+
+    /* 是否能转成目标编码 */
+    if (TAF_ERR_NO_ERROR != TAF_STD_IsSuitableEncodeForUcs2(pusUcs2Str, ulUcs2Len, enDstCoding))
+    {
+        NAS_MULTIINSTANCE_MemFree(enModemId, WUEPS_PID_TAF, pusUcs2Str);/*lint !e516 */
+        MN_INFO_LOG("TAF_STD_ConvertStrEncodingType Dst Encoding cannot be");
+        return TAF_ERR_PARA_ERROR;
+    }
+    pstDstStr->enCoding = enDstCoding;
+
+    /* 将Unicode(UCS2)码流转到指定格式 */
+    ulRslt = TAF_STD_ConvertUcs2ToStr(pstDstStr, pusUcs2Str, ulUcs2Len, ulDstBuffLen);
+
+    if (TAF_ERR_NO_ERROR != ulRslt)
+    {
+        NAS_MULTIINSTANCE_MemFree(enModemId, WUEPS_PID_TAF, pusUcs2Str);/*lint !e516 */
+        return ulRslt;
+    }
+
+    NAS_MULTIINSTANCE_MemFree(enModemId, WUEPS_PID_TAF, pusUcs2Str);/*lint !e516 */
+    return TAF_ERR_NO_ERROR;
+}
+#endif
 
 
 
@@ -1938,6 +2207,12 @@ MODULE_EXPORTED VOS_VOID TAF_STD_MemCpy_s(
     VOS_INT32                           lFileIdAndLine
 )
 {
+#if (FEATURE_ON == FEATURE_MEMCPY_REBOOT_CFG)
+    if (VOS_NULL_PTR == VOS_MemCpy_s( pDestBuffer, ulDestSize, pSrcBuffer, ulCount ))
+    {
+        mdrv_om_system_error(TAF_REBOOT_MOD_ID_MEM, 0, lFileIdAndLine, 0, 0 );
+    }
+#else
     VOS_UINT32                          ulMemCpyLen;
 
     ulMemCpyLen = TAF_MIN(ulDestSize, ulCount);
@@ -1946,9 +2221,13 @@ MODULE_EXPORTED VOS_VOID TAF_STD_MemCpy_s(
     {
         if (VOS_NULL_PTR == VOS_MemCpy_s( pDestBuffer, ulMemCpyLen, pSrcBuffer, ulMemCpyLen ))
         {
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+            mdrv_om_system_error(TAF_REBOOT_MOD_ID_MEM, 0, lFileIdAndLine, 0, 0 );
+#endif
             MN_ERR_LOG("TAF_STD_MemCpy_s ERR!");
         }
     }
+#endif
     return;
 }
 
@@ -1962,6 +2241,12 @@ MODULE_EXPORTED VOS_VOID TAF_STD_MemSet_s(
     VOS_INT32                           lFileIdAndLine
 )
 {
+#if (FEATURE_ON == FEATURE_MEMCPY_REBOOT_CFG)
+    if (VOS_NULL_PTR == VOS_MemSet_s( pDestBuffer, ulDestSize, (VOS_CHAR)(ucChar), ulCount ))
+    {
+        mdrv_om_system_error(TAF_REBOOT_MOD_ID_MEM, 0, lFileIdAndLine, 0, 0 );
+    }
+#else
     VOS_UINT32                          ulMemSetLen;
 
     ulMemSetLen = TAF_MIN(ulDestSize, ulCount);
@@ -1970,9 +2255,13 @@ MODULE_EXPORTED VOS_VOID TAF_STD_MemSet_s(
     {
         if (VOS_NULL_PTR == VOS_MemSet_s( pDestBuffer, ulMemSetLen, (VOS_CHAR)(ucChar), ulMemSetLen ))
         {
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+            mdrv_om_system_error(TAF_REBOOT_MOD_ID_MEM, 0, lFileIdAndLine, 0, 0 );
+#endif
             MN_ERR_LOG("TAF_STD_MemSet_s ERR!");
         }
     }
+#endif
     return;
 }
 /*lint +e429*/
@@ -1985,6 +2274,12 @@ VOS_VOID TAF_STD_MemMove_s(
     VOS_INT32                           lFileIdAndLine
 )
 {
+#if (FEATURE_ON == FEATURE_MEMCPY_REBOOT_CFG)
+    if (VOS_NULL_PTR == VOS_MemMove_s( pDestBuffer, ulDestSize, pSrcBuffer, ulCount ))
+    {
+        mdrv_om_system_error(TAF_REBOOT_MOD_ID_MEM, 0, lFileIdAndLine, 0, 0 );
+    }
+#else
     VOS_UINT32                          ulMemMoveLen;
 
     ulMemMoveLen = TAF_MIN(ulDestSize, ulCount);
@@ -1993,13 +2288,138 @@ VOS_VOID TAF_STD_MemMove_s(
     {
         if (VOS_NULL_PTR == VOS_MemMove_s( pDestBuffer, ulMemMoveLen, pSrcBuffer, ulMemMoveLen ))
         {
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+            mdrv_om_system_error(TAF_REBOOT_MOD_ID_MEM, 0, lFileIdAndLine, 0, 0 );
+#endif
             MN_ERR_LOG("TAF_STD_MemMove_s ERR!");
         }
     }
+#endif
     return;
 }
 
 
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+
+VOS_UINT32 TAF_STD_IsLeapYear(VOS_UINT16 usYear)
+{
+    if (((usYear % 4 == 0) && (usYear % 100 != 0))
+     || (usYear % 400 == 0))
+    {
+        return VOS_TRUE;
+    }
+
+    return VOS_FALSE;
+}
+
+
+VOS_UINT32 TAF_STD_GetDaysForYear(VOS_UINT16 usYear)
+{
+    VOS_UINT32                          ulDays;
+
+    ulDays = TAF_STD_IsLeapYear(usYear) ? (366) : (365);
+
+    return ulDays;
+}
+
+
+VOS_VOID TAF_STD_SecondTimeToDateTime(
+    VOS_UINT64                          ullSecondTime,
+    TAF_STD_TIME_ZONE_TYPE_STRU        *pstDateTime
+)
+{
+    VOS_UINT8  ucMonLoop                = 0;
+    VOS_UINT16 usCurYear                = 0;
+    VOS_UINT32 ulRst                    = 0;
+    VOS_UINT32 ulDaysOfCurYear          = 0;
+    VOS_UINT64 ullLeftDays              = 0;
+    VOS_UINT64 ullLeftSeconds           = 0;
+
+    /* 时间超过2099/12/31 23:59:59则将当前时间重置为0s(1900/01/01 00:00:00) */
+    if (ullSecondTime > TAF_STD_MAX_DATE_TO_SECOND)
+    {
+        ullSecondTime = 0;
+    }
+
+    ullLeftDays                         = ullSecondTime / TAF_STD_DAY_TO_SECOND;
+    usCurYear                           = TAF_STD_UTC_START_YEAR;
+    ulDaysOfCurYear                     = TAF_STD_GetDaysForYear(usCurYear);
+
+    /* 计算年 */
+    while (ullLeftDays >= ulDaysOfCurYear)
+    {
+        ullLeftDays     = ullLeftDays - ulDaysOfCurYear;
+        usCurYear++;
+        ulDaysOfCurYear = TAF_STD_GetDaysForYear(usCurYear);
+    }
+
+    pstDateTime->usYear = usCurYear;
+
+    /* 计算月日 */
+    ulRst = TAF_STD_IsLeapYear(usCurYear);
+
+    for (ucMonLoop = 1; ucMonLoop < TAF_STD_MAX_MONTH_DAY_COUNT; ucMonLoop++)
+    {
+        if (ullLeftDays < g_ausMonthDay[ulRst][ucMonLoop])
+        {
+            pstDateTime->usMonth = ucMonLoop;
+            pstDateTime->usDay   = (VOS_UINT8)(ullLeftDays - g_ausMonthDay[ulRst][ucMonLoop - 1] + 1);
+            break;
+        }
+    }
+
+    /* 计算时分秒 */
+    ullLeftSeconds        = ullSecondTime % TAF_STD_DAY_TO_SECOND;
+    pstDateTime->usHour   = (VOS_UINT16)(ullLeftSeconds / TAF_STD_HOUR_TO_SECOND);
+    pstDateTime->usMinute = (VOS_UINT16)((ullLeftSeconds % TAF_STD_HOUR_TO_SECOND) / TAF_STD_MIN_TO_SECOND);
+    pstDateTime->usSecond = (VOS_UINT16)(ullLeftSeconds % TAF_STD_MIN_TO_SECOND);
+
+    return;
+}
+
+
+VOS_UINT64 TAF_STD_DateTimeToSecondTime(
+    TAF_STD_TIME_ZONE_TYPE_STRU        *pstDateTime
+)
+{
+    VOS_UINT32 ulRst                    = 0;
+    VOS_UINT16 usCurYear                = 0;
+    VOS_UINT32 ulDaysOfCurYear          = 0;
+    VOS_UINT32 ulDaysOfYears            = 0;
+    VOS_UINT64 ullSecondTime            = 0;
+
+    /* 1900/01/01 00:00:00~2099/12/31 23:59:59为有效时间，超出有效范围重置为0s(1900/01/01 00:00:00) */
+    if ((pstDateTime->usYear < TAF_STD_UTC_START_YEAR)
+     || (pstDateTime->usYear >= TAF_STD_TIME_ZONE_MAX_YEAR)
+     || (0 == pstDateTime->usMonth)
+     || (0 == pstDateTime->usDay))
+    {
+        MN_ERR_LOG("TAF_STD_DateTimeToSecondTime: The DateTime is invalid");
+        return 0;
+    }
+
+    usCurYear = TAF_STD_UTC_START_YEAR;
+
+    while (usCurYear < pstDateTime->usYear)
+    {
+        ulDaysOfCurYear = TAF_STD_GetDaysForYear(usCurYear);
+        ulDaysOfYears   += ulDaysOfCurYear;
+        usCurYear++;
+    }
+
+    ulRst = TAF_STD_IsLeapYear(usCurYear);
+
+    ulDaysOfYears += (g_ausMonthDay[ulRst][pstDateTime->usMonth - 1] + pstDateTime->usDay - 1);
+
+    ullSecondTime = (VOS_UINT64)(pstDateTime->usHour * TAF_STD_HOUR_TO_SECOND
+                    + pstDateTime->usMinute * TAF_STD_MIN_TO_SECOND
+                    + pstDateTime->usSecond);
+
+    ullSecondTime += ((VOS_UINT64)ulDaysOfYears * TAF_STD_DAY_TO_SECOND);
+
+    return ullSecondTime;
+}
+#endif
 
 
 

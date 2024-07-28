@@ -47,7 +47,7 @@
  */
 
 #ifndef __PSLOGFILTERCOMM_H__
-#define __PSLOGFILTERCOM_H__
+#define __PSLOGFILTERCOMM_H__
 
 
 /******************************************************************************

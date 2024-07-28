@@ -279,7 +279,7 @@ typedef struct
 *****************************************************************************/
 VOS_UINT32 CBTPPM_OamCbtPortDataSnd(VOS_UINT8 *pucVirAddr, VOS_UINT8 *pucPhyAddr, VOS_UINT32 ulDataLen);
 
-VOS_INT32  CBTPPM_OamUsbCbtReadDataCB(VOS_VOID);
+VOS_VOID  CBTPPM_OamUsbCbtReadDataCB(VOS_VOID);
 
 VOS_VOID   CBTPPM_OamCbtPortDataInit(OM_PROT_HANDLE_ENUM_UINT32          enHandle,
                                                  VOS_VOID                            *pReadCB,

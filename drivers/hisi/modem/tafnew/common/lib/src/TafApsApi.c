@@ -54,6 +54,10 @@
 
 #include "PsCommonDef.h"
 #include "TafPsApi.h"
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+#include "Taf_Aps.h"
+#include "TafApsMntn.h"
+#endif
 
 
 
@@ -401,6 +405,7 @@ VOS_UINT32 TAF_PS_GetDsFlowNvWriteCfg(
 
 
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 TAF_PS_SetCdataDialModeInfo(
     VOS_UINT32                          ulModuleId,
@@ -441,6 +446,11 @@ TAF_PS_CDATA_BEAR_STATUS_ENUM_UINT8 TAF_PS_GetCdataBearStatus(
 
     ucCdataBearStatus = TAF_PS_CDATA_BEAR_STATUS_INACTIVE;
 
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
+    ucCdataBearStatus = TAF_APS_GetCdataBearStatusCommFun(ucPdpId);
+#endif
+#endif
 
     return ucCdataBearStatus;
 }
@@ -470,7 +480,9 @@ TAF_PS_CDATA_BEAR_STATUS_ENUM_UINT8  TAF_PS_GetPppStatus( VOS_VOID )
 
 
 
+#endif
 
+#if(FEATURE_ON == FEATURE_LTE)
 
 VOS_UINT32 TAF_PS_GetLteCsInfo(
     VOS_UINT32                          ulModuleId,
@@ -533,6 +545,7 @@ VOS_UINT32 TAF_PS_GetCemodeInfo(
 
     return ulResult;
 }
+#endif
 
 
 VOS_UINT32 TAF_PS_Set_DataSwitchStatus(

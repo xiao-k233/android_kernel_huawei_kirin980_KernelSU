@@ -321,13 +321,13 @@ struct icc_dbg
 };
 
 void icc_sleep_flag_set(void);
-u32 fifo_get(struct icc_channel_fifo *fifo, u8 *data_buf, u32 data_len, u32 *read);
+u32 fifo_get(struct icc_channel_fifo *fifo, u32 channel_id, u8 *data_buf, u32 data_len, u32 *read);
 void icc_restore_recv_channel_flag(struct icc_channel_fifo * channel_fifo);
 s32 icc_channel_has_data(void);
 void icc_shared_sem_init(void);
 void icc_private_sem_init(osl_sem_id *private_sem);
 int icc_shared_task_init(void);
-void icc_task_shared_func(void const *obj);
+int icc_task_shared_func(void *obj);
 void icc_ipc_isr(u32 data);
 s32 icc_dynamic_data_receive(void);
 s32  icc_channel_empty(u32 channel_id);

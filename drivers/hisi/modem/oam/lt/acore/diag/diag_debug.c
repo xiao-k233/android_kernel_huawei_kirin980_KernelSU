@@ -153,42 +153,42 @@ VOS_VOID DIAG_ShowLogCfg(VOS_UINT32 ulModuleId)
     /*检查DIAG是否初始化且HSO是否连接上*/
     if(!DIAG_IS_CONN_ON)
     {
-        diag_crit("未连接工具软件!\n");
+        diag_crit("do not connect tool\n");
     }
 
     if(DIAG_CFG_MODULE_IS_INVALID((VOS_INT32)ulModuleId))
     {
-        diag_crit("非法PID. PID范围(%d -- %d)!\n", VOS_PID_DOPRAEND, VOS_PID_BUTT);
+        diag_crit("invalid PID. PID range(%d -- %d)\n", VOS_PID_DOPRAEND, VOS_PID_BUTT);
         return;
     }
 
-    diag_crit("打印总开关 0x%x, 全FF表示无效.\n", g_PrintTotalCfg);
+    diag_crit("open global switch 0x%x(0xffffffff = invalid).\n", g_PrintTotalCfg);
 
     /* level中存储的值(0|ERROR|WARNING|NORMAL|INFO|0|0|0) bit 6-3 分别表示ERROR-INFO */
     level = g_PrintModuleCfg[ulModuleId - VOS_PID_DOPRAEND];
     if(level & 0x08)
     {
-        diag_crit("PID %d 的打印级别为 info.\n", ulModuleId);
+        diag_crit("PID %d print level: info.\n", ulModuleId);
     }
     else if(level & 0x10)
     {
-        diag_crit("PID %d 的打印级别为 normal.\n", ulModuleId);
+        diag_crit("PID %d print level: normal.\n", ulModuleId);
     }
     else if(level & 0x20)
     {
-        diag_crit("PID %d 的打印级别为 warning.\n", ulModuleId);
+        diag_crit("PID %d print level: warning.\n", ulModuleId);
     }
     else if(level & 0x40)
     {
-        diag_crit("PID %d 的打印级别为 error.\n", ulModuleId);
+        diag_crit("PID %d print level: error.\n", ulModuleId);
     }
     else
     {
-        diag_crit("PID %d 的打印级别为 off.\n", ulModuleId);
+        diag_crit("PID %d print level: off.\n", ulModuleId);
     }
 
-    diag_crit("打印失败总次数 %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_PRINTFV_ERR].ulCalledNum);
-    diag_crit("打印成功总次数 %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_PRINTFV_OK].ulCalledNum);
+    diag_crit("PRINT failed cnt: %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_PRINTFV_ERR].ulCalledNum);
+    diag_crit("PRINT success cnt: %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_PRINTFV_OK].ulCalledNum);
 }
 
 /*****************************************************************************
@@ -200,17 +200,17 @@ VOS_VOID DIAG_ShowEventCfg(VOS_UINT32 ulpid)
     /*检查DIAG是否初始化且HSO是否连接上*/
     if(!DIAG_IS_CONN_ON)
     {
-        diag_crit("未连接工具软件!\n");
+        diag_crit("do not connect tool\n");
     }
     else if(!DIAG_IS_EVENT_ON)
     {
-        diag_crit("event总开关未打开!\n");
+        diag_crit("event global switch closed\n");
     }
     else
     {
         if(DIAG_CFG_MODULE_IS_INVALID(ulpid))
         {
-            diag_crit("非法PID: A(%d -- %d), C(%d -- %d)!\n",
+            diag_crit("Invalid PID: A(%d -- %d), C(%d -- %d)!\n",
                 VOS_PID_CPU_ID_1_DOPRAEND, VOS_CPU_ID_1_PID_BUTT,
                 VOS_PID_CPU_ID_0_DOPRAEND, VOS_CPU_ID_0_PID_BUTT);
         }
@@ -218,17 +218,17 @@ VOS_VOID DIAG_ShowEventCfg(VOS_UINT32 ulpid)
         {
             if(g_EventModuleCfg[ulpid - VOS_PID_DOPRAEND])
             {
-                diag_crit("ulpid %d event开关已打开!\n", ulpid);
+                diag_crit("ulpid %d event switch opened\n", ulpid);
             }
             else
             {
-                diag_crit("ulpid %d event开关已关闭!\n", ulpid);
+                diag_crit("ulpid %d event switch closed\n", ulpid);
             }
         }
     }
 
-    diag_crit("Event上报失败总次数 %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_EVENT_ERR].ulCalledNum);
-    diag_crit("Event上报成功总次数 %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_EVENT_OK].ulCalledNum);
+    diag_crit("Event report failed cnt: %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_EVENT_ERR].ulCalledNum);
+    diag_crit("Event report success cnt: %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_EVENT_OK].ulCalledNum);
 }
 
 /*****************************************************************************
@@ -240,18 +240,18 @@ VOS_VOID DIAG_ShowAirCfg(VOS_VOID)
     /*检查DIAG是否初始化且HSO是否连接上*/
     if(!DIAG_IS_CONN_ON)
     {
-        diag_crit("未连接工具软件!\n");
+        diag_crit("do not connect tool\n");
     }
     else if(!DIAG_IS_LT_AIR_ON)
     {
-        diag_crit("空口开关未打开!\n");
+        diag_crit("air global switch closed\n");
     }
     else
     {
-        diag_crit("空口开关已打开!\n");
+        diag_crit("air global switch opend\n");
     }
-    diag_crit("空口消息上报失败总次数 %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_AIR_ERR].ulCalledNum);
-    diag_crit("空口消息上报成功总次数 %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_AIR_OK].ulCalledNum);
+    diag_crit("AIR report failed cnt: %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_AIR_ERR].ulCalledNum);
+    diag_crit("AIR report success cnt: %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_AIR_OK].ulCalledNum);
 }
 
 
@@ -267,7 +267,7 @@ VOS_VOID DIAG_ShowLayerCfg(VOS_UINT32 ulModuleId, VOS_UINT32 ulSrcDst)
     /*检查DIAG是否初始化且HSO是否连接上*/
     if(!DIAG_IS_CONN_ON)
     {
-        diag_crit("未连接工具软件!\n");
+        diag_crit("do not connect tool\n");
     }
 
     /* 0表示源模块 */
@@ -293,14 +293,14 @@ VOS_VOID DIAG_ShowLayerCfg(VOS_UINT32 ulModuleId, VOS_UINT32 ulSrcDst)
         }
         else
         {
-            diag_crit("非法PID: A(%d -- %d), C(%d -- %d)!\n",
+            diag_crit("Invalid PID: A(%d -- %d), C(%d -- %d)!\n",
                 VOS_PID_CPU_ID_1_DOPRAEND, VOS_CPU_ID_1_PID_BUTT,
                 VOS_PID_CPU_ID_0_DOPRAEND, VOS_CPU_ID_0_PID_BUTT);
 
             return ;
         }
 
-        diag_crit("源模块%d开关为 %s .\n", ulModuleId, ulState ? "打开状态":"关闭状态");
+        diag_crit("SRC module %d switch status is %s .\n", ulModuleId, ulState ? "Opend":"closed");
     }
     else
     {
@@ -324,22 +324,22 @@ VOS_VOID DIAG_ShowLayerCfg(VOS_UINT32 ulModuleId, VOS_UINT32 ulSrcDst)
         }
         else
         {
-            diag_crit("非法PID: A(%d -- %d), C(%d -- %d)!\n",
+            diag_crit("Invalid PID: A(%d -- %d), C(%d -- %d)!\n",
                 VOS_PID_CPU_ID_1_DOPRAEND, VOS_CPU_ID_1_PID_BUTT,
                 VOS_PID_CPU_ID_0_DOPRAEND, VOS_CPU_ID_0_PID_BUTT);
 
             return ;
         }
 
-        diag_crit("目的模块%d开关为 %s .\n", ulModuleId, ulState ? "打开状态":"关闭状态");
+        diag_crit("DST module %d switch status is %s .\n", ulModuleId, ulState ? "opened":"closed");
     }
 
-    diag_crit("主动上报层间消息上报失败总次数 %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_TRACE_ERR].ulCalledNum);
-    diag_crit("主动上报层间消息上报成功总次数 %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_TRACE_OK].ulCalledNum);
+    diag_crit("Layer report failed cnt: %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_TRACE_ERR].ulCalledNum);
+    diag_crit("Layer report success cnt: %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_TRACE_OK].ulCalledNum);
 
-    diag_crit("vos勾包层间消息上报失败总次数 %d.\n", g_astCBTInfoTbl[EN_DIAG_API_MSG_LAYER_ERR].ulCalledNum);
-    diag_crit("vos勾包层间消息上报成功总次数 %d.\n", g_astCBTInfoTbl[EN_DIAG_API_MSG_LAYER_OK].ulCalledNum);
-    diag_crit("vos勾包层间消息过滤次数 %d: srcid 0x%x, dstid 0x%x, msgid 0x%x.\n",
+    diag_crit("vos hook layer report failed cnt: %d.\n", g_astCBTInfoTbl[EN_DIAG_API_MSG_LAYER_ERR].ulCalledNum);
+    diag_crit("vos hook layer report success cnt: %d.\n", g_astCBTInfoTbl[EN_DIAG_API_MSG_LAYER_OK].ulCalledNum);
+    diag_crit("voshook layer report filtered cnt: %d: srcid 0x%x, dstid 0x%x, msgid 0x%x.\n",
         g_astCBTInfoTbl[EN_DIAG_API_MSG_LAYER_MATCH].ulCalledNum,
         g_astCBTInfoTbl[EN_DIAG_API_MSG_LAYER_MATCH].ulRserved1,
         g_astCBTInfoTbl[EN_DIAG_API_MSG_LAYER_MATCH].ulRserved2,
@@ -352,8 +352,8 @@ VOS_VOID DIAG_ShowLayerCfg(VOS_UINT32 ulModuleId, VOS_UINT32 ulSrcDst)
 *****************************************************************************/
 VOS_VOID DIAG_ShowUsrCfg(VOS_VOID)
 {
-    diag_crit("用户面消息上报失败总次数 %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_USER_ERR].ulCalledNum);
-    diag_crit("用户面消息上报成功总次数 %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_USER_OK].ulCalledNum);
+    diag_crit("User Plane report failed cnt: %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_USER_ERR].ulCalledNum);
+    diag_crit("User Plane report success cnt: %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_USER_OK].ulCalledNum);
 }
 
 /*****************************************************************************
@@ -362,10 +362,10 @@ VOS_VOID DIAG_ShowUsrCfg(VOS_VOID)
 *****************************************************************************/
 VOS_VOID DIAG_ShowTrans(VOS_UINT32 n)
 {
-    diag_crit("透传消息上报失败总次数 %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_TRANS_ERR].ulCalledNum);
-    diag_crit("透传消息上报成功总次数 %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_TRANS_OK].ulCalledNum);
+    diag_crit("Trance report failed cnt: %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_TRANS_ERR].ulCalledNum);
+    diag_crit("Trance report success cnt: %d.\n", g_astCBTInfoTbl[EN_DIAG_CBT_API_TRANS_OK].ulCalledNum);
 
-    diag_crit("最后 %d 个透传上报的信息如下:\n", n);
+    diag_crit("The last %d trance messages:\n", n);
 
     DIAG_ShowLNR(EN_DIAG_LNR_TRANS_IND, n);
 
@@ -377,7 +377,7 @@ VOS_VOID DIAG_ShowTrans(VOS_UINT32 n)
 *****************************************************************************/
 VOS_VOID DIAG_ShowPsTransCmd(VOS_UINT32 n)
 {
-    diag_crit("最后 %d 个透传上报的信息如下:\n", n);
+    diag_crit("The last %d trance messages:\n", n);
     DIAG_ShowLNR(EN_DIAG_LNR_PS_TRANS, n);
 }
 
@@ -482,8 +482,16 @@ VOS_VOID diag_ReportDstMntn(VOS_VOID)
     current_slice = mdrv_timer_get_normal_timestamp();
     stDiagInfo.pstMntnInfo.ulDeltaTime = DIAG_SLICE_DELTA(last_slice, current_slice);
 
-    stDiagInfo.pstMntnInfo.ulThrputPhy      = ((mdrv_GetThrputInfo(EN_DIAG_THRPUT_DATA_CHN_PHY)/1024)*1000)/((stDiagInfo.pstMntnInfo.ulDeltaTime*1000)/32768);
-    stDiagInfo.pstMntnInfo.ulThrputCb       = ((mdrv_GetThrputInfo(EN_DIAG_THRPUT_DATA_CHN_CB)/1024)*1000)/((stDiagInfo.pstMntnInfo.ulDeltaTime*1000)/32768);
+    if(((stDiagInfo.pstMntnInfo.ulDeltaTime*1000)/32768) == 0)
+    {
+        stDiagInfo.pstMntnInfo.ulThrputPhy = 0;
+        stDiagInfo.pstMntnInfo.ulThrputCb  = 0; 
+    }
+    else
+    {
+        stDiagInfo.pstMntnInfo.ulThrputPhy      = ((mdrv_GetThrputInfo(EN_DIAG_THRPUT_DATA_CHN_PHY)/1024)*1000)/((stDiagInfo.pstMntnInfo.ulDeltaTime*1000)/32768);
+        stDiagInfo.pstMntnInfo.ulThrputCb       = ((mdrv_GetThrputInfo(EN_DIAG_THRPUT_DATA_CHN_CB)/1024)*1000)/((stDiagInfo.pstMntnInfo.ulDeltaTime*1000)/32768);	
+    }
 
     stDiagInfo.pstMntnHead.ulModule       = DIAG_GEN_MODULE_EX(DIAG_MODEM_0, DIAG_MODE_LTE, DIAG_MSG_TYPE_BSP);
     stDiagInfo.pstMntnHead.ulPid          = DIAG_AGENT_PID;
@@ -725,7 +733,7 @@ VOS_VOID DIAG_DebugLayerCfg(VOS_UINT32 ulModuleId, VOS_UINT8 ucFlag)
     }
     else
     {
-        diag_crit("非法PID: A(%d -- %d), C(%d -- %d)!\n",
+        diag_crit("Invalid PID: A(%d -- %d), C(%d -- %d)!\n",
             VOS_PID_CPU_ID_1_DOPRAEND, VOS_CPU_ID_1_PID_BUTT,
             VOS_PID_CPU_ID_0_DOPRAEND, VOS_CPU_ID_0_PID_BUTT);
 

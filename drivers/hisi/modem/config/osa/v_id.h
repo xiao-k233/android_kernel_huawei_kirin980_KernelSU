@@ -46,29 +46,6 @@
  *
  */
 
-/*****************************************************************************/
-/*                                                                           */
-/*                Copyright 1999 - 2003, Huawei Tech. Co., Ltd.              */
-/*                           ALL RIGHTS RESERVED                             */
-/*                                                                           */
-/* FileName: v_id.h                                                          */
-/*                                                                           */
-/* Author: Qin Peifeng                                                       */
-/*                                                                           */
-/* Version: 1.0                                                              */
-/*                                                                           */
-/* Date: 2000-04-21                                                          */
-/*                                                                           */
-/* Description:                                                              */
-/*                                                                           */
-/* Others:                                                                   */
-/*                                                                           */
-/* History:                                                                  */
-/* 1. Date: 2000-04-21                                                       */
-/*    Author: Qin Peifeng                                                    */
-/*    Modification: Create this file                                         */
-/*                                                                           */
-/*****************************************************************************/
 #ifndef _V_ID_H
 #define _V_ID_H
 
@@ -587,6 +564,8 @@ BEGIN_FID_DEFINITION()
     DEFINE_FID(CPROC_FID_HRPD)
     DEFINE_FID(CPROC_FID_RM)
     DEFINE_FID(UEPS_FID_CNAS)
+#endif
+#if ((FEATURE_ON == FEATURE_UE_MODE_CDMA) || (FEATURE_ON == FEATURE_PPP))
     DEFINE_FID(MSPS_FID_PPPC)
 #endif
 #if ((FEATURE_ON == FEATURE_CSDR) || (FEATURE_ON == FEATURE_GSM_SDR))

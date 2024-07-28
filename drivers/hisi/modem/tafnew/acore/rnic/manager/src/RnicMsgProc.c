@@ -104,6 +104,7 @@ const RNIC_PROC_MSG_STRU g_astRnicMsgProcTab[] =
     {ACPU_PID_RNIC,    ID_RNIC_CCPU_RESET_START_IND,         RNIC_RcvCcpuResetStartInd},
     {ACPU_PID_RNIC,    ID_RNIC_CCPU_RESET_END_IND,           RNIC_RcvCcpuResetEndInd},
     {ACPU_PID_RNIC,    ID_RNIC_NETDEV_READY_IND,             RNIC_RcvNetdevReadyInd},
+#if ((FEATURE_ON == FEATURE_IMS) && (FEATURE_ON == FEATURE_DELAY_MODEM_INIT))
     {ACPU_PID_RNIC,    ID_RNIC_IMS_DATA_PROC_IND,            RNIC_ProcImsData},
     /*****************************    RNIC -> RNIC End    *******************************/
 
@@ -119,6 +120,7 @@ const RNIC_PROC_MSG_STRU g_astRnicMsgProcTab[] =
     /*****************************    CDS -> RNIC Begin *******************************/
     {UEPS_PID_CDS,     ID_CDS_RNIC_IMS_DATA_IND,             RNIC_RcvCdsImsDataInd},
     /*****************************    CDS -> RNIC End   *******************************/
+#endif /* FEATURE_ON == FEATURE_IMS */
 };
 
 /*****************************************************************************
@@ -274,12 +276,14 @@ VOS_UINT32 RNIC_RcvAtPdnInfoCfgInd(
         return VOS_ERR;
     }
 
+#if (FEATURE_OFF == FEATURE_DATA_SERVICE_NEW_PLATFORM)
     /* 检查RABID */
     if (!RNIC_RAB_ID_IS_VALID(pstRnicPdnCfgInd->ucRabId))
     {
         RNIC_ERROR_LOG(ACPU_PID_RNIC, "RNIC_RcvAtPdnInfoCfgInd: RabId is invalid.");
         return VOS_ERR;
     }
+#endif
 
     /* 检查RmnetID */
     if (!RNIC_RMNET_IS_VALID(pstRnicPdnCfgInd->ucRmNetId))
@@ -387,6 +391,7 @@ VOS_UINT32 RNIC_RcvAtUsbTetherInfoInd(
     MsgBlock                           *pstMsg
 )
 {
+#if (FEATURE_ON == FEATURE_RNIC_NAPI_GRO)
     AT_RNIC_USB_TETHER_INFO_IND_STRU   *pstRnicUsbTetherInd;
     RNIC_PS_IFACE_TETHER_INFO_STRU      stTetherInfo;
 
@@ -400,6 +405,7 @@ VOS_UINT32 RNIC_RcvAtUsbTetherInfoInd(
 
     /* 调用配置部分接口 */
     RNIC_IFACE_TetherInfo(&stTetherInfo);
+#endif
 
     return VOS_OK;
 }
@@ -423,9 +429,11 @@ VOS_UINT32  RNIC_RcvTiDsflowStatsExpired(
 
     RNIC_IFACE_SetDsFlowStats(ucRmNetId);
 
+#if (FEATURE_ON == FEATURE_RNIC_NAPI_GRO)
     RNIC_IFACE_AdjustNapiWeight(ucRmNetId);
     RNIC_IFACE_AdjNapiLbLevel(ucRmNetId);
     RNIC_CLEAN_IFACE_PERIOD_RECV_PKT(ucRmNetId);
+#endif
 
     /* 每个流量统计周期结束后，需要将周期统计Byte数清除 */
     RNIC_IFACE_ClearDsFlowFlux(ucRmNetId);
@@ -491,6 +499,10 @@ VOS_UINT32 RNIC_RcvCcpuResetStartInd(
     /* 初始化RNIC定时器上下文 */
     RNIC_InitAllTimers();
 
+#if (FEATURE_OFF == FEATURE_DELAY_MODEM_INIT)
+    /* 初始化拨号模式信息 */
+    RNIC_InitOnDemandDialInfo();
+#endif
 
     /* 初始化拨号断开定时器超时次数参数统计 */
     RNIC_CLEAR_TI_DIALDOWN_EXP_CONT();
@@ -528,6 +540,7 @@ VOS_UINT32 RNIC_RcvNetdevReadyInd(
     return VOS_OK;
 }
 
+#if ((FEATURE_ON == FEATURE_IMS) && (FEATURE_ON == FEATURE_DELAY_MODEM_INIT))
 
 STATIC VOS_UINT8 RNIC_GetImsEmcBearRmnetId(
     IMSA_RNIC_IMS_RAT_TYPE_ENUM_UINT8   enRatType,
@@ -545,6 +558,7 @@ STATIC VOS_UINT8 RNIC_GetImsEmcBearRmnetId(
         return RNIC_DEV_ID_RMNET_R_IMS01;
     }
 
+#if (MULTI_MODEM_NUMBER >= 2)
     if ((IMSA_RNIC_IMS_RAT_TYPE_LTE == enRatType) && (MODEM_ID_1 == enModemId))
     {
         return RNIC_DEV_ID_RMNET_EMC1;
@@ -554,6 +568,7 @@ STATIC VOS_UINT8 RNIC_GetImsEmcBearRmnetId(
     {
         return RNIC_DEV_ID_RMNET_R_IMS11;
     }
+#endif
 
     return RNIC_DEV_ID_BUTT;
 }
@@ -575,6 +590,7 @@ STATIC VOS_UINT8 RNIC_GetImsNormalBearRmnetId(
         return RNIC_DEV_ID_RMNET_R_IMS00;
     }
 
+#if (MULTI_MODEM_NUMBER >= 2)
     if ((MODEM_ID_1 == enModemId) && (IMSA_RNIC_IMS_RAT_TYPE_LTE == enRatType))
     {
         return RNIC_DEV_ID_RMNET_IMS10;
@@ -584,6 +600,7 @@ STATIC VOS_UINT8 RNIC_GetImsNormalBearRmnetId(
     {
         return RNIC_DEV_ID_RMNET_R_IMS10;
     }
+#endif
 
     return RNIC_DEV_ID_BUTT;
 }
@@ -743,6 +760,7 @@ VOS_UINT32 RNIC_ProcImsaPdnActInd_Lte(
         return VOS_ERR;
     }
 
+#if (FEATURE_OFF == FEATURE_DATA_SERVICE_NEW_PLATFORM)
     /* 检查RABID */
     if (!RNIC_RAB_ID_IS_VALID(pstPdnInfo->ucRabId))
     {
@@ -750,6 +768,7 @@ VOS_UINT32 RNIC_ProcImsaPdnActInd_Lte(
             "RNIC_ProcImsaPdnActInd_Lte: RabId is invalid.");
         return VOS_ERR;
     }
+#endif
 
     /* 指定一张专门的网卡用于VT视频数据传输 */
     ucRmNetId = RNIC_GetImsRmnetId(IMSA_RNIC_IMS_RAT_TYPE_LTE,
@@ -1092,6 +1111,7 @@ VOS_UINT32 RNIC_RcvCdsImsDataInd(
 
     return ulRet;
 }
+#endif /* FEATURE_ON == FEATURE_IMS */
 
 
 RNIC_PROC_MSG_FUNC RNIC_GetProcMsgFunc(

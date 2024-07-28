@@ -1,6 +1,3 @@
-#
-# created by y000184236 for k3v3 fpga
-#
 #gcov
 ifeq ($(strip $(llt_gcov)),y)
 GCOV_PROFILE := y
@@ -46,9 +43,6 @@ ifeq ($(filter YES,$(CFG_BSP_CONFIG_PHONE_TYPE) $(CFG_CONFIG_EMMC_BOOT)),YES)
 obj-y		+= adp_blk_mmc.o
 else
 obj-y		+= adp_blk_mtd.o
-endif
-ifeq ($(strip $(CFG_CONFIG_CORESIGHT)),YES)
-obj-y			+= adp_coresight.o
 endif
 obj-y           += adp_charger.o
 obj-y           += adp_mmc.o

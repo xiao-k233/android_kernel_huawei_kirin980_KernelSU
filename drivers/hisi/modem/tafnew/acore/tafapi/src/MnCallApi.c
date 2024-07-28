@@ -311,6 +311,7 @@ VOS_UINT32 MN_CALL_CheckUus1ParmValid(
     return MN_ERR_NO_ERROR;
 }
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32  TAF_XCALL_SendFlashReq(
     MN_CLIENT_ID_T                      clientId,
@@ -518,8 +519,452 @@ VOS_UINT32  TAF_XCALL_SendCclpr(
 
     return VOS_OK;
 }
+#endif
+
+#if ((FEATURE_ON == FEATURE_UE_MODE_CDMA)&&(FEATURE_ON == FEATURE_CHINA_TELECOM_VOICE_ENCRYPT))
+
+VOS_UINT32 TAF_XCALL_SendEncryptCall(
+    VOS_UINT32                                              ulModuleId,
+    MN_CLIENT_ID_T                                          usClientId,
+    MN_OPERATION_ID_T                                       opId,
+    VOS_UINT32                                              ulEccVoiceType,
+    TAF_ECC_CALL_BCD_NUM_STRU                              *pstDialNumber
+)
+{
+
+    TAF_CALL_APP_ENCRYPT_VOICE_REQ_STRU                    *pstEncryptVoiceReq;
+    VOS_UINT32                                              ulReceiverPid;
+    VOS_UINT32                                              ulSenderPid;
+
+    ulReceiverPid      = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+    ulSenderPid        = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+
+    pstEncryptVoiceReq = (TAF_CALL_APP_ENCRYPT_VOICE_REQ_STRU *)PS_ALLOC_MSG_WITH_HEADER_LEN(ulSenderPid,
+                                          sizeof(TAF_CALL_APP_ENCRYPT_VOICE_REQ_STRU));
+    if (VOS_NULL_PTR == pstEncryptVoiceReq)
+    {
+        AT_ERR_LOG("TAF_XCALL_SndEncryptCall: Failed to alloc VOS message.");
+        return VOS_ERR;
+    }
+
+    TAF_MEM_SET_S((VOS_INT8*)pstEncryptVoiceReq + VOS_MSG_HEAD_LENGTH,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_ENCRYPT_VOICE_REQ_STRU) - VOS_MSG_HEAD_LENGTH),
+                0x00,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_ENCRYPT_VOICE_REQ_STRU) - VOS_MSG_HEAD_LENGTH));
+
+    /* 填写VOS消息头 */
+    pstEncryptVoiceReq->ulSenderCpuId                       = VOS_LOCAL_CPUID;
+    pstEncryptVoiceReq->ulSenderPid                         = ulSenderPid;
+    pstEncryptVoiceReq->ulReceiverCpuId                     = VOS_LOCAL_CPUID;
+    pstEncryptVoiceReq->ulReceiverPid                       = ulReceiverPid;
+    pstEncryptVoiceReq->ulLength                            = sizeof(TAF_CALL_APP_ENCRYPT_VOICE_REQ_STRU) - VOS_MSG_HEAD_LENGTH;
+
+    /* 填写消息内容 */
+    pstEncryptVoiceReq->enMsgName                           = ID_TAF_CALL_APP_ENCRYPT_VOICE_REQ;
+    pstEncryptVoiceReq->stCtrl.usClientId                   = usClientId;
+    pstEncryptVoiceReq->stCtrl.ucOpId                       = opId;
+    pstEncryptVoiceReq->stCtrl.ulModuleId                   = ulModuleId;
+    pstEncryptVoiceReq->enEccVoiceType                      = ulEccVoiceType;
+    TAF_MEM_CPY_S(&pstEncryptVoiceReq->stDialNumber, (VOS_UINT32)sizeof(pstEncryptVoiceReq->stDialNumber), pstDialNumber, (VOS_UINT32)sizeof(TAF_ECC_CALL_BCD_NUM_STRU));
+
+    /* 发送VOS消息ID_TAF_CALL_APP_ENCRYPT_VOICE_REQ */
+	/*lint -e516 */
+    (VOS_VOID)PS_SEND_MSG(ulSenderPid, pstEncryptVoiceReq);
+
+    return VOS_OK;
+}
 
 
+VOS_UINT32 TAF_XCALL_SendEccCtrl(
+    VOS_UINT32                                              ulModuleId,
+    MN_CLIENT_ID_T                                          usClientId,
+    MN_OPERATION_ID_T                                       opId,
+    VOS_UINT32                                              ulRemoteCtrlEvtType,
+    VOS_UINT32                                              ulResult
+
+)
+{
+    TAF_CALL_APP_REMOTE_CTRL_ANSWER_REQ_STRU               *pstEccRemoteCtrlAnsReq;
+    VOS_UINT32                                              ulReceiverPid;
+    VOS_UINT32                                              ulSenderPid;
+
+    ulReceiverPid          = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+    ulSenderPid            = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+
+    pstEccRemoteCtrlAnsReq = (TAF_CALL_APP_REMOTE_CTRL_ANSWER_REQ_STRU *)PS_ALLOC_MSG_WITH_HEADER_LEN(ulSenderPid,
+                                          sizeof(TAF_CALL_APP_REMOTE_CTRL_ANSWER_REQ_STRU));
+    if (VOS_NULL_PTR == pstEccRemoteCtrlAnsReq)
+    {
+        AT_ERR_LOG("TAF_XCALL_SndEccCtrl: Failed to alloc VOS message.");
+        return VOS_ERR;
+    }
+
+    TAF_MEM_SET_S((VOS_INT8*)pstEccRemoteCtrlAnsReq + VOS_MSG_HEAD_LENGTH,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_REMOTE_CTRL_ANSWER_REQ_STRU) - VOS_MSG_HEAD_LENGTH),
+                0x00,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_REMOTE_CTRL_ANSWER_REQ_STRU) - VOS_MSG_HEAD_LENGTH));
+
+    /* 填写VOS消息头 */
+    pstEccRemoteCtrlAnsReq->ulSenderCpuId                   = VOS_LOCAL_CPUID;
+    pstEccRemoteCtrlAnsReq->ulSenderPid                     = ulSenderPid;
+    pstEccRemoteCtrlAnsReq->ulReceiverCpuId                 = VOS_LOCAL_CPUID;
+    pstEccRemoteCtrlAnsReq->ulReceiverPid                   = ulReceiverPid;
+    pstEccRemoteCtrlAnsReq->ulLength                        = sizeof(TAF_CALL_APP_REMOTE_CTRL_ANSWER_REQ_STRU) - VOS_MSG_HEAD_LENGTH;
+
+    /* 填写消息内容 */
+    pstEccRemoteCtrlAnsReq->enMsgName                       = ID_TAF_CALL_APP_REMOTE_CTRL_ANSWER_REQ;
+    pstEccRemoteCtrlAnsReq->stCtrl.usClientId               = usClientId;
+    pstEccRemoteCtrlAnsReq->stCtrl.ucOpId                   = opId;
+    pstEccRemoteCtrlAnsReq->stCtrl.ulModuleId               = ulModuleId;
+    pstEccRemoteCtrlAnsReq->enRemoteCtrlEvtType             = ulRemoteCtrlEvtType;
+    pstEccRemoteCtrlAnsReq->enResult                        = ulResult;
+
+    /* 发送VOS消息ID_TAF_CALL_APP_REMOTE_CTRL_ANSWER_REQ */
+    (VOS_VOID)PS_SEND_MSG(ulSenderPid, pstEccRemoteCtrlAnsReq);
+
+    return VOS_OK;
+}
+
+
+VOS_UINT32 TAF_XCALL_SetEccCap(
+    VOS_UINT32                                              ulModuleId,
+    MN_CLIENT_ID_T                                          usClientId,
+    MN_OPERATION_ID_T                                       opId,
+    VOS_UINT32                                              ulEccSrvCap,
+    VOS_UINT32                                              ulEccSrvStatus
+)
+{
+    TAF_CALL_APP_ECC_SRV_CAP_CFG_REQ_STRU                  *pstEccSrvCapReq;
+    VOS_UINT32                                              ulReceiverPid;
+    VOS_UINT32                                              ulSenderPid;
+
+    ulReceiverPid   = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+    ulSenderPid     = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+
+    pstEccSrvCapReq = (TAF_CALL_APP_ECC_SRV_CAP_CFG_REQ_STRU *)PS_ALLOC_MSG_WITH_HEADER_LEN(ulSenderPid,
+                                          sizeof(TAF_CALL_APP_ECC_SRV_CAP_CFG_REQ_STRU));
+    if (VOS_NULL_PTR == pstEccSrvCapReq)
+    {
+        AT_ERR_LOG("TAF_XCALL_SetEccCap: Failed to alloc VOS message.");
+        return VOS_ERR;
+    }
+
+    TAF_MEM_SET_S((VOS_INT8*)pstEccSrvCapReq + VOS_MSG_HEAD_LENGTH,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_ECC_SRV_CAP_CFG_REQ_STRU) - VOS_MSG_HEAD_LENGTH),
+                0x00,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_ECC_SRV_CAP_CFG_REQ_STRU) - VOS_MSG_HEAD_LENGTH));
+
+    /* 填写VOS消息头 */
+    pstEccSrvCapReq->ulSenderCpuId                          = VOS_LOCAL_CPUID;
+    pstEccSrvCapReq->ulSenderPid                            = ulSenderPid;
+    pstEccSrvCapReq->ulReceiverCpuId                        = VOS_LOCAL_CPUID;
+    pstEccSrvCapReq->ulReceiverPid                          = ulReceiverPid;
+    pstEccSrvCapReq->ulLength                               = sizeof(TAF_CALL_APP_ECC_SRV_CAP_CFG_REQ_STRU) - VOS_MSG_HEAD_LENGTH;
+
+    /* 填写消息内容 */
+    pstEccSrvCapReq->enMsgName                              = ID_TAF_CALL_APP_ECC_SRV_CAP_CFG_REQ;
+    pstEccSrvCapReq->stCtrl.usClientId                      = usClientId;
+    pstEccSrvCapReq->stCtrl.ucOpId                          = opId;
+    pstEccSrvCapReq->stCtrl.ulModuleId                      = ulModuleId;
+    pstEccSrvCapReq->enEccSrvCap                            = ulEccSrvCap;
+    pstEccSrvCapReq->enEccSrvStatus                         = ulEccSrvStatus;
+
+    /* 发送VOS消息ID_TAF_CALL_APP_ECC_SRV_CAP_CFG_REQ */
+    (VOS_VOID)PS_SEND_MSG(ulSenderPid, pstEccSrvCapReq);
+
+    return VOS_OK;
+}
+
+VOS_UINT32 TAF_XCALL_QryEncryptCallCap(
+    VOS_UINT32                                              ulModuleId,
+    MN_CLIENT_ID_T                                          usClientId,
+    MN_OPERATION_ID_T                                       opId
+)
+{
+    TAF_CALL_APP_ECC_SRV_CAP_QRY_REQ_STRU                  *pstQryEccCapReq;
+    VOS_UINT32                                              ulReceiverPid;
+    VOS_UINT32                                              ulSenderPid;
+
+    ulReceiverPid   = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+    ulSenderPid     = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+
+    pstQryEccCapReq = (TAF_CALL_APP_ECC_SRV_CAP_QRY_REQ_STRU *)PS_ALLOC_MSG_WITH_HEADER_LEN(ulSenderPid,
+                                          sizeof(TAF_CALL_APP_ECC_SRV_CAP_QRY_REQ_STRU));
+    if (VOS_NULL_PTR == pstQryEccCapReq)
+    {
+        AT_ERR_LOG("TAF_XCALL_QryEncryptCallCap: Failed to alloc VOS message.");
+        return VOS_ERR;
+    }
+
+    TAF_MEM_SET_S((VOS_INT8*)pstQryEccCapReq + VOS_MSG_HEAD_LENGTH,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_ECC_SRV_CAP_QRY_REQ_STRU) - VOS_MSG_HEAD_LENGTH),
+                0x00,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_ECC_SRV_CAP_QRY_REQ_STRU) - VOS_MSG_HEAD_LENGTH));
+
+    /* 填写VOS消息头 */
+    pstQryEccCapReq->ulSenderCpuId                        = VOS_LOCAL_CPUID;
+    pstQryEccCapReq->ulSenderPid                          = ulSenderPid;
+    pstQryEccCapReq->ulReceiverCpuId                      = VOS_LOCAL_CPUID;
+    pstQryEccCapReq->ulReceiverPid                        = ulReceiverPid;
+    pstQryEccCapReq->ulLength                             = sizeof(TAF_CALL_APP_ECC_SRV_CAP_QRY_REQ_STRU) - VOS_MSG_HEAD_LENGTH;
+
+
+    /* 填写消息内容 */
+    pstQryEccCapReq->enMsgName                            = ID_TAF_CALL_APP_ECC_SRV_CAP_QRY_REQ;
+    pstQryEccCapReq->stCtrl.usClientId                    = usClientId;
+    pstQryEccCapReq->stCtrl.ucOpId                        = opId;
+    pstQryEccCapReq->stCtrl.ulModuleId                    = ulModuleId;
+
+    /* 发送VOS消息ID_TAF_CALL_APP_ECC_SRV_CAP_QRY_REQ */
+    (VOS_VOID)PS_SEND_MSG(ulSenderPid, pstQryEccCapReq);
+
+    return VOS_OK;
+}
+
+
+#if  (FEATURE_ON == FEATURE_CHINA_TELECOM_VOICE_ENCRYPT_TEST_MODE)
+
+
+VOS_UINT32 TAF_XCALL_SetEncryptCallKmc(
+    VOS_UINT32                                              ulModuleId,
+    MN_CLIENT_ID_T                                          usClientId,
+    MN_OPERATION_ID_T                                       opId,
+    MN_CALL_APP_EC_KMC_DATA_STRU                           *pstEccKmcData
+)
+{
+
+    TAF_CALL_APP_SET_EC_KMC_REQ_STRU                       *pstEccKmcSetReq;
+    VOS_UINT32                                              ulReceiverPid;
+    VOS_UINT32                                              ulSenderPid;
+
+    ulReceiverPid   = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+    ulSenderPid     = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+
+    pstEccKmcSetReq = (TAF_CALL_APP_SET_EC_KMC_REQ_STRU *)PS_ALLOC_MSG_WITH_HEADER_LEN(ulSenderPid,
+                                          sizeof(TAF_CALL_APP_SET_EC_KMC_REQ_STRU));
+    if (VOS_NULL_PTR == pstEccKmcSetReq)
+    {
+        AT_ERR_LOG("TAF_XCALL_SetEccKmc: Failed to alloc VOS message.");
+        return VOS_ERR;
+    }
+
+    TAF_MEM_SET_S((VOS_INT8*)pstEccKmcSetReq + VOS_MSG_HEAD_LENGTH,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_SET_EC_KMC_REQ_STRU) - VOS_MSG_HEAD_LENGTH),
+                0x00,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_SET_EC_KMC_REQ_STRU) - VOS_MSG_HEAD_LENGTH));
+
+    /* 填写VOS消息头 */
+    pstEccKmcSetReq->ulSenderCpuId                          = VOS_LOCAL_CPUID;
+    pstEccKmcSetReq->ulSenderPid                            = ulSenderPid;
+    pstEccKmcSetReq->ulReceiverCpuId                        = VOS_LOCAL_CPUID;
+    pstEccKmcSetReq->ulReceiverPid                          = ulReceiverPid;
+    pstEccKmcSetReq->ulLength                               = sizeof(TAF_CALL_APP_SET_EC_KMC_REQ_STRU) - VOS_MSG_HEAD_LENGTH;
+
+    /* 填写消息内容 */
+    pstEccKmcSetReq->enMsgName                              = ID_TAF_CALL_APP_SET_EC_KMC_REQ;
+    pstEccKmcSetReq->stCtrl.usClientId                      = usClientId;
+    pstEccKmcSetReq->stCtrl.ucOpId                          = opId;
+    pstEccKmcSetReq->stCtrl.ulModuleId                      = ulModuleId;
+    TAF_MEM_CPY_S(&pstEccKmcSetReq->stKmcData, (VOS_UINT32)sizeof(pstEccKmcSetReq->stKmcData), pstEccKmcData, (VOS_UINT32)sizeof(MN_CALL_APP_EC_KMC_DATA_STRU));
+
+
+    /* 发送VOS消息ID_TAF_CALL_APP_SET_EC_KMC_REQ */
+    (VOS_VOID)PS_SEND_MSG(ulSenderPid, pstEccKmcSetReq);
+
+    return VOS_OK;
+}
+
+VOS_UINT32 TAF_XCALL_SetEccTestMode(
+    VOS_UINT32                                              ulModuleId,
+    MN_CLIENT_ID_T                                          usClientId,
+    MN_OPERATION_ID_T                                       opId,
+    VOS_UINT32                                              ulTestMode
+)
+{
+
+    TAF_CALL_APP_SET_EC_TEST_MODE_REQ_STRU                 *pstEccTestModeReq;
+    VOS_UINT32                                              ulReceiverPid;
+    VOS_UINT32                                              ulSenderPid;
+
+    ulReceiverPid     = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+    ulSenderPid       = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+
+    pstEccTestModeReq = (TAF_CALL_APP_SET_EC_TEST_MODE_REQ_STRU *)PS_ALLOC_MSG_WITH_HEADER_LEN(ulSenderPid,
+                                          sizeof(TAF_CALL_APP_SET_EC_TEST_MODE_REQ_STRU));
+    if (VOS_NULL_PTR == pstEccTestModeReq)
+    {
+        AT_ERR_LOG("TAF_XCALL_SetEccTestMode: Failed to alloc VOS message.");
+        return VOS_ERR;
+    }
+
+    TAF_MEM_SET_S((VOS_INT8*)pstEccTestModeReq + VOS_MSG_HEAD_LENGTH,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_SET_EC_TEST_MODE_REQ_STRU) - VOS_MSG_HEAD_LENGTH),
+                0x00,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_SET_EC_TEST_MODE_REQ_STRU) - VOS_MSG_HEAD_LENGTH));
+
+    /* 填写VOS消息头 */
+    pstEccTestModeReq->ulSenderCpuId                        = VOS_LOCAL_CPUID;
+    pstEccTestModeReq->ulSenderPid                          = ulSenderPid;
+    pstEccTestModeReq->ulReceiverCpuId                      = VOS_LOCAL_CPUID;
+    pstEccTestModeReq->ulReceiverPid                        = ulReceiverPid;
+    pstEccTestModeReq->ulLength                             = sizeof(TAF_CALL_APP_SET_EC_TEST_MODE_REQ_STRU) - VOS_MSG_HEAD_LENGTH;
+
+
+    /* 填写消息内容 */
+    pstEccTestModeReq->enMsgName                            = ID_TAF_CALL_APP_SET_EC_TEST_MODE_REQ;
+    pstEccTestModeReq->stCtrl.usClientId                    = usClientId;
+    pstEccTestModeReq->stCtrl.ucOpId                        = opId;
+    pstEccTestModeReq->stCtrl.ulModuleId                    = ulModuleId;
+    pstEccTestModeReq->enEccTestModeStatus                  = ulTestMode;
+
+
+    /* 发送VOS消息ID_TAF_CALL_APP_SET_EC_TEST_MODE_REQ */
+    (VOS_VOID)PS_SEND_MSG(ulSenderPid, pstEccTestModeReq);
+
+    return VOS_OK;
+
+}
+
+
+VOS_UINT32 TAF_XCALL_QryEncryptCallRandom(
+    VOS_UINT32                                              ulModuleId,
+    MN_CLIENT_ID_T                                          usClientId,
+    MN_OPERATION_ID_T                                       opId
+)
+{
+    TAF_CALL_APP_GET_EC_RANDOM_REQ_STRU                    *pstGetEccRandomReq;
+    VOS_UINT32                                              ulReceiverPid;
+    VOS_UINT32                                              ulSenderPid;
+
+    ulReceiverPid      = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+    ulSenderPid        = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+
+    pstGetEccRandomReq = (TAF_CALL_APP_GET_EC_RANDOM_REQ_STRU *)PS_ALLOC_MSG_WITH_HEADER_LEN(ulSenderPid,
+                                          sizeof(TAF_CALL_APP_GET_EC_RANDOM_REQ_STRU));
+    if (VOS_NULL_PTR == pstGetEccRandomReq)
+    {
+        AT_ERR_LOG("TAF_XCALL_QryEncryptCallRandom: Failed to alloc VOS message.");
+        return VOS_ERR;
+    }
+
+    TAF_MEM_SET_S((VOS_INT8*)pstGetEccRandomReq + VOS_MSG_HEAD_LENGTH,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_GET_EC_RANDOM_REQ_STRU) - VOS_MSG_HEAD_LENGTH),
+                0x00,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_GET_EC_RANDOM_REQ_STRU) - VOS_MSG_HEAD_LENGTH));
+
+    /* 填写VOS消息头 */
+    pstGetEccRandomReq->ulSenderCpuId                        = VOS_LOCAL_CPUID;
+    pstGetEccRandomReq->ulSenderPid                          = ulSenderPid;
+    pstGetEccRandomReq->ulReceiverCpuId                      = VOS_LOCAL_CPUID;
+    pstGetEccRandomReq->ulReceiverPid                        = ulReceiverPid;
+    pstGetEccRandomReq->ulLength                             = sizeof(TAF_CALL_APP_GET_EC_RANDOM_REQ_STRU) - VOS_MSG_HEAD_LENGTH;
+
+    /* 填写消息内容 */
+    pstGetEccRandomReq->enMsgName                            = ID_TAF_CALL_APP_GET_EC_RANDOM_REQ;
+    pstGetEccRandomReq->stCtrl.usClientId                    = usClientId;
+    pstGetEccRandomReq->stCtrl.ucOpId                        = opId;
+    pstGetEccRandomReq->stCtrl.ulModuleId                    = ulModuleId;
+
+    /* 发送VOS消息ID_TAF_CALL_APP_ECC_SRV_CAP_QRY_REQ */
+    (VOS_VOID)PS_SEND_MSG(ulSenderPid, pstGetEccRandomReq);
+
+    return VOS_OK;
+}
+
+VOS_UINT32 TAF_XCALL_QryEncryptCallKmc(
+    VOS_UINT32                                              ulModuleId,
+    MN_CLIENT_ID_T                                          usClientId,
+    MN_OPERATION_ID_T                                       opId
+)
+{
+    TAF_CALL_APP_GET_EC_KMC_REQ_STRU                       *pstGetEccKmcReq;
+    VOS_UINT32                                              ulReceiverPid;
+    VOS_UINT32                                              ulSenderPid;
+
+    ulReceiverPid      = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+    ulSenderPid        = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+
+    pstGetEccKmcReq = (TAF_CALL_APP_GET_EC_KMC_REQ_STRU *)PS_ALLOC_MSG_WITH_HEADER_LEN(ulSenderPid,
+                                          sizeof(TAF_CALL_APP_GET_EC_KMC_REQ_STRU));
+    if (VOS_NULL_PTR == pstGetEccKmcReq)
+    {
+        AT_ERR_LOG("TAF_XCALL_QryEncryptCallKmc: Failed to alloc VOS message.");
+        return VOS_ERR;
+    }
+
+    TAF_MEM_SET_S((VOS_INT8*)pstGetEccKmcReq + VOS_MSG_HEAD_LENGTH,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_GET_EC_KMC_REQ_STRU) - VOS_MSG_HEAD_LENGTH),
+                0x00,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_GET_EC_KMC_REQ_STRU) - VOS_MSG_HEAD_LENGTH));
+
+    /* 填写VOS消息头 */
+    pstGetEccKmcReq->ulSenderCpuId                        = VOS_LOCAL_CPUID;
+    pstGetEccKmcReq->ulSenderPid                          = ulSenderPid;
+    pstGetEccKmcReq->ulReceiverCpuId                      = VOS_LOCAL_CPUID;
+    pstGetEccKmcReq->ulReceiverPid                        = ulReceiverPid;
+    pstGetEccKmcReq->ulLength                             = sizeof(TAF_CALL_APP_GET_EC_KMC_REQ_STRU) - VOS_MSG_HEAD_LENGTH;
+
+    /* 填写消息内容 */
+    pstGetEccKmcReq->enMsgName                            = ID_TAF_CALL_APP_GET_EC_KMC_REQ;
+    pstGetEccKmcReq->stCtrl.usClientId                    = usClientId;
+    pstGetEccKmcReq->stCtrl.ucOpId                        = opId;
+    pstGetEccKmcReq->stCtrl.ulModuleId                    = ulModuleId;
+
+    /* 发送VOS消息ID_TAF_CALL_APP_GET_EC_KMC_REQ */
+    (VOS_VOID)PS_SEND_MSG(ulSenderPid, pstGetEccKmcReq);
+
+    return VOS_OK;
+}
+
+VOS_UINT32 TAF_XCALL_QryEncryptCallTestMode(
+    VOS_UINT32                                              ulModuleId,
+    MN_CLIENT_ID_T                                          usClientId,
+    MN_OPERATION_ID_T                                       opId
+)
+{
+    TAF_CALL_APP_GET_EC_TEST_MODE_REQ_STRU                 *pstGetEccTestModeReq;
+    VOS_UINT32                                              ulReceiverPid;
+    VOS_UINT32                                              ulSenderPid;
+
+    ulReceiverPid        = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+    ulSenderPid          = AT_GetDestPid(usClientId, WUEPS_PID_TAF);
+
+    pstGetEccTestModeReq = (TAF_CALL_APP_GET_EC_TEST_MODE_REQ_STRU *)PS_ALLOC_MSG_WITH_HEADER_LEN(ulSenderPid,
+                                          sizeof(TAF_CALL_APP_GET_EC_TEST_MODE_REQ_STRU));
+    if (VOS_NULL_PTR == pstGetEccTestModeReq)
+    {
+        AT_ERR_LOG("TAF_XCALL_QryEncryptCallTestMode: Failed to alloc VOS message.");
+        return VOS_ERR;
+    }
+
+    TAF_MEM_SET_S((VOS_INT8*)pstGetEccTestModeReq + VOS_MSG_HEAD_LENGTH,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_GET_EC_TEST_MODE_REQ_STRU) - VOS_MSG_HEAD_LENGTH),
+                0x00,
+               (VOS_SIZE_T)(sizeof(TAF_CALL_APP_GET_EC_TEST_MODE_REQ_STRU) - VOS_MSG_HEAD_LENGTH));
+
+    /* 填写VOS消息头 */
+    pstGetEccTestModeReq->ulSenderCpuId                        = VOS_LOCAL_CPUID;
+    pstGetEccTestModeReq->ulSenderPid                          = ulSenderPid;
+    pstGetEccTestModeReq->ulReceiverCpuId                      = VOS_LOCAL_CPUID;
+    pstGetEccTestModeReq->ulReceiverPid                        = ulReceiverPid;
+    pstGetEccTestModeReq->ulLength                             = sizeof(TAF_CALL_APP_GET_EC_TEST_MODE_REQ_STRU) - VOS_MSG_HEAD_LENGTH;
+
+    /* 填写消息内容 */
+    pstGetEccTestModeReq->enMsgName                            = ID_TAF_CALL_APP_GET_EC_TEST_MODE_REQ;
+    pstGetEccTestModeReq->stCtrl.usClientId                    = usClientId;
+    pstGetEccTestModeReq->stCtrl.ucOpId                        = opId;
+    pstGetEccTestModeReq->stCtrl.ulModuleId                    = ulModuleId;
+
+    /* 发送VOS消息ID_TAF_CALL_APP_GET_EC_TEST_MODE_REQ */
+    (VOS_VOID)PS_SEND_MSG(ulSenderPid, pstGetEccTestModeReq);
+    /*lint +e516 */
+
+    return VOS_OK;
+}
+#endif
+#endif
+
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 TAF_XCALL_SetPrivacyModePreferred(
     VOS_UINT32                                              ulModuleId,
@@ -616,6 +1061,7 @@ VOS_UINT32 TAF_XCALL_QryPrivacyModePreferred(
 
     return VOS_OK;
 }
+#endif
 
 
 VOS_UINT32 TAF_CALL_QryCnap(

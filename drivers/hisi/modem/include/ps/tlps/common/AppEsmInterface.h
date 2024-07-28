@@ -1,18 +1,50 @@
-/******************************************************************************
-
-  Copyright(C)2008,Hisilicon Co. LTD.
-
- ******************************************************************************
-  File Name       : AppEsmInterface.h
-  Description     : AppEsmInterface.h header file
-  History         :
-      1.sunbing       2008-12-16   Draft Enact
-      2.yangqianhui   2008-12-22   Modify
-      3.sunbing       2009-01-06   Modify  BA8D00870
-      4.yangqianhui   2009-02-05   Modify  BA8D00933
-      5.yangqianhui   2009-03-06   Modify  BA8D01127
-
-******************************************************************************/
+/*
+ * Copyright (C) Huawei Technologies Co., Ltd. 2012-2019. All rights reserved.
+ * foss@huawei.com
+ *
+ * If distributed as part of the Linux kernel, the following license terms
+ * apply:
+ *
+ * * This program is free software; you can redistribute it and/or modify
+ * * it under the terms of the GNU General Public License version 2 and
+ * * only version 2 as published by the Free Software Foundation.
+ * *
+ * * This program is distributed in the hope that it will be useful,
+ * * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * * GNU General Public License for more details.
+ * *
+ * * You should have received a copy of the GNU General Public License
+ * * along with this program; if not, write to the Free Software
+ * * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+ *
+ * Otherwise, the following license terms apply:
+ *
+ * * Redistribution and use in source and binary forms, with or without
+ * * modification, are permitted provided that the following conditions
+ * * are met:
+ * * 1) Redistributions of source code must retain the above copyright
+ * *    notice, this list of conditions and the following disclaimer.
+ * * 2) Redistributions in binary form must reproduce the above copyright
+ * *    notice, this list of conditions and the following disclaimer in the
+ * *    documentation and/or other materials provided with the distribution.
+ * * 3) Neither the name of Huawei nor the names of its contributors may
+ * *    be used to endorse or promote products derived from this software
+ * *    without specific prior written permission.
+ *
+ * * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
 
 #ifndef __APPESMINTERFACE_H__
 #define __APPESMINTERFACE_H__
@@ -47,7 +79,9 @@ extern "C" {
 #define APP_MAX_IPV6_ADDR_LEN                               16
 #define APP_ESM_PCSCF_ADDR_MAX_NUM                          (8)
 
+/* Added 2016-06-20,Begin */
 #define APP_MAX_IPV6_PREFIX_LEN                             8
+/* Added 2016-06-20,End */
 
 #define APP_ESM_MAX_IPV6_PREFIX_NUM     (6)
 #define APP_ESM_IPV6_ADDR_LEN           (16)
@@ -58,12 +92,14 @@ extern "C" {
 #define APP_MAX_APN_LEN                                     99
 #define APP_ESM_MAX_EPSB_NUM                                (11)                /*最大承载数*/
 #define APP_ESM_MAX_ACCESS_NUM_LEN                          32
+
 /* 产品线at手册规定AT^AUTHDATA用户名和密码长度最大为127 */
 #define APP_ESM_MAX_USER_NAME_LEN                           100
 #define APP_ESM_MAX_PASSWORD_LEN                            100
 /* PCO消息最大长度为253，若用户名和密码为127时将超过PCO消息最大长度，GU在AUTH编码时允许用户名和密码最大长度为99,根据GU此处最大值设为99 */
 #define APP_ESM_MAX_USER_NAME_ENCODE_LEN                    99
 #define APP_ESM_MAX_PASSWORD_ENCODE_LEN                     99
+
 
 
 #define APP_ESM_MAX_SDF_PF_NUM                              16
@@ -85,16 +121,22 @@ extern "C" {
 
 #define APP_ESM_TFT_MAX_PF_NUM                              16
 
-/* niuxiufan DT begin */
+/* DT begin */
 #define APP_ESM_DT_REPORT_STATUS_OPEN                       1
 #define APP_ESM_DT_REPORT_STATUS_CLOSE                      0
-/* niuxiufan DT end */
+/* DT end */
 
+/* moded for verizon band13 pco requirement 2017-03-25, begin */
 #define APP_ESM_MAX_CUSTOM_PCO_CONTAINER_NUM                (3)
 #define APP_ESM_MAX_CUSTOM_PCO_CONTAINER_CONTENT_LEN        (53)
+/* moded for verizon band13 pco requirement 2017-03-25, end */
+/* added for Band13 R1 PHASE1, 2017-10-20, begin */
 #define APP_ESM_MAX_VZW_APN_INFO_NUM                        (8)
+/* added for Band13 R1 PHASE1, 2017-10-20, end */
+/* added for R1 DATA DEVICE PHASE1, 2017-12-13, begin */
 #define  APP_ESM_MAX_IPV4_EPDG_NUM                          (2)
 #define  APP_ESM_MAX_IPV6_EPDG_NUM                          (2)
+/* added for R1 DATA DEVICE PHASE1, 2017-12-13, end */
 
 
 /*****************************************************************************
@@ -138,20 +180,26 @@ enum APP_ESM_MSG_TYPE_ENUM
 
     ID_APP_ESM_SET_GW_AUTH_REQ          = 0x11+APP_ESM_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_SET_GW_AUTH_REQ_STRU*/
     ID_APP_ESM_SET_GW_AUTH_CNF          = 0x11+ESM_APP_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_SET_GW_AUTH_CNF_STRU*/
-    /* niuxiufan modify begin */
+    /* modify begin */
     ID_APP_ESM_IPV6_INFO_NOTIFY         = 0x12+APP_ESM_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_IPV6_INFO_NOTIFY_STRU*/
 
     ID_APP_ESM_PROCEDURE_ABORT_NOTIFY   = 0x13+APP_ESM_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_PROCEDURE_ABORT_NOTIFY_STRU*/
-    /* niuxiufan modify end */
+    /* modify end */
 
+    /* begin 2013-05-29 Modify L4A */
     ID_APP_ESM_NDISCONN_REQ             = 0x14+APP_ESM_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_NDISCONN_REQ_STRU*/
     ID_APP_ESM_NDISCONN_CNF             = 0x12+ESM_APP_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_NDISCONN_CNF_STRU*/
 
     ID_APP_ESM_SET_CGDCONT_REQ          = 0x15+APP_ESM_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_SET_CGDCONT_REQ_STRU*/
     ID_APP_ESM_SET_CGDCONT_CNF          = 0x13+ESM_APP_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_SET_CGDCONT_CNF_STRU*/
+    /* end 2013-05-29 Modify L4A */
+    /* added for Band13 R1 PHASE1, 2017-10-20, begin */
     ID_APP_ESM_APN_ENABLE_INFO_CHANGE_NTF  = 0x16+APP_ESM_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_APN_ENABLE_INFO_CHANGE_NTF_STRU*/
+    /* added for Band13 R1 PHASE1, 2017-10-20, end */
+    /* Added for R1 e911, 2017-12-6, begin */
     ID_APP_ESM_SET_APN_THROT_INFO_REQ= 0x17+APP_ESM_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_SET_APN_THROT_INFO_REQ_STRU*/
     ID_APP_ESM_SET_APN_THROT_INFO_CNF          = 0x14+ESM_APP_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_SET_APN_THROT_INFO_CNF_STRU*/
+    /* Added for R1 e911, 2017-12-6, end */
     /*参数查询原语*/
     ID_APP_ESM_INQ_TFT_REQ              = 0x31+APP_ESM_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_INQ_TFT_REQ_STRU*/
     ID_APP_ESM_INQ_TFT_CNF              = 0x32+ESM_APP_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_INQ_TFT_CNF_STRU*/
@@ -193,11 +241,13 @@ enum APP_ESM_MSG_TYPE_ENUM
     ID_APP_ESM_INQ_GW_AUTH_REQ          = 0x4A+APP_ESM_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_INQ_GW_AUTH_REQ_STRU*/
     ID_APP_ESM_INQ_GW_AUTH_CNF          = 0x4A+ESM_APP_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_INQ_GW_AUTH_CNF_STRU*/
 
-    /* niuxiufan DT begin */
+    /* V7R2-DT PDP   2014/03/21  start*/
+    /* DT begin */
     ID_APP_ESM_DT_INQ_PDP_INFO_REQ      = 0x4B+APP_ESM_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_INQ_PDP_INFO_REQ_STRU*/
     ID_APP_ESM_DT_INQ_PDP_INFO_CNF      = 0x4B+ESM_APP_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_INQ_PDP_INFO_CNF_STRU*/
     ID_APP_ESM_DT_INQ_PDP_INFO_IND      = 0x4C+ESM_APP_MSG_ID_HEADER,/*_H2ASN_MsgChoice  APP_ESM_INQ_PDP_INFO_IND_STRU*/
-    /* niuxiufan DT end */
+    /* DT end */
+    /* V7R2-DT PDP   2014/03/21  end*/
 
     ID_ESM_DSM_NOTIFICATION_IND         = 0x4D + APP_ESM_MSG_ID_HEADER,/* _H2ASN_MsgChoice ESM_DSM_NOTIFICATION_IND_STRU */
     ID_ESM_DSM_REG_CID_IND              = 0x4E + ESM_APP_MSG_ID_HEADER,/* _H2ASN_MsgChoice ESM_DSM_REG_CID_IND_STRU */
@@ -354,7 +404,7 @@ enum APP_ESM_PDN_TYPE_ENUM
 };
 typedef VOS_UINT32 APP_ESM_PDN_TYPE_ENUM_UINT32;
 
-/*Modify by sunbing 49683 for CL multimode 2014-01-09 begin*/
+/*Modify for CL multimode 2014-01-09 begin*/
 /*****************************************************************************
  枚举名    : APP_ESM_PDN_REQUEST_TYPE_ENUM
  枚举说明  : PDN请求类型取值 24008 10.5.6.17
@@ -366,7 +416,7 @@ enum APP_ESM_PDN_REQUEST_TYPE_ENUM
     APP_ESM_PDN_REQUEST_TYPE_BUTT
 };
 typedef VOS_UINT32 APP_ESM_PDN_REQUEST_TYPE_ENUM_UINT32;
-/*Modify by sunbing 49683 for CL multimode 2014-01-09 end*/
+/*Modify for CL multimode 2014-01-09 end*/
 
 
 /*****************************************************************************
@@ -419,6 +469,7 @@ enum APP_ESM_PDP_SETUP_TYPE_ENUM
 };
 
 typedef VOS_UINT32 APP_ESM_PDP_SETUP_TYPE_ENUM_UINT32;
+/* Added for DATA RETRY PHASEIII, 2016-6-23, begin */
 /* 用于EAB特性，记录APP下发的承载优先级 */
 enum APP_ESM_BEARER_PRIO_ENUM
 {
@@ -429,6 +480,7 @@ enum APP_ESM_BEARER_PRIO_ENUM
 };
 
 typedef VOS_UINT32 APP_ESM_BEARER_PRIO_ENUM_UINT32;
+/* Added for DATA RETRY PHASEIII, 2016-6-23, end */
 
 
 /*****************************************************************************
@@ -464,7 +516,7 @@ enum APP_ESM_BEARER_MANAGE_MODE_ENUM
 };
 typedef VOS_UINT8  APP_ESM_BEARER_MANAGE_MODE_ENUM_UINT8;
 
-/*niuxiufan DT begin */
+/*DT begin */
 
 /*****************************************************************************
  结构名    : NAS_ESM_DT_BEARER_TYPE_ENUM
@@ -475,13 +527,16 @@ enum NAS_ESM_DT_BEARER_TYPE_ENUM
 {
     NAS_ESM_DT_BEARER_TYPE_DEFAULT = 0,                /*缺省承载*/
     NAS_ESM_DT_BEARER_TYPE_DEDICATED,                  /*专有承载*/
+    /*V7R2-DT ,2014/5/6, begin*/
     NAS_ESM_DT_BEARER_TYPE_EMERGENCY,                  /*紧急承载*/
+    /*V7R2-DT ,2014/5/6, end*/
 
     NAS_ESM_DT_BEARER_TYPE_BUTT
 };/*承载的属性*/
 typedef VOS_UINT8  NAS_ESM_DT_BEARER_TYPE_ENUM_UINT8;
-/*niuxiufan DT end */
+/*DT end */
 
+/* ims begin */
 enum APP_ESM_PCSCF_DISCOVERY_ENUM
 {
     APP_ESM_PCSCF_DISCOVERY_NOT_INFLUENCED  = 0x00,
@@ -500,7 +555,9 @@ enum APP_ESM_IMS_CN_SIG_FLAG_ENUM
     APP_ESM_IMS_CN_SIG_FLAG_BUTT
 };
 typedef VOS_UINT32 APP_ESM_IMS_CN_SIG_FLAG_ENUM_UINT32;
+/* ims end */
 
+/* modify for 2014-05-09 begin */
 enum APP_ESM_PDP_EMC_IND_ENUM
 {
     APP_ESM_PDP_NOT_FOR_EMC             = 0x00,
@@ -509,7 +566,9 @@ enum APP_ESM_PDP_EMC_IND_ENUM
     APP_ESM_PDP_EMC_IND_BUTT
 };
 typedef VOS_UINT32 APP_ESM_PDP_EMC_IND_ENUM_UINT32;
+/* modify for 2014-05-09 end */
 
+/* Added for DATA RETRY PHASEI, 2016-03-21, Begin */
 /*****************************************************************************
  枚举名    : APP_ESM_PDP_RELEASE_CAUSE_ENUM
  枚举说明  : PDP释放原因
@@ -518,18 +577,29 @@ enum APP_ESM_PDP_RELEASE_CAUSE_ENUM
 {
     APP_ESM_PDP_RELEASE_CAUSE_NORMAL                  = 0,
     APP_ESM_PDP_RELEASE_CAUSE_IPV6_ADDR_ALLOC_FAIL    = 1,
+        /* Added for DATA RETRY PHASEIV, 2016-7-25, begin */
     APP_ESM_PDP_RELEASE_CAUSE_IPV6_ADDR_TIME_OUT      = 2,
+    /* Added for DATA RETRY PHASEIV, 2016-7-25, end */
     APP_ESM_PDP_RELEASE_CAUSE_PCSCF_ADDR_ALLOC_FAIL   = 3,
+    /* added for Band13 R1 PHASE1, 2017-10-20, begin */
     /* del reattach type */
+    /* added for Band13 R1 PHASE1, 2017-10-20, end */
 
 
+    /* Added for DCM DATA OFF, 2017-10-28, begin */
     APP_ESM_PDP_RELEASE_CAUSE_DATA_OFF                = 4,
+    /* Added for DCM DATA OFF, 2017-10-28, end */
+    /* Added for 2018-1-8, begin */
     APP_ESM_PDP_RELEASE_CAUSE_CELLULAR2W_HO           = 5,
+    /* Added for 2018-1-8, end */
 
     APP_ESM_PDP_RELEASE_CAUSE_BUTT
 };
 typedef VOS_UINT8 APP_ESM_PDP_RELEASE_CAUSE_ENUM_UINT8;
+/* Added for DATA RETRY PHASEI, 2016-03-21, End */
 
+/* Added for DATA RETRY PHASEIV, 2016-7-25, begin */
+/* added for Band13 R1 PHASE1, 2017-10-20, begin */
 /*****************************************************************************
  枚举名    : APP_ESM_APN_TYPE_ENUM_UINT8
  枚举说明  : 注册使用的APN 类型
@@ -549,6 +619,8 @@ enum APP_ESM_APN_TYPE_ENUM
     APP_ESM_APN_TYPE_BUTT
 };
 typedef VOS_UINT8 APP_ESM_APN_TYPE_ENUM_UINT8;
+/* added for Band13 R1 PHASE1, 2017-10-20, end */
+/* Added for DATA RETRY PHASEIV, 2016-7-25, begin */
 
 /*****************************************************************************
  枚举名    : ESM_DSM_NOTIFICATION_IND_ENUM_UINT32
@@ -589,7 +661,6 @@ enum APP_ESM_HANDOVER_RESULT_ENUM
 };
 typedef VOS_UINT32 APP_ESM_HANDOVER_RESULT_ENUM_UINT32;
 
-
 /*****************************************************************************
   5 STRUCT
 *****************************************************************************/
@@ -598,7 +669,9 @@ typedef VOS_UINT32 APP_ESM_HANDOVER_RESULT_ENUM_UINT32;
 *                           参数设置消息结构                                 *
 *                                                                            *
 ******************************************************************************/
+/* Added for DATA RETRY PHASEIV, 2016-7-25, begin */
 
+/* Added for 5G Iteration 5, 2018-1-22, begin */
 /*****************************************************************************
  枚举名    : ESM_DSM_NOTIFICATION_IND_STRU
  枚举说明  : SRVCC通知信息
@@ -623,7 +696,7 @@ typedef struct
     VOS_UINT32                          ulRegCid;
 }ESM_DSM_REG_CID_IND_STRU;
 
-
+/* moded for Band13 R1 PHASE1, 2017-10-16, begin */
 /*****************************************************************************
  结构名    : APP_ESM_APN_CLASS_INFO_STRU
  结构说明  : 注册APN信息结构
@@ -636,6 +709,8 @@ typedef struct
     VOS_UINT8                           aucReserved[2];
     VOS_UINT32                          ulInactivityTimerValue;/*Inactivity Timer Value in second*/
 }APP_ESM_APN_CLASS_INFO_STRU;
+/* moded for Band13 R1 PHASE1, 2017-10-16, end */
+/* Added for DATA RETRY PHASEIV, 2016-7-25, end */
 
 /*****************************************************************************
  结构名    : APP_ESM_PARA_SET_CNF_STRU
@@ -651,6 +726,7 @@ typedef struct
     VOS_UINT32                          ulSetRslt;          /*参数设置结果:0:成功,1:失败   */
 }APP_ESM_PARA_SET_CNF_STRU;
 
+/* begin for r11 2014-09-18 */
 /*****************************************************************************
  结构名    : APP_ESM_TFT_INFO_STRU
  结构说明  : TFT  结构
@@ -667,8 +743,10 @@ typedef struct
     VOS_UINT32                          bitOpSecuParaIndex             : 1;
     VOS_UINT32                          bitOpTypeOfService             : 1;
     VOS_UINT32                          bitOpFlowLabelType             : 1;
+    /* begin for r11 2014-09-18 */
     VOS_UINT32                          bitOpLocalIpv4AddrAndMask      : 1;
     VOS_UINT32                          bitOpLocalIpv6AddrAndMask      : 1;
+    /* end for r11 2014-09-18 */
     VOS_UINT32                          bitOpSpare                     : 20;
 
     VOS_UINT8                           ucPacketFilterId;
@@ -704,12 +782,15 @@ typedef struct
                                                                     ucRmtIpv6Mask[7]为低字节位*/
 
     VOS_UINT32                          ulFlowLabelType;          /*FlowLabelType*/
+    /* begin for r11 2014-09-18 */
     VOS_UINT8                           aucLocalIpv4Addr[APP_MAX_IPV4_ADDR_LEN];
     VOS_UINT8                           aucLocalIpv4Mask[APP_MAX_IPV4_ADDR_LEN];
     VOS_UINT8                           aucLocalIpv6Addr[APP_MAX_IPV6_ADDR_LEN];
     VOS_UINT8                           ucLocalIpv6Prefix;
     VOS_UINT8                           aucReserved2[3];
+    /* end for r11 2014-09-18 */
 }APP_ESM_TFT_INFO_STRU;
+/* end for r11 2014-09-18 */
 /*****************************************************************************
  结构名    : APP_ESM_SET_TFT_REQ_STRU
  结构说明  : TFT  参数设置
@@ -756,10 +837,12 @@ typedef struct
     VOS_UINT8                           ucGuarantBitRateForDownExt;
     VOS_UINT8                           ucMaxBitRateForUpExt;
     VOS_UINT8                           ucGuarantBitRateForUpExt;
+    /* begin for r11 2014-09-02 */
     VOS_UINT8                           ucMaxBitRateForDownExt_2;
     VOS_UINT8                           ucGuarantBitRateForDownExt_2;
     VOS_UINT8                           ucMaxBitRateForUpExt_2;
     VOS_UINT8                           ucGuarantBitRateForUpExt_2;
+    /* end for r11 2014-09-02 */
 
     VOS_UINT8                           ucReserved[1];
 }APP_ESM_QOS_INFO_STRU;
@@ -862,6 +945,7 @@ typedef struct
 }APP_ESM_SET_APN_REQ_STRU;
 
 typedef  APP_ESM_PARA_SET_CNF_STRU APP_ESM_SET_APN_CNF_STRU;
+/* Added for R1 e911, 2017-12-6, begin */
 /*****************************************************************************
  结构名    : APP_ESM_SET_EXCESSIVE_PDN_CTRL_PARA_REQ_STRU
  结构说明  : APN  参数设置
@@ -909,6 +993,7 @@ typedef struct
 
 
 
+/* Added for R1 e911, 2017-12-6, end */
 /*****************************************************************************
  结构名    : APP_ESM_APN_AMBR_INFO_STRU
  结构说明  : APN AMBR 参数
@@ -1067,9 +1152,11 @@ typedef struct
     VOS_UINT32                          bitOpLinkdCId        : 1;
     VOS_UINT32                          bitIpv4AddrAllocType : 1;
     VOS_UINT32                          bitOpGwAuthInfo      : 1;
+    /* ims begin */
     VOS_UINT32                          bitOpPcscfDiscovery  : 1;
     VOS_UINT32                          bitOpImsCnSignalFlag : 1;
     VOS_UINT32                          bitOpSpare           : 24;
+    /* ims end */
 
     APP_ESM_PDN_TYPE_ENUM_UINT32        enPdnType;
     APP_ESM_IPV4_ADDR_ALLOC_TYPE_ENUM_UINT32 enIpv4AddrAllocType;
@@ -1083,8 +1170,10 @@ typedef struct
     APP_ESM_APN_INFO_STRU               stApnInfo;
     APP_ESM_GW_AUTH_INFO_STRU           stGwAuthInfo;
     APP_ESM_TFT_INFO_STRU               astCntxtTftInfo[APP_ESM_MAX_SDF_PF_NUM];
+    /* ims begin */
     APP_ESM_PCSCF_DISCOVERY_ENUM_UINT32 enPcscfDiscovery;
     APP_ESM_IMS_CN_SIG_FLAG_ENUM_UINT32 enImsCnSignalFlag;
+    /* ims end */
 }APP_ESM_SDF_PARA_STRU;
 
 /*lint -save -e959*/
@@ -1359,9 +1448,13 @@ typedef struct
     VOS_UINT32                          bitOpPCscfPrim       :1;
     VOS_UINT32                          bitOpPCscfSec        :1;
     VOS_UINT32                          bitOpGateWayAddrInfo :1;
+    /* ims begin */
     VOS_UINT32                          bitOpImsCnSignalFlag :1;
+    /* ims end */
+    /* Modified for IPV4 MTU, 2016-11-15, Begin */
     VOS_UINT32                          bitOpIpv4Mtu         : 1;
     VOS_UINT32                          bitOpSpare           :22;
+    /* Modified for IPV4 MTU, 2016-11-15, End */
 
     VOS_UINT32                          ulRslt;
     VOS_UINT32                          ulEpsbId;
@@ -1374,9 +1467,13 @@ typedef struct
     APP_ESM_IP_ADDR_STRU                stPCscfSecAddrInfo; /* 辅P-CSCF信息 */
     APP_ESM_APN_INFO_STRU               stApnInfo;
     VOS_UINT32                          ulLinkCid;
+    /* ims begin */
     APP_ESM_IMS_CN_SIG_FLAG_ENUM_UINT32 enImsCnSignalFlag;
+    /* ims end */
+    /* Added for IPV4 MTU, 2016-11-15, Begin */
     VOS_UINT16                          usIpv4Mtu;
     VOS_UINT8                           aucReserved[2];
+    /* Added for IPV4 MTU, 2016-11-15, End */
 } APP_ESM_INQ_DYNAMIC_PDP_CONT_CNF_STRU;
 
 typedef APP_ESM_INQ_PARA_REQ_STRU APP_ESM_INQ_DYNAMIC_EPS_QOS_REQ_STRU;
@@ -1573,6 +1670,7 @@ typedef struct
 
 typedef   APP_ESM_DT_INQ_CMD_REQ_STRU APP_ESM_INQ_PDP_INFO_REQ_STRU;
 
+/*V7R2-DT ,2014/4/24, CNF 不上报消息体，在IND上报,begin*/
 typedef struct
 {
     VOS_MSG_HEADER                                           /*_H2ASN_Skip*/
@@ -1581,6 +1679,7 @@ typedef struct
     VOS_UINT32                          ulOpId;
     VOS_UINT32                          ulRslt;
 } APP_ESM_INQ_PDP_INFO_CNF_STRU;
+/*V7R2-DT ,2014/4/24, CNF 不上报消息体，在IND上报,end*/
 
 typedef struct
 {
@@ -1593,7 +1692,7 @@ typedef struct
 } APP_ESM_INQ_PDP_INFO_IND_STRU;
 
 
-/* niuxiufan DT end */
+/* DT end */
 
 /*****************************************************************************
 *                                                                            *
@@ -1601,6 +1700,7 @@ typedef struct
 *                                                                            *
 ******************************************************************************/
 
+/* moded for verizon band13 pco requirement 2017-03-25, begin */
 /*****************************************************************************
  结构名称   : APP_ESM_CUSTOM_PCO_CONTAINER_STRU
  协议表格   : PCO信元格式参考24008-10.5.6.3
@@ -1633,7 +1733,9 @@ typedef struct
     VOS_UINT32                                  ulContainerNum;
     APP_ESM_CUSTOM_PCO_CONTAINER_STRU           astContainerList[APP_ESM_MAX_CUSTOM_PCO_CONTAINER_NUM];
 }APP_ESM_CUSTOM_PCO_INFO_STRU;
+/* moded for verizon band13 pco requirement 2017-03-25, end */
 
+/* added for R1 DATA DEVICE PHASE1, 2017-12-13, begin */
 typedef struct
 {
     VOS_UINT8                           aucIpV4Addr[APP_MAX_IPV4_ADDR_LEN];
@@ -1657,6 +1759,7 @@ typedef struct
     APP_ESM_IPV4_EPDG_STRU              astIpv4EpdgList[APP_ESM_MAX_IPV4_EPDG_NUM];
     APP_ESM_IPV6_EPDG_STRU              astIpv6EpdgList[APP_ESM_MAX_IPV6_EPDG_NUM];
 }APP_ESM_EPDG_INFO_STRU;
+/* added for R1 DATA DEVICE PHASE1, 2017-12-13, end */
 
 
 /*****************************************************************************
@@ -1676,7 +1779,9 @@ typedef struct
     VOS_UINT8                           ucPduSessionId;
     VOS_UINT8                           aucRsv[3];
     APP_ESM_PPP_INFO_STRU               stPppInfo;          /* PPP拨号参数信息*/
+    /*Added for DATA RETRY PHASEIII 2016-06-21 start*/
     APP_ESM_BEARER_PRIO_ENUM_UINT32     enBearerPrio;       /* NAS signalling low priority标识 */
+    /*Added for DATA RETRY PHASEIII 2016-06-21 end*/
     VOS_UINT32                          ulPsCallId;         /*呼叫实体ID，范围:0~31*/
 }APP_ESM_PDP_SETUP_REQ_STRU;
 
@@ -1687,7 +1792,14 @@ typedef struct
     VOS_UINT8                           ucRsv;
 }APP_ESM_PLMN_ID_STRU;
 
-
+/*****************************************************************************
+ 结构名称: APP_ESM_S_NSSAI_STRU
+ 结构说明: ESM给APS同步的S_NSSAI的结构,参考24.501 9.10.2.6
+           比5G下的切片结构多一个PLMN ID
+ 修改历史      :
+  1.日    期   : 2018年08月16日
+    修改内容   : 新增结构
+*****************************************************************************/
 typedef struct
 {
     PS_S_NSSAI_STRU                     stSnssai;
@@ -1718,8 +1830,12 @@ typedef struct
     VOS_UINT32                          bitOpPCscfPrim       :1;
     VOS_UINT32                          bitOpPCscfSec        :1;
     VOS_UINT32                          bitOpGateWayAddrInfo :1;
+    /* added for verizon band13 pco requirement 2017-03-25, begin */
     VOS_UINT32                          bitOpCustomPco       :1; /* 用于VERRIZON定制需求中,把FF00H上报给APS时,指示FF00H是否需要上报。 1:需要 0:不需要 */
+    /* added for verizon band13 pco requirement 2017-03-25, end */
+    /* moded for R1 DATA DEVICE PHASE1, 2017-12-13, begin */
     VOS_UINT32                          bitOpEpdgInfo        : 1; /* 用于R1定制需求中,把EPDG地址上报给APS时,指示是否要上报给IMSA。 1:需要 0:不需要 */
+    /* moded for R1 DATA DEVICE PHASE1, 2017-12-13, end */
     VOS_UINT32                          bitOpSscMode         : 1;
     VOS_UINT32                          bitOpSNssai          : 1;
     VOS_UINT32                          bitOpSessionAmbr     : 1;
@@ -1741,12 +1857,19 @@ typedef struct
     APP_ESM_APN_INFO_STRU               stApnInfo;
     APP_ESM_EPS_QOS_INFO_STRU           stSdfQosInfo;
 
+    /* add for active pdp timer expire, 2016-10-20, begin */
     VOS_UINT8                           ucExpiredCount;     /* 发起激活的超时次数 */
+    /* add for active pdp timer expire, 2016-10-20, end */
     PS_SSC_MODE_ENUM_UINT8              enSscMode;      /* 24501-9.10.4.12 */
     VOS_UINT8                           ucPduSessionId;
     VOS_UINT8                           ucReserve;
+    /* added for verizon band13 pco requirement 2017-03-25, begin */
     APP_ESM_CUSTOM_PCO_INFO_STRU        stCustomPcoInfo;
+    /* added for verizon band13 pco requirement 2017-03-25, end */
+    /* added for R1 DATA DEVICE PHASE1, 2017-12-13, begin */
     APP_ESM_EPDG_INFO_STRU              stEpdgInfo;
+    /* added for R1 DATA DEVICE PHASE1, 2017-12-13, end */
+
 
 #if (FEATURE_ON == FEATURE_UE_MODE_NR)
     /* TODO:为了减少非NR版本中消息大小，暂时用宏控制 */
@@ -1756,6 +1879,7 @@ typedef struct
     PS_EPS_MAP_QOS_FLOW_LIST_STRU       stMapQosFlowList;
     PS_EPS_MAP_QOS_RULE_LIST_STRU       stMapQosRuleList;
 #endif
+
 } APP_ESM_PDP_SETUP_CNF_STRU;
 
 
@@ -1772,8 +1896,12 @@ typedef struct
     APP_MSG_HEADER
     VOS_UINT32                          ulOpId;             /*本次操作标识符*/
     VOS_UINT32                          ulCid;              /*上下文序列号，范围:0~31*/
+    /* Added for DATA RETRY PHASEIII, 2016-6-23, begin */
     APP_ESM_BEARER_PRIO_ENUM_UINT32     enBearerPrio;       /* NAS signalling priority标识 */
+    /* Added for DATA RETRY PHASEIII, 2016-6-23, end */
+    /* add for PS CALL ID,2018-05-22,begin */
     VOS_UINT32                          ulPsCallId;         /*呼叫实体ID，范围:0~31*/
+    /* add for PS CALL ID,2018-05-22,end */
 }APP_ESM_PDP_MODIFY_REQ_STRU;
 
 typedef struct
@@ -1790,7 +1918,9 @@ typedef struct
     VOS_UINT32                          bitOpBearerType     :1;
     VOS_UINT32                          bitOpRabId          :1;
     VOS_UINT32                          bitOpSdfQos         :1;
+    /* added for verizon band13 pco requirement 2017-03-25, begin */
     VOS_UINT32                          bitOpCustomPco      :1; /* 用于VERRIZON定制需求中,把FF00H上报给APS时,指示FF00H是否需要上报。 1:需要 0:不需要 */
+    /* added for verizon band13 pco requirement 2017-03-25, end */
     VOS_UINT32                          bitOpSpare          :27;
 
     VOS_UINT32                          ulRslt ;            /*删除操作结果;取值范围:参见附录3.1*/
@@ -1802,7 +1932,9 @@ typedef struct
 
     APP_ESM_EPS_QOS_INFO_STRU           stSdfQosInfo;
 
+    /* added for verizon band13 pco requirement 2017-03-25, begin */
     APP_ESM_CUSTOM_PCO_INFO_STRU        stCustomPcoInfo;
+    /* added for verizon band13 pco requirement 2017-03-25, end */
 } APP_ESM_PDP_MODIFY_CNF_STRU;
 
 typedef APP_ESM_PDP_MODIFY_CNF_STRU APP_ESM_PDP_MODIFY_IND_STRU;
@@ -1821,9 +1953,11 @@ typedef struct
     VOS_UINT32                          ulCid;
     VOS_UINT32                          ulPsCallId;         /*呼叫实体ID，范围:0~31*/
 
+    /* Added for DATA RETRY PHASEI, 2016-03-21, Begin */
     APP_ESM_PDP_RELEASE_CAUSE_ENUM_UINT8          enCause;       /* 释放原因 */
     VOS_UINT8                                     ucDetachInd;   /* 是否需要执行DETACH，VOS_TRUE是，VOS_FALS否 */
     VOS_UINT8                                     ucRsv[2];      /* 保留 */
+    /* Added for DATA RETRY PHASEI, 2016-03-21, End */
 
 }APP_ESM_PDP_RELEASE_REQ_STRU;
 
@@ -1842,7 +1976,9 @@ typedef struct
 
     VOS_UINT32                          bitOpLinkCid        :1;
     VOS_UINT32                          bitOpPdnAddr        :1;
+    /* added for verizon band13 pco requirement 2017-03-25, begin */
     VOS_UINT32                          bitOpCustomPco      :1; /* 用于VERRIZON定制需求中,把FF00H上报给APS时,指示FF00H是否需要上报。 1:需要 0:不需要 */
+    /* added for verizon band13 pco requirement 2017-03-25, end */
     VOS_UINT32                          bitOpSpare          :29;
 
     VOS_UINT32                          ulRslt;
@@ -1851,12 +1987,18 @@ typedef struct
     VOS_UINT32                          ulLinkCid;
     APP_ESM_IP_ADDR_STRU                stPDNAddrInfo;
 
+    /* add for VIA CL MT-DETACH make CID mod problem begin */
     /* 给APP上报RELEASE IND时(RELEASE CNF不填);    */
     VOS_UINT32                          ulEpsbId;
+    /* add for VIA CL MT-DETACH make CID mod problem end */
 
+    /* added for verizon band13 pco requirement 2017-03-25, begin */
     APP_ESM_CUSTOM_PCO_INFO_STRU        stCustomPcoInfo;
+    /* added for verizon band13 pco requirement 2017-03-25, end */
     VOS_UINT8                          ucPduSessionId;
+    /* fix pclint, add begin, 2018-11-06 */
     VOS_UINT8                           ucReserved[3];
+    /* fix pclint, add end, 2018-11-06 */
 }APP_ESM_PDP_RELEASE_CNF_STRU;
 
 typedef APP_ESM_PDP_RELEASE_CNF_STRU APP_ESM_PDP_RELEASE_IND_STRU;
@@ -1929,7 +2071,7 @@ typedef struct
     VOS_UINT8                           aucReserved[2];
     APP_ESM_IPV6_PREFIX_STRU            astIpv6PrefixArray[APP_ESM_MAX_IPV6_PREFIX_NUM];
 }APP_ESM_IPV6_INFO_NOTIFY_STRU;
-/*niuxiufan modify begin */
+/*modify begin */
 /*****************************************************************************
  结构名    : APP_ESM_PROCEDURE_ABORT_NOTIFY_STRU
  结构说明  : APS-->ESM 流程终止消息结构
@@ -1943,9 +2085,11 @@ typedef struct
     VOS_UINT32                          ulCid;
     VOS_UINT32                          ulPsCallId;     /*呼叫实体ID，范围:0~31*/
 }APP_ESM_PROCEDURE_ABORT_NOTIFY_STRU;
-/*niuxiufan modify end */
+/*modify end */
 
+/* by begin 2013-05-29 Modify L4A */
 
+/* ims begin */
 /*****************************************************************************
  结构名    : APP_ESM_NDISCONN_REQ_STRU
  结构说明  : APS-->ESM 拨号消息结构
@@ -1965,22 +2109,31 @@ typedef struct
     VOS_UINT32                                  bitOpPdnType           :1;
     VOS_UINT32                                  bitOpApn               :1;
     VOS_UINT32                                  bitOpGwAuth            :1;
+    /* modify 2014-05-09 begin */
     VOS_UINT32                                  bitOpIpv4AddrAlloc     :1;                /* Ipv4AddrAlloc*/
     VOS_UINT32                                  bitOpPcscfDiscovery    :1;                /* P-CSCF discovery */
     VOS_UINT32                                  bitOpImCnSignalFlg     :1;                /* IM CN Signalling Flag */
     VOS_UINT32                                  bitOpSpare             :26;
+    /* modify 2014-05-09 end */
 
     APP_ESM_APN_INFO_STRU                       stApnInfo;
     APP_ESM_PDN_TYPE_ENUM_UINT32                enPdnType;
     APP_ESM_GW_AUTH_INFO_STRU                   stGwAuthInfo;
+	/*Modify for CL multimode 2014-02-14 begin*/
     APP_ESM_PDN_REQUEST_TYPE_ENUM_UINT32        enPdnReqestType;
+    /*Modify for CL multimode 2014-02-14 end*/
+    /* 2014-05-09 begin */
     APP_ESM_PDP_EMC_IND_ENUM_UINT32             enEmergencyInd;
     APP_ESM_IPV4_ADDR_ALLOC_TYPE_ENUM_UINT32    enIpv4AddrAlloc;
     APP_ESM_PCSCF_DISCOVERY_ENUM_UINT32         enPcscfDiscovery;
     APP_ESM_IMS_CN_SIG_FLAG_ENUM_UINT32         enImCnSignalFlg;
+    /* 2014-05-09 end */
+    /* Added for DATA RETRY PHASEIII, 2016-6-23, begin */
     APP_ESM_BEARER_PRIO_ENUM_UINT32               enBearerPrio;
+    /* Added for DATA RETRY PHASEIII, 2016-6-23, end */
 } APP_ESM_NDISCONN_REQ_STRU;
 
+/* ims end */
 
 /*****************************************************************************
  结构名    : APP_ESM_NDISCONN_CNF_STRU
@@ -2006,8 +2159,12 @@ typedef struct
     VOS_UINT32                                  bitOpPCscfPrim      :1;
     VOS_UINT32                                  bitOpPCscfSec       :1;
     VOS_UINT32                                  bitOpGateWayAddrInfo    :1;
+    /* added for verizon band13 pco requirement 2017-03-25, begin */
     VOS_UINT32                                  bitOpCustomPco      :1; /* 用于VERRIZON定制需求中,把FF00H上报给APS时,指示FF00H是否需要上报。 1:需要 0:不需要 */
+    /* added for verizon band13 pco requirement 2017-03-25, end */
+    /* moded for R1 DATA DEVICE PHASE1, 2017-12-13, begin */
     VOS_UINT32                                  bitOpEpdgInfo        : 1; /* 用于R1定制需求中,把EPDG地址上报给APS时,指示是否上报给IMSA。 1:需要 0:不需要 */
+    /* moded for R1 DATA DEVICE PHASE1, 2017-12-13, end */
     VOS_UINT32                                  bitOpSscMode         : 1;
     VOS_UINT32                                  bitOpSNssai          : 1;
     VOS_UINT32                                  bitOpSessionAmbr     : 1;
@@ -2029,12 +2186,19 @@ typedef struct
     APP_ESM_APN_INFO_STRU                       stApnInfo;
     APP_ESM_EPS_QOS_INFO_STRU                   stSdfQosInfo;
 
+    /* add for active pdp timer expire, 2016-10-20, begin */
     VOS_UINT8                                   ucExpiredCount;     /* 发起激活的超时次数 */
+    /* add for active pdp timer expire, 2016-10-20, end */
     PS_SSC_MODE_ENUM_UINT8                      enSscMode;      /* 24501-9.10.4.12 */
     VOS_UINT8                                   ucPduSessionId;
     VOS_UINT8                                   ucReserve;
+    /* added for verizon band13 pco requirement 2017-03-25, begin */
     APP_ESM_CUSTOM_PCO_INFO_STRU                stCustomPcoInfo;
+    /* added for verizon band13 pco requirement 2017-03-25, end */
+    /* added for R1 DATA DEVICE PHASE1, 2017-12-13, begin */
     APP_ESM_EPDG_INFO_STRU                      stEpdgInfo;
+    /* added for R1 DATA DEVICE PHASE1, 2017-12-13, end */
+
 #if (FEATURE_ON == FEATURE_UE_MODE_NR)
     /* TODO:为了减少非NR版本中消息大小，暂时用宏控制 */
     APP_ESM_S_NSSAI_STRU                        stSnssaiInfo;       /* 5G S-NASSAI */
@@ -2043,6 +2207,7 @@ typedef struct
     PS_EPS_MAP_QOS_FLOW_LIST_STRU               stMapQosFlowList;
     PS_EPS_MAP_QOS_RULE_LIST_STRU               stMapQosRuleList;
 #endif
+
 } APP_ESM_NDISCONN_CNF_STRU;
 /*****************************************************************************
  结构名    : APP_ESM_SET_CGDCONT_REQ_STRU
@@ -2061,8 +2226,10 @@ typedef struct
     VOS_UINT32                                  bitOpApn               :1;
 
     VOS_UINT32                                  bitOpIpv4AddrAllocType :1;
+    /* ims begin */
     VOS_UINT32                                  bitOpPcscfDiscovery    :1;
     VOS_UINT32                                  bitOpImsCnSignalFlag   :1;
+    /* ims end */
     VOS_UINT32                                  bitOpSpare             :26;
 
 
@@ -2071,8 +2238,10 @@ typedef struct
     APP_ESM_APN_INFO_STRU                       stApnInfo;
     APP_ESM_PDN_TYPE_ENUM_UINT32                enPdnType;
     APP_ESM_IPV4_ADDR_ALLOC_TYPE_ENUM_UINT32    enIpv4AddrAllocType;
+    /* ims begin */
     APP_ESM_PCSCF_DISCOVERY_ENUM_UINT32         enPcscfDiscovery;
     APP_ESM_IMS_CN_SIG_FLAG_ENUM_UINT32         enImsCnSignalFlag;
+    /* ims end */
 } APP_ESM_SET_CGDCONT_REQ_STRU;
 
 /*****************************************************************************
@@ -2090,7 +2259,9 @@ typedef struct
     VOS_UINT32                                  ulRslt;
 
 } APP_ESM_SET_CGDCONT_CNF_STRU;
+/* end 2013-05-29 Modify L4A */
 
+/* added for Band13 R1 PHASE1, 2017-10-16, begin */
 /*****************************************************************************
  结构名    : APP_ESM_APN_ENABLE_INFO_CHANGE_NTF_STRU
  结构说明  : APN enable参数设置的消息结构
@@ -2107,6 +2278,7 @@ typedef struct
     VOS_UINT8                                   ucEnableFlag;  /* apn enable flag */
     VOS_UINT8                                   aucReserved[2];
 } APP_ESM_APN_ENABLE_INFO_CHANGE_NTF_STRU;
+/* added for Band13 R1 PHASE1, 2017-10-16, end */
 
 
 /*****************************************************************************
@@ -2120,6 +2292,7 @@ typedef struct
     VOS_UINT8                                aucReserve1[2]; /* 四字节对齐，保留 */
 }APP_ESM_PDP_MANAGE_INFO_STRU;
 
+/* Added for DCM DATA OFF, 2017-11-11, begin */
 /*****************************************************************************
  结构名    : APP_ESM_DATA_SWITCH_INFO_STRU
  结构说明  : 数据业务开关信息结构
@@ -2131,6 +2304,7 @@ typedef struct
 
     VOS_UINT8                               aucResv[2];
 }APP_ESM_DATA_SWITCH_INFO_STRU;
+/* Added for DCM DATA OFF, 2017-11-11, end */
 
 typedef struct
 {
@@ -2351,7 +2525,6 @@ typedef struct
     APP_ESM_S_NSSAI_STRU                stSnssaiInfo;                       /* 5G S-NASSAI */
 } APP_ESM_NR_HANDOVER_TO_LTE_IND_STRU;
 
-
 /*****************************************************************************
   6 UNION
 *****************************************************************************/
@@ -2382,26 +2555,31 @@ extern VOS_UINT32 APP_GetCidImsSuppFlagByModemId
     VOS_UINT8                           ucCid,
     VOS_UINT8                          *pucImsSuppFlag
 );
-/* 与闫志吉确认:此接口仅在VZW场景下会返回有效的APN个数和APN信息;
-非VZW场景下,APN个数为0,返回VOS_OK */
+/* added for Band13 R1 PHASE1, 2017-10-16, begin */
+
 extern VOS_UINT32 APP_ESM_GetAllApnClassInfo
 (
     MODEM_ID_ENUM_UINT16                enModemId,
     VOS_UINT32                         *pulApnNum,
     APP_ESM_APN_CLASS_INFO_STRU        *pstApnClassInfo
 );
+/* added for Band13 R1 PHASE1, 2017-10-16, end */
 
+/* Added for DCM DATA OFF, 2017-11-1, begin */
 extern VOS_UINT32 APP_GetDataSwitchInfoByModemId
 (
     MODEM_ID_ENUM_UINT16                enModemId,
     APP_ESM_DATA_SWITCH_INFO_STRU      *pstDataSwitchInfo
 );
+/* Added for DCM DATA OFF, 2017-11-1, end */
+
 
 extern VOS_UINT32 APP_AllocPsCallIdByModemId
 (
     MODEM_ID_ENUM_UINT16                enModemId,
     VOS_UINT8                          *pucPsCallId
 );
+
 
 extern VOS_UINT32 APP_AllocPduSessionIdByModemId
 (

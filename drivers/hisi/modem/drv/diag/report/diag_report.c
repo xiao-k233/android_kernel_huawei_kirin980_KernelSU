@@ -424,38 +424,24 @@ u32 diag_report_cnf(DRV_DIAG_CNF_INFO_STRU *pstDiagInfo, void *pstData, u32 ulLe
  返 回 值	: 成功与否标识码
  修改历史	:
 *************************************************************************/
-u32 diag_report_drv_log(u32 level, char* fmt, va_list arg)
+u32 diag_report_drv_log(u32 level, const char* fmt)
 {
     DIAG_DRV_STRING_HEADER_STRU stStringHeader = {};
     DIAG_MSG_REPORT_HEAD_STRU   stDiagHead;
     diag_print_head_stru *print_head = NULL;
     unsigned long ulLockLevel;
-    char string[DIAG_DRV_PRINTLOG_MAX_BUFF_LEN];
+    char string[DIAG_DRV_PRINTLOG_MAX_BUFF_LEN + 1] = "ap[0]";
     s32 len = 0;
     s32 usRet = 0;
 
     /* 由于底软打印中会增加[], HIDS识别时会认为底软中的[] 为行号，因此此处默认填写[] */
-    usRet = snprintf_s(string, DIAG_DRV_PRINTLOG_MAX_BUFF_LEN, DIAG_DRV_PRINTLOG_MAX_BUFF_LEN - 1, "%s", "ap[0]");
-    if(usRet < 0)
+    usRet = strcat_s(string, DIAG_DRV_PRINTLOG_MAX_BUFF_LEN, fmt);
+    if(usRet != EOK)
     {
-        diag_error("snprintf_s return error ret:0x%x\n", usRet);
+        diag_error("strcat_s return error ret:0x%x\n", usRet);
         return ERR_MSP_INALID_LEN_ERROR;
     }
-    len = usRet;
-
-    usRet = vscnprintf(string + sizeof("ap[0]") - 1, DIAG_DRV_PRINTLOG_MAX_BUFF_LEN - sizeof("ap[0]"), fmt, arg);
-    if(usRet < 0)
-    {
-        diag_error("vsnprintf return error ret:0x%x\n", usRet);
-        return ERR_MSP_INALID_LEN_ERROR;
-    }
-    len += usRet;
-
-    if(len > DIAG_DRV_PRINTLOG_MAX_BUFF_LEN)
-    {
-        /* 内存越界，主动复位 */
-        system_error(DRV_ERRNO_DIAG_OVERFLOW, __LINE__, len, 0, 0);
-    }
+    len = strnlen(string, DIAG_DRV_PRINTLOG_MAX_BUFF_LEN);
 
     print_head = &stStringHeader.print_head;
 

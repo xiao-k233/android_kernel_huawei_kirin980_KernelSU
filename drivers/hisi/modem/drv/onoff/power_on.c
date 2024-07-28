@@ -119,14 +119,13 @@ static void bsp_power_icc_send_state(void)
  调用函数  :
  被调函数  :
 *****************************************************************************/
-static s32 bsp_power_ctrl_read_cb(void)
+static s32 bsp_power_ctrl_read_cb(u32 channel_id, u32 len, void* context)
 {
     int rt = 0;
     int read_len;
     stCtrlMsg msg;
-    u32 channel_id = ICC_CHN_IFC << 16 | IFC_RECV_FUNC_ONOFF;
 
-    read_len = bsp_icc_read(channel_id, (u8*)&msg, (u32)sizeof(stCtrlMsg));
+    read_len = bsp_icc_read(ICC_CHN_IFC << 16 | IFC_RECV_FUNC_ONOFF, (u8*)&msg, (u32)sizeof(stCtrlMsg));
     if(read_len != (int)sizeof(stCtrlMsg))
     {
         bsp_debug("read len(%x) != expected len(%lu)\n", read_len, (unsigned long)sizeof(stCtrlMsg));
@@ -226,3 +225,6 @@ int __init his_boot_init(void)
 
     return ret;
 }
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+late_initcall(his_boot_init);
+#endif

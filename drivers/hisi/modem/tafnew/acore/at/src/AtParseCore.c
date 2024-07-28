@@ -683,7 +683,7 @@ VOS_UINT32 atMatchCmdName (VOS_UINT8 ucClientId, VOS_UINT32 CmdType)
     pCmdTblList = &(g_stCmdTblList);
 
     /* 全部格式化为大写字符 */
-    if(AT_FAILURE == At_UpString(g_stATParseCmd.stCmdName.aucCmdName,g_stATParseCmd.stCmdName.usCmdNameLen))
+    if(AT_FAILURE == At_UpString(g_stATParseCmd.stCmdName.aucCmdName,TAF_MIN(g_stATParseCmd.stCmdName.usCmdNameLen, AT_CMD_NAME_LEN)))
     {
         return AT_ERROR;
     }
@@ -960,6 +960,7 @@ VOS_UINT32 CmdParseProc(VOS_UINT8 ucClientId, VOS_UINT8 *pData, VOS_UINT16 usLen
         }
     }
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     /* 下发的AT命令是否与CL模式下需要保护的AT命令相匹配，匹配的话，直接返回操作不允许 */
     if (VOS_TRUE == At_CheckCurrRatModeIsCL(ucClientId))
     {
@@ -975,6 +976,7 @@ VOS_UINT32 CmdParseProc(VOS_UINT8 ucClientId, VOS_UINT8 *pData, VOS_UINT16 usLen
             return AT_CME_OPERATION_NOT_ALLOWED;
         }
     }
+#endif
 
     ulResult = (AT_RRETURN_CODE_ENUM_UINT32)atCmdDispatch(ucClientId);
 
@@ -1434,6 +1436,10 @@ VOS_UINT32 AnyCharCmdParse(VOS_UINT8* pData, VOS_UINT16 usLen, VOS_UINT8* pName)
     /* seperate para by char ',' */
     for(i=0; i < usLen; i++,pData++)
     {
+        if (usParaLen > AT_PARA_MAX_LEN) {
+            return AT_CME_INCORRECT_PARAMETERS;
+        }
+
         if ((' ' == *pData) && (0 == bInQoute))
         {
             continue;          /* skip space char not in quatation*/
@@ -1589,6 +1595,12 @@ VOS_VOID At_ReadyClientCmdProc(VOS_UINT8 ucIndex, VOS_UINT8 *pData, VOS_UINT16 u
     {
         At_FormatResultData(ucIndex, ulRet);
 
+        return;
+    }
+
+    /* 最短为"AT"两个字符 */
+    if (usLen < 2)
+    {
         return;
     }
 
@@ -2373,6 +2385,7 @@ VOS_UINT32 AT_IsAllClientDataMode(VOS_VOID)
 }
 
 
+#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT8 atCmdIsSupportedByCLMode(VOS_UINT8 ucIndex)
 {
@@ -2384,7 +2397,9 @@ VOS_UINT8 atCmdIsSupportedByCLMode(VOS_UINT8 ucIndex)
                                                                     AT_CMD_DTMF,*/
                                                              AT_CMD_CARDMODE,
 
+                                                             #if ((FEATURE_ON == FEATURE_GCBS) || (FEATURE_ON == FEATURE_WCBS))
                                                              AT_CMD_CSCB,
+                                                             #endif
                                                              /*AT_CMD_CNMI,*/
 
                                                              /*AT_CMD_CSASM,*/
@@ -2489,6 +2504,7 @@ VOS_UINT8 atCmdIsSupportedByGULMode(VOS_UINT8 ucIndex)
 
     return VOS_TRUE;
 }
+#endif
 
 
 

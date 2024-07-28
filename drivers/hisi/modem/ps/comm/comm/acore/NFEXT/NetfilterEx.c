@@ -51,6 +51,7 @@
 ******************************************************************************/
 #include "product_config.h"
 
+#if (FEATURE_ON == FEATURE_NFEXT)
 
 #include "NetfilterEx.h"
 
@@ -419,9 +420,7 @@ unsigned int NFExt_BrForwardFlowCtrlHook(unsigned int hooknum,
 
 #else
 
-unsigned int NFExt_BrPreRoutingHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_BrPreRoutingHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     /* 判断是否OM的数据 */
     if ( NF_EXT_FLAG_OM_DATA == NFExt_IsOmData(skb) )
@@ -435,9 +434,7 @@ unsigned int NFExt_BrPreRoutingHook(const struct nf_hook_ops *ops,
 }
 
 
-unsigned int NFExt_BrPostRoutingHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_BrPostRoutingHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     if ( NF_EXT_FLAG_OM_DATA == NFExt_IsOmData(skb) )
     {
@@ -450,9 +447,7 @@ unsigned int NFExt_BrPostRoutingHook(const struct nf_hook_ops *ops,
 }
 
 
-unsigned int NFExt_BrLocalInHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_BrLocalInHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     if ( NF_EXT_FLAG_OM_DATA == NFExt_IsOmData(skb) )
     {
@@ -465,9 +460,7 @@ unsigned int NFExt_BrLocalInHook(const struct nf_hook_ops *ops,
 }
 
 
-unsigned int NFExt_BrLocalOutHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_BrLocalOutHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     if ( NF_EXT_FLAG_OM_DATA == NFExt_IsOmData(skb) )
     {
@@ -480,9 +473,7 @@ unsigned int NFExt_BrLocalOutHook(const struct nf_hook_ops *ops,
 }
 
 
-unsigned int NFExt_BrForwardHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_BrForwardHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     NFExt_BrDataExport(skb, state->in, state->out, ID_IPS_TRACE_BRIDGE_DATA_INFO);
 
@@ -490,9 +481,7 @@ unsigned int NFExt_BrForwardHook(const struct nf_hook_ops *ops,
 }
 
 
-unsigned int NFExt_ArpInHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_ArpInHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     NFExt_ArpDataExport(skb, state->in, ID_IPS_TRACE_RECV_ARP_PKT);
 
@@ -501,9 +490,7 @@ unsigned int NFExt_ArpInHook(const struct nf_hook_ops *ops,
 
 
 
-unsigned int NFExt_ArpOutHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_ArpOutHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
 
     NFExt_ArpDataExport(skb, state->out, ID_IPS_TRACE_SEND_ARP_PKT);
@@ -512,9 +499,7 @@ unsigned int NFExt_ArpOutHook(const struct nf_hook_ops *ops,
 }
 
 
-unsigned int NFExt_Ip4PreRoutingHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_Ip4PreRoutingHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     NFExt_IpDataExport(skb, state->in, ID_IPS_TRACE_INPUT_DATA_INFO);
 
@@ -523,9 +508,7 @@ unsigned int NFExt_Ip4PreRoutingHook(const struct nf_hook_ops *ops,
 
 
 
-unsigned int NFExt_Ip4PostRoutingHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_Ip4PostRoutingHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     NFExt_IpDataExport(skb, state->out, ID_IPS_TRACE_OUTPUT_DATA_INFO);
 
@@ -533,9 +516,7 @@ unsigned int NFExt_Ip4PostRoutingHook(const struct nf_hook_ops *ops,
 }
 
 
-unsigned int NFExt_Ip4LocalInHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_Ip4LocalInHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
 
     NFExt_IpDataExport(skb, state->in, ID_IPS_TRACE_IP4_LOCAL_IN_INFO);
@@ -544,9 +525,7 @@ unsigned int NFExt_Ip4LocalInHook(const struct nf_hook_ops *ops,
 }
 
 
-unsigned int NFExt_Ip4LocalOutHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_Ip4LocalOutHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     NFExt_IpDataExport(skb, state->out, ID_IPS_TRACE_IP4_LOCAL_OUT_INFO);
 
@@ -554,9 +533,7 @@ unsigned int NFExt_Ip4LocalOutHook(const struct nf_hook_ops *ops,
 }
 
 
-unsigned int NFExt_Ip4ForwardHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_Ip4ForwardHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     NFExt_IpDataExport(skb, state->in, ID_IPS_TRACE_IP4_FORWARD_INFO);
 
@@ -564,9 +541,7 @@ unsigned int NFExt_Ip4ForwardHook(const struct nf_hook_ops *ops,
 }
 
 
-unsigned int NFExt_Ip6PreRoutingHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_Ip6PreRoutingHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     NFExt_IpDataExport(skb, state->in, ID_IPS_TRACE_INPUT_DATA_INFO);
 
@@ -574,9 +549,7 @@ unsigned int NFExt_Ip6PreRoutingHook(const struct nf_hook_ops *ops,
 }
 
 
-unsigned int NFExt_Ip6PostRoutingHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_Ip6PostRoutingHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     NFExt_IpDataExport(skb, state->out, ID_IPS_TRACE_OUTPUT_DATA_INFO);
 
@@ -584,9 +557,7 @@ unsigned int NFExt_Ip6PostRoutingHook(const struct nf_hook_ops *ops,
 }
 
 
-unsigned int NFExt_Ip6LocalInHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_Ip6LocalInHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     NFExt_IpDataExport(skb, state->in, ID_IPS_TRACE_IP6_LOCAL_IN_INFO);
 
@@ -594,9 +565,7 @@ unsigned int NFExt_Ip6LocalInHook(const struct nf_hook_ops *ops,
 }
 
 
-unsigned int NFExt_Ip6LocalOutHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_Ip6LocalOutHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     NFExt_IpDataExport(skb, state->out, ID_IPS_TRACE_IP6_LOCAL_OUT_INFO);
 
@@ -604,9 +573,7 @@ unsigned int NFExt_Ip6LocalOutHook(const struct nf_hook_ops *ops,
 }
 
 
-unsigned int NFExt_Ip6ForwardHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_Ip6ForwardHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     NFExt_IpDataExport(skb, state->in, ID_IPS_TRACE_IP6_FORWARD_INFO);
 
@@ -617,9 +584,7 @@ unsigned int NFExt_Ip6ForwardHook(const struct nf_hook_ops *ops,
                         流控功能
 *****************************************************************************/
 
-unsigned int NFExt_BrForwardFlowCtrlHook(const struct nf_hook_ops *ops,
-                                    struct sk_buff *skb,
-                                    const struct nf_hook_state *state)
+unsigned int NFExt_BrForwardFlowCtrlHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
     NF_EXT_STATS_INC(1, NF_EXT_STATS_BR_FC_ENTER);
 
@@ -639,3 +604,4 @@ unsigned int NFExt_BrForwardFlowCtrlHook(const struct nf_hook_ops *ops,
 
 #endif      /* #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)) */
 
+#endif      /* #if (FEATURE_ON == FEATURE_NFEXT) */

@@ -94,6 +94,8 @@ extern "C" {
 #endif
 #define TAF_MAX_CID_NV                  (11)
 
+#define TAF_MAX_CID_NV_NUM (TAF_MAX_CID_NV + 1)
+
 #define TAF_INVALID_CID                 (0xFF)
 
 /* 4 x 3 char dec nums + 3 x '.' + '\0' */
@@ -3135,7 +3137,7 @@ typedef struct
 typedef struct
 {
     VOS_UINT32                          ulSdfNum;
-    TAF_SDF_PARA_STRU                   astSdfPara[TAF_MAX_CID_NV];
+    TAF_SDF_PARA_STRU                   astSdfPara[TAF_MAX_CID_NV_NUM];
 
 } TAF_SDF_PARA_QUERY_INFO_STRU;
 

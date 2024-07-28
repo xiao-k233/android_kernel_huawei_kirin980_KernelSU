@@ -3,6 +3,7 @@
 #ifndef HISI_AP_DRV_H
 #define HISI_AP_DRV_H
 #include <linux/module.h>
+#include <linux/version.h>
 /*************************************************************************
 *
 *   启动/加载/复位/校验
@@ -18,6 +19,7 @@
 #define PARTITION_MODEM_NVBACKUP_NAME    "modemnvm_backup"
 #define PARTITION_MODEM_NVSYS_NAME       "modemnvm_system"
 #define PARTITION_MODEM_NVIMG_NAME       "modemnvm_img"
+#define PARTITION_MODEM_NVPATCH_NAME     "modem_patch_nv"
 #define PARTITION_MODEM_LOG_NAME         "modem_om"
 #define PARTITION_MODEM_DTB_NAME	 "modem_dtb"
 #define PARTITION_PTN_VRL_P_NAME 	 "vrl"
@@ -869,6 +871,26 @@ struct mdm_adc_s {
 extern int hisi_mdm_adc_get_value_register(int (*func)(struct mdm_adc_s *mdm_adc_para));
 /******************* modem temp end ****************/
 
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(4, 9, 0))
+/* hifi reset notify modem */
+enum DRV_RESET_CALLCBFUN_MOMENT {
+	DRV_RESET_CALLCBFUN_RESET_BEFORE,
+	DRV_RESET_CALLCBFUN_RESET_AFTER,
+	DRV_RESET_CALLCBFUN_RESETING,
+	DRV_RESET_CALLCBFUN_MOEMENT_INVALID
+};
+
+typedef int (*hifi_reset_cbfunc)(enum DRV_RESET_CALLCBFUN_MOMENT eparam, int userdata);
+
+#ifdef CONFIG_HISI_HIFI_BB
+int hifireset_regcbfunc(const char *pname, hifi_reset_cbfunc pcbfun, int userdata, int priolevel);
+#else
+static inline int hifireset_regcbfunc(const char *pname, hifi_reset_cbfunc pcbfun, int userdata, int priolevel)
+{
+	return 0;
+}
+#endif
+#endif
 #endif /* HISI_AP_DRV_H */
 
 

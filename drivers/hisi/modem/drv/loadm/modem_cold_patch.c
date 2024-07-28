@@ -83,7 +83,11 @@ int bsp_nvem_cold_patch_read(struct cold_patch_info_s *p_cold_patch_info)
           bsp_err("nvem_cold_patch_read:nvem read failed!\n");
           return ret;
     }
-    (void)memcpy_s(p_cold_patch_info,size,&(nve_cold_patch.nv_data[0]),size);
+    ret = memcpy_s(p_cold_patch_info,size,&(nve_cold_patch.nv_data[0]),size);
+    if (ret) {
+        bsp_err("nvem_cold_patch_read:memcpy fail!\n");
+    }
+
     return 0;
 }
 int bsp_nvem_cold_patch_write(struct cold_patch_info_s *p_cold_patch_info)
@@ -96,7 +100,11 @@ int bsp_nvem_cold_patch_write(struct cold_patch_info_s *p_cold_patch_info)
     nve_cold_patch.nv_number = NVME_COLD_PATCH_ID;
     nve_cold_patch.valid_size = size;
 
-    (void)memcpy_s(&(nve_cold_patch.nv_data[0]),size,p_cold_patch_info,sizeof(struct cold_patch_info_s));
+    ret = memcpy_s(&(nve_cold_patch.nv_data[0]),size,p_cold_patch_info,sizeof(struct cold_patch_info_s));
+    if (ret) {
+        bsp_err("nvem_cold_patch_write:memcpy fail!\n");
+    }
+
     ret = hisi_nve_direct_access(&nve_cold_patch);
     if(ret)
     {
@@ -141,7 +149,12 @@ void bsp_modem_cold_patch_update_modem_fail_count(void)
     mutex_lock(&cold_patch_proc_lock);
 
     if(g_cold_patch_dump_base != NULL)
-        (void)memcpy_s(g_cold_patch_dump_base ,COLD_PATCH_DUMP_SIZE,&g_cold_patch_info,sizeof(struct cold_patch_info_s));
+    {
+        ret = memcpy_s(g_cold_patch_dump_base ,COLD_PATCH_DUMP_SIZE,&g_cold_patch_info,sizeof(struct cold_patch_info_s));
+        if (ret) {
+            bsp_err("modem_cold_patch_update_modem_fail_count :memcpy fail!\n");
+        }
+    }
 
     if(!bsp_modem_cold_patch_is_exist())
     {
@@ -256,6 +269,9 @@ int bsp_modem_cold_patch_init(void)
     return 0;
 }
 
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+module_init(bsp_modem_cold_patch_init);
+#endif
 
 
 

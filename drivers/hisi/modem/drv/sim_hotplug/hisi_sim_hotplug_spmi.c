@@ -38,7 +38,7 @@
 #include <linux/hisi-spmi.h>
 #include <linux/of_hisi_spmi.h>
 #include <linux/mfd/hisi_pmic.h>
-#include <linux/wakelock.h>
+#include <linux/pm_wakeup.h>
 #include "hisi_sim_hotplug.h"
 
 #include <linux/init.h>
@@ -54,7 +54,9 @@
 #include <linux/poll.h>
 #include <linux/platform_device.h>
 #include <linux/of.h>
+#ifdef CONFIG_COMPAT
 #include <linux/compat.h>
+#endif
 #include "securec.h"
 #include <adrv.h>
 #include <bsp_print.h>
@@ -101,7 +103,7 @@ struct hisi_sim_hotplug_info
     struct workqueue_struct *sim_debounce_delay_wq;
     struct workqueue_struct *sim_sci_msg_wq;
     struct mutex            sim_hotplug_lock;
-    struct wake_lock        sim_hotplug_wklock;
+    struct wakeup_source    sim_hotplug_wklock;
     struct work_struct      sim_hotplug_hpd_work;
     struct work_struct      sim_hotplug_det_work;
     struct delayed_work     sim_debounce_delay_work;
@@ -568,8 +570,13 @@ static int sim_pmu_hpd_init(struct hisi_sim_hotplug_info *info, struct device_no
 
 static ssize_t sim_plug_state_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
+    int mret = 0;
     /*coverity[secure_coding]*/
-    memcpy_s(buf, sizeof(sim_plug_state), &sim_plug_state, sizeof(sim_plug_state));
+    mret = memcpy_s(buf, sizeof(sim_plug_state), &sim_plug_state, sizeof(sim_plug_state));
+    if(mret)
+    {
+        LOGE("memcpy failed!\n");
+    }
     return (ssize_t)sizeof(sim_plug_state);
 }
 
@@ -803,7 +810,7 @@ static void update_sim_hotplug_count(u32 sim_id, u8 sim_pluged)
     }
     else
     {
-        LOGE("invalid sim_id: %d\n", __func__, sim_id);
+        LOGE("invalid sim_id: %d\n", sim_id);
     }
 }
 
@@ -839,7 +846,7 @@ static int sim_set_inactive(struct hisi_sim_hotplug_info *info)
     return 0;
 }
 
-void send_det_msg_to_core(struct hisi_sim_hotplug_info *info, u32 channel_id, u8 sim_pluged)
+void send_det_msg_to_core(struct hisi_sim_hotplug_info *info, u32 channel_id, u32 sim_pluged)
 {
     int ret = 0;
     u8 sim1_type = STATUS_NO_CARD;
@@ -850,7 +857,7 @@ void send_det_msg_to_core(struct hisi_sim_hotplug_info *info, u32 channel_id, u8
         {
             LOGI("sim%d, sim_pluged = %s, bsp_icc_send to CP.\n",
                         info->sim_id, simplug_to_string(sim_pluged));
-            ret = bsp_icc_send(ICC_CPU_MODEM, channel_id, &sim_pluged, sizeof(sim_pluged));
+            ret = bsp_icc_send(ICC_CPU_MODEM, channel_id, (u8 *)&sim_pluged, sizeof(sim_pluged));
             if (ret != sizeof(sim_pluged))
             {
                 LOGE("sim%d, bsp_icc_send failed.\n", info->sim_id);
@@ -858,10 +865,12 @@ void send_det_msg_to_core(struct hisi_sim_hotplug_info *info, u32 channel_id, u8
         }
         else
         {
+#ifdef CONFIG_MMC_DW_MUX_SDSIM
             if( SIM_CARD_OUT == sim_pluged && SIM1 == info->sim_id)
                 (void)sd_sim_detect_run(NULL, STATUS_PLUG_OUT, MODULE_SIM, 0);
             else if(SIM_CARD_IN == sim_pluged && SIM1 == info->sim_id)
                 (void)sd_sim_detect_run(NULL, STATUS_PLUG_IN, MODULE_SIM, 0);
+#endif
             sim1_type = get_card1_status(info);
 
             if( SIM_CARD_OUT == sim_pluged && SIM1 == info->sim_id)//report out directly
@@ -869,7 +878,7 @@ void send_det_msg_to_core(struct hisi_sim_hotplug_info *info, u32 channel_id, u8
                 LOGI("sim%d, sim_pluged = %s, bsp_icc_send to CP.\n",
                         info->sim_id, simplug_to_string(sim_pluged));
 
-                ret = bsp_icc_send(ICC_CPU_MODEM, channel_id, &sim_pluged, sizeof(sim_pluged));
+                ret = bsp_icc_send(ICC_CPU_MODEM, channel_id, (u8 *)&sim_pluged, sizeof(sim_pluged));
                 if (ret != sizeof(sim_pluged))
                 {
                     LOGE("sim%d, bsp_icc_send failed.\n", info->sim_id);
@@ -881,7 +890,7 @@ void send_det_msg_to_core(struct hisi_sim_hotplug_info *info, u32 channel_id, u8
             {
                 LOGI("sim%d, sim_pluged = %s, bsp_icc_send to CP.\n",
                     info->sim_id, simplug_to_string(sim_pluged));
-                ret = bsp_icc_send(ICC_CPU_MODEM, channel_id, &sim_pluged, sizeof(sim_pluged));
+                ret = bsp_icc_send(ICC_CPU_MODEM, channel_id, (u8 *)&sim_pluged, sizeof(sim_pluged));
                 if (ret != sizeof(sim_pluged))
                 {
                     LOGE("sim%d, bsp_icc_send failed.\n", info->sim_id);
@@ -897,7 +906,7 @@ void send_det_msg_to_core(struct hisi_sim_hotplug_info *info, u32 channel_id, u8
 
 }
 
-static void hisi_sim_det_msg_to_ccore(struct hisi_sim_hotplug_info *info, u8 sim_pluged)
+static void hisi_sim_det_msg_to_ccore(struct hisi_sim_hotplug_info *info, u32 sim_pluged)
 {
     u32 channel_id      = 0;
     int det_gpio_level  = 0;
@@ -954,7 +963,7 @@ static void hisi_sim_hpd_msg_to_ccore(struct hisi_sim_hotplug_info *info)
 {
     u32 channel_id  = 0;
     s32 ret         = 0;
-    u8 sim_state    = SIM_HPD_LEAVE;
+    u32 sim_state    = SIM_HPD_LEAVE;
 
     if (NULL == info)
     {
@@ -978,7 +987,7 @@ static void hisi_sim_hpd_msg_to_ccore(struct hisi_sim_hotplug_info *info)
     update_sim_hotplug_count(info->sim_id, sim_state);
 
     LOGI("sim%d, SIM_HPD_LEAVE bsp_icc_send to CP.\n", info->sim_id);
-    ret = bsp_icc_send(ICC_CPU_MODEM, channel_id, &sim_state, sizeof(sim_state));
+    ret = bsp_icc_send(ICC_CPU_MODEM, channel_id, (u8 *)&sim_state, sizeof(sim_state));
     if (ret != sizeof(sim_state))
     {
         LOGE("sim%d, bsp_icc_send failed.\n", info->sim_id);
@@ -1060,7 +1069,7 @@ static void inquiry_sim_det_irq_reg(struct work_struct *work)
             {
                 debounce_wait_time = info->det_low_debounce_wait_time;
             }
-            wake_lock_timeout(&info->sim_hotplug_wklock, msecs_to_jiffies(debounce_wait_time + 5));
+            __pm_wakeup_event(&info->sim_hotplug_wklock, jiffies_to_msecs(debounce_wait_time + 5));
 
             queue_delayed_work(info->sim_debounce_delay_wq,
                                &info->sim_debounce_delay_work,
@@ -1507,7 +1516,7 @@ static int sim_state_init(struct hisi_sim_hotplug_info *info, struct device *dev
     }
 
     mutex_init(&(info->sim_hotplug_lock));
-    wake_lock_init(&info->sim_hotplug_wklock, WAKE_LOCK_SUSPEND, "android-simhotplug");
+    wakeup_source_init(&info->sim_hotplug_wklock, "android-simhotplug");
 
     return 0;
 }
@@ -1569,7 +1578,7 @@ static int sim_hpd_init(struct hisi_sim_hotplug_info *info, struct spmi_device *
 void notify_card_status(int32_t card_status)
 {
     s32 ret         = 0;
-    u8  sim_state   = SIM_CARD_IN;
+    u32  sim_state   = SIM_CARD_IN;
 
     if (SIM_CARD_IN == card_status)
     {
@@ -1587,7 +1596,7 @@ void notify_card_status(int32_t card_status)
         }
 
         LOGI("sim1, fake SIM_CARD_IN bsp_icc_send to CP\n");
-        ret = bsp_icc_send(ICC_CPU_MODEM, SIM1_CHANNEL_ID, &sim_state, sizeof(sim_state));
+        ret = bsp_icc_send(ICC_CPU_MODEM, SIM1_CHANNEL_ID, (u8 *)&sim_state, sizeof(sim_state));
         if (ret != sizeof(sim_state))
         {
             LOGE("sim1, bsp_icc_send failed.\n");
@@ -1610,9 +1619,11 @@ static u8 get_card1_status(struct hisi_sim_hotplug_info *info)
         LOGI("sim1 mux_sdsim is 0, as STATUS_SIM return.\n");
         return STATUS_SIM;
     }
+#ifdef CONFIG_MMC_DW_MUX_SDSIM
 
     status = get_card1_type();
 
+#endif
 
     return status;
 }
@@ -1624,8 +1635,13 @@ s32 handle_msg_from_sci(u32 channel_id, u32 len, void *context)
     s32 read_len    = 0;
     struct hisi_sim_hotplug_info *info = context;
 
-    read_len = bsp_icc_read(channel_id, (u8*)&request_id, len);
-    if ((u32)read_len != len)
+    if (len != sizeof(request_id))
+    {
+        LOGE("wrong len(%d).\n", len);
+        return -1;
+    }
+    read_len = bsp_icc_read(channel_id, (u8 *)&request_id, sizeof(request_id));
+    if ((u32)read_len != sizeof(request_id))
     {
         LOGE("readed len(%d) != expected len(%d)\n", read_len, len);
         return -1;
@@ -1649,7 +1665,7 @@ s32 handle_msg_from_sci(u32 channel_id, u32 len, void *context)
 static void sim_sci_msg_proc(struct work_struct *work)
 {
     s32 ret         = 0;
-    u8  status      = 0;
+    u32  status      = 0;
     u32 channel_id = 0;
     struct hisi_sim_hotplug_info *info =
             container_of(work, struct hisi_sim_hotplug_info, sim_sci_msg_work);
@@ -1672,7 +1688,7 @@ static void sim_sci_msg_proc(struct work_struct *work)
     status = get_card1_status(info);
 
     LOGI("bsp_icc_send status to cp, status: %d(%s), simid %d, mux_sdsim %d\n", status, card_status_to_string(status), info->sim_id, info->mux_sdsim);
-    ret = bsp_icc_send(ICC_CPU_MODEM, channel_id, &status, sizeof(status));
+    ret = bsp_icc_send(ICC_CPU_MODEM, channel_id, (u8 *)&status, sizeof(status));
     if (ret != sizeof(status))
     {
         LOGE("in REQUEST_CARD_STATUS, bsp_icc_send failed.\n");
@@ -1759,11 +1775,13 @@ static long simhotplug_ioctl(struct file *flip, unsigned int cmd, unsigned long 
 }
 
 /* support of 32bit userspace on 64bit platforms */
+#ifdef CONFIG_COMPAT
 static long compat_simhotplug_ioctl(struct file *flip,
     unsigned int cmd, unsigned long arg)
 {
     return simhotplug_ioctl(flip, cmd, (unsigned long) compat_ptr(arg));
 }
+#endif
 
 static int simhotplug_release(struct inode *inode, struct file *filp)
 {
@@ -1779,7 +1797,9 @@ static const struct file_operations simhp_dev_fops = {
 	.owner = THIS_MODULE,
 	.open = simhotplug_open,
 	.unlocked_ioctl = simhotplug_ioctl,
+#ifdef CONFIG_COMPAT
 	.compat_ioctl = compat_simhotplug_ioctl,
+#endif
        .release = simhotplug_release,
 };
 
@@ -1789,8 +1809,17 @@ static int create_simhp_node(int sim_id)
     int ret = 0;
     struct device *dev = NULL;
     char simhp_dev_name[16];
-    memset_s(simhp_dev_name,sizeof(simhp_dev_name),0,sizeof(simhp_dev_name));
-    snprintf_s(simhp_dev_name,sizeof(simhp_dev_name), (sizeof(simhp_dev_name)-1),SIMHP_NAME_BASE"%d",sim_id);
+    int mret = 0;
+    mret = memset_s(simhp_dev_name,sizeof(simhp_dev_name),0,sizeof(simhp_dev_name));
+    if(mret)
+    {
+        LOGE("memset failed.\n");
+    }
+    mret = snprintf_s(simhp_dev_name,sizeof(simhp_dev_name), (sizeof(simhp_dev_name)-1),SIMHP_NAME_BASE"%d",sim_id);
+    if(mret < 0)
+    {
+        LOGE("snprintf failed.\n");
+    }
 
     LOGE("start\n");
 
@@ -1862,6 +1891,7 @@ int sim_hotplug_sdmux_init(struct hisi_sim_hotplug_info *info)
 {
     int     ret = 0;
 
+#ifdef CONFIG_MMC_DW_MUX_SDSIM
     if((SIM1 == info->sim_id) && (1 == info->mux_sdsim))
     {
         if (STATUS_SD2JTAG == get_card1_type())
@@ -1885,6 +1915,7 @@ int sim_hotplug_sdmux_init(struct hisi_sim_hotplug_info *info)
             ret = create_simhp_node(info->sim_id);
         }
     }
+#endif
 
     return ret;
 }
@@ -1957,11 +1988,13 @@ static int hisi_sim_hotplug_probe(struct spmi_device *pdev)
     }
     else if (SIM1 == info->sim_id)
     {
+#ifdef CONFIG_MMC_DW_MUX_SDSIM
         if (1 == info->mux_sdsim)
         {
             ret = sd_sim_detect_run(NULL, !(info->sim_pluged), MODULE_SIM, 0);
             LOGI("sd_sim_detect_run ret: %d\n", ret);
         }
+#endif
         ret = bsp_icc_event_register(SIM1_CHANNEL_ID, handle_msg_from_sci, info, NULL, NULL);
         if (ret != 0)
         {
@@ -1975,7 +2008,7 @@ static int hisi_sim_hotplug_probe(struct spmi_device *pdev)
     return ret;
 
 free_sim_lock:
-    wake_lock_destroy(&info->sim_hotplug_wklock);
+    wakeup_source_trash(&info->sim_hotplug_wklock);
     mutex_destroy(&info->sim_hotplug_lock);
 
 free_sim_det_wq:
@@ -2010,7 +2043,7 @@ static int hisi_sim_hotplug_remove(struct spmi_device *pdev)
     }
 
     mutex_destroy(&info->sim_hotplug_lock);
-    wake_lock_destroy(&info->sim_hotplug_wklock);
+    wakeup_source_trash(&info->sim_hotplug_wklock);
 
     if (info->sim_hotplug_det_wq)
     {
@@ -2044,6 +2077,7 @@ static int hisi_sim_hotplug_remove(struct spmi_device *pdev)
     return 0;
 }
 
+#ifdef CONFIG_PM
 static int hisi_sim_hotplug_suspend(struct spmi_device *pdev, pm_message_t state)
 {
     struct hisi_sim_hotplug_info *info;
@@ -2081,6 +2115,7 @@ static int hisi_sim_hotplug_resume(struct spmi_device *pdev)
 
     return 0;
 }
+#endif
 
 static struct of_device_id hisi_sim_hotplug_of_match[] =
 {
@@ -2101,8 +2136,10 @@ static struct spmi_driver hisi_sim_hotplug_driver =
         .name       = "hisi-sim_hotplug",
         .of_match_table = of_match_ptr(hisi_sim_hotplug_of_match),
     },
+#ifdef CONFIG_PM
     .suspend        = hisi_sim_hotplug_suspend,
     .resume         = hisi_sim_hotplug_resume,
+#endif
 };
 
 int __init hisi_sim_hotplug_init(void)
@@ -2115,6 +2152,10 @@ static void __exit hisi_sim_hotplug_exit(void)
     spmi_driver_unregister(&hisi_sim_hotplug_driver);
 }
 
+#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
+late_initcall(hisi_sim_hotplug_init);
+module_exit(hisi_sim_hotplug_exit);
+#endif
 MODULE_DESCRIPTION("Sim hotplug driver");
 MODULE_LICENSE("GPL v2");
 

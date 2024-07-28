@@ -195,6 +195,7 @@ VOS_UINT32 At_TestUsbTetherInfo(VOS_UINT8 ucIndex);
 VOS_UINT32 At_QryDconnStatPara(VOS_UINT8 ucIndex);
 VOS_UINT32 AT_TestDconnStatPara(VOS_UINT8 ucIndex);
 AT_PDP_STATUS_ENUM_UINT32 AT_NdisGetConnStatus(AT_PDP_STATE_ENUM_U8 enPdpState);
+VOS_UINT32 AT_SetEmcStatus(VOS_UINT8 ucIndex);
 
 #if (VOS_OS_VER == VOS_WIN32)
 #pragma pack()

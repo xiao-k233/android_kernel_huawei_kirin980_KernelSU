@@ -119,6 +119,16 @@ VOS_VOID DMS_SetLogLevel(VOS_UINT32 ulLvl)
     return;
 }
 
+#if ( FEATURE_ON == FEATURE_DEBUG_PRINT_ADDRESS )
+VOS_VOID DMS_ShowDebugInfo(VOS_VOID)
+{
+    DMS_MAIN_INFO                      *pstMainInfo = DMS_GetMainInfo();
+
+    PS_PRINTF_INFO("<DMS_ShowDebugInfo> pfnAcmReadData = %p\n", pfnAcmReadData);
+    PS_PRINTF_INFO("<DMS_ShowDebugInfo> pstMainInfo->pfnRdDataCallback = %p\n", pstMainInfo->pfnRdDataCallback);
+    return;
+}
+#endif
 
 VOS_VOID DMS_ShowAtServerNvInfo(VOS_VOID)
 {
@@ -236,6 +246,29 @@ VOS_VOID DMS_ShowVcomStats(VOS_VOID)
     return;
 }
 
+#if ( FEATURE_ON == FEATURE_DEBUG_PRINT_ADDRESS )
+
+VOS_VOID DMS_ShowNlkEntityInfo(VOS_VOID)
+{
+    PS_PRINTF_INFO("DMS NLK CONTEXT START:                    \n");
+    PS_PRINTF_INFO("SOCKET:                         %p\n", g_stDmsNlkEntity.pstSock);
+    PS_PRINTF_INFO("LTE CTRL Read CB:               %p\n", g_stDmsNlkEntity.astOmChanProp[DMS_OM_CHAN_LTE_CTRL].pDataFunc);
+    PS_PRINTF_INFO("LTE CTRL MSG Type:              %d\n", g_stDmsNlkEntity.astOmChanProp[DMS_OM_CHAN_LTE_CTRL].enMsgType);
+    PS_PRINTF_INFO("LTE CTRL PHY BEAR:              %d\n", g_stDmsNlkEntity.astOmChanProp[DMS_OM_CHAN_LTE_CTRL].enPhyBear);
+    PS_PRINTF_INFO("LTE CTRL PHY PID:               %d\n", g_stDmsNlkEntity.astPhyBearProp[DMS_NLK_PHY_BEAR_LTE].lPid);
+    PS_PRINTF_INFO("LTE DATA Read CB:               %p\n", g_stDmsNlkEntity.astOmChanProp[DMS_OM_CHAN_LTE_DATA].pDataFunc);
+    PS_PRINTF_INFO("LTE DATA MSG Type:              %d\n", g_stDmsNlkEntity.astOmChanProp[DMS_OM_CHAN_LTE_DATA].enMsgType);
+    PS_PRINTF_INFO("LTE DATA PHY BEAR:              %d\n", g_stDmsNlkEntity.astOmChanProp[DMS_OM_CHAN_LTE_DATA].enPhyBear);
+    PS_PRINTF_INFO("LTE DATA PHY PID:               %d\n", g_stDmsNlkEntity.astPhyBearProp[DMS_NLK_PHY_BEAR_LTE].lPid);
+    PS_PRINTF_INFO("GU Read CB:                     %p\n", g_stDmsNlkEntity.astOmChanProp[DMS_OM_CHAN_GU_DATA].pDataFunc);
+    PS_PRINTF_INFO("GU DATA MSG Type:               %d\n", g_stDmsNlkEntity.astOmChanProp[DMS_OM_CHAN_GU_DATA].enMsgType);
+    PS_PRINTF_INFO("GU DATA PHY BEAR:               %d\n", g_stDmsNlkEntity.astOmChanProp[DMS_OM_CHAN_GU_DATA].enPhyBear);
+    PS_PRINTF_INFO("GU DATA PHY PID:                %d\n", g_stDmsNlkEntity.astPhyBearProp[DMS_NLK_PHY_BEAR_GU].lPid);
+    PS_PRINTF_INFO("DMS NLK CONTEXT END.                    \n");
+
+    return;
+}
+#endif
 
 
 VOS_VOID DMS_ShowNlkUlStats(VOS_VOID)

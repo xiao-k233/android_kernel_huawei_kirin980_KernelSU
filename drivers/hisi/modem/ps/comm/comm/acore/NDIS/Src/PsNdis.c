@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Huawei Technologies Co., Ltd. 2012-2015. All rights reserved.
+ * Copyright (C) Huawei Technologies Co., Ltd. 2012-2019. All rights reserved.
  * foss@huawei.com
  *
  * If distributed as part of the Linux kernel, the following license terms
@@ -59,7 +59,9 @@
 #include "Ipv4DhcpServer.h"
 #include "PsCommonDef.h"
 #include "msp_at.h"
+#if (FEATURE_ON == FEATURE_LTE)
 #include "msp_diag.h"
+#endif
 #include "vos.h"
 #include "IpNdServer.h"
 #include "nv_stru_gucnas.h"
@@ -136,7 +138,19 @@ extern VOS_UINT32 DIPC_AtMsgProc( const MsgBlock *pMsgBlock );
 extern VOS_UINT32 MUX_Pid_InitFunc( enum VOS_INIT_PHASE_DEFINE ip );
 extern VOS_UINT32 MUX_AtMsgProc( const MsgBlock *pMsgBlock );
 
+/* ****************************************************************************
+ 函 数 名  : Ndis_GetMacAddr
+ 功能描述  : 获取MAC地址
+ 输入参数  : None
+ 输出参数  : None
+ 返 回 值  : VOS_UINT8*
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2014年10月17日
+    修改内容   : 新生成函数
+*****************************************************************************/
 VOS_UINT8* Ndis_GetMacAddr(VOS_VOID)
 {
     /*LTE协议栈MAC地址*/
@@ -149,7 +163,20 @@ VOS_UINT8* Ndis_GetMacAddr(VOS_VOID)
 }
 
 
+/*****************************************************************************
+ 函 数 名  : Ndis_SndMsgToAt
+ 功能描述  : 发送Cnf消息到AT
+ 输入参数  :
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年3月16日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT32 Ndis_SndMsgToAt(const VOS_UINT8 *pucBuf,VOS_UINT16 usMsgLen,VOS_UINT32 ulMsgId)
 {
     MsgBlock                     *pstMsgBlock   = VOS_NULL_PTR;
@@ -186,7 +213,24 @@ VOS_UINT32 Ndis_SndMsgToAt(const VOS_UINT8 *pucBuf,VOS_UINT16 usMsgLen,VOS_UINT3
 
 
 
+/* ****************************************************************************
+ 函 数 名  : Ndis_DlAdsDataRcv
+ 功能描述  : NDIS_ADS下行数据接收回调函数
+ 输入参数  : VOS_VOID *pBuf
+             VOS_UINT32 ulLen
+ 输出参数  : 无
+ 返 回 值  : VOS_INT
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年12月9日
+    修改内容   : 新生成函数
+
+  2.日    期   : 2013年1月16日
+    修改内容   : DSDA特性开发，入参修改为扩展承载ID
+
+*****************************************************************************/
 VOS_INT Ndis_DlAdsDataRcv(VOS_UINT8 ucExRabId, IMM_ZC_STRU *pData, ADS_PKT_TYPE_ENUM_UINT8 enPktType, VOS_UINT32 ulExParam)
 {
     if (VOS_NULL_PTR == pData)
@@ -222,7 +266,21 @@ VOS_INT Ndis_DlAdsDataRcv(VOS_UINT8 ucExRabId, IMM_ZC_STRU *pData, ADS_PKT_TYPE_
     return PS_SUCC;
 }
 
+/* ****************************************************************************
+ 函 数 名  : Ndis_DlAdsDataRcvV2
+ 功能描述  : NDIS_ADS下行数据接收回调函数
+ 输入参数  : VOS_VOID *pBuf
+             VOS_UINT32 ulLen
+ 输出参数  : 无
+ 返 回 值  : VOS_INT
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2018年08月16日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_INT Ndis_DlAdsDataRcvV2(unsigned long ulUserData, IMM_ZC_STRU *pData)
 {
     ADS_PKT_TYPE_ENUM_UINT8         enPktType;
@@ -267,7 +325,21 @@ VOS_INT Ndis_DlAdsDataRcvV2(unsigned long ulUserData, IMM_ZC_STRU *pData)
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ 函 数 名  : AppNdis_UsbReadCb
+ 功能描述  : App核间USB通道
+ 输入参数  : VOS_VOID *pBuf
+             VOS_UINT32 ulLen
+ 输出参数  : 无
+ 返 回 值  : VOS_UINT32
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年1月31日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT32 AppNdis_UsbReadCb(UDI_HANDLE ulhandle, VOS_VOID *pPktNode)
 {
     IMM_ZC_STRU            *pstImmZc = (IMM_ZC_STRU*)pPktNode;    /*目前ImmZc和sk_buff完全一致，直接强转*/
@@ -330,7 +402,21 @@ VOS_UINT32 AppNdis_UsbReadCb(UDI_HANDLE ulhandle, VOS_VOID *pPktNode)
 
     return PS_SUCC;
 }
+/*****************************************************************************
+ 函 数 名  : AppNdis_SpeReadCb
+ 功能描述  : App核间SPE通道
+ 输入参数  : VOS_VOID *pBuf
+             VOS_UINT32 ulLen
+ 输出参数  : 无
+ 返 回 值  : VOS_UINT32
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2015年1月31日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT32 AppNdis_SpeReadCb(VOS_INT32 lSpePort, VOS_VOID *pPktNode)
 {
     IMM_ZC_STRU            *pstImmZc = (IMM_ZC_STRU*)pPktNode;    /*目前ImmZc和sk_buff完全一致，直接强转*/
@@ -389,7 +475,20 @@ VOS_UINT32 AppNdis_SpeReadCb(VOS_INT32 lSpePort, VOS_VOID *pPktNode)
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_NvItemInit
+ 功能描述  : A核NDIS读取NV项的初始化函数
+ 输入参数  : VOS_VOID
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2012年4月24日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT32 Ndis_NvItemInit(VOS_VOID)
 {
     VOS_UINT32     ulRtn;
@@ -458,7 +557,20 @@ VOS_UINT32 Ndis_NvItemInit(VOS_VOID)
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_Init
+ 功能描述  : APP核NDIS功能的初始化函数
+ 输入参数  : VOS_VOID
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年2月10日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT32 Ndis_Init( VOS_VOID )
 {
     VOS_UINT32     ulLoop;
@@ -503,7 +615,21 @@ VOS_UINT32 Ndis_Init( VOS_VOID )
 
     return PS_SUCC;
 }
+/*****************************************************************************
+ 函 数 名  : Ndis_DlSendNcm
+ 功能描述  : 下行方向的NCM数据的发送
+ 输入参数  : 无
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年2月11日
+    修改内容   : 新生成函数
+     2.日    期   : 2015年2月11日
+    修改内容   : SPE
+*****************************************************************************/
 VOS_UINT32 Ndis_DlSendNcm(VOS_UINT8 ucExRabId, ADS_PKT_TYPE_ENUM_UINT8 ucPktType, IMM_ZC_STRU *pstImmZc)
 {
     VOS_UINT32                     ulResult;
@@ -606,7 +732,18 @@ VOS_UINT32 Ndis_DlUsbSendNcm(VOS_UINT8 ucExRabId, ADS_PKT_TYPE_ENUM_UINT8 ucPktT
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_ProcTmrMsg
+ 功能描述  : 处理TmerMsg
+ 输入参数  : MsgBlock *pRcvMsg
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+  1.日    期   : 2012年4月28日
+    修改内容   : 新生成函数
+*****************************************************************************/
 VOS_VOID Ndis_ProcARPTimerExp(VOS_VOID)
 {
     VOS_UINT32                   ulLoop;
@@ -624,7 +761,9 @@ VOS_VOID Ndis_ProcARPTimerExp(VOS_VOID)
 
             if (PS_TRUE == pstIpV4Info->ulArpInitFlg)
             {
+                #if (VOS_OS_VER != VOS_WIN32)
                 Ndis_StopARPTimer(pstArpPeriodTimer);
+                #endif
             }
             else
             {
@@ -636,7 +775,19 @@ VOS_VOID Ndis_ProcARPTimerExp(VOS_VOID)
     return;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_ProcTmrMsg
+ 功能描述  : 处理TmerMsg
+ 输入参数  : MsgBlock *pRcvMsg
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史  :
+  1.日    期   : 2012年4月28日
+    修改内容   : 新生成函数
+*****************************************************************************/
 VOS_VOID Ndis_ProcTmrMsg(const REL_TIMER_MSG *pRcvMsg)
 {
 
@@ -659,7 +810,20 @@ VOS_VOID Ndis_ProcTmrMsg(const REL_TIMER_MSG *pRcvMsg)
     return;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_DHCPPkt_Proc
+ 功能描述  : DHCP处理
+ 输入参数  : 无
+ 输出参数  : 无
+ 返 回 值  : VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年2月11日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_VOID Ndis_DHCPPkt_Proc(VOS_VOID *pRcvMsg)
 {
     ADS_NDIS_DATA_IND_STRU  *pstAdsNdisMsg  = (ADS_NDIS_DATA_IND_STRU*)pRcvMsg;
@@ -702,7 +866,20 @@ VOS_VOID Ndis_DHCPPkt_Proc(VOS_VOID *pRcvMsg)
 
     return;
 }
+/*****************************************************************************
+ 函 数 名  : Ndis_FindRabIdBySpePort
+ 功能描述  : 根据SpePort查找RabId
+ 输入参数  : 无
+ 输出参数  : 无
+ 返 回 值  : VOS_UINT32
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年12月9日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT8 Ndis_FindRabIdBySpePort(VOS_INT32 lPort, VOS_UINT16 usFrameType)
 {
     VOS_UINT32                      ulLoop;
@@ -739,7 +916,20 @@ VOS_UINT8 Ndis_FindRabIdBySpePort(VOS_INT32 lPort, VOS_UINT16 usFrameType)
 
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_FindRabIdByHandle
+ 功能描述  : 根据Handle查找RabId
+ 输入参数  : 无
+ 输出参数  : 无
+ 返 回 值  : VOS_UINT32
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年12月9日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT8 Ndis_FindRabIdByHandle(UDI_HANDLE ulhandle, VOS_UINT16 usFrameType)
 {
     VOS_UINT32                      ulLoop;
@@ -775,7 +965,23 @@ VOS_UINT8 Ndis_FindRabIdByHandle(UDI_HANDLE ulhandle, VOS_UINT16 usFrameType)
 
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_UlNcmFrmProc
+ 功能描述  : 对上行NCM帧的处理
+ 输入参数  : UDI_HANDLE ulhandle, IMM_ZC_STRU *pstImmZc
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年2月11日
+    修改内容   : 新生成函数
+
+  2.日    期   : 2013年1月16日
+    修改内容   : DSDA开发
+
+*****************************************************************************/
 VOS_VOID Ndis_UlNcmFrmProc(VOS_UINT8 ucExRabId, IMM_ZC_STRU *pstImmZc)
 {
     VOS_UINT16                  usFrameType;
@@ -907,18 +1113,39 @@ VOS_VOID Ndis_UlNcmFrmProc(VOS_UINT8 ucExRabId, IMM_ZC_STRU *pstImmZc)
     }
 
     /*NR版本上暂不编译该部分，待NR Ndis迭代开始后再调整该部分*/
+    #if (FEATURE_OFF == FEATURE_DATA_SERVICE_NEW_PLATFORM)
     if (VOS_OK != ADS_UL_SendPacket(pstImmZc, ucExRabId))
     {
         NDIS_ERROR_LOG(NDIS_TASK_PID, "Ndis_UlNcmFrmProc, ADS_UL_SendPacket fail!");
         return;
     }
+    #else
+    if (VOS_OK != ads_iface_tx(ucExRabId, pstImmZc))
+    {
+        NDIS_ERROR_LOG(NDIS_TASK_PID, "Ndis_UlNcmFrmProc, ads_iface_tx fail!")
+        return;
+    }
+    #endif
 
     NDIS_STAT_UL_SEND_ADSPKT(1);
 
     return;
 }
 
+/*****************************************************************************
+ 函 数 名  : APP_Ndis_DLPid_InitFunc
+ 功能描述  : APP NDIS下行PID初始化函数
+ 输入参数  : enum VOS_INIT_PHASE_DEFINE ePhase
+ 输出参数  : 无
+ 返 回 值  : extern VOS_UINT32
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年2月15日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT32  APP_Ndis_Pid_InitFunc( enum VOS_INIT_PHASE_DEFINE ePhase)
 {
     VOS_UINT32  ulResult = PS_FAIL;
@@ -955,7 +1182,20 @@ VOS_UINT32  APP_Ndis_Pid_InitFunc( enum VOS_INIT_PHASE_DEFINE ePhase)
     return VOS_OK;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_SendMacFrm
+ 功能描述  : 发送以太网帧接口
+ 输入参数  : 无
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年2月14日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT32 Ndis_SendMacFrm(const VOS_UINT8  *pucBuf, VOS_UINT32 ulLen, VOS_UINT8 ucExRabId)
 {
     IMM_ZC_STRU      *pstImmZc = VOS_NULL_PTR;
@@ -977,7 +1217,7 @@ VOS_UINT32 Ndis_SendMacFrm(const VOS_UINT8  *pucBuf, VOS_UINT32 ulLen, VOS_UINT8
         return PS_FAIL;
     }
 
-    ucPdata = (VOS_UINT8*)IMM_ZcPut(pstImmZc, ulLen);             /*与yinweidong确认的*/
+    ucPdata = (VOS_UINT8*)IMM_ZcPut(pstImmZc, ulLen);
     if (VOS_NULL_PTR == ucPdata)
     {
         /*lint -e522*/
@@ -1017,7 +1257,23 @@ VOS_UINT32 Ndis_SendMacFrm(const VOS_UINT8  *pucBuf, VOS_UINT32 ulLen, VOS_UINT8
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_ProcReqArp
+ 功能描述  : 处理ARP Request 帧
+ 输入参数  :
 
+ 输出参数  : 无
+ 返 回 值  : 成功返回PS_SUCC;
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2011年2月11日
+    修改内容   : 新生成函数
+  2.日    期   : 2013年1月22日
+  修改内容   : DSDA
+
+*****************************************************************************/
 
 VOS_UINT32 Ndis_ProcReqArp(ETH_ARP_FRAME_STRU *pstReqArp, VOS_UINT8 ucRabId)
 {
@@ -1081,7 +1337,22 @@ VOS_UINT32 Ndis_ProcReqArp(ETH_ARP_FRAME_STRU *pstReqArp, VOS_UINT8 ucRabId)
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_ProcReplyArp
+ 功能描述  : 处理ARP Reply 帧,更新PC的MAC地址
+ 输入参数  :
 
+ 输出参数  : 无
+ 返 回 值  : 成功返回PS_SUCC;
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2009年12月31日
+    修改内容   : 新生成函数
+  2.日    期   : 2013年1月22日
+    修改内容   : DSDA
+*****************************************************************************/
 VOS_UINT32 Ndis_ProcReplyArp(const ETH_ARP_FRAME_STRU *pstRspArp, VOS_UINT8 ucRabId)
 {
     NDIS_IPV4_INFO_STRU         *pstArpV4Info = VOS_NULL_PTR;
@@ -1112,7 +1383,20 @@ VOS_UINT32 Ndis_ProcReplyArp(const ETH_ARP_FRAME_STRU *pstRspArp, VOS_UINT8 ucRa
     return PS_FAIL;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_Ipv4PdnInfoCfg
+ 功能描述  : IPV4 PDN信息配置
+ 输入参数  : 无
+ 输出参数  : 无
+ 返 回 值  :
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年3月15日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_VOID  Ndis_Ipv4PdnInfoCfg(const AT_NDIS_IPV4_PDN_INFO_STRU *pstNasNdisInfo,
                                            NDIS_ENTITY_STRU  *pstNdisEntity)
 {
@@ -1195,9 +1479,22 @@ VOS_VOID  Ndis_Ipv4PdnInfoCfg(const AT_NDIS_IPV4_PDN_INFO_STRU *pstNasNdisInfo,
     return;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_StartARPTimer
+ 功能描述  : NDIS启动周期性ARP定时器
+ 输出参数  : 无
+ 返 回 值  : VOS_UINT32
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2012年4月19日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT32 Ndis_StartARPTimer(NDIS_ENTITY_STRU *pstNdisEntity)
 {
+    #if (VOS_OS_VER != VOS_WIN32)
     VOS_UINT32                      ulRtn;
     NDIS_ARP_PERIOD_TIMER_STRU     *pstArpPeriodTimer;
 
@@ -1229,11 +1526,24 @@ VOS_UINT32 Ndis_StartARPTimer(NDIS_ENTITY_STRU *pstNdisEntity)
         pstArpPeriodTimer->hTm = VOS_NULL_PTR;
         return PS_FAIL;
     }
+    #endif
 
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_StopARPTimer
+ 功能描述  : NDIS停止周期性ARP定时器
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2012年4月19日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_VOID Ndis_StopARPTimer(NDIS_ARP_PERIOD_TIMER_STRU *pstArpPeriodTimer)
 {
     if (VOS_NULL_PTR != pstArpPeriodTimer->hTm)
@@ -1247,14 +1557,95 @@ VOS_VOID Ndis_StopARPTimer(NDIS_ARP_PERIOD_TIMER_STRU *pstArpPeriodTimer)
 
     return;
 }
+#if (FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
+/*****************************************************************************
+ 函 数 名  : Ndis_ChkRabIdValid
+ 功能描述  : Ndis检查ExRabId取值是否在合法范围内
+ 输入参数  :
 
+ 输出参数  : 无
+ 返 回 值  : VOS_UINT32
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2018年08月21日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
+VOS_UINT32 Ndis_ChkRabIdValid(VOS_UINT8 ucExRabId)
+{
+    /*B5000及以后的版本下，Ndis的索引为IFACE ID*/
+    if (ucExRabId >= PS_IFACE_ID_BUTT)
+    {
+        return PS_FAIL;
+    }
+
+    return PS_SUCC;
+}
+#if (VOS_OS_VER != VOS_WIN32)
+/*****************************************************************************
+ 函 数 名  : ADS_DL_RegDlDataCallback
+ 功能描述  : 桩函数
+ 输入参数  :
+
+ 输出参数  : 无
+ 返 回 值  : VOS_UINT32
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2018年08月21日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
+VOS_UINT32 ADS_DL_RegDlDataCallback(VOS_UINT8 ucRabId, RCV_DL_DATA_FUNC pFunc, VOS_UINT32 ulExParam)
+{
+    return PS_SUCC;
+}
+#endif
+#else
+
+#if (VOS_OS_VER != VOS_WIN32)
+/*****************************************************************************
+ 函 数 名  : ads_iface_register_rx_handler
+ 功能描述  : 桩函数
+ 输入参数  :
+
+ 输出参数  : 无
+ 返 回 值  : VOS_UINT32
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2018年08月21日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 int ads_iface_register_rx_handler(VOS_UINT8 iface_id,
                                        struct ads_iface_rx_handler_s *rx_handler)
 {
     return PS_SUCC;
 }
+#endif
+/*****************************************************************************
+ 函 数 名  : Ndis_ChkRabIdValid
+ 功能描述  : Ndis检查ExRabId取值是否在合法范围内
+ 输入参数  :
 
+ 输出参数  : 无
+ 返 回 值  : VOS_UINT32
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2012年12月7日
+    修改内容   : 新生成函数
+
+  2.日    期   : 2013年1月15日
+    修改内容   : DSDA特性开发:对ModemID和RabId均做检查
+
+*****************************************************************************/
 VOS_UINT32 Ndis_ChkRabIdValid(VOS_UINT8 ucExRabId)
 {
     VOS_UINT16 usModemId;
@@ -1274,8 +1665,22 @@ VOS_UINT32 Ndis_ChkRabIdValid(VOS_UINT8 ucExRabId)
 
     return PS_SUCC;
 }
+#endif
 
+/*****************************************************************************
+ 函 数 名  : NDIS_GetEntityByRabId
+ 功能描述  : 根据ExRabId查找NDIS实体
+ 输入参数  : VOS_UINT8 ucExRabId
+ 输出参数  : 无
+ 返 回 值  : NDIS_ENTITY_STRU*
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2013年1月15日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 NDIS_ENTITY_STRU* NDIS_GetEntityByRabId(VOS_UINT8 ucExRabId)
 {
     VOS_UINT16 i = 0;
@@ -1293,7 +1698,20 @@ NDIS_ENTITY_STRU* NDIS_GetEntityByRabId(VOS_UINT8 ucExRabId)
     return VOS_NULL_PTR;
 }
 
+/*****************************************************************************
+ 函 数 名  : NDIS_AllocEntity
+ 功能描述  : 分配一个空闲的NDIS实体
+ 输入参数  : 无
+ 输出参数  : 无
+ 返 回 值  : NDIS_ENTITY_STRU*
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2013年1月15日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 NDIS_ENTITY_STRU* NDIS_AllocEntity(VOS_VOID)
 {
     VOS_UINT16 i = 0;
@@ -1311,7 +1729,20 @@ NDIS_ENTITY_STRU* NDIS_AllocEntity(VOS_VOID)
     return VOS_NULL_PTR;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_CheckIpv4PdnInfo
+ 功能描述  : PDN IPV4地址信息检查
+ 输入参数  : AT_NDIS_IPV4_PDN_INFO_STRU
+ 输出参数  :
+ 返 回 值  : VOS_UINT32
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年12月11日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT32 Ndis_CheckIpv4PdnInfo(const AT_NDIS_IPV4_PDN_INFO_STRU *pstIpv4PdnInfo)
 {
     if (PS_FALSE == pstIpv4PdnInfo->bitOpPdnAddr)
@@ -1361,7 +1792,20 @@ VOS_UINT32  Ndis_PdnV4PdnCfg( const AT_NDIS_PDNINFO_CFG_REQ_STRU *pstNasNdisInfo
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_PdnV6PdnCfg
+ 功能描述  : IPV6 PDN信息配置
+ 输入参数  : 无
+ 输出参数  : 无
+ 返 回 值  :
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年12月23日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT32  Ndis_PdnV6PdnCfg(const AT_NDIS_PDNINFO_CFG_REQ_STRU *pstNasNdisInfo,
                                      NDIS_ENTITY_STRU  *pstNdisEntity)
 {
@@ -1391,7 +1835,21 @@ VOS_UINT32  Ndis_PdnV6PdnCfg(const AT_NDIS_PDNINFO_CFG_REQ_STRU *pstNasNdisInfo,
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_AtCnfResultProc
+ 功能描述  : NDIS向AT返回的配置确认结果处理
+ 输入参数  :
 
+ 输出参数  : 无
+ 返 回 值  : 成功返回PS_SUCC;
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2012年4月25日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT8 Ndis_AtCnfResultProc(const AT_NDIS_PDNINFO_CFG_REQ_STRU *pstNasNdisInfo, VOS_UINT32 ulV4Ret, VOS_UINT32 ulV6Ret)
 {
     VOS_UINT8  enResult;
@@ -1423,7 +1881,24 @@ VOS_UINT8 Ndis_AtCnfResultProc(const AT_NDIS_PDNINFO_CFG_REQ_STRU *pstNasNdisInf
 
     return enResult;
 }
+/*****************************************************************************
+ 函 数 名  : Ndis_PdnInfoCfgProc
+ 功能描述  : PDN地址信息参数配置
+ 输入参数  :
 
+ 输出参数  : 无
+ 返 回 值  : 成功返回PS_SUCC;
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2011年12月31日
+    修改内容   : 新生成函数
+
+  2.日    期   : 2013年1月15日
+    修改内容   : DSDA特性，主要增加对接口消息中ModemId的处理
+
+*****************************************************************************/
 VOS_VOID Ndis_PdnInfoCfgProc(const AT_NDIS_PDNINFO_CFG_REQ_STRU *pstNasNdisInfo)
 {
     VOS_UINT8                       ucExRabId;
@@ -1532,7 +2007,24 @@ VOS_VOID Ndis_PdnInfoCfgProc(const AT_NDIS_PDNINFO_CFG_REQ_STRU *pstNasNdisInfo)
     return;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_PdnRel
+ 功能描述  : PDN释放
+ 输入参数  :
 
+ 输出参数  : 无
+ 返 回 值  : 成功返回PS_SUCC;
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2011年12月7日
+    修改内容   : 用户面融合修改
+
+  1.日    期   : 2013年1月15日
+    修改内容   : DSDA特性开发:
+
+*****************************************************************************/
 VOS_VOID Ndis_PdnRel(const AT_NDIS_PDNINFO_REL_REQ_STRU *pstNasNdisRel)
 {
     VOS_UINT8                      ucExRabId;
@@ -1597,7 +2089,21 @@ VOS_VOID Ndis_PdnRel(const AT_NDIS_PDNINFO_REL_REQ_STRU *pstNasNdisRel)
     return;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_ATIfaceUpCfgTransToPdnInfoCfg
+ 功能描述  : IFACE UP CFG消息内容转成PND INFO CFG消息内容
+ 输入参数  :
 
+ 输出参数  : 无
+ 返 回 值  : 成功返回PS_SUCC;
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2018年08月16日
+    修改内容   : 新增
+
+*****************************************************************************/
 
 VOS_VOID Ndis_ATIfaceUpCfgTransToPdnInfoCfg(const	AT_NDIS_IFACE_UP_CONFIG_IND_STRU *pstNdisIFaceInfo,
                                             AT_NDIS_PDNINFO_CFG_REQ_STRU             *pstNdisPdnInfo)
@@ -1625,7 +2131,21 @@ VOS_VOID Ndis_ATIfaceUpCfgTransToPdnInfoCfg(const	AT_NDIS_IFACE_UP_CONFIG_IND_ST
     return;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_IfaceUpCfgProc
+ 功能描述  : IFACE UP消息处理
+ 输入参数  :
 
+ 输出参数  : 无
+ 返 回 值  : 成功返回PS_SUCC;
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2018年08月16日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_VOID Ndis_IfaceUpCfgProc(const AT_NDIS_IFACE_UP_CONFIG_IND_STRU *pstIfacInfo)
 {
     VOS_UINT8                       ucExRabId;
@@ -1722,7 +2242,21 @@ VOS_VOID Ndis_IfaceUpCfgProc(const AT_NDIS_IFACE_UP_CONFIG_IND_STRU *pstIfacInfo
     return;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_IfaceDownCfgProc
+ 功能描述  : IFACE DOWN消息处理
+ 输入参数  :
 
+ 输出参数  : 无
+ 返 回 值  :
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2018年08月16日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_VOID Ndis_IfaceDownCfgProc(const AT_NDIS_IFACE_DOWN_CONFIG_IND_STRU *pstIfacInfo)
 
 {
@@ -1776,7 +2310,21 @@ VOS_VOID Ndis_IfaceDownCfgProc(const AT_NDIS_IFACE_DOWN_CONFIG_IND_STRU *pstIfac
 }
 
 /*NDIS ARP PROC Begin*/
+/*****************************************************************************
+ 函 数 名  : Ndis_SendRequestArp
+ 功能描述  : 发送ARP Request 帧到Ethenet上
+ 输入参数  :
 
+ 输出参数  : 无
+ 返 回 值  : 成功返回PS_SUCC;
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2009年12月31日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT32  Ndis_SendRequestArp(NDIS_IPV4_INFO_STRU  *pstArpInfoItem, VOS_UINT8 ucExRabId)
 {
     ETH_ARP_FRAME_STRU  stArpReq;
@@ -1820,7 +2368,21 @@ VOS_UINT32  Ndis_SendRequestArp(NDIS_IPV4_INFO_STRU  *pstArpInfoItem, VOS_UINT8 
     return PS_SUCC;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_ProcArpMsg
+ 功能描述  : 处理底软发送上来的ARP帧
+ 输入参数  :
 
+ 输出参数  : 无
+ 返 回 值  : 成功返回PS_SUCC;
+ 调用函数  :
+ 被调函数  :
+
+ 修改历史      :
+  1.日    期   : 2009年12月31日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_UINT32 Ndis_ProcArpMsg(ETH_ARP_FRAME_STRU* pstArpMsg, VOS_UINT8 ucRabId)
 {
     /*Arp Request*/
@@ -1842,7 +2404,20 @@ VOS_UINT32 Ndis_ProcArpMsg(ETH_ARP_FRAME_STRU* pstArpMsg, VOS_UINT8 ucRabId)
     }
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_AtMsgProc
+ 功能描述  :
+ 输入参数  : const MsgBlock *pMsgBlock
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年3月16日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_VOID Ndis_AtMsgProc( const MsgBlock *pMsgBlock )
 {
     AT_NDIS_MSG_ID_ENUM_UINT32      ulMsgId;
@@ -1886,7 +2461,20 @@ VOS_VOID Ndis_AtMsgProc( const MsgBlock *pMsgBlock )
     return;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_AdsMsgProc
+ 功能描述  : NDIS接收ADS消息处理函数
+ 输入参数  : MsgBlock* pMsgBlock
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年12月15日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_VOID Ndis_AdsMsgProc(const MsgBlock* pMsgBlock )
 {
     ADS_NDIS_DATA_IND_STRU  *pstAdsNdisMsg  = (ADS_NDIS_DATA_IND_STRU*)(VOS_VOID*)pMsgBlock;
@@ -1936,7 +2524,20 @@ VOS_VOID Ndis_AdsMsgProc(const MsgBlock* pMsgBlock )
     return;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_AdsV2MsgTransToV1Msg
+ 功能描述  : ADS V2消息内容转成V1格式
+ 输入参数  :
+ 输出参数  :
+ 返 回 值  :
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2018年08月16日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_VOID Ndis_AdsV2MsgTransToV1Msg(ADS_NDIS_DATA_IND_V2_STRU    *pstV2Msg,
                                               ADS_NDIS_DATA_IND_STRU       *pstV1Msg)
 {
@@ -1954,7 +2555,20 @@ VOS_VOID Ndis_AdsV2MsgTransToV1Msg(ADS_NDIS_DATA_IND_V2_STRU    *pstV2Msg,
     return;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_AdsMsgProcV2
+ 功能描述  : NDIS接收ADS消息处理函数
+ 输入参数  : MsgBlock* pMsgBlock
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年12月15日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_VOID Ndis_AdsMsgProcV2(const MsgBlock* pMsgBlock )
 {
     ADS_NDIS_DATA_IND_V2_STRU  *pstAdsNdisMsg  = (ADS_NDIS_DATA_IND_V2_STRU*)(VOS_VOID*)pMsgBlock;
@@ -1999,7 +2613,20 @@ VOS_VOID Ndis_AdsMsgProcV2(const MsgBlock* pMsgBlock )
 }
 
 
+/*****************************************************************************
+ 函 数 名  : Ndis_AdsMsgDispatch
+ 功能描述  : NDIS接收ADS消息处理函数
+ 输入参数  : MsgBlock* pMsgBlock
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2018年08月16日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_VOID Ndis_AdsMsgDispatch(const MsgBlock* pMsgBlock )
 {
     AT_NDIS_MSG_ID_ENUM_UINT32      ulMsgId;
@@ -2035,8 +2662,21 @@ VOS_VOID Ndis_AdsMsgDispatch(const MsgBlock* pMsgBlock )
     return;
 }
 
+/*****************************************************************************
+ 函 数 名  : APP_Ndis_PidMsgProc
+ 功能描述  : NDIS接收各模块消息处理函数
+ 输入参数  : MsgBlock* pMsgBlock
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
-VOS_VOID APP_Ndis_PidMsgProc(const MsgBlock* pMsgBlock )
+ 修改历史      :
+  1.日    期   : 2011年2月15日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
+VOS_VOID APP_Ndis_PidMsgProc(MsgBlock* pMsgBlock )
 {
     if (VOS_NULL_PTR == pMsgBlock)
     {
@@ -2069,7 +2709,19 @@ VOS_VOID APP_Ndis_PidMsgProc(const MsgBlock* pMsgBlock )
 }
 
 /*lint -e40*/
+/*****************************************************************************
+ 函 数 名  : APP_NDIS_FidInit
+ 功能描述  : NDIS的FID初始化函数
+ 输入参数  : enum VOS_INIT_PHASE_DEFINE enPhase
+ 输出参数  : 无
+ 返 回 值  : VOS_UINT32
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2008年9月17日
+    修改内容   : 新生成函数
+*****************************************************************************/
 VOS_UINT32 APP_NDIS_FidInit(enum VOS_INIT_PHASE_DEFINE enPhase)
 {
     VOS_UINT32  ulResult = PS_FAIL;
@@ -2126,6 +2778,7 @@ VOS_UINT32 APP_NDIS_FidInit(enum VOS_INIT_PHASE_DEFINE enPhase)
 }
 /*lint +e40*/
 
+#if (FEATURE_ON ==FEATURE_LTE)
 /*****************************************************************************
  Function Name  : Ndis_MsgHook
  Discription    :
@@ -2134,7 +2787,6 @@ VOS_UINT32 APP_NDIS_FidInit(enum VOS_INIT_PHASE_DEFINE enPhase)
  Return         : None
 
  History:
-      1. z0103912   2010-05-20  初稿
 
 *****************************************************************************/
 VOS_UINT32 Ndis_MsgHook (VOS_UINT8 *pucData,VOS_UINT32 ulLength,
@@ -2146,6 +2798,7 @@ VOS_UINT32 Ndis_MsgHook (VOS_UINT8 *pucData,VOS_UINT32 ulLength,
     return VOS_OK;
 
 }
+#endif
 VOS_UINT32 g_ulGUNdisOMSwitch = PS_FALSE;
 VOS_VOID GU_NDIS_OM_SWITCH_ON(VOS_VOID)
 {
@@ -2160,7 +2813,23 @@ VOS_VOID GU_NDIS_OM_SWITCH_OFF(VOS_VOID)
 }
 
 /*======================================统计信息==============================*/
+/*****************************************************************************
+ 函 数 名  : Ndis_ShowAppDataInfo
+ 功能描述  : 显示收发的业务数据信息
+ 输入参数  : VOS_VOID
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2009年6月16日
+    修改内容   : 新生成函数
+修改历史      :
+  2.日    期   : 2013年1月22日
+    修改内容   : DSDA
+
+*****************************************************************************/
 VOS_VOID Ndis_ShowStat(VOS_VOID)
 {
     PS_PRINTF_ERR("上行丢弃的数据包个数:                %d\n", g_stNdisStatStru.ulDicardUsbFrmNum);
@@ -2187,7 +2856,20 @@ VOS_VOID Ndis_ShowStat(VOS_VOID)
     return;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_PrintIpAddr
+ 功能描述  : 打印IP地址信息
+ 输入参数  : VOS_VOID
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2009年6月16日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_VOID Ndis_PrintIpv4Addr(const VOS_UINT8 *pIpaddr)
 {
     if ((pIpaddr[0] == 0) && (pIpaddr[1] == 0) && (pIpaddr[2] == 0) && (pIpaddr[3] == 0) )
@@ -2200,7 +2882,20 @@ VOS_VOID Ndis_PrintIpv4Addr(const VOS_UINT8 *pIpaddr)
     return;
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_ShowValidEntity
+ 功能描述  : 显示有效的实体信息
+ 输入参数  : VOS_VOID
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年3月16日
+    修改内容   : 新生成函数
+
+*****************************************************************************/
 VOS_VOID Ndis_ShowValidEntity(VOS_UINT16 usModemId, VOS_UINT8 ucRabId)
 {
     NDIS_ENTITY_STRU     *pstEntity;
@@ -2224,7 +2919,23 @@ VOS_VOID Ndis_ShowValidEntity(VOS_UINT16 usModemId, VOS_UINT8 ucRabId)
 
 }
 
+/*****************************************************************************
+ 函 数 名  : Ndis_ShowAllEntity
+ 功能描述  : 显示所有的实体信息
+ 输入参数  : VOS_VOID
+ 输出参数  : 无
+ 返 回 值  : VOS_VOID
+ 调用函数  :
+ 被调函数  :
 
+ 修改历史      :
+  1.日    期   : 2011年4月18日
+    修改内容   : 新生成函数
+
+  2.日    期   : 2013年1月16日
+    修改内容   : DSDA
+
+*****************************************************************************/
 VOS_VOID Ndis_ShowAllEntity(VOS_VOID)
 {
     VOS_UINT32            ulLoop;
@@ -2252,21 +2963,45 @@ VOS_VOID Ndis_ShowAllEntity(VOS_VOID)
 
 
 
+/*****************************************************************************
+ Function Name  : NDIS_OpenLatency
+ Discription    : UserPlane Latency
+ Input          : None
+ Output         : None
+ Return         : None
 
+ History:
+*****************************************************************************/
 VOS_VOID NDIS_OpenLatency(VOS_VOID)
 {
     g_ulNdisLomSwitch = 1;
     return;
 }
 
+/*****************************************************************************
+ Function Name  : NDIS_CloseLatency
+ Discription    : UserPlane Latency
+ Input          : None
+ Output         : None
+ Return         : None
 
+ History:
+*****************************************************************************/
 VOS_VOID NDIS_CloseLatency(VOS_VOID)
 {
     g_ulNdisLomSwitch = 0;
     return;
 }
 
+/*****************************************************************************
+ Function Name  : Ndis_LomTraceRcvUlData
+ Discription    : UserPlane Latency
+ Input          : None
+ Output         : None
+ Return         : None
 
+ History:
+*****************************************************************************/
 VOS_VOID Ndis_LomTraceRcvUlData(VOS_VOID)
 {
     if (1 == g_ulNdisLomSwitch)
@@ -2276,7 +3011,15 @@ VOS_VOID Ndis_LomTraceRcvUlData(VOS_VOID)
     return;
 }
 
+/*****************************************************************************
+ Function Name  : Ndis_LomTraceRcvDlData
+ Discription    : UserPlane Latency
+ Input          : None
+ Output         : None
+ Return         : None
 
+ History:
+*****************************************************************************/
 VOS_VOID Ndis_LomTraceRcvDlData(VOS_VOID)
 {
     if (1 == g_ulNdisLomSwitch)

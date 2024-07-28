@@ -50,11 +50,64 @@
 #include <mdrv_sysboot.h>
 #include <bsp_reset.h>
 
+#if !defined( CONFIG_BALONG_MODEM_RESET) && !defined(CONFIG_BALONG_MODEM_GLOBAL_RESET)&& !defined(CONFIG_BALONG_MODEM_RESET_CTRL) /* ´ò×®!CONFIG_BALONG_MODEM_RESET */
+
+int mdrv_sysboot_register_reset_notify(const char *pname, pdrv_reset_cbfun pcbfun, int userdata, int priolevel)
+{
+	//bsp_trace(BSP_LOG_LEVEL_ERROR, BSP_MODU_RESET, "[reset]: <%s> is stub\n", __FUNCTION__);
+    return 0;
+}
+
+s32 bsp_reset_ccpu_status_get(void)
+{
+	//bsp_trace(BSP_LOG_LEVEL_ERROR, BSP_MODU_RESET, "[reset]: <%s> is stub\n", __FUNCTION__);
+	return 1;
+}
+
+s32 bsp_reset_cb_func_register(const char *name, pdrv_reset_cbfun func, int user_data, int prior)
+{
+	bsp_trace(BSP_LOG_LEVEL_ERROR, BSP_MODU_RESET, "[reset]: <%s> is stub\n", __FUNCTION__);
+	return 0;
+}
+
+void bsp_modem_power_off(void)
+{
+	bsp_trace(BSP_LOG_LEVEL_ERROR, BSP_MODU_RESET, "[reset]: <%s> is stub\n", __FUNCTION__);
+	return;
+}
+
+void bsp_modem_power_on(void)
+{
+	bsp_trace(BSP_LOG_LEVEL_ERROR, BSP_MODU_RESET, "[reset]: <%s> is stub\n", __FUNCTION__);
+	return;
+}
+
+int bsp_cp_reset(void)
+{
+	bsp_trace(BSP_LOG_LEVEL_ERROR, BSP_MODU_RESET, "[reset]: <%s> is stub\n", __FUNCTION__);
+	return -1;
+}
+
+u32 bsp_reset_is_connect_ril(void)
+{
+	bsp_trace(BSP_LOG_LEVEL_ERROR, BSP_MODU_RESET, "[reset]: <%s> is stub\n", __FUNCTION__);
+	return 0;
+}
+
+
+#else  /* ÊµÏÖ */
 
 int mdrv_sysboot_register_reset_notify(const char *pname, pdrv_reset_cbfun pcbfun, int userdata, int priolevel)
 {
     return bsp_reset_cb_func_register(pname, pcbfun, userdata, priolevel);
 }
 
+#endif /* end of CONFIG_BALONG_MODEM_RESET */
 
+#ifndef CONFIG_HISI_HIFI_BB
+int hifireset_regcbfunc(const char *pname, pdrv_reset_cbfun pcbfun, int userdata, int priolevel)
+{
+	return 0;
+}
+#endif /* end of undef CONFIG_HISI_HIFI_BB */
 

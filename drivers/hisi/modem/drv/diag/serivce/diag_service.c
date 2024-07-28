@@ -46,9 +46,7 @@
  *
  */
 
-
 #include <mdrv.h>
-#include <linux/wakelock.h>
 #include <securec.h>
 #include <bsp_slice.h>
 #include <osl_spinlock.h>
@@ -64,7 +62,6 @@
 #include "scm_ind_src.h"
 #include "scm_cnf_src.h"
 #include "diag_service.h"
-
 
 
 #define  THIS_MODU mod_diag
@@ -124,8 +121,12 @@ void diag_SvcFillHeader(DIAG_SRV_HEADER_STRU *pstSrvHeader)
     pstSrvHeader->frame_header.stService.MsgTransId = 0;
 
     (void)mdrv_timer_get_accuracy_timestamp((u32*)&(auctime[4]), (u32*)&(auctime[0]));
-    memcpy_s(pstSrvHeader->frame_header.stService.aucTimeStamp, sizeof(pstSrvHeader->frame_header.stService.aucTimeStamp), \
-                auctime, ulTimeStampLen);
+    if(memcpy_s(pstSrvHeader->frame_header.stService.aucTimeStamp, sizeof(pstSrvHeader->frame_header.stService.aucTimeStamp), \
+                auctime, ulTimeStampLen))
+    {
+        diag_error("memcpy fail\n");
+    }
+
 }
 /*****************************************************************************
  Function Name   : diag_PktTimeoutClear
@@ -273,7 +274,11 @@ diag_frame_head_stru * diag_SrvcSavePkt(diag_frame_head_stru *pFrame, u32 ulData
             if(0 == pFrame->stService.index4b)  /* 第0帧 */
             {
                 /* 第0帧需要拷贝header, cmdid, meglen and data */
-                (void)memcpy_s(pTempNode->pFrame, pTempNode->ulFrameDataLen, pFrame, ulDataLen);
+                if(memcpy_s(pTempNode->pFrame, pTempNode->ulFrameDataLen, pFrame, ulDataLen))
+                {
+                    diag_error("memcpy fail\n");
+                }
+
                 pTempNode->ulFrameOffset = ulDataLen;
                 diag_SaveDFR(&g_stDFRreq, (u8*)pFrame, ulDataLen);
             }
@@ -299,8 +304,12 @@ diag_frame_head_stru * diag_SrvcSavePkt(diag_frame_head_stru *pFrame, u32 ulData
                 uloffset = pTempNode->ulFrameOffset;
 
                 /* 最后一帧只需要拷贝剩余data */
-                (void)memcpy_s( ((u8*)pTempNode->pFrame) + uloffset, pTempNode->ulFrameDataLen - pTempNode->ulFrameOffset,
-                            ((u8*)pFrame) + sizeof(diag_service_head_stru),  ulLen);
+                if(memcpy_s( ((u8*)pTempNode->pFrame) + uloffset, pTempNode->ulFrameDataLen - pTempNode->ulFrameOffset,
+                            ((u8*)pFrame) + sizeof(diag_service_head_stru),  ulLen))
+                {
+                    diag_error("memcpy fail\n");
+                }
+
                 pTempNode->ulFrameOffset += ulLen;
                 diag_SaveDFR(&g_stDFRreq, (u8*)pFrame, ulDataLen);
             }
@@ -320,10 +329,14 @@ diag_frame_head_stru * diag_SrvcSavePkt(diag_frame_head_stru *pFrame, u32 ulData
                 }
 
                 /* 中间的帧不拷贝cmdid和长度，只需要拷贝data */
-                (void)memcpy_s( ((u8*)pTempNode->pFrame) + uloffset,
+                if(memcpy_s( ((u8*)pTempNode->pFrame) + uloffset,
                             (u32)(pTempNode->ulFrameDataLen - uloffset),
                             ((u8*)pFrame) + sizeof(diag_service_head_stru),
-                            ulLocalLen);
+                            ulLocalLen))
+                 {
+                      diag_error("memcpy fail\n");
+                 }
+
                 pTempNode->ulFrameOffset += ulLocalLen;
                 diag_SaveDFR(&g_stDFRreq, (u8*)pFrame, ulDataLen);
             }
@@ -471,12 +484,12 @@ u32 diag_ServiceProc(void *pData, u32 ulDatalen)
         diag_PTR(EN_DIAG_PTR_SERVICE_1, 1, pHeader->u32CmdId, 0 );
 
         /* 开始处理，不允许睡眠 */
-        wake_lock(&g_SrvCtrl.stWakelock);
+        __pm_stay_awake(&g_SrvCtrl.stWakelock);
 
         ulRet = diag_GetSrvData(pHeader, ulDatalen, &pProcHead);
         if(ulRet != SERVICE_MSG_PROC)
         {
-            wake_unlock(&g_SrvCtrl.stWakelock);
+            __pm_relax(&g_SrvCtrl.stWakelock);
             return ulRet;
         }
 
@@ -499,7 +512,7 @@ u32 diag_ServiceProc(void *pData, u32 ulDatalen)
         }
 
         /* 处理结束，允许睡眠 */
-        wake_unlock(&g_SrvCtrl.stWakelock);
+        __pm_relax(&g_SrvCtrl.stWakelock);
     }
     else
     {
@@ -531,7 +544,7 @@ void diag_ServiceInit(void)
     spin_lock_init(&g_stSrvIndSrcBuffSpinLock);
     spin_lock_init(&g_stSrvCnfSrcBuffSpinLock);
 
-    wake_lock_init(&g_SrvCtrl.stWakelock, WAKE_LOCK_SUSPEND, "diag_srv_lock");
+    wakeup_source_init(&g_SrvCtrl.stWakelock, "diag_srv_lock");
 
     /* 创建节点保护信号量*/
     osl_sem_init(1, &g_stDiagSrvc.ListSem);
@@ -576,19 +589,30 @@ void diag_SrvcPackWrite(SOCP_BUFFER_RW_STRU *pRWBuffer, const void * pPayload, u
 
     if(pRWBuffer->u32Size > u32DataLen)
     {
-       (void)memcpy_s(((u8*)pRWBuffer->pBuffer), pRWBuffer->u32Size, pPayload, u32DataLen);
+        if(memcpy_s(((u8*)pRWBuffer->pBuffer), pRWBuffer->u32Size, pPayload, u32DataLen))
+        {
+            diag_error("memcpy fail\n");
+        }
+
         pRWBuffer->pBuffer = pRWBuffer->pBuffer + u32DataLen;
         pRWBuffer->u32Size = pRWBuffer->u32Size - u32DataLen;
     }
     else
     {
         ulTempLen = pRWBuffer->u32Size;
-        (void)memcpy_s(((u8*)pRWBuffer->pBuffer), pRWBuffer->u32Size, pPayload,ulTempLen);
+        if(memcpy_s(((u8*)pRWBuffer->pBuffer), pRWBuffer->u32Size, pPayload,ulTempLen))
+        {
+            diag_error("memcpy fail\n");
+        }
 
         ulTempLen1 = u32DataLen - pRWBuffer->u32Size;
         if(ulTempLen1)
         {
-            (void)memcpy_s(pRWBuffer->pRbBuffer, pRWBuffer->u32RbSize, ((u8 *)pPayload + ulTempLen) ,ulTempLen1);
+            if(memcpy_s(pRWBuffer->pRbBuffer, pRWBuffer->u32RbSize, ((u8 *)pPayload + ulTempLen) ,ulTempLen1))
+            {
+                diag_error("memcpy fail\n");
+            }
+
         }
         pRWBuffer->pBuffer = pRWBuffer->pRbBuffer + ulTempLen1;
         pRWBuffer->u32Size = pRWBuffer->u32RbSize - ulTempLen1;

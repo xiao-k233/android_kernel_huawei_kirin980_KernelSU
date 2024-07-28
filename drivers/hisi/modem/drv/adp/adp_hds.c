@@ -75,6 +75,7 @@ int mdrv_hds_msg_proc(void *pstReq)
 }
 
 
+#if (FEATURE_HDS_TRANSLOG == FEATURE_ON)
 
 int mdrv_hds_translog_conn(void)
 {
@@ -86,7 +87,19 @@ int mdrv_hds_translog_disconn(void)
     return bsp_hds_translog_disconn();
 }
 
+#else
+int mdrv_hds_translog_conn(void)
+{
+    return 0;
+}
 
+int mdrv_hds_translog_disconn(void)
+{
+    return 0;
+}
+#endif
+
+#if (FEATURE_HDS_PRINTLOG == FEATURE_ON)
 
 int mdrv_hds_printlog_conn(void)
 {
@@ -98,6 +111,18 @@ int mdrv_hds_printlog_disconn(void)
     return bsp_hds_printlog_disconn();
 }
 
+#else
+int mdrv_hds_printlog_conn(void)
+{
+    return 0;
+}
+
+int mdrv_hds_printlog_disconn(void)
+{
+    return 0;
+}
+
+#endif
 
 
 

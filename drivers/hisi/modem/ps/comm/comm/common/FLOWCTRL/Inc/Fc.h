@@ -557,7 +557,7 @@ extern VOS_UINT32  FC_CDS_DelRab( VOS_UINT8 ucRabId, MODEM_ID_ENUM_UINT16 enMode
 extern VOS_UINT32  FC_CDS_UpProcess( VOS_UINT8 ucRabId, MODEM_ID_ENUM_UINT16 enModemId );
 extern VOS_UINT32  FC_CDS_DownProcess( VOS_UINT8 ucRabId, MODEM_ID_ENUM_UINT16 enModemId );
 extern VOS_UINT32  FC_ACORE_RcvIntraMsg( MsgBlock * pMsg );
-extern VOS_UINT32  FC_ACORE_MsgProc( MsgBlock * pMsg );
+extern VOS_VOID FC_ACORE_MsgProc(MsgBlock * pMsg);
 extern VOS_UINT32  FC_ACORE_Init( VOS_VOID );
 
 #pragma pack()

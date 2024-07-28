@@ -2898,7 +2898,8 @@ typedef TAF_UINT8 TAF_PHONE_EVENT;
 #define TAF_MMA_MAX_GUC_RAT_NUM                             (4)                 /* AT^syscfgex中acqorder代表的接入技术个数 */
 #define TAF_PH_MAX_SUPPORT_RAT_NUM                          (6)                 /* AT^syscfgex中acqorder代表的接入技术个数,G U L NR 1X HRPD */
 
-#define TAF_PH_MAX_GUL_RAT_NUM                              (3)                 /* AT^syscfgex中acqorder代表的接入技术个数 */
+/* 非全模配置场景下，代表syscfg设置的接入技术；全模场景下，获取当前激活的模式所支持的rat，分GUL模式和CL模式 */
+#define TAF_PH_MAX_GUL_RAT_NUM                              (3)
 #if (FEATURE_ON == FEATURE_UE_MODE_NR)
 #define TAF_PH_MAX_GULNR_RAT_NUM                            (4)
 #define TAF_PH_MAX_GUNR_RAT_NUM                             (3)

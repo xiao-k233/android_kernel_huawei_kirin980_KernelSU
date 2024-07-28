@@ -93,7 +93,7 @@
 
 #include <net/netlink.h>
 #include <net/sock.h>
-#include <linux/wakelock.h>
+#include <linux/pm_wakeup.h>
 #else
 #include "Linuxstub.h"
 #endif
@@ -385,7 +385,7 @@ typedef struct
     VOS_UINT32                          ulPortCfgValue;
     VOS_UINT8                           aucReserved[4];
 
-    struct wake_lock                    stwakelock;
+    struct wakeup_source                stwakelock;
     VOS_UINT8                           aucModemStatus[3];
     VOS_UINT8                           aucReserved1[5];
 

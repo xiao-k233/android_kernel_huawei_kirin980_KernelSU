@@ -54,6 +54,9 @@
 #include  "MnMsgApi.h"
 #include  "MnMsgTs.h"
 #include "TafStdlib.h"
+#if (OSA_CPU_CCPU == VOS_OSA_CPU)
+#include  "NasMultiInstanceApi.h"
+#endif
 
 
 
@@ -97,7 +100,17 @@ VOS_VOID *MN_MSG_AllocForLib(
 )
 {
     /* OSA_CPU_CCPU编译代码实现 */
+#if (OSA_CPU_ACPU == VOS_OSA_CPU)
     return PS_MEM_ALLOC(ulPid, ulSize);
+#else
+
+    /* OSA_CPU_CCPU编译代码实现 */
+    MODEM_ID_ENUM_UINT16                enModemId;
+
+    enModemId = NAS_MULTIINSTANCE_GetCurrInstanceModemId(ulPid);
+
+    return NAS_MULTIINSTANCE_MemAlloc(enModemId, ulPid, ulSize);
+#endif
 
 }
 
@@ -108,7 +121,16 @@ VOS_VOID MN_MSG_FreeForLib(
     VOS_VOID                           *pAddr
 )
 {
+#if (OSA_CPU_ACPU == VOS_OSA_CPU)
     PS_MEM_FREE(ulPid, pAddr);
+#else
+    /* OSA_CPU_CCPU编译代码实现 */
+    MODEM_ID_ENUM_UINT16                enModemId;
+
+    enModemId = NAS_MULTIINSTANCE_GetCurrInstanceModemId(ulPid);
+
+    NAS_MULTIINSTANCE_MemFree(enModemId, ulPid, pAddr);
+#endif
 }
 
 
@@ -164,6 +186,33 @@ VOS_UINT32 MN_MSG_CheckUdl(
 
 }
 
+
+
+VOS_UINT32 MN_MSG_CheckStaRptUdl(
+    const MN_MSG_DCS_CODE_STRU         *pstDcsInfo,
+    VOS_UINT8                           ucUdl,
+    VOS_UINT32                          ulUserDataLen
+)
+{
+    VOS_UINT32                          ulMaxDataLen;
+
+    ulMaxDataLen = TAF_MIN(ulUserDataLen, MN_MSG_MAX_STARPT_DATA_LEN);
+
+    if ((MN_MSG_MSG_CODING_7_BIT == pstDcsInfo->enMsgCoding)
+     && (VOS_TRUE != pstDcsInfo->bCompressed))
+    {
+        ulMaxDataLen = ulMaxDataLen * MN_MSG_BITS_PER_OCTET / MN_MSG_BITS_PER_SEPTET;
+    }
+
+    if (ucUdl > ulMaxDataLen)
+    {
+        MN_WARN_LOG("MN_MSG_CheckStaRptUdl: syntax error.");
+        return MN_ERR_CLASS_SMS_MSGLEN_OVERFLOW;
+    }
+
+    return MN_ERR_NO_ERROR;
+
+}
 
 VOS_UINT32 MN_MSG_BcdAddrToAscii(
     MN_MSG_BCD_ADDR_STRU                *pstBcdAddr,
@@ -1253,6 +1302,10 @@ LOCAL VOS_UINT32 MSG_DecodeUserData(
         return MN_ERR_NULLPTR;
     }
 
+    if (pstSmsUserData->ulSmsUserDataLen == 0){
+        MN_WARN_LOG("MSG_DecodeUserData: SmsUserDataLen Too Short");
+        return MN_ERR_CLASS_SMS_MSGLEN_OVERFLOW;
+    }
     ucUdl  = pstSmsUserData->pucSrcOct[ulPos];
     ulPos++;
 
@@ -1262,14 +1315,28 @@ LOCAL VOS_UINT32 MSG_DecodeUserData(
         return MN_ERR_NO_ERROR;
     }
 
-    /*UDL长度有效性检查*/
-    ulRet = MN_MSG_CheckUdl(pstDcsInfo,
-                            ucUdl,
-                            (pstSmsUserData->ulSmsUserDataLen - ulPos),
-                            VOS_FALSE);
-    if (MN_ERR_NO_ERROR != ulRet)
+    if (pstSmsUserData->ucIsSmsStaRptType == VOS_TRUE)
     {
-        return ulRet;
+        ulRet = MN_MSG_CheckStaRptUdl(pstDcsInfo,
+                              ucUdl,
+                              (pstSmsUserData->ulSmsUserDataLen - ulPos));
+        if (MN_ERR_NO_ERROR != ulRet)
+        {
+            MN_ERR_LOG("MSG_DecodeUserData: UDL is invalid.");
+            return ulRet;
+        }
+    }
+    else
+    {
+        /*UDL长度有效性检查*/
+        ulRet = MN_MSG_CheckUdl(pstDcsInfo,
+                                ucUdl,
+                                (pstSmsUserData->ulSmsUserDataLen - ulPos),
+                                VOS_FALSE);
+        if (MN_ERR_NO_ERROR != ulRet)
+        {
+            return ulRet;
+        }
     }
 
     if (VOS_TRUE == bUserDataHeaderInd)
@@ -1316,6 +1383,12 @@ LOCAL VOS_UINT32   MSG_DecodeDeliver(
     {
         MN_ERR_LOG("MSG_DecodeDeliver: Parameter of the function is null.");
         return MN_ERR_NULLPTR;
+    }
+
+    if (pstSmsRawDataInfo->ulLen < MN_MSG_DELIVER_TPDU_MANDATORY_IE_LEN)
+    {
+        MN_ERR_LOG("MSG_DecodeDeliver: Length of the SMS Raw Data is lack.");
+        return MN_ERR_NOMEM;
     }
 
     TAF_MEM_SET_S(pstSmsDeliverInfo, sizeof(MN_MSG_DELIVER_STRU), 0x00, sizeof(MN_MSG_DELIVER_STRU));
@@ -1411,6 +1484,12 @@ LOCAL VOS_UINT32   MSG_DecodeDeliverRptAck(
         return MN_ERR_NO_ERROR;
     }
 
+    if (pstSmsRawDataInfo->ulLen < MN_MSG_DELIVER_RPTACK_TPDU_MANDATORY_IE_LEN)
+    {
+        MN_ERR_LOG("MSG_DecodeDeliver: Length of the SMS Raw Data is lack.");
+        return MN_ERR_NOMEM;
+    }
+
     /*TP MTI ignore  TP-UDHI  */
     MSG_GET_TP_UDHI(pstSmsDeliverRptAckInfo->bUserDataHeaderInd, pstSmsRawDataInfo->aucData[ulPos++]);
 
@@ -1504,6 +1583,11 @@ LOCAL VOS_UINT32   MSG_DecodeDeliverRptErr(
         return MN_ERR_NO_ERROR;
     }
 
+    if (pstSmsRawDataInfo->ulLen < MN_MSG_DELIVER_RPTERR_TPDU_MANDATORY_IE_LEN)
+    {
+        MN_ERR_LOG("MSG_DecodeDeliver: Length of the SMS Raw Data is lack.");
+        return MN_ERR_NOMEM;
+    }
 
     /*TP MTI ignore  TP-UDHI  */
     MSG_GET_TP_UDHI(pstSmsDeliverRptErrInfo->bUserDataHeaderInd, pstSmsRawDataInfo->aucData[ulPos++]);
@@ -1586,6 +1670,12 @@ LOCAL VOS_UINT32   MSG_DecodeStaRpt(
     {
         MN_ERR_LOG("MSG_DecodeStaRpt: Parameter of the function is null.");
         return MN_ERR_NULLPTR;
+    }
+
+    if (pstSmsRawDataInfo->ulLen < MN_MSG_STATUS_REPORT_TPDU_MANDATORY_IE_LEN)
+    {
+        MN_ERR_LOG("MSG_DecodeDeliver: Length of the SMS Raw Data is lack.");
+        return MN_ERR_NOMEM;
     }
 
     TAF_MEM_SET_S(pstSmsStatusRptInfo, sizeof(MN_MSG_STA_RPT_STRU), 0x00, sizeof(MN_MSG_STA_RPT_STRU));
@@ -1683,6 +1773,8 @@ LOCAL VOS_UINT32   MSG_DecodeStaRpt(
         return ulRet;
     }
 
+    stOrigUserData.ucIsSmsStaRptType = VOS_TRUE;
+
     /*TP UD TP UDL;*/
     if (0 != (pstSmsStatusRptInfo->ucParaInd & MN_MSG_TP_UDL_MASK))
     {
@@ -1716,6 +1808,12 @@ LOCAL VOS_UINT32   MSG_DecodeCommand(
     {
         MN_ERR_LOG("MSG_DecodeCommand: Parameter of the function is null.");
         return MN_ERR_NULLPTR;
+    }
+
+    if (pstSmsRawDataInfo->ulLen < MN_MSG_COMMAND_TPDU_MANDATORY_IE_LEN)
+    {
+        MN_ERR_LOG("MSG_DecodeDeliver: Length of the SMS Raw Data is lack.");
+        return MN_ERR_NOMEM;
     }
 
     TAF_MEM_SET_S(pstSmsCommandInfo, sizeof(MN_MSG_COMMAND_STRU), 0x00, sizeof(MN_MSG_COMMAND_STRU));
@@ -1788,6 +1886,12 @@ LOCAL VOS_UINT32   MSG_DecodeSubmit(
     {
         MN_ERR_LOG("MSG_DecodeSubmit: Parameter of the function is null.");
         return MN_ERR_NULLPTR;
+    }
+
+    if (pstSmsRawDataInfo->ulLen < MN_MSG_SUBMIT_TPDU_MANDATORY_IE_LEN)
+    {
+        MN_ERR_LOG("MSG_DecodeDeliver: Length of the SMS Raw Data is lack.");
+        return MN_ERR_NOMEM;
     }
 
     TAF_MEM_SET_S(pstSmsSubmitInfo, sizeof(MN_MSG_SUBMIT_STRU), 0x00, sizeof(MN_MSG_SUBMIT_STRU));
@@ -1893,6 +1997,12 @@ LOCAL VOS_UINT32   MSG_DecodeSubmitRptAck(
         return MN_ERR_NO_ERROR;
     }
 
+    if (pstSmsRawDataInfo->ulLen < MN_MSG_SUBMIT_RPTACK_TPDU_MANDATORY_IE_LEN)
+    {
+        MN_ERR_LOG("MSG_DecodeDeliver: Length of the SMS Raw Data is lack.");
+        return MN_ERR_NOMEM;
+    }
+
     /*TP MTI ignore TP-UDHI  */
     MSG_GET_TP_UDHI(pstSmsSubmitRptAckInfo->bUserDataHeaderInd, pstSmsRawDataInfo->aucData[ulPos]);
     ulPos++;
@@ -1993,6 +2103,12 @@ LOCAL VOS_UINT32   MSG_DecodeSubmitRptErr(
     {
         MN_WARN_LOG("MSG_DecodeSubmitRptErr: no TPDU");
         return MN_ERR_NO_ERROR;
+    }
+
+    if (pstSmsRawDataInfo->ulLen < MN_MSG_SUBMIT_RPTERR_TPDU_MANDATORY_IE_LEN)
+    {
+        MN_ERR_LOG("MSG_DecodeDeliver: Length of the SMS Raw Data is lack.");
+        return MN_ERR_NOMEM;
     }
 
     /*TP MTI ignore TP-UDHI  */
@@ -2107,66 +2223,66 @@ MODULE_EXPORTED VOS_UINT32  MN_MSG_DecodeDcs(
     if (0x84 == ucDcsData)
     {
         pstDcs->enMsgCoding = MN_MSG_MSG_CODING_8_BIT;
+        return MN_ERR_NO_ERROR;
     }
-    else
-    {
-        switch (ucCodingGroup)
-        {
-            /*(pattern 00xx xxxx)*/
-            case 1:
-                /*Message Marked for Automatic Deletion Group*/
-                pstDcs->enMsgWaiting = MN_MSG_MSG_WAITING_AUTO_DELETE;
-                /* fall through */
-            case 0:
 
+    switch (ucCodingGroup)
+    {
+        /*(pattern 00xx xxxx)*/
+        case 1:
+            /*Message Marked for Automatic Deletion Group*/
+            pstDcs->enMsgWaiting = MN_MSG_MSG_WAITING_AUTO_DELETE;
+            /* fall through */
+        case 0:
+
+            /*lint -e961*/
+            /* Bit 5  if set to 0, indicates the text is uncompressed */
+            MSG_GET_COMPRESSED(pstDcs->bCompressed, ucDcsData);
+            /*lint +e961*/
+
+            /* Bit 3 Bit2 Character set:*/
+            MSG_GET_CHARSET(pstDcs->enMsgCoding, ucDcsData);
+            /* Bit 4, if set to 0, indicates that bits 1 to 0 are reserved and have no message class*/
+            if (0 != (ucDcsData & 0x10)) /*(bit 4)*/
+            {
+                MSG_GET_MSGCLASS(pstDcs->enMsgClass, ucDcsData);
+            }
+            /*数据损失引入点*/
+            break;
+        case 3:
+            if ((ucDcsData & 0x30) == 0x30) /*(pattern 1111 xxxx)*/
+            {
+                pstDcs->enMsgWaiting = MN_MSG_MSG_WAITING_NONE_1111;
+                MSG_GET_MSGCODING(pstDcs->enMsgCoding, ucDcsData);
+                MSG_GET_MSGCLASS(pstDcs->enMsgClass, ucDcsData);
+                /*bit3 默认为0，数据损失引入点*/
+            }
+            else
+            {
+                /*bit2 默认为0，数据损失引入点*/
                 /*lint -e961*/
-                /* Bit 5  if set to 0, indicates the text is uncompressed */
-                MSG_GET_COMPRESSED(pstDcs->bCompressed, ucDcsData);
+                MSG_GET_INDSENSE(pstDcs->bWaitingIndiActive, ucDcsData);
+                MSG_GET_INDTYPE(pstDcs->enMsgWaitingKind, ucDcsData);
                 /*lint +e961*/
 
-                /* Bit 3 Bit2 Character set:*/
-                MSG_GET_CHARSET(pstDcs->enMsgCoding, ucDcsData);
-                /* Bit 4, if set to 0, indicates that bits 1 to 0 are reserved and have no message class*/
-                if (0 != (ucDcsData & 0x10)) /*(bit 4)*/
+                if ((ucDcsData & 0x30) == 0x00)/*(pattern 1100 xxxx)*/
                 {
-                    MSG_GET_MSGCLASS(pstDcs->enMsgClass, ucDcsData);
-                }
-                /*数据损失引入点*/
-                break;
-            case 3:
-                if ((ucDcsData & 0x30) == 0x30) /*(pattern 1111 xxxx)*/
-                {
-                    pstDcs->enMsgWaiting = MN_MSG_MSG_WAITING_NONE_1111;
-                    MSG_GET_MSGCODING(pstDcs->enMsgCoding, ucDcsData);
-                    MSG_GET_MSGCLASS(pstDcs->enMsgClass, ucDcsData);
-                    /*bit3 默认为0，数据损失引入点*/
+                    pstDcs->enMsgWaiting = MN_MSG_MSG_WAITING_DISCARD;
                 }
                 else
                 {
-                    /*bit2 默认为0，数据损失引入点*/
-                    /*lint -e961*/
-                    MSG_GET_INDSENSE(pstDcs->bWaitingIndiActive, ucDcsData);
-                    MSG_GET_INDTYPE(pstDcs->enMsgWaitingKind, ucDcsData);
-                    /*lint +e961*/
-
-                    if ((ucDcsData & 0x30) == 0x00)/*(pattern 1100 xxxx)*/
+                    pstDcs->enMsgWaiting = MN_MSG_MSG_WAITING_STORE;
+                    if ((ucDcsData & 0x30) == 0x20)
                     {
-                        pstDcs->enMsgWaiting = MN_MSG_MSG_WAITING_DISCARD;
-                    }
-                    else
-                    {
-                        pstDcs->enMsgWaiting = MN_MSG_MSG_WAITING_STORE;
-                        if ((ucDcsData & 0x30) == 0x20)
-                        {
-                            pstDcs->enMsgCoding = MN_MSG_MSG_CODING_UCS2;
-                        }
+                        pstDcs->enMsgCoding = MN_MSG_MSG_CODING_UCS2;
                     }
                 }
-                break;
-            default:
-                MN_WARN_LOG("MN_MSG_DecodeDcs: invalid coding group.");
-                return MN_ERR_CLASS_SMS_INVALID_CODING_GRP;
-        }
+            }
+            break;
+        default:
+            
+            MN_ERR_LOG("MN_MSG_DecodeDcs: ucCodingGroup is Reserve.");
+            break;
     }
 
     return MN_ERR_NO_ERROR;

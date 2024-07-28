@@ -252,6 +252,21 @@ typedef struct
 #define PSACORE_MEM_MOVE(Dest, ulDestSize, Src, Count) \
                 PSACORE_MEM_MOVE_EX(Dest, (VOS_SIZE_T)(ulDestSize), Src, (VOS_SIZE_T)(Count), (THIS_FILE_ID), (__LINE__))
 
+/*
+ * TTF 安全函数返回值校验，校验失败会触发复位。
+ * 支持函数： memset_s memcpy_s memmove_s
+ */
+VOS_VOID TtfSfChk(VOS_BOOL result, VOS_UINT32 fileNo, VOS_UINT32 lineNo);
+#define TTF_SF_CHK(result)  TtfSfChk(((result) != EOK) ? VOS_TRUE : VOS_FALSE, THIS_FILE_ID, __LINE__)
+
+/*
+ * TTF Acore安全函数返回值校验，校验失败会打印错误，不能复位。
+ * 支持函数： memset_s memcpy_s memmove_s
+ */
+MODULE_EXPORTED VOS_VOID TtfAcoreSfChk(VOS_BOOL result, VOS_UINT32 fileNo, VOS_UINT32 lineNo);
+#define TTF_ACORE_SF_CHK(result)  TtfAcoreSfChk(((result) != EOK) ? VOS_TRUE : VOS_FALSE, THIS_FILE_ID, __LINE__)
+
+
 #pragma pack()
 
 /******************************************************************************

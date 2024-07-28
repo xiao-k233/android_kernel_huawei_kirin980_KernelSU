@@ -63,6 +63,11 @@
 #endif
 #include <linux/workqueue.h>
 #include <linux/version.h>
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
+#include <linux/cpuhotplug.h>
+#endif
+
 #include "product_config.h"
 #include "rnic_dev_def.h"
 #include "rnic_dev_i.h"
@@ -85,6 +90,10 @@ extern "C" {
 #endif
 
 #define RNIC_DEV_CTX()		(&rnic_dev_context)
+
+#define RNIC_DEFAULT_MTU	ETH_DATA_LEN
+#define RNIC_MIN_MTU		68
+#define RNIC_MAX_MTU		2000
 
 #if (defined(CONFIG_BALONG_SPE))
 #if (defined(CONFIG_BALONG_SPE_WAN))
@@ -144,15 +153,6 @@ extern "C" {
 				RNIC_DEV_NAME_SUFFIX_##ifname,\
 			}
 
-#if ((FEATURE_ON == FEATURE_IMS) && (FEATURE_ON == FEATURE_DELAY_MODEM_INIT))
-#define RNIC_R_IMS_ETH_DATA_LEN			(2000)
-#define RNIC_RMNET_R_IMS_IS_VALID(RmNetId) \
-			((RNIC_DEV_ID_RMNET_R_IMS00 == (RmNetId)) \
-			|| (RNIC_DEV_ID_RMNET_R_IMS10 == (RmNetId)) \
-			|| (RNIC_DEV_ID_RMNET_R_IMS01 == (RmNetId)) \
-			|| (RNIC_DEV_ID_RMNET_R_IMS11 == (RmNetId)))
-#endif
-
 
 /*****************************************************************************
   3. Enumerations declatations
@@ -194,6 +194,11 @@ struct rnic_dev_context_s {
 #if (defined(CONFIG_BALONG_SPE))
 	int spe_port;
 	int ipf_port_flag;
+#endif
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
+	enum cpuhp_state online_state;
+	uint32_t resevered;
 #endif
 };
 

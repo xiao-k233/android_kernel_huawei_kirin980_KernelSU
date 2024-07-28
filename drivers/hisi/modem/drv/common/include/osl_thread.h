@@ -78,7 +78,7 @@
 /*此处用于存放任务优先级 ---end*/
 
 typedef struct task_struct* OSL_TASK_ID;
-typedef void (*OSL_TASK_FUNC)(void* para);
+typedef int (*OSL_TASK_FUNC)(void* para);
 static inline s32  osl_task_init(
 			char* name,
 			u32 priority,
@@ -93,7 +93,7 @@ static inline s32  osl_task_init(
 
 	sch_para.sched_priority = (int)priority;
 
-	tsk =  kthread_run((void*)entry, para, name);
+	tsk =  kthread_run(entry, para, name);
 	if (IS_ERR(tsk))
 	{
 		printk("create kthread %s failed!\n", name);
@@ -152,10 +152,10 @@ static __inline__ s32 osl_task_init(
                 0,0,0,0,0,0,0,0);
     if (tsk == ERROR)           /* create failed */
     {
-        logMsg("osl_task_init fail name:%s!", (int)name,0,0,0,0,0); /*[false alarm]*/
+        logMsg("osl_task_init fail name:%s!", (int)name,0,0,0,0,0);
         return ERROR;
     }
-    *tskid = (u32)tsk; /*[false alarm]*/
+    *tskid = (u32)tsk;
     return OK;
 }
 static __inline__ int osl_task_delay(int ticks )
@@ -251,7 +251,7 @@ typedef TSK_HANDLE_T          OSL_TASK_ID;
         (void)SRE_Printf("osl_task_init fail name:%s,ret=0x%x!\n", name,ret);
         return ERROR;
     }
-    *tskid = id; /*[false alarm]*/
+    *tskid = id;
     return OK;
 }
 static inline int osl_task_delay(int ticks )
@@ -364,7 +364,7 @@ static inline  s32 osl_task_create_only(
         (void)SRE_Printf("SRE_TaskCreateOnlyl name:%s,ret:0x%x!", name,ret);
         return ERROR;
     }
-    *tskid = id; /*[false alarm]*/
+    *tskid = id;
     return OK;
 }
 /*suspend a task*/

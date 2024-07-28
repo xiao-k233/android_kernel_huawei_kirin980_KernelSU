@@ -1251,8 +1251,6 @@ VOS_UINT32 MMI_FillInProcessUssdReqPara(
 
     TAF_MEM_SET_S(pstProcessUssdReq, sizeof(TAF_SS_PROCESS_USS_REQ_STRU), 0x00, sizeof(TAF_SS_PROCESS_USS_REQ_STRU));
 
-    /* Deleted by z60575 for TQE, 2013-8-3 begin */
-    /* Deleted by z60575 for TQE, 2013-8-3 end */
 
     /* pstProcessUssdReq->DatacodingScheme = pstMmiOpParam->ProcessUssdReq.DatacodingScheme 这个赋值没有意义*/
     pstProcessUssdReq->UssdStr.usCnt = (VOS_UINT8)VOS_StrNLen((VOS_CHAR *)pcInMmiStr, TAF_SS_MAX_UNPARSE_PARA_LEN);

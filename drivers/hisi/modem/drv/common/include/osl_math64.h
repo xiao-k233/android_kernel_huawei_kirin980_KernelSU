@@ -55,9 +55,11 @@
 
 static inline unsigned long long osl_u64_div(unsigned long long dividend, unsigned int divisor)
 {
-	return dividend/divisor;
+    if (divisor) {
+        return dividend / divisor;
+    }
+    return -1;
 }
-
 #endif/*KERNEL*/
 #endif/*__OSL_MATH64_H__*/
 
