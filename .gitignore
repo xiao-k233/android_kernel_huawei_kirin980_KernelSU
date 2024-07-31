@@ -7,3 +7,13 @@ tools/kernel.img
 drivers/hisi/tzdriver/cfc_graph.pyc
 drivers/hisi/tzdriver/cfc_graphgen.pyc
 drivers/hisi/tzdriver/cfc_rule_parser.pyc
+include/generated/autoksyms.h
+scripts/basic/.fixdep.cmd
+scripts/basic/fixdep
+scripts/kconfig/.conf.cmd
+scripts/kconfig/.conf.o.cmd
+scripts/kconfig/.zconf.tab.o.cmd
+scripts/kconfig/conf
+scripts/kconfig/zconf.hash.c
+scripts/kconfig/zconf.lex.c
+scripts/kconfig/zconf.tab.c
