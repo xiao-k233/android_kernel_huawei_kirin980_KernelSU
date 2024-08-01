@@ -3,7 +3,8 @@ out/
 tools/kernel.img
 */*.pyc
 *.o
-
+*.rej
+*.orig
 drivers/hisi/tzdriver/cfc_graph.pyc
 drivers/hisi/tzdriver/cfc_graphgen.pyc
 drivers/hisi/tzdriver/cfc_rule_parser.pyc
