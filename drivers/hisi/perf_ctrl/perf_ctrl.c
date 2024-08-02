@@ -25,7 +25,27 @@ extern int get_ipa_status(struct ipa_stat *status);
 
 #define PERF_CTRL_DDR_MAX_CH (4)
 #define PERF_CTRL_DDR_FLUX_MAX_CNT (0xFFFFFFFFUL)
+int set_frame_margin(int margin)
+{
+	struct frame_info *frame_info = NULL;
 
+	if (margin < MIN_VLOAD_MARGIN || margin > MAX_VLOAD_MARGIN) {
+		pr_err("[%s] [IPROVISION-FRAME_INFO] invalid MARGIN value", __func__);
+		return -EINVAL;
+	}
+
+	frame_info = rtg_frame_info();
+
+	if (!frame_info)
+		return -EIO;
+
+	frame_info->vload_margin = margin;
+	frame_info->max_vload_time = frame_info->qos_frame_time / NSEC_PER_MSEC
+		+ frame_info->vload_margin;
+	FRAME_SYSTRACE("FRAME_MARGIN", margin, smp_processor_id());
+
+	return 0;
+}
 /* attention: there is same structure definition in atf hisi_ddr.c */
 struct ddr_perfdata {
 	unsigned int channel_nr;
