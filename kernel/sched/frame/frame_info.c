@@ -80,7 +80,7 @@ int set_frame_rate(int qos)
 
 	return 0;
 }
-EXPORT_SYMBOL_GPL(set_frame_rate);
+EXPORT_SYMBOL(set_frame_rate);
 
 int set_frame_margin(int margin)
 {
@@ -103,7 +103,7 @@ int set_frame_margin(int margin)
 
 	return 0;
 }
-EXPORT_SYMBOL_GPL(set_frame_margin);
+EXPORT_SYMBOL(set_frame_margin);
 
 /*
  * frame_vload [0~1024]
@@ -293,7 +293,7 @@ int set_frame_status(unsigned long status)
 
 	return 0;
 }
-EXPORT_SYMBOL_GPL(set_frame_status);
+EXPORT_SYMBOL(set_frame_status);
 
 struct frame_info global_frame_info;
 static int __init init_frame_info(void)

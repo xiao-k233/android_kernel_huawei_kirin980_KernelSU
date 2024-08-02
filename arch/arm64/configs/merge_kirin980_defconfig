@@ -506,7 +506,7 @@ CONFIG_PREEMPT_COUNT=y
 #
 # IProvision Scheduling v1.0
 #
-CONFIG_FRAME_RTG=y
+# CONFIG_FRAME_RTG is not set
 # CONFIG_TRACE_FRAME_SYSTRACE is not set
 # CONFIG_HZ_100 is not set
 CONFIG_HZ_250=y

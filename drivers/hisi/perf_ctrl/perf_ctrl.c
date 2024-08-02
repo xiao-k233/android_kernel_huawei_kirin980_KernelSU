@@ -18,34 +18,19 @@
 #include <libhwsecurec/securec.h>
 #include <linux/hisi_rtg.h>
 
+#include<linux/kernel.h>
+
+#include<linux/init.h>
 #include <linux/sched/frame.h>
 
 extern int get_ipa_status(struct ipa_stat *status);
+extern int set_frame_rate(int rate);
+extern int set_frame_margin(int margin);
+extern int set_frame_status(unsigned long status);
 
 
 #define PERF_CTRL_DDR_MAX_CH (4)
 #define PERF_CTRL_DDR_FLUX_MAX_CNT (0xFFFFFFFFUL)
-int set_frame_margin(int margin)
-{
-	struct frame_info *frame_info = NULL;
-
-	if (margin < MIN_VLOAD_MARGIN || margin > MAX_VLOAD_MARGIN) {
-		pr_err("[%s] [IPROVISION-FRAME_INFO] invalid MARGIN value", __func__);
-		return -EINVAL;
-	}
-
-	frame_info = rtg_frame_info();
-
-	if (!frame_info)
-		return -EIO;
-
-	frame_info->vload_margin = margin;
-	frame_info->max_vload_time = frame_info->qos_frame_time / NSEC_PER_MSEC
-		+ frame_info->vload_margin;
-	FRAME_SYSTRACE("FRAME_MARGIN", margin, smp_processor_id());
-
-	return 0;
-}
 /* attention: there is same structure definition in atf hisi_ddr.c */
 struct ddr_perfdata {
 	unsigned int channel_nr;
@@ -220,6 +205,10 @@ static long perf_ctrl_ioctl_get_power(void __user *uarg) {
 
 	return 0;
 }
+extern int set_frame_rate(int rate);
+extern int set_frame_margin(int margin);
+extern int set_frame_status(unsigned long status);
+
 
 static long perf_ctrl_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
@@ -394,36 +383,6 @@ err:
 		}
 		break;
 
-	case PERF_CTRL_SET_FRAME_RATE:
-		if (copy_from_user(&frame_rate, uarg, sizeof(int))) {
-			pr_err("frame_qos copy_from_user fail.\n");
-			return -EFAULT;
-		}
-		set_frame_rate(frame_rate);
-
-		ret = sched_set_group_window_size(DEFAULT_RT_FRAME_ID, frame_rate);
-		break;
-
-	case PERF_CTRL_SET_FRAME_MARGIN:
-		if (copy_from_user(&frame_margin, uarg, sizeof(int))) {
-			pr_err("frame_margin copy_from_user fail.\n");
-			return -EFAULT;
-		}
-
-		ret = set_frame_margin(frame_margin);
-		break;
-
-	case PERF_CTRL_SET_FRAME_STATUS:
-		if (copy_from_user(&frame_status, uarg, sizeof(unsigned long))) {
-			pr_err("frame_status copy_from_user fail.\n");
-			return -EFAULT;
-		}
-
-		ret = sched_set_group_window_rollover(DEFAULT_RT_FRAME_ID);
-
-		if (!ret)
-			ret = set_frame_status(frame_status);
-		break;
 
 	case PERF_CTRL_SET_TASK_RTG:
 		if (copy_from_user(&task, uarg, sizeof(struct rtg_group_task))) {
