@@ -1,84 +1,88 @@
-// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0
 /*
+ * linux/drivers/staging/erofs/namei.c
+ *
  * Copyright (C) 2017-2018 HUAWEI, Inc.
- *             https://www.huawei.com/
+ *             http://www.huawei.com/
  * Created by Gao Xiang <gaoxiang25@huawei.com>
+ *
+ * This file is subject to the terms and conditions of the GNU General Public
+ * License.  See the file COPYING in the main directory of the Linux
+ * distribution for more details.
  */
+#include "internal.h"
 #include "xattr.h"
 
 #include <trace/events/erofs.h>
 
-struct erofs_qstr {
-	const unsigned char *name;
-	const unsigned char *end;
-};
-
-/* based on the end of qn is accurate and it must have the trailing '\0' */
-static inline int erofs_dirnamecmp(const struct erofs_qstr *qn,
-				   const struct erofs_qstr *qd,
-				   unsigned int *matched)
+/* based on the value of qn->len is accurate */
+static inline int dirnamecmp(struct qstr *qn,
+	struct qstr *qd, unsigned *matched)
 {
-	unsigned int i = *matched;
-
-	/*
-	 * on-disk error, let's only BUG_ON in the debugging mode.
-	 * otherwise, it will return 1 to just skip the invalid name
-	 * and go on (in consideration of the lookup performance).
-	 */
-	DBG_BUGON(qd->name > qd->end);
-
-	/* qd could not have trailing '\0' */
-	/* However it is absolutely safe if < qd->end */
-	while (qd->name + i < qd->end && qd->name[i] != '\0') {
-		if (qn->name[i] != qd->name[i]) {
-			*matched = i;
-			return qn->name[i] > qd->name[i] ? 1 : -1;
+	unsigned i = *matched, len = min(qn->len, qd->len);
+loop:
+	if (unlikely(i >= len)) {
+		*matched = i;
+		if (qn->len < qd->len) {
+			/*
+			 * actually (qn->len == qd->len)
+			 * when qd->name[i] == '\0'
+			 */
+			return qd->name[i] == '\0' ? 0 : -1;
 		}
-		++i;
+		return (qn->len > qd->len);
 	}
-	*matched = i;
-	/* See comments in __d_alloc on the terminating NUL character */
-	return qn->name[i] == '\0' ? 0 : 1;
+
+	if (qn->name[i] != qd->name[i]) {
+		*matched = i;
+		return qn->name[i] > qd->name[i] ? 1 : -1;
+	}
+
+	++i;
+	goto loop;
 }
 
-#define nameoff_from_disk(off, sz)	(le16_to_cpu(off) & ((sz) - 1))
-
-static struct erofs_dirent *find_target_dirent(struct erofs_qstr *name,
-					       u8 *data,
-					       unsigned int dirblksize,
-					       const int ndirents)
+static struct erofs_dirent *find_target_dirent(
+	struct qstr *name,
+	u8 *data, int maxsize)
 {
-	int head, back;
-	unsigned int startprfx, endprfx;
+	unsigned ndirents, head, back;
+	unsigned startprfx, endprfx;
 	struct erofs_dirent *const de = (struct erofs_dirent *)data;
 
-	/* since the 1st dirent has been evaluated previously */
-	head = 1;
+	/* make sure that maxsize is valid */
+	BUG_ON(maxsize < sizeof(struct erofs_dirent));
+
+	ndirents = le16_to_cpu(de->nameoff) / sizeof(*de);
+
+	/* corrupted dir (may be unnecessary...) */
+	BUG_ON(!ndirents);
+
+	head = 0;
 	back = ndirents - 1;
 	startprfx = endprfx = 0;
 
 	while (head <= back) {
-		const int mid = head + (back - head) / 2;
-		const int nameoff = nameoff_from_disk(de[mid].nameoff,
-						      dirblksize);
-		unsigned int matched = min(startprfx, endprfx);
-		struct erofs_qstr dname = {
-			.name = data + nameoff,
-			.end = mid >= ndirents - 1 ?
-				data + dirblksize :
-				data + nameoff_from_disk(de[mid + 1].nameoff,
-							 dirblksize)
-		};
+		unsigned mid = head + (back - head) / 2;
+		unsigned nameoff = le16_to_cpu(de[mid].nameoff);
+		unsigned matched = min(startprfx, endprfx);
+
+		struct qstr dname = QSTR_INIT(data + nameoff,
+			unlikely(mid >= ndirents - 1) ?
+				maxsize - nameoff :
+				le16_to_cpu(de[mid + 1].nameoff) - nameoff);
 
 		/* string comparison without already matched prefix */
-		int ret = erofs_dirnamecmp(name, &dname, &matched);
+		int ret = dirnamecmp(name, &dname, &matched);
 
-		if (!ret) {
+		if (unlikely(!ret))
 			return de + mid;
-		} else if (ret > 0) {
+		else if (ret > 0) {
 			head = mid + 1;
 			startprfx = matched;
-		} else {
+		} else if (unlikely(mid < 1))	/* fix "mid" overflow */
+			break;
+		else {
 			back = mid - 1;
 			endprfx = matched;
 		}
@@ -87,114 +91,103 @@ static struct erofs_dirent *find_target_dirent(struct erofs_qstr *name,
 	return ERR_PTR(-ENOENT);
 }
 
-static struct page *find_target_block_classic(struct inode *dir,
-					      struct erofs_qstr *name,
-					      int *_ndirents)
+static struct page *find_target_block_classic(
+	struct inode *dir,
+	struct qstr *name, int *_diff)
 {
-	unsigned int startprfx, endprfx;
-	int head, back;
+	unsigned startprfx, endprfx;
+	unsigned head, back;
 	struct address_space *const mapping = dir->i_mapping;
 	struct page *candidate = ERR_PTR(-ENOENT);
 
 	startprfx = endprfx = 0;
 	head = 0;
-	back = erofs_inode_datablocks(dir) - 1;
+	back = inode_datablocks(dir) - 1;
 
 	while (head <= back) {
-		const int mid = head + (back - head) / 2;
+		unsigned mid = head + (back - head) / 2;
 		struct page *page = read_mapping_page(mapping, mid, NULL);
 
-		if (!IS_ERR(page)) {
-			struct erofs_dirent *de = kmap_atomic(page);
-			const int nameoff = nameoff_from_disk(de->nameoff,
-							      EROFS_BLKSIZ);
-			const int ndirents = nameoff / sizeof(*de);
+		if (IS_ERR(page)) {
+exact_out:
+			if (!IS_ERR(candidate)) /* valid candidate */
+				put_page(candidate);
+			return page;
+		} else {
 			int diff;
-			unsigned int matched;
-			struct erofs_qstr dname;
+			unsigned ndirents, matched;
+			struct qstr dname;
+			struct erofs_dirent *de = kmap_atomic(page);
+			unsigned nameoff = le16_to_cpu(de->nameoff);
 
-			if (!ndirents) {
-				kunmap_atomic(de);
-				put_page(page);
-				erofs_err(dir->i_sb,
-					  "corrupted dir block %d @ nid %llu",
-					  mid, EROFS_I(dir)->nid);
-				DBG_BUGON(1);
-				page = ERR_PTR(-EFSCORRUPTED);
-				goto out;
-			}
+			ndirents = nameoff / sizeof(*de);
+
+			/* corrupted dir (should have one entry at least) */
+			BUG_ON(!ndirents || nameoff > PAGE_SIZE);
 
 			matched = min(startprfx, endprfx);
 
 			dname.name = (u8 *)de + nameoff;
-			if (ndirents == 1)
-				dname.end = (u8 *)de + EROFS_BLKSIZ;
-			else
-				dname.end = (u8 *)de +
-					nameoff_from_disk(de[1].nameoff,
-							  EROFS_BLKSIZ);
+			dname.len = ndirents == 1 ?
+				/* since the rest of the last page is 0 */
+				EROFS_BLKSIZ - nameoff
+				: le16_to_cpu(de[1].nameoff) - nameoff;
 
 			/* string comparison without already matched prefix */
-			diff = erofs_dirnamecmp(name, &dname, &matched);
+			diff = dirnamecmp(name, &dname, &matched);
 			kunmap_atomic(de);
 
-			if (!diff) {
-				*_ndirents = 0;
-				goto out;
+			if (unlikely(!diff)) {
+				*_diff = 0;
+				goto exact_out;
 			} else if (diff > 0) {
 				head = mid + 1;
 				startprfx = matched;
 
-				if (!IS_ERR(candidate))
+				if (likely(!IS_ERR(candidate)))
 					put_page(candidate);
 				candidate = page;
-				*_ndirents = ndirents;
 			} else {
 				put_page(page);
+
+				if (unlikely(mid < 1))	/* fix "mid" overflow */
+					break;
 
 				back = mid - 1;
 				endprfx = matched;
 			}
-			continue;
 		}
-out:		/* free if the candidate is valid */
-		if (!IS_ERR(candidate))
-			put_page(candidate);
-		return page;
 	}
+	*_diff = 1;
 	return candidate;
 }
 
 int erofs_namei(struct inode *dir,
-		struct qstr *name,
-		erofs_nid_t *nid, unsigned int *d_type)
+	struct qstr *name,
+	erofs_nid_t *nid, unsigned *d_type)
 {
-	int ndirents;
+	int diff;
 	struct page *page;
-	void *data;
+	u8 *data;
 	struct erofs_dirent *de;
-	struct erofs_qstr qn;
 
-	if (!dir->i_size)
+	if (unlikely(!dir->i_size))
 		return -ENOENT;
 
-	qn.name = name->name;
-	qn.end = name->name + name->len;
+	diff = 1;
+	page = find_target_block_classic(dir, name, &diff);
 
-	ndirents = 0;
-	page = find_target_block_classic(dir, &qn, &ndirents);
-
-	if (IS_ERR(page))
+	if (unlikely(IS_ERR(page)))
 		return PTR_ERR(page);
 
 	data = kmap_atomic(page);
 	/* the target page has been mapped */
-	if (ndirents)
-		de = find_target_dirent(&qn, data, EROFS_BLKSIZ, ndirents);
-	else
-		de = (struct erofs_dirent *)data;
+	de = likely(diff) ?
+		/* since the rest of the last page is 0 */
+		find_target_dirent(name, data, EROFS_BLKSIZ) :
+		(struct erofs_dirent *)data;
 
-	if (!IS_ERR(de)) {
+	if (likely(!IS_ERR(de))) {
 		*nid = le64_to_cpu(de->nid);
 		*d_type = de->file_type;
 	}
@@ -207,12 +200,11 @@ int erofs_namei(struct inode *dir,
 
 /* NOTE: i_mutex is already held by vfs */
 static struct dentry *erofs_lookup(struct inode *dir,
-				   struct dentry *dentry,
-				   unsigned int flags)
+	struct dentry *dentry, unsigned int flags)
 {
 	int err;
 	erofs_nid_t nid;
-	unsigned int d_type;
+	unsigned d_type;
 	struct inode *inode;
 
 	DBG_BUGON(!d_really_is_negative(dentry));
@@ -222,7 +214,7 @@ static struct dentry *erofs_lookup(struct inode *dir,
 	trace_erofs_lookup(dir, dentry, flags);
 
 	/* file name exceeds fs limit */
-	if (dentry->d_name.len > EROFS_NAME_LEN)
+	if (unlikely(dentry->d_name.len > EROFS_NAME_LEN))
 		return ERR_PTR(-ENAMETOOLONG);
 
 	/* false uninitialized warnings on gcc 4.8.x */
@@ -231,20 +223,32 @@ static struct dentry *erofs_lookup(struct inode *dir,
 	if (err == -ENOENT) {
 		/* negative dentry */
 		inode = NULL;
-	} else if (err) {
-		inode = ERR_PTR(err);
-	} else {
-		erofs_dbg("%s, %s (nid %llu) found, d_type %u", __func__,
-			  dentry->d_name.name, nid, d_type);
-		inode = erofs_iget(dir->i_sb, nid, d_type == FT_DIR);
-	}
+		goto negative_out;
+	} else if (unlikely(err))
+		return ERR_PTR(err);
+
+	debugln("%s, %s (nid %llu) found, d_type %u", __func__,
+		dentry->d_name.name, nid, d_type);
+
+	inode = erofs_iget(dir->i_sb, nid, d_type == EROFS_FT_DIR);
+	if (IS_ERR(inode))
+		return ERR_CAST(inode);
+
+negative_out:
 	return d_splice_alias(inode, dentry);
 }
 
 const struct inode_operations erofs_dir_iops = {
 	.lookup = erofs_lookup,
-	.getattr = erofs_getattr,
+};
+
+const struct inode_operations erofs_dir_xattr_iops = {
+	.lookup = erofs_lookup,
+#ifdef CONFIG_EROFS_FS_XATTR
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0))
+	.getxattr = generic_getxattr,
+#endif
 	.listxattr = erofs_listxattr,
-	.get_acl = erofs_get_acl,
+#endif
 };
 
