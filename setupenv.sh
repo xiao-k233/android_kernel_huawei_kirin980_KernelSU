@@ -19,4 +19,4 @@ make ARCH=arm64 O=./out merge_kirin980_defconfig
 make ARCH=arm64 O=./out -j20
 cd tools
 ./pack_kernerimage_cmd.sh
-ls -al kernel.img
+ls -lh kernel.img
