@@ -46,7 +46,6 @@
  *
  */
 /*lint --e{537,607,701,713,718,732,746}*/
-#ifdef __KERNEL__
 #include <linux/version.h>
 #include <linux/hwspinlock.h>
 #include <linux/printk.h>
@@ -60,7 +59,6 @@
 
 #define DRIVER_NAME "v7r2_ipc_device"
 
-#endif
 #include <osl_bio.h>
 #include <osl_types.h>
 #include <osl_module.h>
@@ -95,9 +93,9 @@ static s32 bsp_ipc_int_enable_noirq (IPC_INT_LEV_E ulLvl)
 	   ipc_print_error("[%s]Wrong para , line:%d,para = %d\n",__FUNCTION__, __LINE__,ulLvl);
            return MDRV_ERROR; 
      } 
-    /*Ð´ÖÐ¶ÏÆÁ±Î¼Ä´æÆ÷*/
+    /*Ð´ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½Î¼Ä´ï¿½ï¿½ï¿½*/
     u32IntMask = readl((const volatile void *)(ipc_ctrl.ipc_base + BSP_IPC_CPU_INT_MASK(ipc_ctrl.core_num)));
-    u32IntMask |= (u32)1 << ulLvl;/* [false alarm]:Îó±¨ */
+    u32IntMask |= (u32)1 << ulLvl;/* [false alarm]:ï¿½ï¿½ */
     writel(u32IntMask,(volatile void *)(ipc_ctrl.ipc_base+BSP_IPC_CPU_INT_MASK(ipc_ctrl.core_num)));    
     return MDRV_OK;
 }
@@ -111,7 +109,7 @@ s32 bsp_ipc_int_enable (IPC_INT_LEV_E ulLvl)
 	   ipc_print_error("[%s]Wrong para , line:%d,para = %d\n",__FUNCTION__, __LINE__,ulLvl);
            return MDRV_ERROR; 
      } 
-    /*Ð´ÖÐ¶ÏÆÁ±Î¼Ä´æÆ÷*/
+    /*Ð´ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½Î¼Ä´ï¿½ï¿½ï¿½*/
     spin_lock_irqsave(&ipc_ctrl.lock,flags);
     ret = bsp_ipc_int_enable_noirq(ulLvl);
     spin_unlock_irqrestore(&ipc_ctrl.lock,flags);
@@ -126,9 +124,9 @@ static s32 bsp_ipc_int_disable_noirq(IPC_INT_LEV_E ulLvl)
 		ipc_print_error("[%s]Wrong para , line:%d,para = %d\n",__FUNCTION__, __LINE__,ulLvl);
 		return MDRV_ERROR; 
 	 } 
-	/*Ð´ÖÐ¶ÏÆÁ±Î¼Ä´æÆ÷*/
+	/*Ð´ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½Î¼Ä´ï¿½ï¿½ï¿½*/
 	u32IntMask = readl((const volatile void *)(ipc_ctrl.ipc_base + BSP_IPC_CPU_INT_MASK(ipc_ctrl.core_num)));
-    u32IntMask = u32IntMask & (~((u32)1 << ulLvl));/* [false alarm]:Îó±¨ */
+    u32IntMask = u32IntMask & (~((u32)1 << ulLvl));/* [false alarm]:ï¿½ï¿½ */
 	writel(u32IntMask,(volatile void *)(ipc_ctrl.ipc_base + BSP_IPC_CPU_INT_MASK(ipc_ctrl.core_num)));
 	return MDRV_OK;
 }
@@ -142,7 +140,7 @@ s32 bsp_ipc_int_disable(IPC_INT_LEV_E ulLvl)
 		ipc_print_error("[%s]Wrong para , line:%d,para = %d\n",__FUNCTION__, __LINE__,ulLvl);
 		return MDRV_ERROR; 
 	 } 
-	/*Ð´ÖÐ¶ÏÆÁ±Î¼Ä´æÆ÷*/
+	/*Ð´ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½Î¼Ä´ï¿½ï¿½ï¿½*/
 	spin_lock_irqsave(&ipc_ctrl.lock,flags);
 	ret = bsp_ipc_int_disable_noirq(ulLvl);
 	spin_unlock_irqrestore(&ipc_ctrl.lock,flags);
@@ -195,9 +193,9 @@ OSL_IRQ_FUNC(irqreturn_t,ipc_int_handler,irq,dev_id)
 	u32 u32Date = 0x1;
 	u32 u32BitValue = 0;
 	u32IntStat=readl((const volatile void *)(ipc_ctrl.ipc_base + BSP_IPC_CPU_INT_STAT(ipc_ctrl.core_num)));
-	/*ÇåÖÐ¶Ï*/
+	/*ï¿½ï¿½ï¿½Ð¶ï¿½*/
 	writel(u32IntStat,(volatile void *)(ipc_ctrl.ipc_base + BSP_IPC_CPU_INT_CLR(ipc_ctrl.core_num)));
-	/* ±éÀú32¸öÖÐ¶Ï */
+	/* ï¿½ï¿½ï¿½ï¿½32ï¿½ï¿½ï¿½Ð¶ï¿½ */
 	for (i = 0; i < INTSRC_NUM; i++)
 	{
 		if(0!=i)
@@ -205,10 +203,10 @@ OSL_IRQ_FUNC(irqreturn_t,ipc_int_handler,irq,dev_id)
 			u32Date <<= 1;   
 		} 
 		u32BitValue = u32IntStat & u32Date;
-		/* Èç¹ûÓÐÖÐ¶Ï ,Ôòµ÷ÓÃ¶ÔÓ¦ÖÐ¶Ï´¦Àíº¯Êý */
+		/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ ,ï¿½ï¿½ï¿½ï¿½Ã¶ï¿½Ó¦ï¿½Ð¶Ï´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
 		if (0 != u32BitValue)
 		{  
-			/*µ÷ÓÃ×¢²áµÄÖÐ¶Ï´¦Àíº¯Êý*/
+			/*ï¿½ï¿½ï¿½ï¿½×¢ï¿½ï¿½ï¿½ï¿½Ð¶Ï´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
 			if (NULL !=  ipc_ctrl.ipc_int_table[i].routine)
 			{
 				begin = bsp_get_slice_value();
@@ -242,11 +240,11 @@ s32 bsp_ipc_int_send(IPC_INT_CORE_E enDstCore, IPC_INT_LEV_E ulLvl)
 		return MDRV_ERROR; 
 	 } 
 	
- 	if(modem_reset_flag && (IPC_INT_LEV_E)IPC_CCPU_INT_SRC_ACPU_RESET != ulLvl) /* ºË¼äÐÅÏ¢²»¿ÉÒÔ½»»¥ */
+ 	if(modem_reset_flag && (IPC_INT_LEV_E)IPC_CCPU_INT_SRC_ACPU_RESET != ulLvl) /* ï¿½Ë¼ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½Ô½ï¿½ï¿½ï¿½ */
 	{
 		return IPC_ERR_MODEM_RESETING;
 	}
-	/*Ð´Ô­Ê¼ÖÐ¶Ï¼Ä´æÆ÷,²úÉúÖÐ¶Ï*/
+	/*Ð´Ô­Ê¼ï¿½Ð¶Ï¼Ä´ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½*/
 	spin_lock_irqsave(&ipc_ctrl.lock,flags);
 	writel((u32)1 << ulLvl,(volatile void *)(ipc_ctrl.ipc_base + BSP_IPC_CPU_RAW_INT(enDstCore)));
 	
@@ -262,7 +260,7 @@ static void  mask_int(u32 u32SignalNum)
 	unsigned long flags=0;
 	spin_lock_irqsave(&ipc_ctrl.lock,flags);
 	u32IntMask = readl((const volatile void *)(ipc_ctrl.ipc_base + BSP_IPC_SEM_INT_MASK(ipc_ctrl.core_num)));
-	u32IntMask = u32IntMask & (~((u32)1 << u32SignalNum)); /* [false alarm]:Îó±¨ */
+	u32IntMask = u32IntMask & (~((u32)1 << u32SignalNum)); /* [false alarm]:ï¿½ï¿½ */
 	writel(u32IntMask,(volatile void *)(ipc_ctrl.ipc_base + BSP_IPC_SEM_INT_MASK(ipc_ctrl.core_num)));
 	spin_unlock_irqrestore(&ipc_ctrl.lock,flags);
 }
@@ -274,7 +272,7 @@ static void  mask_int(u32 u32SignalNum)
 		ipc_print_error("[%s]Wrong para , line:%d,para = %d\n",__FUNCTION__, __LINE__,u32SignalNum);
 		return MDRV_ERROR; 
 	 } 
-	 if(true != ipc_ctrl.sem_exist[u32SignalNum])/*±ÜÃâÍ¬Ò»¸öÐÅºÅÁ¿ÔÚÃ»ÓÐÉ¾³ýµÄÇé¿öÏÂ´´½¨¶à´Î*/
+	 if(true != ipc_ctrl.sem_exist[u32SignalNum])/*ï¿½ï¿½ï¿½ï¿½Í¬Ò»ï¿½ï¿½ï¿½Åºï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½É¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
 	 {
 	 	osl_sem_init(SEM_EMPTY,&(ipc_ctrl.sem_ipc_task[u32SignalNum]));
 		ipc_ctrl.sem_exist[u32SignalNum] = true;
@@ -314,13 +312,13 @@ static void  mask_int(u32 u32SignalNum)
  int bsp_ipc_sem_take(u32 u32SignalNum, int s32timeout)
  {
 	u32 u32IntMask = 0,ret = 0;    
-	/*²ÎÊý¼ì²é*/
+	/*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
 	if (u32SignalNum >= IPC_SEM_BUTTOM_ACORE)
 	{
 		ipc_print_error("[%s]Wrong para , line:%d,para = %d\n",__FUNCTION__, __LINE__,u32SignalNum);
 		return MDRV_ERROR; 
 	 } 
-	 /*½«ÉêÇëµÄÐÅºÅÁ¿¶ÔÓ¦µÄÊÍ·ÅÖÐ¶ÏÇåÁã*/
+	 /*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½Í·ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½*/
 	writel((u32)1<<u32SignalNum, (volatile void *)(ipc_ctrl.ipc_base+BSP_IPC_SEM_INT_CLR(ipc_ctrl.core_num)));
 	ret =  readl((const volatile void *)(ipc_ctrl.ipc_base + BSP_IPC_HS_CTRL(ipc_ctrl.core_num, u32SignalNum)));
 	if(0 == ret)
@@ -339,9 +337,9 @@ static void  mask_int(u32 u32SignalNum)
 		}
 		if(0 != s32timeout)
 		{
-			/*Ê¹ÄÜÐÅºÅÁ¿ÊÍ·ÅÖÐ¶Ï*/
+			/*Ê¹ï¿½ï¿½ï¿½Åºï¿½ï¿½ï¿½ï¿½Í·ï¿½ï¿½Ð¶ï¿½*/
 			u32IntMask = readl((const volatile void *)(ipc_ctrl.ipc_base + BSP_IPC_SEM_INT_MASK(ipc_ctrl.core_num)));
-			u32IntMask = u32IntMask | ((u32)1 << u32SignalNum);/* [false alarm]:Îó±¨ */
+			u32IntMask = u32IntMask | ((u32)1 << u32SignalNum);/* [false alarm]:ï¿½ï¿½ */
 			writel(u32IntMask,(volatile void *)(ipc_ctrl.ipc_base + BSP_IPC_SEM_INT_MASK(ipc_ctrl.core_num)));
 			 if (MDRV_OK != osl_sem_downtimeout(&(ipc_ctrl.sem_ipc_task[u32SignalNum]), s32timeout))  
 			{
@@ -374,7 +372,7 @@ s32 bsp_ipc_sem_give(u32 u32SignalNum)
 		return MDRV_ERROR; 
 	 } 
 	ipc_debug.u32SemGiveTimes[u32SignalNum]++;
-	/*ÏòÐÅºÅÁ¿ÇëÇó¼Ä´æÆ÷Ð´0*/
+	/*ï¿½ï¿½ï¿½Åºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½Ð´0*/
 	writel(0,(volatile void *)(ipc_ctrl.ipc_base + BSP_IPC_HS_CTRL(ipc_ctrl.core_num, u32SignalNum)));
 	return MDRV_OK;
  }
@@ -399,16 +397,16 @@ s32 bsp_ipc_sem_give(u32 u32SignalNum)
  }
 
  /*****************************************************************************
- * º¯ Êý Ãû      : ipc_sem_int_handler
+ * ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½      : ipc_sem_int_handler
  *
- * ¹¦ÄÜÃèÊö  : ÐÅºÅÁ¿ÊÍ·ÅÖÐ¶Ï´¦Àíº¯Êý
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  : ï¿½Åºï¿½ï¿½ï¿½ï¿½Í·ï¿½ï¿½Ð¶Ï´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  *
- * ÊäÈë²ÎÊý  : ÎÞ  
- * Êä³ö²ÎÊý  : ÎÞ
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  : ï¿½ï¿½  
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  : ï¿½ï¿½
  *
- * ·µ »Ø Öµ      : ÎÞ
+ * ï¿½ï¿½ ï¿½ï¿½ Öµ      : ï¿½ï¿½
  *
- * ÐÞ¸Ä¼ÇÂ¼  :  2013Äê1ÔÂ9ÈÕ lixiaojie 
+ * ï¿½Þ¸Ä¼ï¿½Â¼  :  2013ï¿½ï¿½1ï¿½ï¿½9ï¿½ï¿½ lixiaojie 
  *****************************************************************************/
 OSL_IRQ_FUNC(irqreturn_t,ipc_sem_int_handler,irq,dev_id)
 {
@@ -419,7 +417,7 @@ OSL_IRQ_FUNC(irqreturn_t,ipc_sem_int_handler,irq,dev_id)
 	{
 		do
 		{
-			 /*Èç¹ûÓÐÐÅºÅÁ¿ÊÍ·ÅÖÐ¶Ï£¬Çå³ý¸ÃÖÐ¶Ï*/
+			 /*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½ï¿½ï¿½ï¿½Í·ï¿½ï¿½Ð¶Ï£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½*/
 			writel((u32)1<<--u32SNum, (volatile void *)(ipc_ctrl.ipc_base+BSP_IPC_SEM_INT_CLR(ipc_ctrl.core_num)));
 			u32HsCtrl = readl((const volatile void *)(ipc_ctrl.ipc_base + BSP_IPC_HS_CTRL(ipc_ctrl.core_num, u32SNum)));
 			if (0 == u32HsCtrl)
@@ -578,7 +576,7 @@ static void ipc_free_sem_taked(u32 core_id)
 
     for(i = 0; i < 32; i++)
     {
-        /*ÅÐ¶Ï×ÊÔ´ËøÕ¼ÓÃ£¬Èç¹ûÕ¼ÓÃ£¬ÔòÊÍ·Å*/
+        /*ï¿½Ð¶ï¿½ï¿½ï¿½Ô´ï¿½ï¿½Õ¼ï¿½Ã£ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½Ã£ï¿½ï¿½ï¿½ï¿½Í·ï¿½*/
         ret = readl((const volatile void *)(ipc_ctrl.ipc_base + BSP_IPC_HS_STAT(core_id, i)));
         if (ret == ((1 << 3) | core_id))
         {
@@ -587,7 +585,6 @@ static void ipc_free_sem_taked(u32 core_id)
     }
 }
 
-#ifdef CONFIG_IPC_MSG
 static struct ipc_msg g_ipc_msg = {0};
 static int ipc_msg_init(void)
 {
@@ -626,12 +623,6 @@ static int ipc_msg_init(void)
     ipc_print_error("ipc msg init success\n");
     return BSP_OK;
 }
-#else
-static int ipc_msg_init(void)
-{
-    return BSP_OK;
-}
-#endif
 
 static s32  bsp_ipc_probe(struct platform_device *dev)
 {
@@ -672,7 +663,7 @@ static s32  bsp_ipc_probe(struct platform_device *dev)
 
 	ipc_ctrl.core_num = IPC_CORE_ACORE;
 
-	/* ÄÚ´æÓ³Éä£¬»ñµÃ»ùÖ· */
+	/* ï¿½Ú´ï¿½Ó³ï¿½ä£¬ï¿½ï¿½Ã»ï¿½Ö· */
 	p_iomap_ret = of_iomap(node, 0);
 	if (NULL == p_iomap_ret)
 	{
@@ -694,7 +685,7 @@ static s32  bsp_ipc_probe(struct platform_device *dev)
 	writel(0x0,(volatile void *)(ipc_ctrl.ipc_base + BSP_IPC_SEM_INT_MASK(ipc_ctrl.core_num)));
 	spin_lock_init(&ipc_ctrl.lock);
 
-	/* »ñÈ¡ÖÐ¶ÏºÅ */
+	/* ï¿½ï¿½È¡ï¿½Ð¶Ïºï¿½ */
 	ipc_ctrl.irq_int_no = irq_of_parse_and_map(node, 0);
 	ret = request_irq(ipc_ctrl.irq_int_no, ipc_int_handler, IRQF_NO_SUSPEND, "ipc_irq",(void*) NULL);
 	if (ret )
@@ -758,7 +749,7 @@ void ccore_ipc_disable(void)
 
     writel(0x0,(volatile void *)(ipc_ctrl.ipc_base+BSP_IPC_CPU_INT_MASK(ipc_ctrl.core_num)));  
 	
-	/*µ¥¶À¸´Î»µÄÌØÊâ´¦Àí£¬²»ÆÁ±Î*/
+	/*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½â´¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
 	(void)bsp_ipc_int_enable_noirq(IPC_ACPU_INT_SRC_CCPU_RESET_IDLE);
 	(void)bsp_ipc_int_enable_noirq(IPC_ACPU_INT_SRC_CCPU_RESET_SUCC);
 
@@ -772,7 +763,6 @@ void ccore_ipc_enable(void)
 	spin_unlock_irqrestore(&ipc_ctrl.lock,flag);
 }
 
-#ifdef CONFIG_PM
 
 static void ipc_dpm_complete(struct device *dev)
 {
@@ -808,9 +798,6 @@ static const struct dev_pm_ops balong_ipc_pm_ops ={
 };
 
 #define BALONG_DEV_PM_OPS (&balong_ipc_pm_ops)
-#else
-#define BALONG_DEV_PM_OPS NULL
-#endif
 
 
 static struct platform_driver balong_ipc_driver = {
@@ -820,7 +807,6 @@ static struct platform_driver balong_ipc_driver = {
 		.name = DRIVER_NAME,
 		.owner  = THIS_MODULE,
 		.pm     = BALONG_DEV_PM_OPS,
-		.probe_type     = PROBE_FORCE_SYNCHRONOUS,
 	},
 };
 
@@ -849,12 +835,13 @@ int __init hi_ipc_init(void)
 	}
 	return ret;
 }
+/*
 static void  bsp_ipc_exit(void)
 {
 	platform_driver_unregister(&balong_ipc_driver);
  	platform_device_unregister(&balong_ipc_device);
 }
-
+*/
 
 void bsp_ipc_debug_show(void)
 {
@@ -907,12 +894,6 @@ EXPORT_SYMBOL(ipc_modem_reset_cb);
 EXPORT_SYMBOL(bsp_ipc_spin_lock_timeout);
 EXPORT_SYMBOL(bsp_ipc_int_mask_status_dump);
 
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-arch_initcall(hi_ipc_init);
-module_exit(bsp_ipc_exit);
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Hisilicon Drive Group");
-#endif
 /*lint -restore +e19*/
 
 

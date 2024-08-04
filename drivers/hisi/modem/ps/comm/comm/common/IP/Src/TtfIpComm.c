@@ -46,13 +46,22 @@
  *
  */
 
-#include "TtfIpComm.h"
-#include "securec.h"
+
+
+
+/******************************************************************************
+   1 头文件包含
+******************************************************************************/
 #include "PsTypeDef.h"
 #include "TTFComm.h"
+#include "TtfIpComm.h"
 
-
-#define THIS_FILE_ID        PS_FILE_ID_TTF_IP_COMM_C
+/*****************************************************************************
+    协议栈打印打点方式下的.C文件宏定义
+*****************************************************************************/
+/*lint -e767*/
+#define    THIS_FILE_ID        PS_FILE_ID_TTF_IP_COMM_C
+/*lint +e767*/
 
 
 /******************************************************************************
@@ -319,13 +328,11 @@ MODULE_EXPORTED IP_DATA_TYPE_ENUM_UINT8 TTF_ParseIpDataType
         return IP_DATA_TYPE_BUTT;
     }
 
-    #if (FEATURE_ON == FEATURE_BASTET)
     if(TTF_PS_DATA_PRIORITY_HIGH == enDataPriority)
     {
         TTF_LOG(ulPid, DIAG_MODE_COMM, PS_PRINT_WARNING, "TTF_ParseIpDataType user high priority data.");
         return IP_DATA_TYPE_USER_HIGH;
     }
-    #endif
 
     /* 安全检查: 检查数据包大小是否能够容纳对应协议包头，不能容纳的异常包，就不用继续解析了*/
     if (PS_FAIL == TTF_CheckIpDataByProtocalType(pData, usLen, usIpHeadLen, usIpTotalLen, enDataProtocalType))
@@ -501,42 +508,76 @@ MODULE_EXPORTED VOS_UINT16 TTF_GetIpDataTraceLen
     return usIpDataTraceLen;
 }
 
-MODULE_EXPORTED VOS_VOID TTF_FilterIpv4AddrSensitiveInfo(VOS_UINT8 *ipAddr)
+MODULE_EXPORTED VOS_VOID TTF_FilterIpv4AddrSensitiveInfo
+(
+    VOS_UINT8                          *pucIpAddr
+)
 {
-    *(ipAddr + TTF_IPV4_MASK_IP_ADDR_SENSITIVE_POS) = 0;
+    PS_MEM_SET_S(pucIpAddr + TTF_IPV4_MASK_IP_ADDR_SENSITIVE_POS, TTF_IPV4_MASK_IP_ADDR_SENSITIVE_BYTE_NUM,
+            0, TTF_IPV4_MASK_IP_ADDR_SENSITIVE_BYTE_NUM);
+    return;
 }
 
-MODULE_EXPORTED VOS_VOID TTF_FilterIpv6AddrSensitiveInfo(VOS_UINT8 *ipAddr)
+
+MODULE_EXPORTED VOS_VOID TTF_FilterIpv6AddrSensitiveInfo
+(
+    VOS_UINT8                          *pucIpAddr
+)
 {
-    VOS_UINT8 *ipSensitiveAddr = ipAddr + TTF_IPV6_MASK_IP_ADDR_SENSITIVE_POS;
-    (VOS_VOID)memset_s(ipSensitiveAddr, TTF_IPV6_MASK_IP_ADDR_SENSITIVE_BYTE_NUM,
-        0, TTF_IPV6_MASK_IP_ADDR_SENSITIVE_BYTE_NUM);
+    PS_MEM_SET_S(pucIpAddr + TTF_IPV6_MASK_IP_ADDR_SENSITIVE_POS, TTF_IPV6_MASK_IP_ADDR_SENSITIVE_BYTE_NUM,
+            0, TTF_IPV6_MASK_IP_ADDR_SENSITIVE_BYTE_NUM);
+    return;
 }
 
-MODULE_EXPORTED VOS_VOID TTF_MaskIpAddrTraces(VOS_UINT32 pid, VOS_UINT8 *ipData, VOS_UINT16 dataLen)
+
+
+MODULE_EXPORTED VOS_VOID TTF_TraceMaskIpAddr
+(
+    VOS_UINT32                          ulPid,
+    VOS_UINT8                          *pucData,
+    VOS_UINT16                          usDataLen
+)
 {
-    const VOS_UINT32 ipVersion = ipData[0] & IP_VER_MASK;
+    VOS_UINT8                          *pucIpSourceAddr;
+    VOS_UINT8                          *pucIpDestAddr;
 
-    if (ipVersion == IPV4_VER_VAL) {
-        if (dataLen < IPV4_HEAD_NORMAL_LEN) {
-            TTF_LOG1(pid, DIAG_MODE_COMM, PS_PRINT_WARNING, "TTF_MaskIpAddrTraces IPHeadLen is exception.", dataLen);
+
+    if ( IPV4_VER_VAL == (pucData[0] & IP_VER_MASK) )
+    {
+        /* IPV4头长至少20字节 */
+        if (usDataLen < IPV4_HEAD_NORMAL_LEN)
+        {
+            TTF_LOG(ulPid, DIAG_MODE_COMM, PS_PRINT_WARNING, "TTF_TraceMaskIpAddr IPHeadLen is exception.");
             return;
         }
-
-        TTF_FilterIpv4AddrSensitiveInfo(ipData + IPV4_SRC_IP_ADDR_OFFSET_POS);
-        TTF_FilterIpv4AddrSensitiveInfo(ipData + IPV4_DST_IP_ADDR_OFFSET_POS);
-    } else if(ipVersion == IPV6_VER_VAL) {
-        if (dataLen < IPV6_HEAD_NORMAL_LEN) {
-            TTF_LOG1(pid, DIAG_MODE_COMM, PS_PRINT_WARNING, "TTF_MaskIpAddrTraces IPHeadLen is exception.", dataLen);
-            return;
-        }
-
-        TTF_FilterIpv6AddrSensitiveInfo(ipData + IPV6_SRC_IP_ADDR_OFFSET_POS);
-        TTF_FilterIpv6AddrSensitiveInfo(ipData + IPV6_DST_IP_ADDR_OFFSET_POS);
-    } else {
-        TTF_LOG(pid, DIAG_MODE_COMM, PS_PRINT_WARNING, "TTF_MaskIpAddrTraces Protocol is Null.");
+        /*IPv4掩掉后8bit */
+        pucIpSourceAddr  = &(pucData[IPV4_SRC_IP_ADDR_OFFSET_POS]);
+        TTF_FilterIpv4AddrSensitiveInfo(pucIpSourceAddr);
+        pucIpDestAddr    = &(pucData[IPV4_DST_IP_ADDR_OFFSET_POS]);
+        TTF_FilterIpv4AddrSensitiveInfo(pucIpDestAddr);
     }
+    else if( IPV6_VER_VAL == (pucData[0] & IP_VER_MASK) )
+    {
+        /* IPV6头长 至少40字节 */
+        if (usDataLen < IPV6_HEAD_NORMAL_LEN)
+        {
+            TTF_LOG(ulPid, DIAG_MODE_COMM, PS_PRINT_WARNING, "TTF_TraceMaskIpAddr IPHeadLen is exception.");
+            return;
+        }
+        /*IPv6掩掉后88bit */
+        pucIpSourceAddr  = &(pucData[IPV6_SRC_IP_ADDR_OFFSET_POS]);
+        TTF_FilterIpv6AddrSensitiveInfo(pucIpSourceAddr);
+        pucIpDestAddr    = &(pucData[IPV6_DST_IP_ADDR_OFFSET_POS]);
+        TTF_FilterIpv6AddrSensitiveInfo(pucIpDestAddr);
+    }
+    else
+    {
+        TTF_LOG(ulPid, DIAG_MODE_COMM, PS_PRINT_WARNING, "TTF_TraceMaskIpAddr Protocol is Null.");
+    }
+
+    return;
 }
+
 
 
 /*lint -restore */

@@ -22,6 +22,18 @@ extern "C" {
 #define MAX_NV_GUC_CHECK_ITEM_NUM           32
 #define MAX_NV_TL_CHECK_ITEM_NUM            64
 
+#ifndef __u8_defined
+#define __u8_defined
+typedef signed char          s8;
+typedef unsigned char        u8;
+typedef signed short         s16;
+typedef unsigned short       u16;
+typedef signed int           s32;
+typedef unsigned int         u32;
+typedef signed long long     s64;
+typedef unsigned long long   u64;
+#endif
+
 /*请参考结构体样例*/
 typedef struct
 {
@@ -30,27 +42,27 @@ typedef struct
 
 typedef struct
 {
-    unsigned int uwGucCrcResult;                     		/* GUc主卡NV的校验结果 */
-    unsigned int uwTlCrcResult;                      		/* TL主卡NV的校验结果 */
-    unsigned int uwGucM2CrcResult;                   		/* GUC副卡NV的校验结果 */
+    u32 uwGucCrcResult;                     		/* GUc主卡NV的校验结果 */
+    u32 uwTlCrcResult;                      		/* TL主卡NV的校验结果 */
+    u32 uwGucM2CrcResult;                   		/* GUC副卡NV的校验结果 */
 }NV_CRC_CHECK_RESULT_STRU;
 
 typedef struct
 {
-    unsigned short uhwTransmitMode;                       		/* 指示该组的发送模式 */
-    unsigned short uhwBand;                              		/* 指示该组的BAND号 */
-    unsigned short uhwEnable;                              	/* 指示是否有效 */
-    unsigned short uhwValidCount;                              	/* 指示有效数据的个数 */
-    unsigned short auhwNeedCheckID[MAX_SINGLE_GUC_BAND_CHECK_NUM]; /* 保存需要检查的NV_ID值 */
+    u16 uhwTransmitMode;                       		/* 指示该组的发送模式 */
+    u16 uhwBand;                              		/* 指示该组的BAND号 */
+    u16 uhwEnable;                              	/* 指示是否有效 */
+    u16 uhwValidCount;                              	/* 指示有效数据的个数 */
+    u16 auhwNeedCheckID[MAX_SINGLE_GUC_BAND_CHECK_NUM]; /* 保存需要检查的NV_ID值 */
 }SINGLE_GUC_BAND_NV_ID_STRU;
 
 typedef struct
 {
-    unsigned short uhwTransmitMode;                       		/* 指示该组的发送模式 */
-    unsigned short uhwBand;                              		/* 指示该组的BAND号 */
-    unsigned short uhwEnable;                              	/* 指示是否有效 */
-    unsigned short uhwValidCount;                              	/* 指示有效数据的个数 */
-    unsigned short auhwNeedCheckID[MAX_SINGLE_TL_BAND_CHECK_NUM]; 	/* 保存需要检查的NV_ID值 */
+    u16 uhwTransmitMode;                       		/* 指示该组的发送模式 */
+    u16 uhwBand;                              		/* 指示该组的BAND号 */
+    u16 uhwEnable;                              	/* 指示是否有效 */
+    u16 uhwValidCount;                              	/* 指示有效数据的个数 */
+    u16 auhwNeedCheckID[MAX_SINGLE_TL_BAND_CHECK_NUM]; 	/* 保存需要检查的NV_ID值 */
 }SINGLE_TL_BAND_NV_ID_STRU;
 
 typedef struct
@@ -65,11 +77,11 @@ typedef struct
 
 typedef struct
 {
-    unsigned short uhwWorkStationNum;
-    unsigned short auhwNV50001InsertPoint[5];
-    unsigned short auhwNV50002InsertPoint[5];
-    unsigned short auhwNV50003InsertPoint[5];
-    unsigned int rsv;
+    u16 uhwWorkStationNum;
+    u16 auhwNV50001InsertPoint[5];
+    u16 auhwNV50002InsertPoint[5];
+    u16 auhwNV50003InsertPoint[5];
+    u32 rsv;
 }NV_WORKSTATION_INFO_STRU;
 
 typedef struct
@@ -83,17 +95,17 @@ typedef struct
 *****************************************************************************/
 typedef struct
 {
-    unsigned int  ulIsEnable;
-    signed int  lCloseAdcThreshold;
-    unsigned int  ulTempLowCount;
+    u32  ulIsEnable;
+    s32  lCloseAdcThreshold;
+    u32  ulTempLowCount;
 }CHG_BATTERY_LOW_TEMP_PROTECT_NV;
 
 
 typedef struct
 {
-    unsigned int                          ulIsEnable;
-    signed int                           lCloseADCHold;
-    unsigned int                          ulTempOverMax;
+    u32                          ulIsEnable;
+    s32                           lCloseADCHold;
+    u32                          ulTempOverMax;
 }OM_BATTREY_TEMP_CFG_STRU;
 
 /*****************************************************************************
@@ -102,9 +114,9 @@ typedef struct
 *****************************************************************************/
 typedef struct
 {
-    unsigned int  nv_status;
-    unsigned short  cust_first_pid;
-    unsigned short  cust_rewind_pid;
+    u32  nv_status;
+    u16  cust_first_pid;
+    u16  cust_rewind_pid;
 }nvi_cust_pid_type;
 
 /*****************************************************************************
@@ -113,7 +125,7 @@ typedef struct
 *****************************************************************************/
 typedef struct
 {
-    unsigned int ulSDWorkMode;
+    u32 ulSDWorkMode;
 }NV_WEBNAS_SD_WORKMODE_STRU;
 
 /*****************************************************************************
@@ -122,8 +134,8 @@ typedef struct
 *****************************************************************************/
 typedef struct
 {
-    signed short       sTemp;
-    signed short       sADC;
+    s16       sTemp;
+    s16       sADC;
 }NV_OLED_TEMP_ADC_STRU;
 
 /*****************************************************************************
@@ -141,8 +153,8 @@ typedef struct
 *****************************************************************************/
 typedef struct
 {
-    signed short    sTemp;
-    unsigned short    usADC;
+    s16    sTemp;
+    u16    usADC;
 }TEMP_ADC_STRU;
 
 /*****************************************************************************
@@ -160,10 +172,10 @@ typedef struct
 *****************************************************************************/
 typedef struct
 {
-    unsigned int    usbSnNvStatus;
-    unsigned int    usbSnNvSucFlag;
-    unsigned int    usbSnReserved1;
-    /*unsigned int    usbSnReserved2;*/
+    u32    usbSnNvStatus;
+    u32    usbSnNvSucFlag;
+    u32    usbSnReserved1;
+    /*u32    usbSnReserved2;*/
 }USB_SN_NV_INFO_STRU;
 
 /*****************************************************************************
@@ -172,7 +184,7 @@ typedef struct
 *****************************************************************************/
 typedef struct
 {
-    unsigned int    ulLiveTime;
+    u32    ulLiveTime;
 }LIVE_TIME_STRU;
 
 /*****************************************************************************
@@ -181,8 +193,8 @@ typedef struct
 *****************************************************************************/
 typedef struct
 {
-    unsigned int    ulEnable;
-    unsigned int    ulCycle;
+    u32    ulEnable;
+    u32    ulCycle;
 } LIVE_TIME_CONTROL_STRU;
 
 #ifdef __cplusplus

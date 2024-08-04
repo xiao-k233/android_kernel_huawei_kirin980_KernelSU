@@ -87,6 +87,9 @@ drv-y       += adp/adp_blk_mmc.o
 else
 drv-y       += adp/adp_blk_mtd.o
 endif
+ifeq ($(strip $(CFG_CONFIG_CORESIGHT)),YES)
+drv-y           += adp/adp_coresight.o
+endif
 drv-y           += adp/adp_charger.o
 drv-y           += adp/adp_mmc.o
 drv-y           += adp/adp_dload.o

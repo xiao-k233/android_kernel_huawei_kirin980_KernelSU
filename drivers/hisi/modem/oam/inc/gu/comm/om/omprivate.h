@@ -378,11 +378,6 @@ typedef struct
     }
 #endif
 
-static inline VOS_UINT32 PAM_GetMin(VOS_UINT32 num1, VOS_UINT32 num2)
-{
-    return (((num1) > (num2)) ? (num2) : (num1));
-}
-
 #ifdef __cplusplus
 #if __cplusplus
 }

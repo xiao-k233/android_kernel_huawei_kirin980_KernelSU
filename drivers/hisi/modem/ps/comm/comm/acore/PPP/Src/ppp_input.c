@@ -1,361 +1,409 @@
 /*
- * Copyright (C) Huawei Technologies Co., Ltd. 2012-2015. All rights reserved.
- * foss@huawei.com
  *
- * If distributed as part of the Linux kernel, the following license terms
- * apply:
+ * All rights reserved.
  *
- * * This program is free software; you can redistribute it and/or modify
- * * it under the terms of the GNU General Public License version 2 and
- * * only version 2 as published by the Free Software Foundation.
- * *
- * * This program is distributed in the hope that it will be useful,
- * * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * * GNU General Public License for more details.
- * *
- * * You should have received a copy of the GNU General Public License
- * * along with this program; if not, write to the Free Software
- * * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+ * This software is available to you under a choice of one of two
+ * licenses. You may choose this file to be licensed under the terms
+ * of the GNU General Public License (GPL) Version 2 or the 2-clause
+ * BSD license listed below:
  *
- * Otherwise, the following license terms apply:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * * Redistribution and use in source and binary forms, with or without
- * * modification, are permitted provided that the following conditions
- * * are met:
- * * 1) Redistributions of source code must retain the above copyright
- * *    notice, this list of conditions and the following disclaimer.
- * * 2) Redistributions in binary form must reproduce the above copyright
- * *    notice, this list of conditions and the following disclaimer in the
- * *    documentation and/or other materials provided with the distribution.
- * * 3) Neither the name of Huawei nor the names of its contributors may
- * *    be used to endorse or promote products derived from this software
- * *    without specific prior written permission.
- *
- * * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  *
  */
 
 
-#include "ppp_input.h"
-#include "ppp_public.h"
-#include "hdlc_interface.h"
 #include "product_config.h"
-#include "TTFComm.h"
-#include "gucttf_tag.h"
-#include "securec.h"
-#include "pppc_pppa_interface.h"
-
-#if (FEATURE_OFF == FEATURE_HARDWARE_HDLC_FUNC)
-#include "hdlc_software.h"
-#include "ppp_convert.h"
-#else
-#include "hdlc_hardware.h"
-#endif
-
-#if (FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
-#include "ads_dev_i.h"
-#else
-#include "AdsDeviceInterface.h"
-#endif
-
-
-
 /******************************************************************************
    1 头文件包含
 ******************************************************************************/
+#include "PPP/Inc/ppp_public.h"
+#include "PPP/Inc/layer.h"
+#include "PPP/Inc/ppp_mbuf.h"
+#include "PPP/Inc/hdlc.h"
+#include "PPP/Inc/throughput.h"
+#include "PPP/Inc/proto.h"
+#include "PPP/Inc/ppp_fsm.h"
+#include "PPP/Inc/lcp.h"
+#include "PPP/Inc/async.h"
+#include "PPP/Inc/auth.h"
+#include "PPP/Inc/ipcp.h"
+#include "PPP/Inc/pppid.h"
+#include "PPP/Inc/link.h"
+#include "PPP/Inc/ppp_init.h"
+#include "PPP/Inc/ppp_input.h"
+#include "TTFComm.h"
+#include "gucttf_tag.h"
+/*****************************************************************************
+    协议栈打印打点方式下的.C文件宏定义
+*****************************************************************************/
+/*lint -e767   原因简述: 打点日志文件宏ID定义 */
 #define    THIS_FILE_ID        PS_FILE_ID_PPP_INPUT_C
 #define    THIS_MODU           mod_ppp
+/*lint +e767  */
 
-#define PPPA_DATA_QUEUE_MAX_CNT     1500
+/******************************************************************************
+   2 外部函数变量声明
+******************************************************************************/
+extern VOS_VOID   PPP_ClearDataQ(VOS_VOID);
 
-typedef struct
-{
-    PPP_ZC_QUEUE_STRU           stDataQ;                    /* PPP数据队列，上下行数据都在其中 */
-    VOS_UINT32                  dataQMaxCnt;                /* PPP数据队列最大深度 */
-    PPP_DATA_Q_STAT_ST          stStat;                     /* PPP数据队列的统计信息 */
-    HTIMER                      delayProtTimer;             /* 延时处理定时器去 */
-    volatile VOS_UINT32         ulNotifyMsg;                /* 通知PPP处理数据 */
-    VOS_SPINLOCK                spinLock;                   /* ulNotifyMsg在多个任务中会被修改，因此需要使用自旋锁 */
-    VOS_UINT32                  pppTaskId;                  /* PPP任务ID，通知PPP任务有数处理时使用 */
-    VOS_UINT32                  rawDataByPass;              /* RAWDATA拨号时数据是否是透传模式 */
-}PPP_DATA_Q_CTRL_ST;
+/******************************************************************************
+   3 私有定义
+******************************************************************************/
+#define PPP_ASYNC(PppId)  (PPP_LINK(PppId)->async)
 
+/******************************************
+向指针指向内存中放置，并更新该指针地址
+注意:该指针必须是(u)char *型
+*******************************************/
+#define PPP_PUTCHAR(c, cp) {     \
+	*(cp) = (VOS_UINT8)(c);     \
+	(cp) ++;                     \
+}
 
+#define PPP_PUTSHORT(s, cp) {    \
+    *((VOS_UINT16 *)(cp)) = (s); \
+    (cp) += 2;                   \
+}
+
+#define PPP_INCPTR(len, cp) {   \
+    (cp) += (len);              \
+}
+
+#define PPP_LENALIGNTO2BYTE(alignedlen, len){                 \
+    (alignedlen) = ((((len) % 2) == 0) ? (len) : (len + 1));\
+}
+
+/******************************************************************************
+   4 全局变量定义
+******************************************************************************/
 /*PPP的数据队列结构体,上下行数据都在同一个队列中*/
 PPP_DATA_Q_CTRL_ST     g_PppDataQCtrl;
 
-#define PPPA_GET_DATAQ_CTRL()   &g_PppDataQCtrl
-#define PPPA_GET_STAT_ADDR()    &(g_PppDataQCtrl.stStat)
-#define PPPA_DATA_DELAY_PROC_TIMER_LEN  10
+/* RAWDATA拨号时数据是否是透传模式 */
+VOS_UINT32             g_ulRawDataByPassMode    = PS_FALSE;
 
-VOS_BOOL    g_pppUsed           = VOS_FALSE;
-VOS_UINT32  g_pppDelayTimerLen  = PPPA_DATA_DELAY_PROC_TIMER_LEN;
+/* A核是多核需要使用自旋锁 */
+VOS_SPINLOCK           g_stPppASpinLock;
 
-VOS_VOID PPP_ClearDataQ(VOS_VOID)
+/******************************************************************************
+   5 函数实现
+******************************************************************************/
+
+VOS_VOID PPP_InitSpinLock(VOS_VOID)
 {
-    PPP_DATA_Q_CTRL_ST *dataQCtrl = PPPA_GET_DATAQ_CTRL();
-    PPP_ZC_STRU        *pstMem = (PPP_ZC_STRU *)PPP_ZC_DEQUEUE_HEAD(&(dataQCtrl->stDataQ));
-
-    while (pstMem != VOS_NULL_PTR) {
-        PPP_MemFree(pstMem);
-        pstMem  = (PPP_ZC_STRU *)PPP_ZC_DEQUEUE_HEAD(&(dataQCtrl->stDataQ));
-    }
-}
-
-VOS_UINT32 PPP_DataQInit(VOS_VOID)
-{
-    PPP_DATA_Q_CTRL_ST *dataQCtrl = PPPA_GET_DATAQ_CTRL();
-    VOS_UINT32          rslt = VOS_OK;
-
-    (VOS_VOID)memset_s(dataQCtrl, sizeof(PPP_DATA_Q_CTRL_ST), 0, sizeof(PPP_DATA_Q_CTRL_ST));
-
-    PPP_ZC_QUEUE_INIT(&(dataQCtrl->stDataQ));
-    dataQCtrl->rawDataByPass = VOS_FALSE;
-    dataQCtrl->ulNotifyMsg = VOS_TRUE;
-    dataQCtrl->dataQMaxCnt = PPPA_DATA_QUEUE_MAX_CNT;
-
-    PPPA_SetDataStatAddr(&(dataQCtrl->stStat));
-    
-    VOS_SpinLockInit(&(dataQCtrl->spinLock));
-
-#if (FEATURE_ON == FEATURE_HARDWARE_HDLC_FUNC)
-    rslt = PPP_HDLC_HARD_Init();
-#endif
-    return rslt;
-}
-
-VOS_VOID PPPA_SaveTaskId(VOS_UINT32 taskId)
-{
-    PPP_DATA_Q_CTRL_ST *dataQCtrl = PPPA_GET_DATAQ_CTRL();
-
-    dataQCtrl->pppTaskId = taskId;
+    VOS_SpinLockInit(&g_stPppASpinLock);
 }
 
 
 VOS_UINT32 PPP_GetRawDataByPassMode(VOS_VOID)
 {
-    PPP_DATA_Q_CTRL_ST *dataQCtrl = PPPA_GET_DATAQ_CTRL();
-    
-    return dataQCtrl->rawDataByPass;
+    return g_ulRawDataByPassMode;
 }
+
 
 VOS_VOID PPP_SetRawDataByPassMode(VOS_UINT32 ulRawDataByPassMode)
 {
-    PPP_DATA_Q_CTRL_ST *dataQCtrl = PPPA_GET_DATAQ_CTRL();
-    
-    dataQCtrl->rawDataByPass = ulRawDataByPassMode;
+    g_ulRawDataByPassMode    = ulRawDataByPassMode;
+
+    return;
 }
 
+
+VOS_VOID PPP_INPUT_ResetStatInfo(VOS_VOID)
+{
+    PSACORE_MEM_SET(&(g_PppDataQCtrl.stStat), sizeof(PPP_DATA_Q_STAT_ST), 0, sizeof(PPP_DATA_Q_STAT_ST));
+
+    return;
+} /* PPP_ResetDataQStatInfo */
+
+/******************************************************************************
+ Function:       PPP_GetDataCnt
+ Description:    获取数据队列的数据包个数
+ Calls:
+ Data Accessed:
+ Data Updated:
+ Input:
+ Output:
+ Return:
+
+ Others:
+******************************************************************************/
 VOS_UINT32 PPP_INPUT_GetDataCnt(VOS_VOID)
 {
-    PPP_DATA_Q_CTRL_ST *dataQCtrl = PPPA_GET_DATAQ_CTRL();
+    VOS_UINT32  ulUlDataQCnt;
 
-    return PPP_ZC_GET_QUEUE_LEN(&(dataQCtrl->stDataQ));
+    ulUlDataQCnt    = PPP_ZC_GET_QUEUE_LEN(&g_PppDataQCtrl.stDataQ);
+
+    return ulUlDataQCnt;
 }
 
 
-VOS_VOID PPP_NotiFyProcData(PPP_DATA_Q_CTRL_ST *dataQCtrl)
-{
-    VOS_ULONG           ulFlags     = 0UL;
-    
-    VOS_SpinLockIntLock(&(dataQCtrl->spinLock), ulFlags);
 
-    if (dataQCtrl->ulNotifyMsg != VOS_TRUE) {
-        VOS_SpinUnlockIntUnlock(&(dataQCtrl->spinLock) , ulFlags);
-        return;
+VOS_UINT32  PPP_Snd1stDataNotify(VOS_VOID)
+{
+    if (1 == g_stPppEntInfo.ulPppInitFlag)
+    {
+        (VOS_VOID)VOS_EventWrite(g_stPppEntInfo.ulPppTaskId, PPP_RCV_DATA_EVENT);
     }
-    dataQCtrl->ulNotifyMsg = VOS_FALSE;
-    VOS_SpinUnlockIntUnlock(&(dataQCtrl->spinLock) , ulFlags);
-    dataQCtrl->stStat.ulSndMsgCnt++;
-    (VOS_VOID)VOS_EventWrite(dataQCtrl->pppTaskId, PPP_RCV_DATA_EVENT);
-}
+
+    return PS_SUCC;
+} /* PPP_Snd1stDataNotify */
 
 
-VOS_UINT32 PPP_EnqueueData(PPP_ZC_STRU *pstImmZc, PPP_DATA_TYPE_ENUM_UINT8 enDataType, PPP_ID usPppId)
+
+VOS_UINT32  PPP_EnqueueData(PPP_ZC_STRU *pstImmZc, PPP_DATA_TYPE_ENUM_UINT8 enDataType, PPP_ID usPppId)
 {
-    PPP_DATA_Q_CTRL_ST *dataQCtrl   = PPPA_GET_DATAQ_CTRL();
-    PPP_ZC_QUEUE_STRU  *pstDataQ    = &(dataQCtrl->stDataQ);
+    VOS_ULONG                           ulFlags     = 0UL;
+    PPP_ZC_QUEUE_STRU                  *pstDataQ    = &(g_PppDataQCtrl.stDataQ);
+    struct link                        *link        = PPP_LINK(usPppId);        /* usPppId的有效性由调用者保证 */
 
-    if (PPP_ZC_GET_QUEUE_LEN(pstDataQ) > dataQCtrl->dataQMaxCnt)
+    if (PPP_ZC_GET_QUEUE_LEN(pstDataQ) > g_stPppEntInfo.usQueneMaxCnt)
     {
         PPP_MemFree(pstImmZc);
-        dataQCtrl->stStat.ulDropCnt++;
-        PPP_NotiFyProcData(dataQCtrl);
-        return PS_FAIL;
+        g_PppDataQCtrl.stStat.ulDropCnt++;
     }
-
-    /*将数据结点插入队列尾部*/
-    PPP_ZC_ENQUEUE_TAIL(pstDataQ, pstImmZc);
-
-    if (PPP_ZC_GET_QUEUE_LEN(pstDataQ) > dataQCtrl->stStat.ulQMaxCnt)
+    else if ( (PPP_PUSH_PACKET_TYPE == enDataType) && ((ST_STOPPING == link->lcp.fsm.state) || (ST_CLOSING == link->lcp.fsm.state)) )
     {
-        dataQCtrl->stStat.ulQMaxCnt = PPP_ZC_GET_QUEUE_LEN(pstDataQ);
+        PPP_MemFree(pstImmZc);
+    }
+    else
+    {
+        /*将数据结点插入队列尾部*/
+        PPP_ZC_ENQUEUE_TAIL(pstDataQ, pstImmZc);
     }
 
-    PPP_NotiFyProcData(dataQCtrl);
+    if (PPP_ZC_GET_QUEUE_LEN(pstDataQ) > g_PppDataQCtrl.stStat.ulQMaxCnt)
+    {
+        g_PppDataQCtrl.stStat.ulQMaxCnt = PPP_ZC_GET_QUEUE_LEN(pstDataQ);
+    }
+
+    /*  A核任务调试不够实时，之前获取长度和入列分开锁中断，会出现上行数据入队时
+            判断队列不为空，但紧接着PPP任务得到调度，把队列取空后再接着入队的情况。
+            因为将获取队列数据个数和入队包含在一个锁中断中 */
+    VOS_SpinLockIntLock(&g_stPppASpinLock, ulFlags);    /*lint !e571*/
+
+    if ((VOS_NO == g_PppDataQCtrl.ulNotifyMsg) && (0 < PPP_ZC_GET_QUEUE_LEN(pstDataQ)))
+    {
+        g_PppDataQCtrl.ulNotifyMsg = VOS_YES;
+        g_PppDataQCtrl.stStat.ulSndMsgCnt++;
+
+        VOS_SpinUnlockIntUnlock(&g_stPppASpinLock , ulFlags);
+
+        /*向PPP发送数据处理指示*/
+        if (PS_SUCC != PPP_Snd1stDataNotify())
+        {
+            /* 发送消息通知失败，需要清空整个队列 */
+            PPP_ClearDataQ();
+            return PS_FAIL;
+        }
+
+        return PS_SUCC;
+    }
+
+    VOS_SpinUnlockIntUnlock(&g_stPppASpinLock , ulFlags);
 
     return PS_SUCC;
 } /* PPP_EnqueueData */
 
+
+
 VOS_UINT32 PPP_PullPacketEvent(VOS_UINT16 usPppId, IMM_ZC_STRU *pstImmZc)
 {
-    PPP_DATA_Q_STAT_ST *dataStat = PPPA_GET_STAT_ADDR();
-    if (pstImmZc == VOS_NULL_PTR)
+    if(VOS_NULL_PTR == pstImmZc)
     {
-        PPP_MNTN_LOG(PS_PRINT_WARNING,
+        PPP_MNTN_LOG( PS_PID_APP_PPP, 0, PS_PRINT_WARNING,
                       "PPP_PullPacketEvent, WARNING, pstImmZc is NULL!\r\n" );
 
         return PS_FAIL;
     }
 
-    dataStat->ulUplinkCnt++;
+    g_PppDataQCtrl.stStat.ulUplinkCnt++;
+
+    /* 参考V3R1实现，入口处不检查PPP ID对应实体是否存在，这样在网侧断开(此时PPP ID已经释放)，
+    　　也能接收PC发来的IPCP协商包 */
+    if((PPP_MAX_ID_NUM < usPppId) || (0 == usPppId))
+    {
+        g_PppDataQCtrl.stStat.ulUplinkDropCnt++;
+        PPP_MNTN_LOG1(PS_PID_APP_PPP, 0, PS_PRINT_NORMAL,
+                     "PPP, PPP_PullPacketEvent, NORMAL, usPppId %d Wrong\r\n", usPppId);
+        PPP_MemFree(pstImmZc);
+
+        return PS_FAIL;
+    }
 
     /*填充pstData的usApp字段:高8位放usPppId,低8位放PPP报文类型*/
     PPP_ZC_SET_DATA_APP(pstImmZc, (VOS_UINT16)(usPppId << 8) | (VOS_UINT16)PPP_PULL_PACKET_TYPE);
 
-    if ( PS_SUCC != PPP_EnqueueData(pstImmZc, PPP_PULL_PACKET_TYPE, (PPP_ID)usPppId)) {
-        dataStat->ulUplinkDropCnt++;
+    if ( PS_SUCC != PPP_EnqueueData(pstImmZc, PPP_PULL_PACKET_TYPE, usPppId) )
+    {
+        if (0 == (g_PppDataQCtrl.stStat.ulUplinkDropCnt & 0x7f))
+        {
+            PPP_MNTN_LOG( PS_PID_APP_PPP, 0, PS_PRINT_WARNING,
+                          "PPP_PullPacketEvent, WARNING, Enqueue Data Fail!\r\n" );
+        }
+
+        g_PppDataQCtrl.stStat.ulUplinkDropCnt++;
+
+        return PS_FAIL;
     }
 
     return PS_SUCC;
 } /* PPP_PullPacketEvent */
 
+
 VOS_UINT32 PPP_PullRawDataEvent(VOS_UINT16 usPppId, IMM_ZC_STRU *pstImmZc)
 {
-    PPP_ZC_STRU        *pstMem = VOS_NULL_PTR;
-    PPP_DATA_Q_STAT_ST *dataStat = PPPA_GET_STAT_ADDR();
+    PPP_ZC_STRU                        *pstMem;
 
-    dataStat->ulUplinkCnt++;
+    g_PppDataQCtrl.stStat.ulUplinkCnt++;
 
     if(VOS_NULL_PTR == pstImmZc)
     {
-        PPP_MNTN_LOG(PS_PRINT_WARNING,
+        PPP_MNTN_LOG( PS_PID_APP_PPP, 0, PS_PRINT_WARNING,
                       "PPP_PullRawDataEvent, WARNING, Alloc TTF mem fail!\r\n" );
 
         return PS_FAIL;
     }
-    
-    if (PPP_GetRawDataByPassMode() == VOS_TRUE){
-#if (FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
-        VOS_UINT16                          usDataLen;
 
-        /* 递交给ADS的数据需要预留MAC头，因此透传模式下需要重新申请内存 */
-        usDataLen = PPP_ZC_GET_DATA_LEN(pstImmZc);
-        if ((0 == usDataLen) || (usDataLen > PPP_ZC_MAX_DATA_LEN))
-        {
-            dataStat->ulUplinkDropCnt++;
-            PPP_MNTN_LOG1(PS_PRINT_WARNING, "DataLen err", usDataLen);
-            PPP_MemFree(pstImmZc);
-            return PS_FAIL;
-        }
-        
-        pstMem = PPP_MemCopyAlloc(PPP_ZC_GET_DATA_PTR(pstImmZc), usDataLen, PPP_ZC_UL_RESERVE_LEN);
+    if((PPP_MAX_ID_NUM < usPppId)
+        || (0 == usPppId))
+    {
+        g_PppDataQCtrl.stStat.ulUplinkDropCnt++;
+        PPP_MNTN_LOG1(PS_PID_APP_PPP, 0, PS_PRINT_WARNING,
+                     "PPP, PPP_PullRawDataEvent, WARNING, usPppId %d Wrong\r\n", usPppId);
         PPP_MemFree(pstImmZc);
-        if (VOS_NULL_PTR == pstMem)
-        {
-            PPP_MNTN_LOG(PS_PRINT_WARNING, "Alloc Mem Fail");
-            dataStat->ulUplinkDropCnt++;
-            return PS_FAIL;
-        }
-#else
+
+        return PS_FAIL;
+    }
+
+    if (PS_TRUE == PPP_GetRawDataByPassMode())
+    {
         pstMem = pstImmZc;
-#endif
         /* PPP模式透传模式下递交给ADS的是PPP报文，因此协议类型填0 */
-        if (PS_SUCC != PPP_SendUlDataToAds(usPppId, pstMem, 0))
+        if (PS_SUCC != PPP_SendPulledData(usPppId, pstMem, 0))
         {
             return PS_FAIL;
         }
-    } else {
+    }
+    else
+    {
         /*填充pstData的usApp字段:高8位放usPppId,低8位放PPP报文类型*/
         PPP_ZC_SET_DATA_APP(pstImmZc, (VOS_UINT16)(usPppId << 8) | (VOS_UINT16)PPP_PULL_RAW_DATA_TYPE);
 
-        if ( PS_SUCC != PPP_EnqueueData(pstImmZc, PPP_PULL_RAW_DATA_TYPE, (PPP_ID)usPppId) ) {
-            dataStat->ulUplinkDropCnt++;
+        if ( PS_SUCC != PPP_EnqueueData(pstImmZc, PPP_PULL_RAW_DATA_TYPE, usPppId) )
+        {
+            PPP_MNTN_LOG( PS_PID_APP_PPP, 0, PS_PRINT_WARNING,
+                          "PPP_PullRawDataEvent, WARNING, Enqueue Data Fail!\r\n" );
+
+            return PS_FAIL;
         }
     }
 
     return PS_SUCC;
 } /* PPP_PullRawEvent */
 
-VOS_BOOL PPPA_GetUsedFalg(VOS_VOID)
-{
-    return g_pppUsed;
-}
+
 VOS_INT PPP_DlPacketProc(PPP_ID usPppId, IMM_ZC_STRU *pstImmZc)
 {
-    PPP_DATA_Q_STAT_ST *dataStat = PPPA_GET_STAT_ADDR();
+    
+    if(VOS_NULL_PTR == pstImmZc)
+    {
+        PPP_MNTN_LOG( PS_PID_APP_PPP, 0, PS_PRINT_WARNING,
+                      "PPP_PushPacketEvent, WARNING, pstImmZc is NULL!\r\n" );
 
-    if(pstImmZc == VOS_NULL_PTR) {
-        PPP_MNTN_LOG(PS_PRINT_WARNING, "PPP_PushPacketEvent, WARNING, pstImmZc is NULL!\r\n" );
         return PS_FAIL;
     }
 
     /*如果该链接还没建立起来*/
-    if (PPPA_GetUsedFalg() != VOS_TRUE) {
+    if((VOS_OK != PppIsIdValid(usPppId))
+        || (PPP_LINK(usPppId)->phase != PHASE_NETWORK)
+        || (PPP_LINK(usPppId)->ipcp.fsm.state != ST_OPENED))
+    {
         /*该变量需要被初始化为0*/
-        dataStat->ulDownlinkDropCnt++;
-        PPP_MNTN_LOG1(PS_PRINT_NORMAL, "ppp id err", dataStat->ulDownlinkDropCnt);
+        g_PppDataQCtrl.stStat.ulDownlinkDropCnt++;
+        PPP_MNTN_LOG1(PS_PID_APP_PPP, 0, PS_PRINT_NORMAL,
+                      "PPP, PPP_PushPacket, WARNING, packet from GGSN droped, packet num = <1>\r\n",
+                      (VOS_INT32)g_PppDataQCtrl.stStat.ulDownlinkDropCnt);
+
         PPP_MemFree(pstImmZc);
+
         return PS_FAIL;
     }
 
     /*填充pstData的usApp字段:高8位放usPppId,低8位放PPP报文类型*/
     PPP_ZC_SET_DATA_APP(pstImmZc, (VOS_UINT16)(usPppId << 8) | (VOS_UINT16)PPP_PUSH_PACKET_TYPE);
 
-    if ( PS_SUCC != PPP_EnqueueData(pstImmZc, PPP_PUSH_PACKET_TYPE, usPppId) ) {
-        dataStat->ulDownlinkDropCnt++;
+    if ( PS_SUCC != PPP_EnqueueData(pstImmZc, PPP_PUSH_PACKET_TYPE, usPppId) )
+    {
+        if (0 == (g_PppDataQCtrl.stStat.ulDownlinkDropCnt & 0x7f))
+        {
+            PPP_MNTN_LOG( PS_PID_APP_PPP, 0, PS_PRINT_WARNING,
+                          "PPP_PushPacketEvent, WARNING, Enqueue Data Fail!\r\n" );
+        }
+
+        g_PppDataQCtrl.stStat.ulDownlinkDropCnt++;
+
+        return PS_FAIL;
     }
 
     return PS_SUCC;
 }
 
-VOS_VOID PPPA_SendDlDataToAT(PPP_ID pppId, IMM_ZC_STRU *data)
-{
-    PPP_DATA_Q_STAT_ST *dataStat = PPPA_GET_STAT_ADDR();
-
-    AT_SendZcDataToModem(pppId, data);
-    dataStat->ulDownlinkSndDataCnt++;
-}
 
 VOS_INT PPP_DlRawDataProc(PPP_ID usPppId, IMM_ZC_STRU *pstImmZc)
 {
-    PPP_DATA_Q_STAT_ST *dataStat = PPPA_GET_STAT_ADDR();
     
-    if(pstImmZc == VOS_NULL_PTR) {
-        PPP_MNTN_LOG(PS_PRINT_WARNING,
+    if(VOS_NULL_PTR == pstImmZc)
+    {
+        PPP_MNTN_LOG( PS_PID_APP_PPP, 0, PS_PRINT_WARNING,
                       "PPP_PushRawDataEvent, WARNING, pstImmZc is NULL!\r\n" );
 
         return PS_FAIL;
     }
 
-    if(PPPA_GetUsedFalg() != VOS_TRUE) {
-        dataStat->ulDownlinkDropCnt++;
+    if(VOS_OK != PppIsIdValid(usPppId))
+    {
+        g_PppDataQCtrl.stStat.ulDownlinkDropCnt++;
         PPP_MemFree(pstImmZc);
-        PPP_MNTN_LOG(PS_PRINT_WARNING,
+        PPP_MNTN_LOG(PS_PID_APP_PPP, 0, PS_PRINT_WARNING,
                      "PPP_PushRawData, WARNING, Invalid PPP id, packet from GGSN droped\r\n");
 
         return PS_FAIL;
     }
 
-    if (PPP_GetRawDataByPassMode() == VOS_TRUE) {
-        PPPA_SendDlDataToAT(usPppId, pstImmZc);
-    } else {
+    if (PS_TRUE == PPP_GetRawDataByPassMode())
+    {
+        AT_SendZcDataToModem(usPppId, pstImmZc);
+    }
+    else
+    {
         /*填充pstData的usApp字段:高8位放usPppId,低8位放PPP报文类型*/
         PPP_ZC_SET_DATA_APP(pstImmZc, (VOS_UINT16)(usPppId << 8) | (VOS_UINT16)PPP_PUSH_RAW_DATA_TYPE);
 
-        if (PS_SUCC != PPP_EnqueueData(pstImmZc, PPP_PUSH_RAW_DATA_TYPE, usPppId)) {
-            dataStat->ulDownlinkDropCnt++;
+        if ( PS_SUCC != PPP_EnqueueData(pstImmZc, PPP_PUSH_RAW_DATA_TYPE, usPppId) )
+        {
+            g_PppDataQCtrl.stStat.ulDownlinkDropCnt++;
+            PPP_MNTN_LOG( PS_PID_APP_PPP, 0, PS_PRINT_WARNING,
+                          "PPP_PushRawDataEvent, WARNING, Enqueue Data Fail!\r\n" );
             return PS_FAIL;
         }
     }
@@ -363,68 +411,18 @@ VOS_INT PPP_DlRawDataProc(PPP_ID usPppId, IMM_ZC_STRU *pstImmZc)
     return PS_SUCC;
 }
 
-#if (FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
-VOS_INT PPP_PushPacketEvent(VOS_ULONG ulUserData, IMM_ZC_STRU *pstImmZc)
-{
-    PPP_ID              usPppId  = (PPP_ID)ulUserData;
-    PPP_DATA_Q_STAT_ST *dataStat = PPPA_GET_STAT_ADDR();
-
-    dataStat->ulDownlinkCnt++;
-    return PPP_DlPacketProc(usPppId, pstImmZc);
-}
-
-VOS_INT PPP_PushRawDataEvent(VOS_ULONG ulUserData, IMM_ZC_STRU *pstImmZc)
-{
-    PPP_ID              usPppId  = (PPP_ID)ulUserData;
-    PPP_DATA_Q_STAT_ST *dataStat = PPPA_GET_STAT_ADDR();
-
-    dataStat->ulDownlinkCnt++;
-    return PPP_DlRawDataProc(usPppId, pstImmZc);
-}
-VOS_UINT32 PPP_SendUlDataToAds(VOS_UINT16 usPppId,  PPP_ZC_STRU *pstImmZc, VOS_UINT16 usProto)
-{
-    VOS_UINT8               ucIfaceId = 0;
-    PPP_DATA_Q_STAT_ST     *dataStat    = PPPA_GET_STAT_ADDR();
-
-    /* 通过usPppId，寻找到ucIfaceId */
-    if (VOS_OK != At_PppId2IfaceId(usPppId, &ucIfaceId))
-    {
-        dataStat->ulUplinkDropCnt++;
-        PPP_MemFree(pstImmZc);
-        PPP_MNTN_LOG2(PS_PRINT_NORMAL, "Can not get IfaceId", usPppId, ucIfaceId);
-
-        return PS_FAIL;
-    }
-
-    IMM_ZcSetProtocol(pstImmZc, usProto);
-
-    /* 数据发送给ADS，如果失败由ADS释放内存 */
-    if ( VOS_OK != ads_iface_tx(ucIfaceId, pstImmZc) )
-    {
-        dataStat->ulUplinkDropCnt++;
-
-        return PS_FAIL;
-    }
-
-    dataStat->ulUplinkSndDataCnt++;
-
-    return PS_SUCC;
-}
-
-#else
 
 VOS_INT PPP_PushPacketEvent(VOS_UINT8 ucRabId, IMM_ZC_STRU *pstImmZc, ADS_PKT_TYPE_ENUM_UINT8 enPktType, VOS_UINT32 ulExParam)
 {
-    PPP_ID              usPppId;
-    PPP_DATA_Q_STAT_ST *dataStat = PPPA_GET_STAT_ADDR();
+    PPP_ID                              usPppId = PPP_INVLAID_PPP_ID;
 
-    dataStat->ulDownlinkCnt++;
+    g_PppDataQCtrl.stStat.ulDownlinkCnt++;
 
     if ( !PPP_RAB_TO_PPPID(&usPppId, ucRabId) )
     {
-        dataStat->ulDownlinkDropCnt++;
+        g_PppDataQCtrl.stStat.ulDownlinkDropCnt++;
         PPP_MemFree(pstImmZc);
-        PPP_MNTN_LOG1(PS_PRINT_NORMAL,
+        PPP_MNTN_LOG1(PS_PID_APP_PPP, 0, PS_PRINT_NORMAL,
                       "PPP, PPP_PushPacketEvent, NORMAL, Can not get PPP Id, RabId <1>", ucRabId);
 
         return PS_FAIL;
@@ -436,16 +434,15 @@ VOS_INT PPP_PushPacketEvent(VOS_UINT8 ucRabId, IMM_ZC_STRU *pstImmZc, ADS_PKT_TY
 
 VOS_INT PPP_PushRawDataEvent(VOS_UINT8 ucRabId, IMM_ZC_STRU *pstImmZc, ADS_PKT_TYPE_ENUM_UINT8 enPktType, VOS_UINT32 ulExParam)
 {
-    PPP_ID              usPppId;
-    PPP_DATA_Q_STAT_ST *dataStat = PPPA_GET_STAT_ADDR();
+    PPP_ID                              usPppId = PPP_INVLAID_PPP_ID;
 
-    dataStat->ulDownlinkCnt++;
+    g_PppDataQCtrl.stStat.ulDownlinkCnt++;
 
     /* 通过RabId，寻找到PPP ID和相应的实体 */
     if ( !PPP_RAB_TO_PPPID(&usPppId, ucRabId) )
     {
         PPP_MemFree(pstImmZc);
-        PPP_MNTN_LOG1(PS_PRINT_WARNING,
+        PPP_MNTN_LOG1(PS_PID_APP_PPP, 0, PS_PRINT_WARNING,
                       "PPP, PPP_PushRawDataEvent, WARNING, Can not get PPP Id, RabId <1>", ucRabId);
 
         return PS_FAIL;
@@ -453,193 +450,233 @@ VOS_INT PPP_PushRawDataEvent(VOS_UINT8 ucRabId, IMM_ZC_STRU *pstImmZc, ADS_PKT_T
 
     return PPP_DlRawDataProc(usPppId, pstImmZc);
 }
-VOS_UINT32 PPP_SendUlDataToAds(VOS_UINT16 usPppId,  PPP_ZC_STRU *pstImmZc, VOS_UINT16 usProto)
+
+
+PS_BOOL_ENUM_UINT8 PPP_IsContinueProcData
+(
+    PPP_HDLC_RESULT_TYPE_ENUM_UINT32    enResultType
+)
 {
-    VOS_UINT8               ucRabId  = 0;
-    PPP_DATA_Q_STAT_ST     *dataStat = PPPA_GET_STAT_ADDR();
-
-    /* 通过usPppId，寻找到usRabId */
-    if ( !PPP_PPPID_TO_RAB(usPppId, &ucRabId) )
+    if (0 < PPP_ZC_GET_QUEUE_LEN(&g_PppDataQCtrl.stDataQ))
     {
-        dataStat->ulUplinkDropCnt++;
-        PPP_MemFree(pstImmZc);
-        PPP_MNTN_LOG2(PS_PRINT_NORMAL,
-                    "PPP, PPP_PushPacketEvent, WARNING, Can not get PPP Id %d, RabId %d",
-                    usPppId, ucRabId);
-
-        return PS_FAIL;
+        return PS_TRUE;
     }
 
-    /* 数据发送给ADS，如果失败由ADS释放内存 */
-    if ( VOS_OK != ADS_UL_SendPacket(pstImmZc, ucRabId) )
-    {
-        dataStat->ulUplinkDropCnt++;
-
-        return PS_FAIL;
-    }
-
-    dataStat->ulUplinkSndDataCnt++;
-
-    return PS_SUCC;
+    return PS_FALSE;
 }
 
-#endif
 
-VOS_VOID PPPA_SetNotifyFlag(VOS_UINT32 notifyFlag)
+VOS_VOID  PPP_ProcDataNotify(VOS_VOID)
 {
-    VOS_ULONG           ulFlags     = 0UL;
-    PPP_DATA_Q_CTRL_ST *dataQCtrl   = PPPA_GET_DATAQ_CTRL();
-    
-    VOS_SpinLockIntLock(&(dataQCtrl->spinLock), ulFlags);    /*lint !e571*/
-    dataQCtrl->ulNotifyMsg = notifyFlag;
-    VOS_SpinUnlockIntUnlock(&(dataQCtrl->spinLock), ulFlags);
-}
+    PPP_ZC_STRU                        *pstMem;
+    PPP_ID                              usPppId;
+    PPP_HDLC_CONFIG_STRU               *pstHdlcConfig;
+    PPP_HDLC_RESULT_TYPE_ENUM_UINT32    ulResult;
+    VOS_ULONG                           ulFlags = 0UL;
 
-VOS_VOID PPP_ProcDataNotify(VOS_VOID)
-{
-    PPP_ID                  usPppId;
-    VOS_BOOL                delayProc = VOS_FALSE;
-    PPP_DATA_Q_STAT_ST     *dataStat    = PPPA_GET_STAT_ADDR();
-    PPP_DATA_Q_CTRL_ST     *dataQCtrl   = PPPA_GET_DATAQ_CTRL();
-    
-    PPP_ZC_STRU *pstMem = (PPP_ZC_STRU *)PPP_ZC_PEEK_QUEUE_HEAD(&dataQCtrl->stDataQ);
+    g_PppDataQCtrl.stStat.ulProcMsgCnt++;
 
-    dataStat->ulProcMsgCnt++;
+    pstMem      = (PPP_ZC_STRU *)PPP_ZC_PEEK_QUEUE_HEAD(&g_PppDataQCtrl.stDataQ);
 
     /* 队列为空的时候返回空指针 */
     if ( VOS_NULL_PTR == pstMem )
     {
-        PPP_MNTN_LOG2(LOG_LEVEL_WARNING,
+        PPP_MNTN_LOG2(PS_PID_APP_PPP, 0, LOG_LEVEL_WARNING,
                       "PPP_ProcDataNotify, WARNING, queue is null!",
-                      dataQCtrl->ulNotifyMsg, PPP_ZC_GET_QUEUE_LEN(&(dataQCtrl->stDataQ)));
-        PPPA_SetNotifyFlag(VOS_TRUE);
+                      g_PppDataQCtrl.ulNotifyMsg, PPP_ZC_GET_QUEUE_LEN(&g_PppDataQCtrl.stDataQ));
+
+        VOS_SpinLockIntLock(&g_stPppASpinLock, ulFlags);    /*lint !e571*/
+        g_PppDataQCtrl.ulNotifyMsg = VOS_NO;
+        VOS_SpinUnlockIntUnlock(&g_stPppASpinLock , ulFlags);
+
         return;
     }
 
     /* 处理该结点(结点的释放动作已经在各处理函数内部完成，无需再释放结点) */
     usPppId         = (PPP_ZC_GET_DATA_APP(pstMem) & 0xFF00) >> 8;
+    pstHdlcConfig   = PPP_CONFIG(usPppId);
 
-#if (FEATURE_OFF == FEATURE_HARDWARE_HDLC_FUNC)
-    delayProc = PPP_HDLC_SOFT_ProcData(usPppId, &g_PppDataQCtrl.stDataQ);
-#else
-    delayProc = PPP_HDLC_HARD_ProcData(usPppId, &g_PppDataQCtrl.stDataQ);
-#endif
+    if (VOS_NULL_PTR == pstHdlcConfig->pFunProcData)
+    {
+        PPP_ClearDataQ();
 
-    /* 如果需要延时处理则启动定时器，此时不需设置通知标记 */
-    if (delayProc == VOS_TRUE) {
-        VOS_StartRelTimer(&(dataQCtrl->delayProtTimer), PS_PID_APP_PPP, g_pppDelayTimerLen,
-                     PPPA_DATA_DELAY_PROC_TIMER, (VOS_UINT32)usPppId, VOS_RELTIMER_NOLOOP, VOS_TIMER_PRECISION_0);
-        return;
-    }
-    
-    PPPA_SetNotifyFlag(VOS_TRUE);
-    if (PPP_ZC_GET_QUEUE_LEN(&(dataQCtrl->stDataQ)) > 0) {
-        PPP_NotiFyProcData(dataQCtrl);
-    }
-}
-/* 目前协商报文是通过VOS消息发送，每秒最多发送100个协商报文 */
-#define PPPA_MAX_NEGO_PKT_CNT_PER_SEC   100
+        PPP_MNTN_LOG1(PS_PID_APP_PPP, 0, LOG_LEVEL_ERROR,
+                      "PPP_ProcDataNotify, ERROR, pstHdlcConfig->pFunProcData is NULL!", g_PppDataQCtrl.ulNotifyMsg);
 
-/* 目前为32K时钟，1s为32768个slice */
-#define PPPA_SLICE_CNT_OF_ONE_SEC       32768
+        VOS_SpinLockIntLock(&g_stPppASpinLock, ulFlags);    /*lint !e571*/
+        g_PppDataQCtrl.ulNotifyMsg = VOS_NO;
+        VOS_SpinUnlockIntUnlock(&g_stPppASpinLock , ulFlags);
 
-VOS_VOID PPPA_SendPppcNegoData(PPP_ZC_STRU *negoData, VOS_UINT16 proto)
-{
-    PPPC_PPPA_NEGO_DATA_STRU       *negoMsg = VOS_NULL_PTR;
-    VOS_UINT16                      msgLen = sizeof(PPPC_PPPA_NEGO_DATA_STRU) + PPP_ZC_GET_DATA_LEN(negoData);
-    static VOS_UINT16               msgSendCnt = 0;
-    static VOS_UINT32               beginTime = 0;
-    VOS_UINT32                      currTime;
-
-    if (msgSendCnt == 0) {
-        /* 发送第一个报文时记录起始时间 */
-        beginTime = mdrv_timer_get_normal_timestamp();
-    } else {
-        currTime = mdrv_timer_get_normal_timestamp();
-        if (currTime - beginTime > PPPA_SLICE_CNT_OF_ONE_SEC) {
-            /* 当前时间和起始时间间隔超过1s，重新开始计数 */
-            msgSendCnt = 0;
-            beginTime = currTime;
-        } else {
-            /* 1s内发送的协商报文数量大于100，不能继续发送协商报文 */
-            if (msgSendCnt > PPPA_MAX_NEGO_PKT_CNT_PER_SEC) {
-                PPP_MNTN_LOG(PS_PRINT_WARNING, "too many nego pkt");
-                return;
-            }
-        }
-    }
-    msgSendCnt++;
-    negoMsg = (PPPC_PPPA_NEGO_DATA_STRU*)PS_ALLOC_MSG_WITH_HEADER_LEN(PS_PID_APP_PPP, msgLen);
-    if (negoMsg == VOS_NULL_PTR) {
-        PPP_MNTN_LOG(PS_PRINT_WARNING, "alloc Msg Fail");
         return;
     }
 
-    negoMsg->ulReceiverPid  = MSPS_PID_PPPC;
-    negoMsg->msgId          = ID_PPPA_PPPC_NEGO_DATA_IND;
-    negoMsg->proto          = proto;
-    negoMsg->dataLen        = PPP_ZC_GET_DATA_LEN(negoData);
-    negoMsg->pktType        = PPPC_PPPA_PKT_TYPE_BUTT;
+    ulResult = pstHdlcConfig->pFunProcData(usPppId, PPP_LINK(usPppId), &g_PppDataQCtrl.stDataQ);
 
-    if (negoMsg->dataLen > 0) {
-        PPPA_SF_CHK(memcpy_s(negoMsg->data, negoMsg->dataLen, PPP_ZC_GET_DATA_PTR(negoData), negoMsg->dataLen));
+    VOS_SpinLockIntLock(&g_stPppASpinLock, ulFlags);    /*lint !e571*/
+
+    if (PS_TRUE == PPP_IsContinueProcData(ulResult))
+    {
+        g_PppDataQCtrl.ulNotifyMsg = VOS_YES;
+        g_PppDataQCtrl.stStat.ulSndMsgCnt++;
+
+        VOS_SpinUnlockIntUnlock(&g_stPppASpinLock , ulFlags);
+
+        PPP_Snd1stDataNotify();
+
+        return;
     }
 
-    (VOS_VOID)PS_SEND_MSG(PS_PID_APP_PPP, negoMsg);
+    g_PppDataQCtrl.ulNotifyMsg = VOS_NO;
+
+    VOS_SpinUnlockIntUnlock(&g_stPppASpinLock , ulFlags);
+
+    return;
+} /* PPP_ProcDataNotify */
+
+
+VOS_VOID PPP_ProcAsFrmDataInd(struct MsgCB * pMsg)
+{
+    HDLC_PROC_AS_FRM_PACKET_IND_MSG_STRU    *pstHdlcEnable;
+    PPP_HDLC_CONFIG_STRU                    *pstHdlcConfig;
+    VOS_UINT16                               usPppId;
+    VOS_UINT16                               usProtocol;
+    PPP_ZC_STRU                             *pstMem;
+
+
+    pstHdlcEnable = (HDLC_PROC_AS_FRM_PACKET_IND_MSG_STRU*)pMsg;
+
+    usPppId       = pstHdlcEnable->usPppId;
+    usProtocol    = pstHdlcEnable->usProtocol;
+    pstMem        = pstHdlcEnable->pstMem;
+
+    pstHdlcConfig = PPP_CONFIG(usPppId);
+
+    if (VOS_NULL_PTR == pstHdlcConfig->pFunProcAsFrmData)
+    {
+        PPP_MemFree(pstMem);
+        PPP_MNTN_LOG(PS_PID_APP_PPP, 0, LOG_LEVEL_ERROR,
+                      "PPP_ProcHdlcEnable, ERROR, pstHdlcConfig->pFunProcAsFrmData is NULL!");
+        return;
+    }
+
+    pstHdlcConfig->pFunProcAsFrmData(usPppId, usProtocol, pstMem);
+
+    return;
+}
+
+/*****************************************************************************
+ Prototype      : PPP_ProcHdlcDisable
+ Description    : 处理HDLC去使能请求
+
+ Input          : ---PPP链路对应的PPP ID
+ Output         : ---
+ Return Value   : ---VOS_UINT32
+ Calls          : ---
+ Called By      : ---
+
+ History        : ---
+  1.Date        : 2005-11-18
+    Author      : ---
+    Modification: Created function
+*****************************************************************************/
+VOS_VOID PPP_ProcHdlcDisable ( PPP_ID usPppId)
+{
+    PPP_HDLC_CONFIG_STRU               *pstHdlcConfig;
+
+    if ((usPppId == 0) || (PPP_MAX_ID_NUM < usPppId))
+    {
+        PPP_MNTN_LOG1(PS_PID_APP_PPP, 0, LOG_LEVEL_WARNING,
+                      "PPP_ProcHdlcDisable, WARNING, usPppID %d is invalid!", usPppId);
+        return;
+    }
+
+    pstHdlcConfig = PPP_CONFIG(usPppId);
+
+    if (VOS_NULL_PTR != pstHdlcConfig->pFunDisable)
+    {
+        PPP_MNTN_LOG(PS_PID_APP_PPP, 0, LOG_LEVEL_INFO,
+                      "PPP_ProcHdlcDisable, INFO, Invoke HDLC disable function!");
+
+        pstHdlcConfig->pFunDisable();
+    }
+
+    return;
 }
 
 
-VOS_VOID PPP_FrameMntnInfo
-(
-    PPP_FRAME_MNTN_INFO_STRU *ptrPppMntnSt,
-    VOS_UINT16                usDataLen
-)
+VOS_UINT32 PPP_ProcAtCtrlOper(struct MsgCB * pMsg)
 {
-    ptrPppMntnSt->ulReceiverPid   = MSPS_PID_PPPC;
-    ptrPppMntnSt->ulSenderPid     = PS_PID_APP_PPP;
-    ptrPppMntnSt->ulLength        = (usDataLen + sizeof(PPP_FRAME_MNTN_INFO_STRU))- VOS_MSG_HEAD_LENGTH;
-    ptrPppMntnSt->ulMsgname       = PPP_RECV_PROTO_PACKET_TYPE;
-    ptrPppMntnSt->ulPppPhase      = 0;
-    ptrPppMntnSt->ulIpcpState     = 0;
-    ptrPppMntnSt->ulLcpState      = 0;
-    ptrPppMntnSt->usPppId         = PPPA_PPP_ID;
-    ptrPppMntnSt->usDataLen       = usDataLen;
+    PPP_AT_CTRL_OPERATION_MSG *pCtrlOperMsg;
 
-    PPP_MNTN_TRACE_MSG(ptrPppMntnSt);
+    pCtrlOperMsg = (PPP_AT_CTRL_OPERATION_MSG *)pMsg;
+
+    switch(pCtrlOperMsg->ulCtrlOpType)
+    {
+        case PPP_AT_CTRL_REL_PPP_REQ:
+            Ppp_ReleasePppReq(pCtrlOperMsg->usPppId);
+            break;
+        case PPP_AT_CTRL_REL_PPP_RAW_REQ:
+            Ppp_ReleaseRawDataPppReq(pCtrlOperMsg->usPppId);
+            break;
+        case PPP_AT_CTRL_HDLC_DISABLE:
+            PPP_ProcHdlcDisable(pCtrlOperMsg->usPppId);
+            break;
+        case PPP_AT_CTRL_CONFIG_INFO_IND:
+            Ppp_ProcConfigInfoInd(pCtrlOperMsg->usPppId);
+            break;
+
+        default:
+            PPP_MNTN_LOG1(PS_PID_APP_PPP, 0, LOG_LEVEL_WARNING,
+                          "PPP, PPP_ProcAtCtrlOper, ulCtrlOpType %d is ERROR!",
+                          (VOS_INT32)(pCtrlOperMsg->ulCtrlOpType));
+            return PS_FAIL;
+    }
+
+    return PS_SUCC;
 }
 
-VOS_VOID PPP_TtfMemFrameMntnInfo
+
+/*****************************************************************************
+    PPP勾包原始内存中数据的结构
+    -PPP_Frame_MNTN_Info_STRU    struct
+    -PPP_Proto                   2 byte NetWork Order
+    -PPP_Frame                   (without PPP Proto)
+*****************************************************************************/
+VOS_VOID Ppp_MBufFrameMntnInfo
 (
-    PPP_ZC_STRU *pstMem,
-    VOS_UINT16   usProto
+    struct ppp_mbuf *bp,
+    VOS_UINT16       usProto,
+    VOS_UINT32       ulDir
 )
 {
-    VOS_UINT16                usFrameLen        = 0;
-    PPP_FRAME_MNTN_INFO_STRU *ptrPppFrameMntnSt = VOS_NULL_PTR;
-    VOS_UINT8                *pucBuff           = VOS_NULL_PTR;
-    VOS_UINT32                ulRet             = PS_FAIL;
+    VOS_UINT16                ulFrameLen        = 0;
+    PPP_FRAME_MNTN_INFO_STRU *ptrPppFrameMntnSt = VOS_NULL;
+    VOS_UINT8                *pucBuff           = VOS_NULL;
+    VOS_INT32                 ulRet             = VOS_ERR;
+
 
     /* PPP 帧长度*/
-    usFrameLen = (VOS_UINT16)PPP_ZC_GET_DATA_LEN(pstMem);
+    ulFrameLen = (VOS_UINT16)ppp_m_length(bp);
 
     ptrPppFrameMntnSt = (PPP_FRAME_MNTN_INFO_STRU *)PS_MEM_ALLOC(PS_PID_APP_PPP,
-                        usFrameLen + sizeof(PPP_FRAME_MNTN_INFO_STRU) + sizeof(usProto));
+                        ulFrameLen + sizeof(PPP_FRAME_MNTN_INFO_STRU) + sizeof(usProto));
     if (VOS_NULL_PTR == ptrPppFrameMntnSt)
     {
-        PPP_MNTN_LOG(PS_PRINT_WARNING,"PPP, PPP_TtfMemFrameMntnInfo, ERROR, Call VOS_MemAlloc fail!\n");
+        PPP_MNTN_LOG(PS_PID_APP_PPP, PS_SUBMOD_NULL, PS_PRINT_ERROR,
+            "PPP, Ppp_MBufFrameMntnInfo, ERROR, Call VOS_MemAlloc fail!\n");
         return;
     }
 
-    /* 填入PPP帧协议类型,网络字节序*/
+    /* 填入PPP帧协议类型,使用网络字节序*/
     pucBuff = (VOS_UINT8 *)(ptrPppFrameMntnSt + 1);
-    *((VOS_UINT16 *)(pucBuff)) = (VOS_HTONS(usProto)); 
-    (pucBuff) += 2;         
+    PPP_PUTSHORT(VOS_HTONS(usProto), pucBuff);
 
     /* 填入帧内容,原始复制即可*/
-    ulRet = PPP_MemGet(pstMem, 0, pucBuff, usFrameLen);
-    if (PS_SUCC != ulRet)
+    ulRet = ppp_mbuf_View(bp, pucBuff, ulFrameLen);
+    if (ulFrameLen != ulRet)
     {
-        PPP_MNTN_LOG(PS_PRINT_WARNING,"PPP, Ppp_frame_MntnInfo, ERROR, TTF_MemGet Fail!\n");
+        PPP_MNTN_LOG(PS_PID_APP_PPP, PS_SUBMOD_NULL, PS_PRINT_ERROR,
+            "PPP, Ppp_MBufFrameMntnInfo, ERROR, ppp_mbuf_View Fail!\n");
         PS_MEM_FREE(PS_PID_APP_PPP, ptrPppFrameMntnSt);
         return ;
     }
@@ -649,73 +686,387 @@ VOS_VOID PPP_TtfMemFrameMntnInfo
        长度: 除可维可测信息头部外数据部分载荷
              涵盖帧长 + 2byte protocol字段
     *****************************************************************/
-    PPP_FrameMntnInfo(ptrPppFrameMntnSt, usFrameLen + sizeof(usProto));
+    Ppp_FrameMntnInfo(ptrPppFrameMntnSt, ulDir, ulFrameLen + sizeof(usProto));
 
     /* 释放内存*/
     PS_MEM_FREE(PS_PID_APP_PPP, ptrPppFrameMntnSt);
+    return;
 }
 
-VOS_VOID PPP_HDLC_ProcIpModeUlData(VOS_UINT16  pppId, PPP_ZC_STRU *pstMem, VOS_UINT16  usProto)
+
+VOS_VOID Ppp_TtfMemFrameMntnInfo
+(
+    PPP_ZC_STRU *pstMem,
+    VOS_UINT16  usProto,
+    VOS_UINT32  ulDir
+)
 {
-    if (usProto != PPPA_IP)
+    VOS_UINT16                ulFrameLen        = 0;
+    PPP_FRAME_MNTN_INFO_STRU *ptrPppFrameMntnSt = VOS_NULL;
+    VOS_UINT8                *pucBuff           = VOS_NULL;
+    VOS_UINT32                ulRet             = PS_FAIL;
+
+    /* PPP 帧长度*/
+    ulFrameLen = (VOS_UINT16)PPP_ZC_GET_DATA_LEN(pstMem);
+
+    ptrPppFrameMntnSt = (PPP_FRAME_MNTN_INFO_STRU *)PS_MEM_ALLOC(PS_PID_APP_PPP,
+                        ulFrameLen + sizeof(PPP_FRAME_MNTN_INFO_STRU) + sizeof(usProto));
+    if (VOS_NULL_PTR == ptrPppFrameMntnSt)
     {
-        /* 把PPP协商包作为可维可测信息,IP包不做可维可测维护*/
-        PPP_TtfMemFrameMntnInfo(pstMem, usProto);
-        PPPA_SendPppcNegoData(pstMem, usProto); 
-        PPP_MemFree(pstMem);
-    } else {
-        PPP_SendUlDataToAds(pppId, pstMem, PPPA_ETH_IPV4_PROTO);
-    } 
-}
-
-
-VOS_VOID PPP_SetupHdlc(VOS_UINT16 pppId, VOS_BOOL ipMode)
-{
-#if (FEATURE_OFF == FEATURE_HARDWARE_HDLC_FUNC)
-    PPP_HDLC_SetUp(pppId, ipMode);
-#else
-    PPP_Service_HdlcHardSetUp(pppId);
-#endif
-}
-
-VOS_VOID PPP_ReleaseHdlc(VOS_UINT16 pppId)
-{
-#if (FEATURE_OFF == FEATURE_HARDWARE_HDLC_FUNC)
-    PPP_CONV_Release(pppId);
-#endif
-
-}
-
-VOS_VOID PPPA_SetUsedFlag(VOS_BOOL isUsed)
-{
-    g_pppUsed = isUsed;
-}
-
-VOS_VOID PPPA_DataEventProc(VOS_VOID)
-{
-#if (FEATURE_ON == FEATURE_HARDWARE_HDLC_FUNC)
-    PPP_Service_HdlcHardOpenClk();
-#endif
-
-    PPP_ProcDataNotify();
-
-#if (FEATURE_ON == FEATURE_HARDWARE_HDLC_FUNC)
-    PPP_Service_HdlcHardCloseClk();
-#endif
-}
-
-VOS_VOID PPPA_INPUT_ProcEchoReq(VOS_VOID)
-{
-    static VOS_UINT32   preDropCnt = 0;
-    PPP_DATA_Q_STAT_ST *dataStat = PPPA_GET_STAT_ADDR();
-
-    if (dataStat->ulDropCnt == preDropCnt) {
+        PPP_MNTN_LOG(PS_PID_APP_PPP, PS_SUBMOD_NULL, PS_PRINT_ERROR,
+            "PPP, Ppp_TtfMemFrameMntnInfo, ERROR, Call VOS_MemAlloc fail!\n");
         return;
     }
-    preDropCnt = dataStat->ulDropCnt;
-    PPPA_SendPppcCommMsg(ID_PPPA_PPPC_IGNORE_ECHO);
+
+    /* 填入PPP帧协议类型,网络字节序*/
+    pucBuff = (VOS_UINT8 *)(ptrPppFrameMntnSt + 1);
+    PPP_PUTSHORT(VOS_HTONS(usProto), pucBuff);
+
+    /* 填入帧内容,原始复制即可*/
+    ulRet = PPP_MemGet(pstMem, 0, pucBuff, ulFrameLen);
+    if (PS_SUCC != ulRet)
+    {
+        PPP_MNTN_LOG(PS_PID_APP_PPP, PS_SUBMOD_NULL, PS_PRINT_ERROR,
+                     "PPP, Ppp_frame_MntnInfo, ERROR, TTF_MemGet Fail!\n");
+        PS_MEM_FREE(PS_PID_APP_PPP, ptrPppFrameMntnSt);
+
+        return ;
+    }
+
+    /****************************************************************
+       发送可维可测信息
+       长度: 除可维可测信息头部外数据部分载荷
+             涵盖帧长 + 2byte protocol字段
+    *****************************************************************/
+    Ppp_FrameMntnInfo(ptrPppFrameMntnSt, ulDir, ulFrameLen + sizeof(usProto));
+
+    /* 释放内存*/
+    PS_MEM_FREE(PS_PID_APP_PPP, ptrPppFrameMntnSt);
+
+    return;
 }
 
+/*lint -e{429}*/
+
+VOS_VOID Ppp_FrameMntnInfo
+(
+    PPP_FRAME_MNTN_INFO_STRU *ptrPppMntnSt,
+    VOS_UINT32                ulDir,
+    VOS_UINT16                ulDataLen
+)
+{
+    ptrPppMntnSt->ulReceiverCpuId = VOS_LOCAL_CPUID;
+    ptrPppMntnSt->ulReceiverPid   = PS_PID_APP_PPP;
+    ptrPppMntnSt->ulSenderCpuId   = VOS_LOCAL_CPUID;
+    ptrPppMntnSt->ulSenderPid     = PS_PID_APP_PPP;
+    ptrPppMntnSt->ulLength        = (ulDataLen + sizeof(PPP_FRAME_MNTN_INFO_STRU))
+                                        - VOS_MSG_HEAD_LENGTH;
+    /* PPP 帧方向*/
+    if (PPP_RECV_IN_PROTOCOL_FRAME == ulDir)
+    {
+        ptrPppMntnSt->ulMsgname = PPP_RECV_PROTO_PACKET_TYPE;
+    }
+    if (PPP_SEND_OUT_PROTOCOL_FRAME == ulDir)
+    {
+        ptrPppMntnSt->ulMsgname = PPP_SEND_PROTO_PACKET_TYPE;
+    }
+
+    ptrPppMntnSt->ulPppPhase  = pgPppLink->phase;
+    ptrPppMntnSt->ulIpcpState = pgPppLink->ipcp.fsm.state;
+    ptrPppMntnSt->ulLcpState  = pgPppLink->lcp.fsm.state;
+    ptrPppMntnSt->usPppId     = (VOS_UINT16)(PPP_LINK_TO_ID(pgPppLink));
+    ptrPppMntnSt->ulDataLen  = ulDataLen;
+
+    PPP_MNTN_TRACE_MSG(ptrPppMntnSt);
+
+    return;
+}
+
+
+VOS_VOID Ppp_FillEventMntnInfo
+(
+    PPP_EVENT_MNTN_INFO_STRU  *ptrPppEveMntnSt,
+    VOS_UINT16                 usPppID,
+    VOS_UINT32                 ulEvent,
+    VOS_UINT32                 ulEventLen
+)
+{
+    ptrPppEveMntnSt->ulReceiverCpuId = VOS_LOCAL_CPUID;
+    ptrPppEveMntnSt->ulReceiverPid   = PS_PID_APP_PPP;
+    ptrPppEveMntnSt->ulSenderCpuId   = VOS_LOCAL_CPUID;
+    ptrPppEveMntnSt->ulSenderPid     = PS_PID_APP_PPP;
+    ptrPppEveMntnSt->ulLength        = ulEventLen - VOS_MSG_HEAD_LENGTH;
+
+    ptrPppEveMntnSt->ulMsgname      = ulEvent;
+    ptrPppEveMntnSt->usPppId        = usPppID;
+    ptrPppEveMntnSt->usReserved     = 0;
+    ptrPppEveMntnSt->ulPppPhase     = pgPppLink->phase;
+    ptrPppEveMntnSt->ulIpcpState    = pgPppLink->ipcp.fsm.state;
+    ptrPppEveMntnSt->ulLcpState     = pgPppLink->lcp.fsm.state;
+}
+
+
+VOS_VOID Ppp_EventMntnInfo
+(
+    VOS_UINT16                usPppID,
+    VOS_UINT32                ulEvent
+)
+{
+    PPP_EVENT_MNTN_INFO_STRU    stPppEveMntnSt;
+
+    /*填入公共信息字段*/
+    Ppp_FillEventMntnInfo(&stPppEveMntnSt, usPppID, ulEvent, sizeof(PPP_EVENT_MNTN_INFO_STRU));
+
+    PPP_MNTN_TRACE_MSG(&stPppEveMntnSt);
+
+    return;
+}
+
+
+/*****************************************************************************
+ PPP_ind_config_info可维可测信息勾包原始内存中的数据结构
+ 需要确保LEN在2BYTE对齐
+-PPP_Event_MNTN_Info_STRU   struct
+-LEN   IP_ADDR_LEN             2 byte
+-IP_ADDR                      16 byte(PPP_MAX_IPV4_ADDR_LEN + 1)
+-LEN   AUTH_LEN                2 byte
+-VALUE ...                  0..x byte
+-LEN   IPCP_LEN                2 byte
+-VALUE ...                  0..x byte
+*****************************************************************************/
+/*lint -e{516}*/
+VOS_VOID Ppp_RcvConfigInfoIndMntnInfo
+(
+    VOS_UINT16  usPppID,
+    AT_PPP_IND_CONFIG_INFO_STRU *ptrIndConfigInfo
+)
+{
+    VOS_UINT16                          ulDataLen;
+    PPP_EVENT_MNTN_INFO_STRU           *ptrPppFrameMntnSt = VOS_NULL;
+    VOS_UINT8                          *pucBuff;
+
+    /*************************************************************
+    CONFIG info 部分数据长度
+    总长度 = aucIpAddr + aucPriDns + aucSecDns + aucGateWay + aucPriNbns + aucSecNbns + 6个长度字段
+    **************************************************************/
+    ulDataLen = (IPV4_ADDR_LEN * 6) + (sizeof(VOS_UINT16) * 6) + sizeof(PPP_EVENT_MNTN_INFO_STRU);
+
+    /* 申请内存,数据长度+事件消息上报头部长度*/
+    ptrPppFrameMntnSt = (PPP_EVENT_MNTN_INFO_STRU *)PS_MEM_ALLOC(PS_PID_APP_PPP, ulDataLen);
+
+    if (VOS_NULL_PTR == ptrPppFrameMntnSt)
+    {
+        PPP_MNTN_LOG(PS_PID_APP_PPP, PS_SUBMOD_NULL, PS_PRINT_ERROR,
+                     "PPP, Ppp_RcvConfigInfoIndMntnInfo, ERROR, Call VOS_MemAlloc fail!\n");
+        return;
+    }
+
+    /* 偏移sizeof(PPP_EVENT_MNTN_INFO_STRU) */
+    pucBuff = (VOS_UINT8 *)(ptrPppFrameMntnSt + 1);
+
+    /*lint -e661 -e662 -e669*/
+    PPP_PUTSHORT(IPV4_ADDR_LEN, pucBuff);
+    PSACORE_MEM_CPY(pucBuff, IPV4_ADDR_LEN, ptrIndConfigInfo->aucIpAddr, IPV4_ADDR_LEN);
+    PPP_INCPTR(IPV4_ADDR_LEN, pucBuff);
+
+    /* 填入 aucPriDns 长度和内容*/
+    PPP_PUTSHORT(IPV4_ADDR_LEN, pucBuff);
+    PSACORE_MEM_CPY(pucBuff, IPV4_ADDR_LEN, ptrIndConfigInfo->stPcoIpv4Item.aucPriDns, IPV4_ADDR_LEN);
+    PPP_INCPTR(IPV4_ADDR_LEN, pucBuff);
+
+    /* 填入 aucSecDns 长度和内容*/
+    PPP_PUTSHORT(IPV4_ADDR_LEN, pucBuff);
+    PSACORE_MEM_CPY(pucBuff, IPV4_ADDR_LEN, ptrIndConfigInfo->stPcoIpv4Item.aucSecDns, IPV4_ADDR_LEN);
+    PPP_INCPTR(IPV4_ADDR_LEN, pucBuff);
+
+    /* 填入 aucGateWay 长度和内容*/
+    PPP_PUTSHORT(IPV4_ADDR_LEN, pucBuff);
+    PSACORE_MEM_CPY(pucBuff, IPV4_ADDR_LEN, ptrIndConfigInfo->stPcoIpv4Item.aucGateWay, IPV4_ADDR_LEN);
+    PPP_INCPTR(IPV4_ADDR_LEN, pucBuff);
+
+    /* 填入 aucPriNbns 长度和内容*/
+    PPP_PUTSHORT(IPV4_ADDR_LEN, pucBuff);
+    PSACORE_MEM_CPY(pucBuff, IPV4_ADDR_LEN, ptrIndConfigInfo->stPcoIpv4Item.aucPriNbns, IPV4_ADDR_LEN);
+    PPP_INCPTR(IPV4_ADDR_LEN, pucBuff);
+
+    /* 填入 aucSecNbns 长度和内容*/
+    PPP_PUTSHORT(IPV4_ADDR_LEN, pucBuff);
+    PSACORE_MEM_CPY(pucBuff, IPV4_ADDR_LEN, ptrIndConfigInfo->stPcoIpv4Item.aucSecNbns, IPV4_ADDR_LEN);
+    PPP_INCPTR(IPV4_ADDR_LEN, pucBuff);
+    /*lint +e661 +e662 +e669*/
+
+    /* 填入公共信息字段*/
+    Ppp_FillEventMntnInfo(ptrPppFrameMntnSt, usPppID, AT_PPP_RECV_CONFIG_INFO_IND, ulDataLen);
+
+    PPP_MNTN_TRACE_MSG(ptrPppFrameMntnSt);
+
+    PS_MEM_FREE(PS_PID_APP_PPP, ptrPppFrameMntnSt);
+
+    return;
+}
+
+
+/*****************************************************************************
+ PPP_ind_config_info可维可测信息勾包原始内存中的数据结构
+
+-PPP_Event_MNTN_Info_STRU   struct
+-AUTH_TYPE                     1 byte
+-Empty Aligned                 1 byte (1 byte填充，确保LEN在2byte对齐)
+   (AUTH_TYPE == PAP)
+     -LEN      PAP             2 byte
+     -VALUE    ...          0..x byte
+   (AUTH_TYPE == CHAP)
+     -LEN      CHALLENGE       2 byte
+     -VALUE    ...          0..x byte
+     -LEN      RESPOSNE        2 byte
+     -VALUE    ...          0..x byte
+   (AUTH_TYPE == OTHER)
+     -NULL
+-IPCP LEN                      2 byte
+-IPCP VAULE ...             0..x byte
+*****************************************************************************/
+/*lint -e{516}*/
+VOS_VOID Ppp_RcvConfigInfoReqMntnInfo(VOS_UINT16  usPppID, PPP_REQ_CONFIG_INFO_STRU *ptrReqConfigInfo)
+{
+    VOS_UINT16 ulDataLen                       = 0;
+    PPP_EVENT_MNTN_INFO_STRU *ptrPppFrameMntnSt = VOS_NULL;
+    VOS_UINT8  *pucBuff                         = VOS_NULL;
+
+    VOS_UINT16 usChapChallengeLen               = 0;
+    VOS_UINT16 usChapChallengeLenAligned        = 0;
+
+    VOS_UINT16 usChapResponseLen                = 0;
+    VOS_UINT16 usChapResponseLenAligned         = 0;
+
+    VOS_UINT16 usPapLen                         = 0;
+    VOS_UINT16 usPapLenAligned                  = 0;
+
+    VOS_UINT16 usIpcpLen                        = 0;
+    VOS_UINT16 usIpcpLenAligned                 = 0;
+
+    /* 事件消息内容长度计算 + 1byte 验证类型 + 1byte 填充*/
+    ulDataLen += (sizeof(VOS_UINT8)*2);
+
+    /* 参数检查*/
+    if (PPP_PAP_AUTH_TYPE == ptrReqConfigInfo->stAuth.ucAuthType)
+    {
+        if ((0 != ptrReqConfigInfo->stAuth.AuthContent.PapContent.usPapReqLen)
+            && (VOS_NULL == ptrReqConfigInfo->stAuth.AuthContent.PapContent.pPapReq))
+        {
+            PPP_MNTN_LOG(PS_PID_APP_PPP, PS_SUBMOD_NULL, PS_PRINT_ERROR,
+                "PPP, Ppp_RcvConfigInfoReqMntnInfo, ERROR, Param PAP Error!\n");
+            return;
+        }
+        usPapLen = ptrReqConfigInfo->stAuth.AuthContent.PapContent.usPapReqLen;
+        PPP_LENALIGNTO2BYTE(usPapLenAligned, usPapLen);
+
+        /* 事件消息内容长度计算 + 2byte PAP长度字段 + PAP长度*/
+        ulDataLen += (usPapLenAligned + sizeof(VOS_UINT16));
+    }
+    if (PPP_CHAP_AUTH_TYPE == ptrReqConfigInfo->stAuth.ucAuthType)
+    {
+        if ((0 != ptrReqConfigInfo->stAuth.AuthContent.ChapContent.usChapChallengeLen)
+            && (VOS_NULL == ptrReqConfigInfo->stAuth.AuthContent.ChapContent.pChapChallenge))
+        {
+            PPP_MNTN_LOG(PS_PID_APP_PPP, PS_SUBMOD_NULL, PS_PRINT_ERROR,
+                "PPP, Ppp_RcvConfigInfoReqMntnInfo, ERROR, Param CHAP Challenge Error!\n");
+            return;
+        }
+        if ((0 != ptrReqConfigInfo->stAuth.AuthContent.ChapContent.usChapResponseLen)
+            && (VOS_NULL == ptrReqConfigInfo->stAuth.AuthContent.ChapContent.pChapResponse))
+        {
+            PPP_MNTN_LOG(PS_PID_APP_PPP, PS_SUBMOD_NULL, PS_PRINT_ERROR,
+                "PPP, Ppp_RcvConfigInfoReqMntnInfo, ERROR, Param CHAP Response Error!\n");
+            return;
+        }
+        usChapChallengeLen = ptrReqConfigInfo->stAuth.AuthContent.ChapContent.usChapChallengeLen;
+        PPP_LENALIGNTO2BYTE(usChapChallengeLenAligned, usChapChallengeLen);
+
+        usChapResponseLen  = ptrReqConfigInfo->stAuth.AuthContent.ChapContent.usChapResponseLen;
+        PPP_LENALIGNTO2BYTE(usChapResponseLenAligned, usChapResponseLen);
+
+        /* 事件消息内容长度计算 + 2byte challenge长度字段 + challenge长度 + 2byte response 长度字段 + response长度*/
+        ulDataLen += (usChapChallengeLenAligned + usChapResponseLenAligned + (sizeof(VOS_UINT16)*2));
+    }
+
+    if ((0 != ptrReqConfigInfo->stIPCP.usIpcpLen) && (VOS_NULL == ptrReqConfigInfo->stIPCP.pIpcp))
+    {
+        PPP_MNTN_LOG(PS_PID_APP_PPP, PS_SUBMOD_NULL, PS_PRINT_ERROR,
+            "PPP, Ppp_RcvConfigInfoReqMntnInfo, ERROR, Param IPCP Error!\n");
+        return;
+    }
+    usIpcpLen = ptrReqConfigInfo->stIPCP.usIpcpLen;
+    PPP_LENALIGNTO2BYTE(usIpcpLenAligned, usIpcpLen);
+
+    /* 事件消息内容长度计算 + 2byte IPCP长度字段 + IPCP长度*/
+    ulDataLen += (usIpcpLenAligned + sizeof(VOS_UINT16));
+
+    ptrPppFrameMntnSt = (PPP_EVENT_MNTN_INFO_STRU *)PS_MEM_ALLOC(PS_PID_APP_PPP,
+                        ulDataLen + sizeof(PPP_EVENT_MNTN_INFO_STRU));
+    if (VOS_NULL_PTR == ptrPppFrameMntnSt)
+    {
+        PPP_MNTN_LOG(PS_PID_APP_PPP, PS_SUBMOD_NULL, PS_PRINT_ERROR,
+            "PPP, Ppp_RcvConfigInfoReqMntnInfo, ERROR, Call VOS_MemAlloc fail!\n");
+        return;
+    }
+
+    /* 填入 验证类型 + padding*/
+    pucBuff = (VOS_UINT8 *)(ptrPppFrameMntnSt + 1);
+    PPP_PUTCHAR(ptrReqConfigInfo->stAuth.ucAuthType, pucBuff);
+    PPP_PUTCHAR(0, pucBuff);
+
+    /* 填入 pap 长度 pap内容*/
+    if(PPP_PAP_AUTH_TYPE == ptrReqConfigInfo->stAuth.ucAuthType)
+    {
+        PPP_PUTSHORT(usPapLenAligned, pucBuff);
+        if (0 != usPapLenAligned)
+        {
+            /*lint -e613 */
+            PSACORE_MEM_CPY(pucBuff, usPapLen, ptrReqConfigInfo->stAuth.AuthContent.PapContent.pPapReq, usPapLen);
+            /*lint +e613 */
+            PPP_INCPTR(usPapLenAligned, pucBuff);
+        }
+    }
+    /* 填入 chap 长度 chap内容*/
+    if(PPP_CHAP_AUTH_TYPE == ptrReqConfigInfo->stAuth.ucAuthType)
+    {
+        PPP_PUTSHORT(usChapChallengeLenAligned, pucBuff);
+        if (0 != usChapChallengeLenAligned)
+        {
+            /*lint -e613 */
+            PSACORE_MEM_CPY(pucBuff, usChapChallengeLen, ptrReqConfigInfo->stAuth.AuthContent.ChapContent.pChapChallenge, usChapChallengeLen);
+            /*lint +e613 */
+            PPP_INCPTR(usChapChallengeLenAligned, pucBuff);
+        }
+
+        PPP_PUTSHORT(usChapResponseLenAligned, pucBuff);
+        if (0 != usChapResponseLenAligned)
+        {
+            /*lint -e613 */
+            PSACORE_MEM_CPY(pucBuff, usChapResponseLen, ptrReqConfigInfo->stAuth.AuthContent.ChapContent.pChapResponse, usChapResponseLen);
+            /*lint +e613 */
+            PPP_INCPTR(usChapResponseLenAligned, pucBuff);
+        }
+    }
+
+    /*填入IPCP长度,内容*/
+    PPP_PUTSHORT(usIpcpLenAligned, pucBuff);
+    if (0 != usIpcpLenAligned)
+    {
+       PSACORE_MEM_CPY(pucBuff, usIpcpLen, ptrReqConfigInfo->stIPCP.pIpcp, usIpcpLen);
+       PPP_INCPTR(usIpcpLenAligned, pucBuff);
+    }
+
+    /*填入公共信息字段*/
+    Ppp_FillEventMntnInfo(ptrPppFrameMntnSt, usPppID, PPP_AT_RECV_CONFIG_INFO_REQ,
+                                (ulDataLen + sizeof(PPP_EVENT_MNTN_INFO_STRU)));
+
+    PPP_MNTN_TRACE_MSG(ptrPppFrameMntnSt);
+
+    PS_MEM_FREE(PS_PID_APP_PPP, ptrPppFrameMntnSt);
+
+    return;
+}
 
 
 

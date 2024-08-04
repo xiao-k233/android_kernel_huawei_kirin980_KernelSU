@@ -133,7 +133,6 @@ modem_cp_exc_desc  g_dump_cp_desc[]= {
 
 
 struct rdr_exception_info_s g_modem_exc_info[] = {
-#ifdef  BSP_CONFIG_PHONE_TYPE
 
     {
         .e_modid            = (unsigned int)RDR_MODEM_AP_MOD_ID,
@@ -584,275 +583,6 @@ struct rdr_exception_info_s g_modem_exc_info[] = {
         .e_desc             = "modem reset by bus error",
     },
 
-#else
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_AP_MOD_ID,
-        .e_modid_end        = (unsigned int)RDR_MODEM_AP_MOD_ID,
-        .e_process_priority = RDR_ERR,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LR | RDR_SYS_LPM3 ,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_AP,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_DISALLOW,
-        .e_exce_type        = CP_S_MODEMAP,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMAP",
-        .e_desc             = "LRSS MDMAP reset system",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_DRV_MOD_ID_START,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_DRV_MOD_ID_END,
-        .e_process_priority = RDR_ERR,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "LRSS MDMCP DRV reset",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_OSA_MOD_ID_START,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_OSA_MOD_ID_END,
-        .e_process_priority = RDR_WARN,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "LRSS MDMCP OSA reset",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_OAM_MOD_ID_START,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_OAM_MOD_ID_END,
-        .e_process_priority = RDR_ERR,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "LRSS MDMCP OAM reset",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_GUL2_MOD_ID_START,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_GUL2_MOD_ID_END,
-        .e_process_priority = RDR_ERR,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "LRSS MDMCP GUL2 reset",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_CTTF_MOD_ID_START,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_CTTF_MOD_ID_END,
-        .e_process_priority = RDR_ERR,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "LRSS MDMCP CTTF reset",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_GUWAS_MOD_ID_START,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_GUWAS_MOD_ID_END,
-        .e_process_priority = RDR_ERR,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "LRSS MDMCP GUWAS reset",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_CAS_MOD_ID_START,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_CAS_MOD_ID_END,
-        .e_process_priority = RDR_ERR,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "LRSS MDMCP CAS reset",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_CPROC_MOD_ID_START,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_CPROC_MOD_ID_END,
-        .e_process_priority = RDR_ERR,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "LRSS MDMCP CPROC reset",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_GUGAS_MOD_ID_START,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_GUGAS_MOD_ID_END,
-        .e_process_priority = RDR_ERR,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "LRSS MDMCP GUGAS reset",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_GUCNAS_MOD_ID_START,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_GUCNAS_MOD_ID_END,
-        .e_process_priority = RDR_ERR,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "LRSS MDMCP GUCNAS reset",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_GUDSP_MOD_ID_START,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_GUDSP_MOD_ID_END,
-        .e_process_priority = RDR_ERR,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "LRSS MDMCP GUDSP reset",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_LPS_MOD_ID_START,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_LPS_MOD_ID_END,
-        .e_process_priority = RDR_ERR,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "LRSS MDMCP LPS reset",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_TLDSP_MOD_ID_START,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_TLDSP_MOD_ID_END,
-        .e_process_priority = RDR_ERR,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "LRSS MDMCP TLDSP reset",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_CPHY_MOD_ID_START,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_CPHY_MOD_ID_END,
-        .e_process_priority = RDR_ERR,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "LRSS MDMCP CPHY reset",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_IMS_MOD_ID_START,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_IMS_MOD_ID_END,
-        .e_process_priority = RDR_ERR,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "LRSS MDMCP IMS reset",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_WDT_MOD_ID,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_WDT_MOD_ID,
-        .e_process_priority = RDR_WARN,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_LR | RDR_LPM3,
-        .e_reset_core_mask  = RDR_SYS_LR,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "modem self-reset wdt",
-    },
-    {
-        .e_modid            = (unsigned int)RDR_MODEM_CP_RESET_DLOCK_MOD_ID,
-        .e_modid_end        = (unsigned int)RDR_MODEM_CP_RESET_DLOCK_MOD_ID,
-        .e_process_priority = RDR_WARN,
-        .e_reboot_priority  = RDR_REBOOT_WAIT,
-        .e_notify_core_mask = RDR_SYS_AP |RDR_SYS_LR | RDR_SYS_LPM3,
-        .e_reset_core_mask  = RDR_SYS_AP,
-        .e_from_core        = RDR_SYS_LR,
-        .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-        .e_exce_type        = CP_S_EXCEPTION,
-        .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-        .e_from_module      = "MDMCP",
-        .e_desc             = "modem reset by bus error",
-    },
-/*以下为NR新增的异常类型定义*/
-    {
-    .e_modid            = (unsigned int)RDR_MODEM_NR_MOD_ID_START,
-    .e_modid_end        = (unsigned int)RDR_MODEM_NR_MOD_ID_END,
-    .e_process_priority = RDR_WARN,
-    .e_reboot_priority  = RDR_REBOOT_WAIT,
-    .e_notify_core_mask = RDR_SYS_AP |RDR_SYS_LR | RDR_SYS_LPM3,
-    .e_reset_core_mask  = RDR_SYS_AP,
-    .e_from_core        = RDR_SYS_NR,
-    .e_reentrant        = (unsigned int)RDR_REENTRANT_ALLOW,
-    .e_exce_type        = CP_S_EXCEPTION,
-    .e_upload_flag      = (unsigned int)RDR_UPLOAD_YES,
-    .excinfo_callbak    = (rdr_exc_info_callback)dump_get_nr_excinfo,
-    .e_from_module      = "NR",
-    },
-#endif
 
 };
 
@@ -964,7 +694,7 @@ u32 dump_get_exc_index(u32 modid)
 void dump_save_rdr_callback_info(u32 modid, u32 etype, u64 coreid, char* logpath, pfn_cb_dump_done fndone)
 {
     rdr_exc_info_s* rdr_info = NULL;
-    s32 ret = 0;
+
     if(unlikely(logpath == NULL))
     {
         dump_error("logpath is null\n");
@@ -987,13 +717,10 @@ void dump_save_rdr_callback_info(u32 modid, u32 etype, u64 coreid, char* logpath
         dump_error("log path is too long %s\n", logpath);
         return ;
     }
-    ret |= memset_s(rdr_info->log_path,sizeof(rdr_info->log_path),'\0',sizeof(rdr_info->log_path));
-    ret |= memcpy_s(rdr_info->log_path,sizeof(rdr_info->log_path) ,logpath, strlen(logpath));
-    ret |= memcpy_s(rdr_info->log_path + strlen(logpath) ,(sizeof(rdr_info->log_path)-strlen(logpath)), RDR_DUMP_FILE_CP_PATH, strlen(RDR_DUMP_FILE_CP_PATH));
-    if(ret)
-    {
-        dump_error("save rdr info error\n");
-    }
+    memset_s(rdr_info->log_path,sizeof(rdr_info->log_path),'\0',sizeof(rdr_info->log_path));
+    memcpy_s(rdr_info->log_path,sizeof(rdr_info->log_path) ,logpath, strlen(logpath));
+    memcpy_s(rdr_info->log_path + strlen(logpath) ,(sizeof(rdr_info->log_path)-strlen(logpath)), RDR_DUMP_FILE_CP_PATH, strlen(RDR_DUMP_FILE_CP_PATH));
+
     dump_ok("this exception logpath is %s\n", rdr_info->log_path);
 
 }
@@ -1137,11 +864,7 @@ s32 dump_check_reset_freq(u32 rdr_id)
 u32 dump_match_lrccpu_rdr_id(u32 mdmcp_mod_id)
 {
     u32 i = 0;
-#ifdef  BSP_CONFIG_PHONE_TYPE
     u32 rdr_id = RDR_MODEM_CP_DRV_MOD_ID_START;
-#else
-    u32 rdr_id = RDR_MODEM_CP_DRV_MOD_ID;
-#endif
     for(i = 0; i < sizeof(g_dump_cp_mod_id)/sizeof(g_dump_cp_mod_id[0]);i++)
     {
         if(mdmcp_mod_id >= g_dump_cp_mod_id[i].mdm_id_start
@@ -1251,7 +974,6 @@ s32 dump_match_mdmcp_rdr_id(dump_exception_info_s* dump_exception_info)
         return rdr_id;
     }
 
-#ifdef  BSP_CONFIG_PHONE_TYPE
     /*手机版本noc错误*/
     rdr_id = dump_match_noc_rdr_id(dump_exception_info->mod_id,dump_exception_info->arg1);
     if(rdr_id== RDR_MODEM_DRV_BUTT_MOD_ID)
@@ -1260,10 +982,6 @@ s32 dump_match_mdmcp_rdr_id(dump_exception_info_s* dump_exception_info)
         rdr_id = dump_match_lrccpu_rdr_id(dump_exception_info->mod_id);
         dump_print_mdmcp_error(rdr_id);
     }
-#else
-    /*mbb产品cp的错误码匹配*/
-    rdr_id = dump_exception_info->mod_id;
-#endif
 
     return rdr_id;
 
@@ -1473,19 +1191,13 @@ void dump_fill_excption_info(dump_exception_info_s* exception_info_s,
         exception_info_s->task_id =task_id;
         if(task_name != NULL)
         {
-            if(memcpy_s(exception_info_s->task_name,sizeof(exception_info_s->task_name),task_name,strlen(task_name)))
-            {
-                dump_error("copy tash name fail\n");
-            }
+            memcpy_s(exception_info_s->task_name,sizeof(exception_info_s->task_name),task_name,strlen(task_name));
         }
     }
 
     if(desc)
     {
-        if(memcpy_s(exception_info_s->exc_desc,sizeof(exception_info_s->exc_desc),desc,strlen(desc)))
-        {
-            dump_error("copy desc fail\n");
-        }
+        memcpy_s(exception_info_s->exc_desc,sizeof(exception_info_s->exc_desc),desc,strlen(desc));
     }
     dump_ok("fill excption info done\n");
 
@@ -1512,8 +1224,6 @@ struct rdr_exception_info_s* dump_get_exception_info_node(u32 mod_id)
 
     for(i = 0; i < (sizeof(g_modem_exc_info)/sizeof(g_modem_exc_info[0]));i++)
     {
-#ifndef BSP_CONFIG_PHONE_TYPE
-#endif
         {
             if(g_modem_exc_info[i].e_modid == mod_id)
             {
@@ -1624,10 +1334,7 @@ void dump_excption_handle_done(u32 modid)
         return ;
     }
     /*清除上次的异常信息*/
-    if(memset_s(&g_curr_excption[index],sizeof(g_curr_excption[index]),sizeof(g_curr_excption[index]),0))
-    {
-        dump_debug("meset g_curr_excption fail\n");
-    }
+    memset_s(&g_curr_excption[index],sizeof(g_curr_excption[index]),sizeof(g_curr_excption[index]),0);
 
     if(index ==  EXC_INFO_NORMAL)
     {
@@ -1749,7 +1456,7 @@ __init s32 dump_exception_handler_init(void)
     pid = (struct task_struct *)kthread_run(dump_handle_excption_task, 0, "Modem_exception");
     if (IS_ERR((void*)pid))
     {
-        dump_error("fail to create kthread task failed! \n");
+        dump_error("fail to create kthread task failed! \n", __LINE__);
         return BSP_ERROR;
     }
     g_exception_ctrl.exception_task_id = (uintptr_t)pid;
@@ -1757,7 +1464,7 @@ __init s32 dump_exception_handler_init(void)
     param.sched_priority = 98;
     if (BSP_OK != sched_setscheduler(pid, SCHED_FIFO, &param))
     {
-        dump_error("fail to set scheduler failed!\n");
+        dump_error("fail to set scheduler failed!\n", __LINE__);
         return BSP_ERROR;
     }
     sema_init(&g_exception_ctrl.sem_wait,0);
@@ -1831,20 +1538,15 @@ s32 dump_register_exception(dump_exception_info_s* current_exception)
 * 修改记录  : 2018年7月28日15:00:33      creat
 *
 *****************************************************************************/
-void dump_mdm_callback(unsigned int modid, unsigned int etype, unsigned long long coreid, char* logpath, pfn_cb_dump_done fndone)
+u32 dump_mdm_callback(u32 modid, u32 etype, u64 coreid, char* logpath, pfn_cb_dump_done fndone)
 {
     u32 ret = BSP_OK;
 
-#ifdef CONFIG_COLD_PATCH
     bsp_modem_cold_patch_update_modem_fail_count();
-#endif
 
     if(NULL != fndone)
         fndone(modid, coreid);
-    if(ret != BSP_OK)
-    {
-        dump_error("callback error\n");
-    }
+    return ret;
 }
 
 /*****************************************************************************
@@ -1860,7 +1562,7 @@ void dump_mdm_callback(unsigned int modid, unsigned int etype, unsigned long lon
 * 修改记录  : 2018年7月28日15:00:33      creat
 *
 *****************************************************************************/
-void dump_mdm_reset(unsigned int modid, unsigned int etype, unsigned long long coreid)
+void dump_mdm_reset(u32 modid, u32 etype, u64 coreid)
 {
     dump_exception_info_s* current_exception = NULL;
     s32 ret;
@@ -1952,19 +1654,11 @@ __init s32 dump_register_modem_exc_info(void)
     memset_s(&g_rdr_exc_info,sizeof(g_rdr_exc_info),0,sizeof(g_rdr_exc_info));
     soc_ops.ops_dump  = (pfn_dump)dump_mdm_callback;
     soc_ops.ops_reset = (pfn_reset)dump_mdm_reset;
-#ifdef  BSP_CONFIG_PHONE_TYPE
     if(rdr_register_module_ops(RDR_CP, &soc_ops, &(soc_rst)) != BSP_OK)
     {
         dump_error("fail to register  rdr ops \n");
         return BSP_ERROR;
     }
-#else
-    if(rdr_register_module_ops(RDR_SYS_LR, &soc_ops, &(soc_rst)) != BSP_OK)
-    {
-        dump_error("fail to register  rdr ops \n");
-        return BSP_ERROR;
-    }
-#endif
 
     dump_ok("register modem exc info ok");
     return BSP_OK;

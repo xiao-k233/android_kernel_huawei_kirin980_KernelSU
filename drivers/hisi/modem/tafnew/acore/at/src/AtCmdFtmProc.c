@@ -54,9 +54,7 @@
 #include "ATCmdProc.h"
 #include "AtMtaInterface.h"
 
-#if (FEATURE_ON == FEATURE_LTE)
 #include "msp_diag.h"
-#endif
 
 #include "AtTestParaCmd.h"
 #include "TafAppMma.h"
@@ -507,221 +505,6 @@ VOS_UINT32 AT_RcvMtaSetRatFreqLockCnf(
     return VOS_OK;
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 AT_SetRatFreqLock(VOS_UINT8 ucIndex)
-{
-    TAF_NVIM_FREQ_LOCK_CFG_STRU         stAtCmd;
-    VOS_UINT32                          ulRst;
-
-    /* 参数个数检查 */
-    if ((gucAtParaIndex < 1) || (gucAtParaIndex > 4))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    TAF_MEM_SET_S(&stAtCmd, sizeof(stAtCmd), 0x00, sizeof(TAF_NVIM_FREQ_LOCK_CFG_STRU));
-    stAtCmd.ucEnableFlg = (VOS_UINT8)gastAtParaList[0].ulParaValue;
-
-    /* 如果锁频功能关闭，直接写Nv, 返回AT_OK */
-    if (VOS_FALSE == stAtCmd.ucEnableFlg)
-    {
-        if (NV_OK != TAF_ACORE_NV_WRITE(MODEM_ID_0, en_NV_Item_FREQ_LOCK_CFG, &stAtCmd, sizeof(stAtCmd)))
-        {
-            AT_ERR_LOG("AT_SetRatFreqLock(): en_NV_Item_FREQ_LOCK_CFG NV Write Fail!");
-            return AT_ERROR;
-        }
-
-        return AT_OK;
-    }
-
-    stAtCmd.ulLockedFreq = gastAtParaList[1].ulParaValue;
-
-    /* 解析命令中的接入模式 */
-    if (0 == gastAtParaList[2].usParaLen)
-    {
-        stAtCmd.enRatMode = AT_MTA_FREQLOCK_RATMODE_WCDMA;
-    }
-    else
-    {
-        stAtCmd.enRatMode = (AT_MTA_FREQLOCK_RATMODE_ENUM_UINT8)gastAtParaList[2].ulParaValue;
-    }
-
-    /* 解析命令中的BAND信息 */
-    if (0 == gastAtParaList[3].usParaLen)
-    {
-        if (AT_MTA_FREQLOCK_RATMODE_GSM == stAtCmd.enRatMode)
-        {
-            return AT_ERROR;
-        }
-        stAtCmd.enBand = AT_MTA_GSM_BAND_BUTT;
-    }
-    else
-    {
-        stAtCmd.enBand = (AT_MTA_GSM_BAND_ENUM_UINT16)gastAtParaList[3].ulParaValue;
-    }
-
-    /* 发送消息给C核处理 */
-    ulRst = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   0,
-                                   ID_AT_MTA_SET_FREQ_LOCK_REQ,
-                                   &stAtCmd,
-                                   sizeof(TAF_NVIM_FREQ_LOCK_CFG_STRU),
-                                   I0_UEPS_PID_MTA);
-
-    if (TAF_SUCCESS == ulRst)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_RATFREQLOCK_SET;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-}
-
-
-VOS_UINT32 AT_QryRatFreqLock(VOS_UINT8 ucIndex)
-{
-    TAF_NVIM_FREQ_LOCK_CFG_STRU         stNvFreqLockCfg;
-
-    TAF_MEM_SET_S(&stNvFreqLockCfg, sizeof(stNvFreqLockCfg), 0x00, sizeof(stNvFreqLockCfg));
-
-    /* 通过读取NV来获取Freq Lock当前配置值 */
-    if (NV_OK != TAF_ACORE_NV_READ(MODEM_ID_0, en_NV_Item_FREQ_LOCK_CFG,
-                           &stNvFreqLockCfg,
-                           sizeof(TAF_NVIM_FREQ_LOCK_CFG_STRU)))
-    {
-        AT_WARN_LOG("At_QryRatFreqLock: TAF_ACORE_NV_READ en_NV_Item_FREQ_LOCK_CFG fail!");
-        return AT_ERROR;
-    }
-
-    /* 锁频功能关闭情况下只上报开关值:0 */
-    if (VOS_FALSE == stNvFreqLockCfg.ucEnableFlg)
-    {
-        /* 查询结果上报 */
-        gstAtSendData.usBufLen = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                        (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                        (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                        "%s: %d",
-                                                        g_stParseContext[ucIndex].pstCmdElement->pszCmdName,
-                                                        stNvFreqLockCfg.ucEnableFlg);
-
-        return AT_OK;
-    }
-
-    /* 锁频功能设置在G模上，查询需要上报BAND信息 */
-    if (TAF_NVIM_RAT_MODE_GSM == stNvFreqLockCfg.enRatMode)
-    {
-        /* 查询结果上报 */
-        gstAtSendData.usBufLen = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                        (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                        (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                        "%s: %d,%u,\"0%d\",\"0%d\"",
-                                                        g_stParseContext[ucIndex].pstCmdElement->pszCmdName,
-                                                        stNvFreqLockCfg.ucEnableFlg,
-                                                        stNvFreqLockCfg.ulLockedFreq,
-                                                        stNvFreqLockCfg.enRatMode,
-                                                        stNvFreqLockCfg.enBand);
-    }
-    else
-    {
-        /* 查询结果上报 */
-        gstAtSendData.usBufLen = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                        (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                        (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                        "%s: %d,%u,\"0%d\"",
-                                                        g_stParseContext[ucIndex].pstCmdElement->pszCmdName,
-                                                        stNvFreqLockCfg.ucEnableFlg,
-                                                        stNvFreqLockCfg.ulLockedFreq,
-                                                        stNvFreqLockCfg.enRatMode);
-    }
-
-    return AT_OK;
-}
-
-
-VOS_UINT32 AT_SetGFreqLock(VOS_UINT8 ucIndex)
-{
-    AT_MTA_SET_GSM_FREQLOCK_REQ_STRU    stGFreqLockInfo;
-    VOS_UINT32                          ulRst;
-
-    /* 参数个数检查 */
-    if ((gucAtParaIndex != 1) && (gucAtParaIndex != 3))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 初始化 */
-    TAF_MEM_SET_S(&stGFreqLockInfo, sizeof(stGFreqLockInfo), 0x00, sizeof(AT_MTA_SET_GSM_FREQLOCK_REQ_STRU));
-
-    /* 参数有效性检查 */
-    /* 第一个参数必须带 */
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    stGFreqLockInfo.enableFlag = (PS_BOOL_ENUM_UINT8)gastAtParaList[0].ulParaValue;
-
-    /* 若启动锁频，则必须带第二个参数和第三个参数 */
-    if (PS_TRUE == stGFreqLockInfo.enableFlag)
-    {
-        if ( (0 == gastAtParaList[1].usParaLen)
-          || (0 == gastAtParaList[2].usParaLen) )
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-        else
-        {
-            stGFreqLockInfo.usFreq = (VOS_UINT16)gastAtParaList[1].ulParaValue;
-            stGFreqLockInfo.enBand = (AT_MTA_GSM_BAND_ENUM_UINT16)gastAtParaList[2].ulParaValue;
-        }
-    }
-
-    /* 发送消息给C核处理 */
-    ulRst = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   0,
-                                   ID_AT_MTA_SET_GSM_FREQLOCK_REQ,
-                                   &stGFreqLockInfo,
-                                   sizeof(AT_MTA_SET_GSM_FREQLOCK_REQ_STRU),
-                                   I0_UEPS_PID_MTA);
-
-    if (TAF_SUCCESS == ulRst)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_GSM_FREQLOCK_SET;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-}
-
-
-TAF_UINT32 AT_QryGFreqLock(TAF_UINT8 ucIndex)
-{
-    VOS_UINT32                          ulRst;
-
-    /* 发送消息ID_AT_MTA_QRY_GSM_FREQLOCK_REQ给AT代理处理 */
-    ulRst = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   0,
-                                   ID_AT_MTA_QRY_GSM_FREQLOCK_REQ,
-                                   VOS_NULL_PTR,
-                                   0,
-                                   I0_UEPS_PID_MTA);
-
-    if (TAF_SUCCESS == ulRst)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_GSM_FREQLOCK_QRY;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-}
-#endif
 
 
 VOS_UINT32 AT_RcvMtaSetGFreqLockCnf(
@@ -1439,20 +1222,16 @@ VOS_UINT32 AT_RcvMtaSetNetMonSCellCnf(
             AT_NetMonFmtUtranFddSCellData(pstSetCnf, &usLength);
             break;
         }
-#if (FEATURE_ON == FEATURE_UE_MODE_TDS)
         case MTA_AT_NETMON_CELL_INFO_UTRAN_TDD:
         {
             AT_NetMonFmtUtranTddSCellData(pstSetCnf, &usLength);
             break;
         }
-#endif
-#if (FEATURE_ON == FEATURE_LTE)
         case MTA_AT_NETMON_CELL_INFO_LTE:
         {
             AT_NetMonFmtEutranSCellData(pstSetCnf, &usLength);
             break;
         }
-#endif
         default:
             usLength += (TAF_UINT16)At_sprintf( AT_CMD_MAX_LEN,
                                                (VOS_CHAR *)pgucAtSndCodeAddr,
@@ -1532,24 +1311,20 @@ VOS_UINT32 AT_RcvMtaSetNetMonNCellCnf(
     {
         AT_NetMonFmtUtranFddNCellData(pstSetCnf, usLengthTemp, &usLength);
     }
-#if (FEATURE_ON == FEATURE_UE_MODE_TDS)
     else if (MTA_NETMON_UTRAN_TDD_TYPE == pstSetCnf->stNCellInfo.enCellMeasTypeChoice)
     {
         AT_NetMonFmtUtranTddNCellData(pstSetCnf, usLengthTemp, &usLength);
     }
-#endif
     else
     {
         /*类型不对，不进行任何处理*/
         ;
     }
 
-#if (FEATURE_ON == FEATURE_LTE)
     /* LTE邻区显示 */
     usLengthTemp = usLength;
 
     AT_NetMonFmtEutranNCellData(pstSetCnf, usLengthTemp, &usLength);
-#endif
 
     /* 无邻区，返回NONE */
     if ( 0 == ( pstSetCnf->stNCellInfo.ucGsmNCellCnt +
@@ -1568,7 +1343,6 @@ VOS_UINT32 AT_RcvMtaSetNetMonNCellCnf(
     return VOS_OK;
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_TDS)
 
 VOS_VOID AT_NetMonFmtUtranTddSCellData(
     MTA_AT_NETMON_CELL_INFO_STRU       *pstSCellInfo,
@@ -1658,9 +1432,7 @@ VOS_VOID AT_NetMonFmtUtranTddNCellData(
 
     return;
 }
-#endif
 
-#if (FEATURE_ON == FEATURE_LTE)
 
 VOS_VOID AT_NetMonFmtEutranSCellData(
     MTA_AT_NETMON_CELL_INFO_STRU       *pstSCellInfo,
@@ -1979,7 +1751,6 @@ VOS_VOID AT_FormatRsrq(
     return;
 }
 /*lint -restore*/
-#endif
 
 
 VOS_VOID AT_FormatGasAtCmdRslt(
@@ -3223,174 +2994,6 @@ VOS_UINT32 AT_RcvMtaAtLtePwrDissSetCnf(VOS_VOID *pMsg)
 }
 
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-
-VOS_UINT32 AT_RcvMtaNrrcCapCfgCnf(
-    VOS_VOID                           *pstMsg
-)
-{
-    AT_MTA_MSG_STRU                    *pstRcvMsg        = VOS_NULL_PTR;
-    MTA_AT_NRRCCAP_CFG_SET_CNF_STRU    *pstNrrcCapCfgCnf = VOS_NULL_PTR;
-    VOS_UINT32                          ulResult;
-    VOS_UINT8                           ucIndex;
-
-    /* 初始化 */
-    pstRcvMsg           = (AT_MTA_MSG_STRU *)pstMsg;
-    pstNrrcCapCfgCnf    = (MTA_AT_NRRCCAP_CFG_SET_CNF_STRU *)pstRcvMsg->aucContent;
-    ucIndex             = 0;
-    ulResult            = AT_ERROR;
-
-    /* 通过clientid获取index */
-    if (AT_FAILURE == At_ClientIdToUserId(pstRcvMsg->stAppCtrl.usClientId, &ucIndex))
-    {
-        AT_WARN_LOG("AT_RcvMtaNrrcCapCfgCnf : WARNING:AT INDEX NOT FOUND!");
-        return VOS_ERR;
-    }
-
-    if (AT_IS_BROADCAST_CLIENT_INDEX(ucIndex))
-    {
-        AT_WARN_LOG("AT_RcvMtaNrrcCapCfgCnf : AT_BROADCAST_INDEX.");
-        return VOS_ERR;
-    }
-
-    /* 当前AT是否在等待AT^NRRCCAPCFG命令返回 */
-    if (AT_CMD_NRRCCAPCFG_SET != gastAtClientTab[ucIndex].CmdCurrentOpt)
-    {
-        AT_WARN_LOG("AT_RcvMtaNrrcCapCfgCnf : Current Option is not AT_CMD_NRRCCAPCFG_SET.");
-        return VOS_ERR;
-    }
-
-    /* 复位AT状态 */
-    AT_STOP_TIMER_CMD_READY(ucIndex);
-
-    ulResult = AT_ConvertMtaResult(pstNrrcCapCfgCnf->enResult);
-
-    /* 输出结果 */
-    At_FormatResultData(ucIndex, ulResult);
-
-    return VOS_OK;
-}
-
-
-VOS_UINT32 AT_RcvMtaNrrcCapQryCnf(
-    VOS_VOID                           *pstMsg
-)
-{
-    AT_MTA_MSG_STRU                    *pstRcvMsg        = VOS_NULL_PTR;
-    MTA_AT_NRRCCAP_QRY_CNF_STRU        *pstNrrcCapQryCnf = VOS_NULL_PTR;
-    VOS_UINT32                          ulResult;
-    VOS_UINT8                           ucIndex;
-
-    /* 初始化 */
-    pstRcvMsg           = (AT_MTA_MSG_STRU *)pstMsg;
-    pstNrrcCapQryCnf    = (MTA_AT_NRRCCAP_QRY_CNF_STRU *)pstRcvMsg->aucContent;
-    ucIndex             = 0;
-    ulResult            = AT_ERROR;
-
-    /* 通过clientid获取index */
-    if (AT_FAILURE == At_ClientIdToUserId(pstRcvMsg->stAppCtrl.usClientId, &ucIndex))
-    {
-        AT_WARN_LOG("AT_RcvMtaNrrcCapQryCnf : WARNING:AT INDEX NOT FOUND!");
-        return VOS_ERR;
-    }
-
-    if (AT_IS_BROADCAST_CLIENT_INDEX(ucIndex))
-    {
-        AT_WARN_LOG("AT_RcvMtaNrrcCapQryCnf : AT_BROADCAST_INDEX.");
-        return VOS_ERR;
-    }
-
-    /* 当前AT是否在等待^ERRCCAPQRY命令返回 */
-    if (AT_CMD_NRRCCAPQRY_SET != gastAtClientTab[ucIndex].CmdCurrentOpt)
-    {
-        AT_WARN_LOG("AT_RcvMtaNrrcCapQryCnf : Current Option is not AT_CMD_NRRCCAPQRY_SET.");
-        return VOS_ERR;
-    }
-
-    /* 复位AT状态 */
-    AT_STOP_TIMER_CMD_READY(ucIndex);
-
-    gstAtSendData.usBufLen = 0;
-
-    if (MTA_AT_RESULT_NO_ERROR == pstNrrcCapQryCnf->enResult)
-    {
-        /* ^NRRCCAPQRY:  */
-        gstAtSendData.usBufLen += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                     (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                     (VOS_CHAR *)pgucAtSndCodeAddr + gstAtSendData.usBufLen,
-                                                     "^NRRCCAPQRY: %u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u",
-                                                     pstNrrcCapQryCnf->ulNrrcCfgNetMode,
-                                                     pstNrrcCapQryCnf->ulPara1,
-                                                     pstNrrcCapQryCnf->ulPara2,
-                                                     pstNrrcCapQryCnf->ulPara3,
-                                                     pstNrrcCapQryCnf->ulPara4,
-                                                     pstNrrcCapQryCnf->ulPara5,
-                                                     pstNrrcCapQryCnf->ulPara6,
-                                                     pstNrrcCapQryCnf->ulPara7,
-                                                     pstNrrcCapQryCnf->ulPara8,
-                                                     pstNrrcCapQryCnf->ulPara9,
-                                                     pstNrrcCapQryCnf->ulPara10);
-
-        ulResult = AT_OK;
-    }
-    else
-    {
-        ulResult = AT_ConvertMtaResult(pstNrrcCapQryCnf->enResult);
-    }
-
-    /* 输出结果 */
-    At_FormatResultData(ucIndex, ulResult);
-
-    return VOS_OK;
-}
-
-
-VOS_UINT32 AT_RcvMtaNrPwrCtrlSetCnf(VOS_VOID *pMsg)
-{
-    AT_MTA_MSG_STRU                    *pstRcvMsg                = VOS_NULL_PTR;
-    MTA_AT_NRPWRCTRL_SET_CNF_STRU      *pstMtaAtNrPwrCtrlSetCnf  = VOS_NULL_PTR;
-    VOS_UINT32                          ulResult;
-    VOS_UINT8                           ucIndex;
-
-    /* 初始化 */
-    pstRcvMsg                = (AT_MTA_MSG_STRU *)pMsg;
-    pstMtaAtNrPwrCtrlSetCnf  = (MTA_AT_NRPWRCTRL_SET_CNF_STRU *)pstRcvMsg->aucContent;
-    ulResult                 = AT_ERROR;
-
-    /* 通过clientid获取index */
-    if (AT_FAILURE == At_ClientIdToUserId(pstRcvMsg->stAppCtrl.usClientId, &ucIndex))
-    {
-        AT_WARN_LOG("AT_RcvMtaNrPwrCtrlSetCnf:WARNING:AT INDEX NOT FOUND!");
-
-        return VOS_ERR;
-    }
-
-    if (AT_IS_BROADCAST_CLIENT_INDEX(ucIndex))
-    {
-        AT_WARN_LOG("AT_RcvMtaNrPwrCtrlSetCnf:AT_BROADCAST_INDEX.");
-
-        return VOS_ERR;
-    }
-
-    /* 当前AT是否在等待该命令返回 */
-    if (AT_CMD_NRPWRCTRL_SET != gastAtClientTab[ucIndex].CmdCurrentOpt)
-    {
-        AT_WARN_LOG("AT_RcvMtaNrPwrCtrlSetCnf:Current Option is not AT_CMD_NRPWRCTRL_SET.");
-
-        return VOS_ERR;
-    }
-
-    /* 复位AT状态 */
-    AT_STOP_TIMER_CMD_READY(ucIndex);
-
-    ulResult = AT_ConvertMtaResult(pstMtaAtNrPwrCtrlSetCnf->enResult);
-
-    /* 输出结果 */
-    At_FormatResultData(ucIndex, ulResult);
-
-    return VOS_OK;
-}
-#endif
 
 
 

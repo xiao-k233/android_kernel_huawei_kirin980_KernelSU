@@ -63,8 +63,8 @@ extern "C" {
 #include "blist.h"
 #include "AppRrcInterface.h"
 #include "msp_diag_comm.h"
-#include <linux/device.h>
-#include <linux/pm_wakeup.h>
+#include  <linux/wakelock.h>
+
 
 /*****************************************************************************
   2 macro
@@ -130,7 +130,7 @@ typedef struct
 /*****************************************************************************
   7 Extern Global Variable
 *****************************************************************************/
-extern struct wakeup_source diag_wakelock;
+extern struct wake_lock diag_wakelock;
 
 /* 自旋锁，用来作编码源buff的临界资源保护 */
 extern VOS_SPINLOCK             g_stScmIndSrcBuffSpinLock;
@@ -158,8 +158,8 @@ VOS_UINT32 diag_TransReqProcEntry(DIAG_FRAME_INFO_STRU *pstReq, DIAG_TRANS_HEADE
 VOS_VOID OM_AcpuCltInfoCnfMsgProc(MsgBlock* pMsg);
 VOS_VOID OM_AcpuCltInfoCnfNotNeedProcessSetFlag(VOS_VOID);
 VOS_VOID OM_AcpuRcvCltInfoFinish(VOS_VOID);
-VOS_INT32 PPM_SockOmServerTask(VOS_VOID);
-VOS_INT32 PPM_SockAtServerTask(VOS_VOID);
+VOS_VOID PPM_SockOmServerTask(VOS_VOID);
+VOS_VOID PPM_SockAtServerTask(VOS_VOID);
 VOS_UINT32 diag_DisconnectTLPort(void);
 VOS_VOID diag_ApAgentMsgProc(MsgBlock* pMsgBlock);
 VOS_VOID diag_TimerMsgProc(MsgBlock* pMsgBlock);

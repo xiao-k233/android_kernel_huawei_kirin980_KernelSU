@@ -108,15 +108,56 @@ void socp_debug_help(void)
 /* cov_verified_start */
 void socp_debug_sendCmd(char* cmd)
 {
+    struct socp_debug_icc_stru icc_req;
+    int ret;
+    u32 channel_id = ICC_CHN_ACORE_CCORE_MIN <<16 | IFC_RECV_FUNC_SOCP_DEBUG;
+    u32 cpu_id;
+
+    cpu_id = (u32)ICC_CPU_MODEM;
+    memset_s(icc_req.OpsCmd,sizeof(icc_req.OpsCmd),0,sizeof(icc_req.OpsCmd));
+    /* coverity[overrun-buffer-arg] */ /* coverity[overrun-local] */
+    memcpy_s(icc_req.OpsCmd, sizeof(icc_req.OpsCmd), cmd, strlen(cmd));/*lint !e666*/
+    socp_crit("enter here:\n");
+    ret = bsp_icc_send(cpu_id,channel_id, (u8*)&icc_req,sizeof(icc_req));
+    if(ret != (int)sizeof(icc_req))
+    {
+        socp_error("bsp_icc_send failed(0x%x)\n",ret);
+    }
     return;
 }
 void socp_debug_ApCountclean(void)
 {
-    return;
+    memset_s(&g_stSocpDebugInfo,sizeof(g_stSocpDebugInfo),0x00,sizeof(g_stSocpDebugInfo));
 }
 
 void socp_debug_CountStore(char* p,int len)
 {
+    /* [false alarm]:alarm */
+    char path[128];
+    /* [false alarm]:alarm */
+    int fd = -1;
+    /* [false alarm]:alarm */
+    int ret;
+
+    memset_s(path,sizeof(path),0,sizeof(path));
+    snprintf_s(path, sizeof(path), 128 - 1,"%s%s%d.bin",SOCP_ROOT_PATH,p,bsp_get_slice_value());
+
+    /* [false alarm]:alarm */
+    fd = bsp_open((s8*)path, RFILE_RDWR|RFILE_CREAT, 0660);
+    /* [false alarm]:alarm */
+    if(fd<0){
+        socp_error("create %s error,save failed!\n",path);
+        return;
+    }
+    /* [false alarm]:alarm */
+    ret = bsp_write((u32)fd,(s8*)&g_stSocpDebugInfo,sizeof(g_stSocpDebugInfo));
+    /* [false alarm]:alarm */
+    if(ret != (int)sizeof(g_stSocpDebugInfo)){
+        socp_error("write %s error,save failed!\n",path);
+        (void)bsp_close((u32)fd);
+        return;
+    }
+    (void)bsp_close((u32)fd);
     return;
 }
 void socp_debug_ApCountStore(void)
@@ -126,6 +167,33 @@ void socp_debug_ApCountStore(void)
 }
 void socp_debug_RegStore(void)
 {
+    /* [false alarm]:alarm */
+    char path[128];
+    /* [false alarm]:alarm */
+    char p[] = "Reg_";
+    /* [false alarm]:alarm */
+    int fd = -1;
+    /* [false alarm]:alarm */
+    int ret;
+
+    memset_s(path,sizeof(path),0,sizeof(path));
+    snprintf_s(path, sizeof(path), 128 -1,"%s%s%d.bin",SOCP_ROOT_PATH,p,bsp_get_slice_value());
+    /* [false alarm]:alarm */
+    fd = bsp_open((s8*)path, RFILE_RDWR|RFILE_CREAT, 0660);
+    /* [false alarm]:alarm */
+    if(fd<0){
+        socp_error("create %s error,save failed!\n",path);
+        return;
+    }
+    /* [false alarm]:alarm */
+    ret = bsp_write((u32)fd,(s8*)g_strSocpStat.baseAddr,4096);
+    /* [false alarm]:alarm */
+    if(ret != (int)4096){
+        socp_error("write %s error | 0x%x,save failed!\n",path,ret);
+        (void)bsp_close((u32)fd);
+        return;
+    }
+    (void)bsp_close((u32)fd);
     return;
 }
 void socp_debug_CpCountStore(void)
@@ -135,7 +203,7 @@ void socp_debug_CpCountStore(void)
 }
 void socp_debug_CpCountClean(void)
 {
-    return;
+    memset_s(&g_stSocpDebugInfo,sizeof(g_stSocpDebugInfo),0x00,sizeof(g_stSocpDebugInfo));
 }
 void socp_debug_PrintCount(void)
 {
@@ -318,21 +386,21 @@ u32 socp_debug_write_reg(u32 reg, u32 data)
 *****************************************************************************/
 void socp_help(void)
 {
-    socp_crit("\r socp_show_debug_gbl\n");
-    socp_crit("\r socp_show_enc_src_chan_curn");
-    socp_crit("\r socp_show_enc_src_chan_add\n");
-    socp_crit("\r socp_show_enc_src_chan_add\n");
-    socp_crit("\r socp_show_enc_dst_chan_cur\n");
-    socp_crit("\r socp_show_enc_dst_chan_add\n");
-    socp_crit("\r socp_show_enc_dst_chan_all\n");
-    socp_crit("\r socp_show_dec_src_chan_cur\n");
-    socp_crit("\r socp_show_dec_src_chan_add\n");
-    socp_crit("\r socp_show_dec_src_chan_all\n");
-    socp_crit("\r socp_show_dec_dst_chan_cur\n");
-    socp_crit("\r socp_show_dec_dst_chan_add\n");
-    socp_crit("\r socp_show_dec_dst_chan_all\n");
-    socp_crit("\r socp_show_ccore_head_err_cnt\n");
-    socp_crit("\r socp_debug_cnt_show\n");
+    socp_crit("\r socp_show_debug_gbl: 查看全局统计信息:通道申请、配置和中断总计数，无参数\n");
+    socp_crit("\r socp_show_enc_src_chan_cur : 查看编码源通道属性，参数为通道ID\n");
+    socp_crit("\r socp_show_enc_src_chan_add : 查看编码源通道操作统计值，参数为通道ID\n");
+    socp_crit("\r socp_show_enc_src_chan_add : 查看所有编码源通道属性和统计值，无参数\n");
+    socp_crit("\r socp_show_enc_dst_chan_cur : 查看编码目的通道属性，参数为通道ID\n");
+    socp_crit("\r socp_show_enc_dst_chan_add : 查看编码目的通道操作统计值，参数为通道ID\n");
+    socp_crit("\r socp_show_enc_dst_chan_all : 查看所有编码目的通道属性和统计值，无参数\n");
+    socp_crit("\r socp_show_dec_src_chan_cur : 查看解码源通道属性，参数为通道ID\n");
+    socp_crit("\r socp_show_dec_src_chan_add : 查看解码源通道操作统计值，参数为通道ID\n");
+    socp_crit("\r socp_show_dec_src_chan_all : 查看所有解码源通道属性和统计值，无参数\n");
+    socp_crit("\r socp_show_dec_dst_chan_cur : 查看解码目的通道属性，参数为通道ID\n");
+    socp_crit("\r socp_show_dec_dst_chan_add : 查看解码目的通道操作统计值，参数为通道ID\n");
+    socp_crit("\r socp_show_dec_dst_chan_all : 查看所有解码目的通道属性和统计值，无参数\n");
+    socp_crit("\r socp_show_ccore_head_err_cnt : 查看C核所有编码源通道包头错误统计值，无参数\n");
+    socp_crit("\r socp_debug_cnt_show : 查看全部统计信息，无参数\n");
 }
 
 /*****************************************************************************
@@ -352,18 +420,18 @@ void socp_show_debug_gbl(void)
 
     sSocpDebugGblInfo = &g_stSocpDebugInfo.sSocpDebugGBl;
 
-    socp_crit(" SOCP global status:\n");
-    socp_crit(" g_strSocpStat.baseAddr): 0x%x\n", (s32)g_strSocpStat.baseAddr);
-    socp_crit(" sSocpDebugGblInfo->u32SocpAllocEncSrcCnt: 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocEncSrcCnt);
-    socp_crit(" sSocpDebugGblInfo->u32SocpAllocEncSrcSucCnt: 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocEncSrcSucCnt);
-    socp_crit(" sSocpDebugGblInfo->u32SocpSetEncDstCnt: 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetEncDstCnt);
-    socp_crit(" sSocpDebugGblInfo->u32SocpSetEncDstSucCnt: 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetEncDstSucCnt);
-    socp_crit(" sSocpDebugGblInfo->u32SocpSetDecSrcCnt: 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetDecSrcCnt);
-    socp_crit(" sSocpDebugGblInfo->u32SocpSetDeSrcSucCnt: 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetDeSrcSucCnt);
-    socp_crit(" sSocpDebugGblInfo->u32SocpAllocDecDstCnt: 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocDecDstCnt);
-    socp_crit(" sSocpDebugGblInfo->u32SocpAllocDecDstSucCnt: 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocDecDstSucCnt);
-    socp_crit(" sSocpDebugGblInfo->u32SocpAppEtrIntCnt: 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAppEtrIntCnt);
-    socp_crit(" sSocpDebugGblInfo->u32SocpAppSucIntCnt: 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAppSucIntCnt);
+    socp_crit(" SOCP全局状态维护信息:\n");
+    socp_crit(" socp基地址:                   : 0x%x\n", (s32)g_strSocpStat.baseAddr);
+    socp_crit(" socp申请编码源通道的次数      : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocEncSrcCnt);
+    socp_crit(" socp申请编码源通道成功的次数  : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocEncSrcSucCnt);
+    socp_crit(" socp配置编码目的通道的次数    : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetEncDstCnt);
+    socp_crit(" socp配置编码目的通道成功的次数: 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetEncDstSucCnt);
+    socp_crit(" socp配置解码源通道的次数      : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetDecSrcCnt);
+    socp_crit(" socp配置解码源通道成功的次数  : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetDeSrcSucCnt);
+    socp_crit(" socp申请解码目的通道的次数    : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocDecDstCnt);
+    socp_crit(" socp申请解码目的通道成功的次数: 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocDecDstSucCnt);
+    socp_crit(" socp进入APP中断的次数         : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAppEtrIntCnt);
+    socp_crit(" socp完成APP中断的次数         : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAppSucIntCnt);
 }
 
 /* cov_verified_stop */
@@ -398,24 +466,28 @@ u32 socp_show_enc_src_chan_cur(u32 u32UniqueId)
         return ret;
     }
 
-    socp_crit("EncSrc channel 0x%x status:\n", u32UniqueId);
-    socp_crit("u32ChanID:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32ChanID);
-    socp_crit("u32AllocStat:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32AllocStat);
-    socp_crit("u32ChanEn:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32ChanEn);
-    socp_crit("u32DestChanID:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32DestChanID);
-    socp_crit("ePriority:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].ePriority);
-    socp_crit("u32BypassEn:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32BypassEn);
-    socp_crit("eChnMode:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].eChnMode);
-    socp_crit("eDataType:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].eDataType);
-    socp_crit("sEncSrcBuf.u32Read:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.u32Read);
-    socp_crit("sEncSrcBuf.u32Write:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.u32Write);
-    socp_crit("sEncSrcBuf.u32Length:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.u32Length);
+    socp_crit("申请的编码源通道 0x%x 属性:\n", u32UniqueId);
+    socp_crit("通道ID:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32ChanID);
+    socp_crit("通道分配状态:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32AllocStat);
+    socp_crit("通道使能状态:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32ChanEn);
+    socp_crit("目的通道ID:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32DestChanID);
+    socp_crit("通道优先级:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].ePriority);
+    socp_crit("通道旁路状态:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32BypassEn);
+    socp_crit("通道数据格式类型:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].eChnMode);
+    socp_crit("通道所属模类型:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].eDataType);
+    socp_crit("通道buffer 起始地址:\t\t0x%pK\n", (char*)g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.Start);
+    socp_crit("通道buffer 结束地址:\t\t0x%pK\n", (char*)g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.End);
+    socp_crit("通道buffer 读指针:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.u32Read);
+    socp_crit("通道buffer 写指针:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.u32Write);
+    socp_crit("通道buffer 长度:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.u32Length);
     if (SOCP_ENCSRC_CHNMODE_LIST == g_strSocpStat.sEncSrcChan[u32RealId].eChnMode)
     {
-        socp_crit("sRdBuf.u32Read:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.u32Read);
-        socp_crit("sRdBuf.u32Write:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.u32Write);
-        socp_crit("sRdBuf.u32Length:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.u32Length);
-        socp_crit("u32RdThreshold:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].u32RdThreshold);
+        socp_crit("通道RD buffer 起始地址:\t\t0x%pK\n", (char*)g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.Start);
+        socp_crit("通道RD buffer 结束地址:\t\t0x%pK\n", (char*)g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.End);
+        socp_crit("通道RD buffer 读指针:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.u32Read);
+        socp_crit("通道RD buffer 写指针:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.u32Write);
+        socp_crit("通道RD buffer 长度:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.u32Length);
+        socp_crit("通道RD buffer 门限:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].u32RdThreshold);
     }
 
     return BSP_OK;
@@ -454,50 +526,50 @@ u32 socp_show_enc_src_chan_add(u32 u32UniqueId)
     {
         return (u32)ret;
     }
-    socp_crit("EncSec channelc 0x%x cnt:\n", u32UniqueId);
-    socp_crit("u32SocpFreeEncSrcCnt: 0x%x\n",
+    socp_crit("编码源通道0x%x累计统计值:\n", u32UniqueId);
+    socp_crit("socp释放编码源通道成功的次数                           : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpFreeEncSrcCnt[u32RealChanID]);
-    socp_crit("u32SocpStartEncSrcCnt: 0x%x\n",
+    socp_crit("socp启动编码源通道成功的次数                           : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpStartEncSrcCnt[u32RealChanID]);
-    socp_crit("u32SocpStopEncSrcCnt: 0x%x\n",
+    socp_crit("socp停止编码源通道成功的次数                           : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpStopEncSrcCnt[u32RealChanID]);
-    socp_crit("u32SocpSoftResetEncSrcCnt: 0x%x\n",
+    socp_crit("socp软复位编码源通道成功的次数                         : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpSoftResetEncSrcCnt[u32RealChanID]);
-    socp_crit("u32SocpRegEventEncSrcCnt: 0x%x\n",
+    socp_crit("socp注册编码源通道异常处理函数的次数                   : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpRegEventEncSrcCnt[u32RealChanID]);
-    socp_crit("u32SocpGetWBufEncSrcEtrCnt: 0x%x\n",
+    socp_crit("socp编码源通道尝试获得写buffer的次数                   : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpGetWBufEncSrcEtrCnt[u32RealChanID]);
-    socp_crit("u32SocpGetWBufEncSrcSucCnt: 0x%x\n",
+    socp_crit("socp编码源通道获得写buffer成功的次数                   : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpGetWBufEncSrcSucCnt[u32RealChanID]);
-    socp_crit("u32socp_write_doneEncSrcEtrCnt: 0x%x\n",
+    socp_crit("socp编码源通道尝试更新写buffer指针的次数               : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32socp_write_doneEncSrcEtrCnt[u32RealChanID]);
-    socp_crit("u32socp_write_doneEncSrcSucCnt: 0x%x\n",
+    socp_crit("socp编码源通道更新写buffer指针成功的次数               : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32socp_write_doneEncSrcSucCnt[u32RealChanID]);
-    socp_crit("u32socp_write_doneEncSrcFailCnt: 0x%x\n",
+    socp_crit("socp编码源通道更新写buffer指针失败的次数               : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32socp_write_doneEncSrcFailCnt[u32RealChanID]);
-    socp_crit("u32SocpRegRdCBEncSrcCnt: 0x%x\n",
+    socp_crit("socp编码源通道注册RD buffer回调函数成功的次数          : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpRegRdCBEncSrcCnt[u32RealChanID]);
-    socp_crit("u32SocpGetRdBufEncSrcEtrCnt: 0x%x\n",
+    socp_crit("socp编码源通道尝试获得RD buffer的次数                  : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpGetRdBufEncSrcEtrCnt[u32RealChanID]);
-    socp_crit("u32SocpGetRdBufEncSrcSucCnt: 0x%x\n",
+    socp_crit("socp编码源通道获得RD buffer成功的次数                  : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpGetRdBufEncSrcSucCnt[u32RealChanID]);
-    socp_crit("u32SocpReadRdDoneEncSrcEtrCnt: 0x%x\n",
+    socp_crit("socp编码源通道尝试更新RDbuffer指针的次数               : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpReadRdDoneEncSrcEtrCnt[u32RealChanID]);
-    socp_crit("u32SocpReadRdDoneEncSrcSucCnt: 0x%x\n",
+    socp_crit("socp编码源通道更新RDbuffer指针成功的次数               : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpReadRdDoneEncSrcSucCnt[u32RealChanID]);
-    socp_crit("u32SocpReadRdDoneEncSrcFailCnt: 0x%x\n",
+    socp_crit("socp编码源通道更新RDbuffer指针失败的次数               : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpReadRdDoneEncSrcFailCnt[u32RealChanID]);
-    socp_crit("u32SocpEncSrcIsrHeadIntCnt: 0x%x\n",
+    socp_crit("socp ISR 中进入编码源通道包头错误中断次数              : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpEncSrcIsrHeadIntCnt[u32RealChanID]);
-    socp_crit("u32SocpEncSrcTskHeadCbOriCnt: 0x%x\n",
+    socp_crit("socp 任务中回调编码源通道包头错误中断处理函数次数      : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpEncSrcTskHeadCbOriCnt[u32RealChanID]);
-    socp_crit("u32SocpEncSrcTskHeadCbCnt: 0x%x\n",
+    socp_crit("socp 回调编码源通道包头错误中断处理函数成功的次数      : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpEncSrcTskHeadCbCnt[u32RealChanID]);
-    socp_crit("u32SocpEncSrcIsrRdIntCnt: 0x%x\n",
+    socp_crit("socp ISR 中进入编码源通道Rd 完成中断次数               : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpEncSrcIsrRdIntCnt[u32RealChanID]);
-    socp_crit("u32SocpEncSrcTskRdCbOriCnt: 0x%x\n",
+    socp_crit("socp 任务中回调编码源通道Rd 完成中断处理函数次数       : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpEncSrcTskRdCbOriCnt[u32RealChanID]);
-    socp_crit("u32SocpEncSrcTskRdCbCnt: 0x%x\n",
+    socp_crit("socp 回调编码源通道Rd 完成中断处理函数成功的次数       : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpEncSrcTskRdCbCnt[u32RealChanID]);
 
     return BSP_OK;
@@ -552,12 +624,14 @@ u32 socp_show_enc_dst_chan_cur(u32 u32UniqueId)
         return ret;
     }
 
-    socp_crit("EncDst channel 0x%x status:\n", u32UniqueId);
-    socp_crit("u32ChanID:%d\n", g_strSocpStat.sEncDstChan[u32RealId].u32ChanID);
-    socp_crit("u32SetStat:%d\n", g_strSocpStat.sEncDstChan[u32RealId].u32SetStat);
-    socp_crit("sEncDstBuf.u32Read:0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.u32Read);
-    socp_crit("sEncDstBuf.u32Write:0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.u32Write);
-    socp_crit("sEncDstBuf.u32Length:0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.u32Length);
+    socp_crit("编码目的通道0x%x属性:\n", u32UniqueId);
+    socp_crit("通道ID                 :%d\n", g_strSocpStat.sEncDstChan[u32RealId].u32ChanID);
+    socp_crit("通道配置状态           :%d\n", g_strSocpStat.sEncDstChan[u32RealId].u32SetStat);
+    socp_crit("通道buffer 起始地址    :0x%pK\n", (char*)g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.Start);
+    socp_crit("通道buffer 结束地址    :0x%pK\n", (char*)g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.End);
+    socp_crit("通道buffer 读指针      :0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.u32Read);
+    socp_crit("通道buffer 写指针      :0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.u32Write);
+    socp_crit("通道buffer 长度        :0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.u32Length);
 
     return BSP_OK;
 }
@@ -589,42 +663,42 @@ u32 socp_show_enc_dst_chan_add(u32 u32UniqueId)
     u32RealChanID = SOCP_REAL_CHAN_ID(u32UniqueId);
     sSocpAddDebugEncDst = &g_stSocpDebugInfo.sSocpDebugEncDst;
 
-    socp_crit("EncDst channel 0x%x Cnt:\n", u32UniqueId);
-    socp_crit("u32SocpRegEventEncDstCnt: 0x%x\n",
+    socp_crit("编码目的通道 0x%x 累计统计值:\n", u32UniqueId);
+    socp_crit("socp注册编码目的通道异常处理函数的次数                 : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpRegEventEncDstCnt[u32RealChanID]);
-    socp_crit("u32SocpRegReadCBEncDstCnt: 0x%x\n",
+    socp_crit("socp编码目的通道注册读数据回调函数成功的次数           : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpRegReadCBEncDstCnt[u32RealChanID]);
-    socp_crit("u32SocpGetReadBufEncDstEtrCnt: 0x%x\n",
+    socp_crit("socp编码目的通道尝试获得读buffer 的次数                : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpGetReadBufEncDstEtrCnt[u32RealChanID]);
-    socp_crit("u32SocpGetReadBufEncDstSucCnt: 0x%x\n",
+    socp_crit("socp编码目的通道获得读buffer成功的次数                 : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpGetReadBufEncDstSucCnt[u32RealChanID]);
-    socp_crit("u32socp_read_doneEncDstEtrCnt: 0x%x\n",
+    socp_crit("socp编码目的通道尝试更新读buffer指针的次数             : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32socp_read_doneEncDstEtrCnt[u32RealChanID]);
-    socp_crit("u32socp_read_doneEncDstSucCnt: 0x%x\n",
+    socp_crit("socp编码目的通道更新读buffer指针成功的次数             : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32socp_read_doneEncDstSucCnt[u32RealChanID]);
-    socp_crit("u32socp_read_doneEncDstFailCnt: 0x%x\n",
+    socp_crit("socp编码目的通道更新读buffer指针失败的次数             : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32socp_read_doneEncDstFailCnt[u32RealChanID]);
-    socp_crit("u32socp_read_doneZeroEncDstCnt: 0x%x\n",
+    socp_crit("socp编码目的通道更新读buffer指针移动0 字节成功的次数   : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32socp_read_doneZeroEncDstCnt[u32RealChanID]);
-    socp_crit("u32socp_read_doneValidEncDstCnt: 0x%x\n",
+    socp_crit("socp编码目的通道更新读buffer指针移动非0 字节成功的次数 : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32socp_read_doneValidEncDstCnt[u32RealChanID]);
-    socp_crit("u32SocpEncDstIsrTrfIntCnt: 0x%x\n",
+    socp_crit("socpISR 中进入编码目的通道传输完成中断次数             : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstIsrTrfIntCnt[u32RealChanID]);
-    socp_crit("u32SocpEncDstTskTrfCbOriCnt: 0x%x\n",
+    socp_crit("socp任务中回调编码目的通道传输完成中断处理函数次数     : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstTskTrfCbOriCnt[u32RealChanID]);
-    socp_crit("u32SocpEncDstTskTrfCbCnt: 0x%x\n",
+    socp_crit("socp回调编码目的通道传输完成中断处理函数成功的次数     : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstTskTrfCbCnt[u32RealChanID]);
-    socp_crit("u32SocpEncDstIsrOvfIntCnt: 0x%x\n",
+    socp_crit("socpISR 中进入编码目的通道buf 溢出中断次数             : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstIsrOvfIntCnt[u32RealChanID]);
-    socp_crit("u32SocpEncDstTskOvfCbOriCnt: 0x%x\n",
+    socp_crit("socp任务中回调编码目的通道buf 溢出中断处理函数次数    : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstTskOvfCbOriCnt[u32RealChanID]);
-    socp_crit("u32SocpEncDstTskOvfCbCnt: 0x%x\n",
+    socp_crit("socp回调编码目的通道buf 溢出中断处理函数成功的次数    : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstTskOvfCbCnt[u32RealChanID]);
-    socp_crit("u32SocpEncDstIsrThresholdOvfIntCnt: 0x%x\n",
+    socp_crit("socpISR 中进入编码目的通道buf阈值溢出中断次数          : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstIsrThresholdOvfIntCnt[u32RealChanID]);
-    socp_crit("u32SocpEncDstTskThresholdOvfCbOriCnt: 0x%x\n",
+    socp_crit("socp任务中回调编码目的通道buf阈值溢出中断处理函数次数  : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstTskThresholdOvfCbOriCnt[u32RealChanID]);
-    socp_crit("u32SocpEncDstTskThresholdOvfCbCnt: 0x%x\n",
+    socp_crit("socp回调编码目的通道buf阈值溢出中断处理函数成功的次数  : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstTskThresholdOvfCbCnt[u32RealChanID]);
 
     return BSP_OK;
@@ -655,7 +729,6 @@ void socp_show_enc_dst_chan_all(void)
 
     return;
 }
-#ifdef SOCP_DECODE_ENABLE
 /*****************************************************************************
 * 函 数 名   : socp_show_dec_src_chan_cur
 *
@@ -681,14 +754,16 @@ u32 socp_show_dec_src_chan_cur(u32 u32UniqueId)
         return ret;
     }
 
-    socp_crit("DecSrc channel 0x%x status:\n", u32UniqueId);
-    socp_crit("u32ChanID:%d\n", g_strSocpStat.sDecSrcChan[u32RealId].u32ChanID);
-    socp_crit("u32SetStat:%d\n", g_strSocpStat.sDecSrcChan[u32RealId].u32SetStat);
-    socp_crit("u32ChanEn:%d\n", g_strSocpStat.sDecSrcChan[u32RealId].u32ChanEn);
-    socp_crit("eChnMode:%d\n", g_strSocpStat.sDecSrcChan[u32RealId].eChnMode);
-    socp_crit("sDecSrcBuf.u32Read:0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.u32Read);
-    socp_crit("sDecSrcBuf.u32Write:0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.u32Write);
-    socp_crit("sDecSrcBuf.u32Length:0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.u32Length);
+    socp_crit("解码源通道 0x%x 属性:\n", u32UniqueId);
+    socp_crit("通道ID                 :%d\n", g_strSocpStat.sDecSrcChan[u32RealId].u32ChanID);
+    socp_crit("通道配置状态           :%d\n", g_strSocpStat.sDecSrcChan[u32RealId].u32SetStat);
+    socp_crit("通道使能状态           :%d\n", g_strSocpStat.sDecSrcChan[u32RealId].u32ChanEn);
+    socp_crit("通道模式               :%d\n", g_strSocpStat.sDecSrcChan[u32RealId].eChnMode);
+    socp_crit("通道buffer 起始地址    :0x%pK\n", (char*)g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.Start);
+    socp_crit("通道buffer 结束地址    :0x%pK\n", (char*)g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.End);
+    socp_crit("通道buffer 读指针      :0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.u32Read);
+    socp_crit("通道buffer 写指针      :0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.u32Write);
+    socp_crit("通道buffer 长度        :0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.u32Length);
 
     return BSP_OK;
 }
@@ -719,30 +794,30 @@ u32 socp_show_dec_src_chan_add(u32 u32UniqueId)
     u32RealChanID = SOCP_REAL_CHAN_ID(u32UniqueId);
     sSocpAddDebugDecSrc = &g_stSocpDebugInfo.sSocpDebugDecSrc;
 
-    socp_crit("DecSrc channel 0x%x Cnt:\n", u32UniqueId);
-    socp_crit("u32SocpSoftResetDecSrcCnt: 0x%x\n",
+    socp_crit("解码源通道 0x%x 累计统计值:\n", u32UniqueId);
+    socp_crit("socp软复位解码源通道成功的次数                     : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpSoftResetDecSrcCnt[u32RealChanID]);
-    socp_crit("u32SocpStartDecSrcCnt: 0x%x\n",
+    socp_crit("socp启动解码源通道成功的次数                       : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpStartDecSrcCnt[u32RealChanID]);
-    socp_crit("u32SocpStopDecSrcCnt: 0x%x\n",
+    socp_crit("socp停止解码源通道成功的次数                       : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpStopDecSrcCnt[u32RealChanID]);
-    socp_crit("u32SocpRegEventDecSrcCnt: 0x%x\n",
+    socp_crit("socp注册解码源通道异常处理函数的次数               : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpRegEventDecSrcCnt[u32RealChanID]);
-    socp_crit("u32SocpGetWBufDecSrcEtrCnt: 0x%x\n",
+    socp_crit("socp解码源通道尝试获得写buffer的次数               : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpGetWBufDecSrcEtrCnt[u32RealChanID]);
-    socp_crit("u32SocpGetWBufDecSrcSucCnt: 0x%x\n",
+    socp_crit("socp解码源通道获得写buffer成功的次数               : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpGetWBufDecSrcSucCnt[u32RealChanID]);
-    socp_crit("u32socp_write_doneDecSrcEtrCnt: 0x%x\n",
+    socp_crit("socp解码源通道尝试更新写buffer指针的次数           : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32socp_write_doneDecSrcEtrCnt[u32RealChanID]);
-    socp_crit("u32socp_write_doneDecSrcSucCnt: 0x%x\n",
+    socp_crit("socp解码源通道更新写buffer指针成功的次数           : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32socp_write_doneDecSrcSucCnt[u32RealChanID]);
-    socp_crit("u32socp_write_doneDecSrcFailCnt: 0x%x\n",
+    socp_crit("socp解码源通道更新写buffer指针失败的次数           : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32socp_write_doneDecSrcFailCnt[u32RealChanID]);
-    socp_crit("u32SocpDecSrcIsrErrIntCnt: 0x%x\n",
+    socp_crit("socpISR 中进入解码源通道错误中断次数               : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpDecSrcIsrErrIntCnt[u32RealChanID]);
-    socp_crit("u32SocpDecSrcTskErrCbOriCnt: 0x%x\n",
+    socp_crit("socp任务中回调解码源通道错误中断处理函数次数       : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpDecSrcTskErrCbOriCnt[u32RealChanID]);
-    socp_crit("u32SocpDecSrcTskErrCbCnt: 0x%x\n",
+    socp_crit("socp回调解码源通道错误中断处理函数成功的次数       : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpDecSrcTskErrCbCnt[u32RealChanID]);
     return BSP_OK;
 }
@@ -797,13 +872,15 @@ u32 socp_show_dec_dst_chan_cur(u32 u32UniqueId)
     {
         return ret;
     }
-    socp_crit("DecDst channel 0x%x status:\n", u32UniqueId);
-    socp_crit("u32ChanID:%d\n", g_strSocpStat.sDecDstChan[u32RealId].u32ChanID);
-    socp_crit("u32AllocStat:%d\n", g_strSocpStat.sDecDstChan[u32RealId].u32AllocStat);
-    socp_crit("eDataType:%d\n", g_strSocpStat.sDecDstChan[u32RealId].eDataType);
-    socp_crit("sDecDstBuf.u32Read:0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.u32Read);
-    socp_crit("sDecDstBuf.u32Write:0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.u32Write);
-    socp_crit("sDecDstBuf.u32Length:0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.u32Length);
+    socp_crit("解码目的通道 0x%x 属性:\n", u32UniqueId);
+    socp_crit("通道ID                 :%d\n", g_strSocpStat.sDecDstChan[u32RealId].u32ChanID);
+    socp_crit("通道分配状态           :%d\n", g_strSocpStat.sDecDstChan[u32RealId].u32AllocStat);
+    socp_crit("通道使用模类型         :%d\n", g_strSocpStat.sDecDstChan[u32RealId].eDataType);
+    socp_crit("通道buffer 起始地址    :0x%pK\n", (char*)g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.Start);
+    socp_crit("通道buffer 结束地址    :0x%pK\n", (char*)g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.End);
+    socp_crit("通道buffer 读指针      :0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.u32Read);
+    socp_crit("通道buffer 写指针      :0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.u32Write);
+    socp_crit("通道buffer 长度        :0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.u32Length);
 
     return BSP_OK;
 }
@@ -835,38 +912,38 @@ u32 socp_show_dec_dst_chan_add(u32 u32UniqueId)
     u32RealChanID = SOCP_REAL_CHAN_ID(u32UniqueId);
     sSocpAddDebugDecDst = &g_stSocpDebugInfo.sSocpDebugDecDst;
 
-    socp_crit("DecDst channel 0x%x Cnt:\n", u32UniqueId);
-    socp_crit("u32SocpFreeDecDstCnt: 0x%x\n",
+    socp_crit("================== 解码目的通道 0x%x  累计统计值:=================\n", u32UniqueId);
+    socp_crit("socp释放解码目的通道成功的次数                         : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpFreeDecDstCnt[u32RealChanID]);
-    socp_crit("u32SocpRegEventDecDstCnt: 0x%x\n",
+    socp_crit("socp注册解码目的通道异常处理函数的次数                 : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpRegEventDecDstCnt[u32RealChanID]);
-    socp_crit("u32SocpRegReadCBDecDstCnt: 0x%x\n",
+    socp_crit("socp解码目的通道注册读数据回调函数成功的次数           : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpRegReadCBDecDstCnt[u32RealChanID]);
-    socp_crit("u32SocpGetReadBufDecDstEtrCnt: 0x%x\n",
+    socp_crit("socp解码目的通道尝试获得读buffer的次数                 : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpGetReadBufDecDstEtrCnt[u32RealChanID]);
-    socp_crit("u32SocpGetReadBufDecDstSucCnt: 0x%x\n",
+    socp_crit("socp解码目的通道获得读buffer成功的次数                 : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpGetReadBufDecDstSucCnt[u32RealChanID]);
-    socp_crit("u32socp_read_doneDecDstEtrCnt: 0x%x\n",
+    socp_crit("socp解码目的通道尝试更新读buffer指针的次数             : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32socp_read_doneDecDstEtrCnt[u32RealChanID]);
-    socp_crit("u32socp_read_doneDecDstSucCnt: 0x%x\n",
+    socp_crit("socp解码目的通道更新读buffer指针成功的次数             : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32socp_read_doneDecDstSucCnt[u32RealChanID]);
-    socp_crit("u32socp_read_doneDecDstFailCnt: 0x%x\n",
+    socp_crit("socp解码目的通道更新读buffer指针失败的次数             : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32socp_read_doneDecDstFailCnt[u32RealChanID]);
-    socp_crit("u32socp_read_doneZeroDecDstCnt: 0x%x\n",
+    socp_crit("socp解码目的通道更新读buffer指针移动0 字节成功的次数   : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32socp_read_doneZeroDecDstCnt[u32RealChanID]);
-    socp_crit("u32socp_read_doneValidDecDstCnt: 0x%x\n",
+    socp_crit("socp解码目的通道更新读buffer指针移动非0 字节成功的次数 : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32socp_read_doneValidDecDstCnt[u32RealChanID]);
-    socp_crit("u32SocpDecDstIsrTrfIntCnt: 0x%x\n",
+    socp_crit("socpISR 中进入解码目的通道传输完成中断次数             : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpDecDstIsrTrfIntCnt[u32RealChanID]);
-    socp_crit("u32SocpDecDstTskTrfCbOriCnt: 0x%x\n",
+    socp_crit("socp任务中 回调解码目的通道传输完成中断处理函数的次数  : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpDecDstTskTrfCbOriCnt[u32RealChanID]);
-    socp_crit("u32SocpDecDstTskTrfCbCnt: 0x%x\n",
+    socp_crit("socp回调解码目的通道传输完成中断处理函数成功的次数     : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpDecDstTskTrfCbCnt[u32RealChanID]);
-    socp_crit("u32SocpDecDstIsrOvfIntCnt: 0x%x\n",
+    socp_crit("socpISR 中进入解码目的通道buf 溢出中断次数             : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpDecDstIsrOvfIntCnt[u32RealChanID]);
-    socp_crit("u32SocpDecDstTskOvfCbOriCnt: 0x%x\n",
+    socp_crit("socp任务中 回调解码目的通道buf 溢出中断处理函数次数    : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpDecDstTskOvfCbOriCnt[u32RealChanID]);
-    socp_crit("u32SocpDecDstTskOvfCbCnt: 0x%x\n",
+    socp_crit("socp回调解码目的通道buf 溢出中断处理函数成功的次数     : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpDecDstTskOvfCbCnt[u32RealChanID]);
 
     return BSP_OK;
@@ -904,7 +981,6 @@ EXPORT_SYMBOL(socp_show_dec_src_chan_all);
 EXPORT_SYMBOL(socp_show_dec_dst_chan_cur);
 EXPORT_SYMBOL(socp_show_dec_dst_chan_add);
 EXPORT_SYMBOL(socp_show_dec_dst_chan_all);
-#endif
 
 /*****************************************************************************
 * 函 数 名   : socp_debug_cnt_show
@@ -922,19 +998,14 @@ void socp_debug_cnt_show(void)
     socp_show_debug_gbl();
     socp_show_enc_src_chan_all();
     socp_show_enc_dst_chan_all();
-#ifdef SOCP_DECODE_ENABLE
     socp_show_dec_src_chan_all();
     socp_show_dec_dst_chan_all();
-#endif
 }
 
 void socp_debug_set_trace(u32 v)
 {
     g_ulSocpDebugTraceCfg = v;
 }
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-module_init(socp_debug_init);
-#endif
 EXPORT_SYMBOL(socp_debug_help);
 EXPORT_SYMBOL(socp_debug_AllStore);
 EXPORT_SYMBOL(socp_debug_AllClean);

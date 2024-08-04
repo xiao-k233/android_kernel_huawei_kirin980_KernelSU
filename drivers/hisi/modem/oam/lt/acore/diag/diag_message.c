@@ -115,7 +115,7 @@ struct DIAG_MESSAGE_PROC_STRU g_aFnMsgTbl[DIAG_MSG_TYPE_BUTT] =
     {DIAG_MSG_TYPE_BSP,     VOS_NULL},
 };
 
-VOS_UINT32 diag_MessageProc(VOS_VOID *pMsg);
+VOS_UINT32 diag_MessageProc(DIAG_FRAME_INFO_STRU *pData);
 
 
 /*****************************************************************************
@@ -140,14 +140,11 @@ VOS_VOID diag_MessageInit(VOS_VOID)
     1.c64416         2014-11-18  Draft Enact
 
 *****************************************************************************/
-VOS_UINT32 diag_MessageProc(VOS_VOID *pMsg)
+VOS_UINT32 diag_MessageProc(DIAG_FRAME_INFO_STRU *pData)
 {
     VOS_UINT32 ulRet = VOS_ERR;
     DIAG_MESSAGE_TYPE_U32 ulMsgType;
-    DIAG_FRAME_INFO_STRU *pData = (DIAG_FRAME_INFO_STRU *)pMsg;
-#ifdef DIAG_SEC_TOOLS
     VOS_UINT32 ulCmdid = 0;
-#endif
 
     mdrv_diag_PTR(EN_DIAG_PTR_MESSAGE_IN, 0, 0, 0);
 
@@ -171,7 +168,6 @@ VOS_UINT32 diag_MessageProc(VOS_VOID *pMsg)
         ulMsgType = ((MSP_DIAG_STID_STRU *)((VOS_UINT8*)pData + DIAG_4G_FRAME_HEAD_LEN))->pri4b;
     }
 
-#ifdef DIAG_SEC_TOOLS
     ulCmdid = DIAG_GET_CONNECT_CMDID(pData);
 
     if(g_ulAuthState != DIAG_AUTH_TYPE_SUCCESS)
@@ -183,7 +179,6 @@ VOS_UINT32 diag_MessageProc(VOS_VOID *pMsg)
             return ERR_MSP_SUCCESS;
         }
     }
-#endif
     if((ulMsgType < DIAG_MSG_TYPE_BUTT) && (g_aFnMsgTbl[ulMsgType].fnMsgProc))
     {
         mdrv_diag_PTR(EN_DIAG_PTR_MESSAGE_PROC, 1, pData->ulCmdId, 0);
@@ -226,9 +221,9 @@ VOS_UINT32 DIAG_MsgProcReg (DIAG_MESSAGE_TYPE_U32 ulMsgType, DIAG_MESSAGE_FUNC p
     1.c64416         2014-11-18  Draft Enact
 
 *****************************************************************************/
-VOS_UINT32 DIAG_MsgReport (VOS_VOID *pstMessage, VOS_VOID *pstData, VOS_UINT32 ulLen)
+VOS_UINT32 DIAG_MsgReport (MSP_DIAG_CNF_INFO_STRU *pstDiagInfo, VOS_VOID *pstData, VOS_UINT32 ulLen)
 {
-    MSP_DIAG_CNF_INFO_STRU *pstDiagInfo = (MSP_DIAG_CNF_INFO_STRU *)pstMessage;
+
     /*检查DIAG是否初始化且HSO是否连接上*/
     if(!DIAG_IS_CONN_ON)
     {

@@ -331,7 +331,7 @@ VOS_UINT32 NdSer_Ipv6PdnValid(VOS_UINT8 ucRabId);
 VOS_VOID NdSer_NdAndEchoPktProc(VOS_VOID *pRcvMsg);
 VOS_UINT32  APP_NdServer_Pid_InitFunc( enum VOS_INIT_PHASE_DEFINE ePhase);
 VOS_VOID IP_NDSERVER_ProcTooBigPkt(VOS_UINT8 ucRabId, VOS_UINT8 *pucSrcData, VOS_UINT32 ulDataLen);
-VOS_VOID APP_NdServer_PidMsgProc(MsgBlock *pRcvMsg);
+VOS_VOID APP_NdServer_PidMsgProc(const MsgBlock *pRcvMsg);
 VOS_UINT32 IP_NDSERVER_SendNsMsg
 (
     VOS_UINT32                          ulIndex,

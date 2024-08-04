@@ -51,7 +51,6 @@
   1 头文件包含
 *****************************************************************************/
 #include "product_config.h"
-#if(FEATURE_ON == FEATURE_ACPU_FC_POINT_REG)
 
 #include "Fc.h"
 #include "FcInterface.h"
@@ -210,4 +209,3 @@ VOS_VOID FC_ACORE_CResetRcvStartRsp(VOS_VOID)
 }
 
 
-#endif

@@ -46,6 +46,35 @@
  *
  */
 
+/*****************************************************************************/
+/*                                                                           */
+/*                Copyright 1999 - 2003, Huawei Tech. Co., Ltd.              */
+/*                           ALL RIGHTS RESERVED                             */
+/*                                                                           */
+/* FileName: v_msg.c                                                         */
+/*                                                                           */
+/* Author: Yang Xiangqian                                                    */
+/*                                                                           */
+/* Version: 1.0                                                              */
+/*                                                                           */
+/* Date: 2006-10                                                             */
+/*                                                                           */
+/* Description: implement message function                                   */
+/*                                                                           */
+/* Others:                                                                   */
+/*                                                                           */
+/* History:                                                                  */
+/* 1. Date:                                                                  */
+/*    Author:                                                                */
+/*    Modification: Create this file                                         */
+/*                                                                           */
+/* 2. Date: 2006-10                                                          */
+/*    Author: Xu Cheng                                                       */
+/*    Modification: Standardize code                                         */
+/*                                                                           */
+/*****************************************************************************/
+
+
 #include "v_msg.h"
 #include "v_blkMem.h"
 #include "v_queue.h"
@@ -57,9 +86,6 @@
 #include "pam_tag.h"
 
  /* LINUX 不支持 */
-#if (VOS_VXWORKS== VOS_OS_VER)
-#include "stdio.h"
-#endif
 
 
 
@@ -81,18 +107,8 @@ extern VOS_MSG_HOOK_FUNC                vos_MsgHook;
 
 #define VOS_ICC_HANDSHAKE_TIME_MAX      (200000)
 
-#if  ( FEATURE_MULTI_MODEM == FEATURE_ON )
 #define OSA_ICC_BUFFER_SIZE             (128*1024)
-#else
-#define OSA_ICC_BUFFER_SIZE             (64*1024)
-#endif
 
-#if (VOS_DEBUG == VOS_DOPRA_VER)
-
-MEMORY_HOOK_FUNC  g_pfnAllocMsgHook = VOS_NULL_PTR;
-MEMORY_HOOK_FUNC  g_pfnFreeMsgHook = VOS_NULL_PTR;
-
-#endif
 
 typedef struct
 {
@@ -122,47 +138,15 @@ typedef struct
 }VOS_ICC_UDI_CTRL_STRU;
 
 
-#if (FEATURE_ON == FEATURE_HIFI_USE_ICC)/* ICC */
 
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-VOS_SENDMSG_FUNCLIST_ST g_astVOSSendMsgProcTable[VOS_SUPPORT_CPU_NUM_MAX]={
-                            {VOS_CPU_ID_0_PID_BUTT, 0, V_SendLocalMsg,     V_SendLocalUrgentMsg},  /* Send Local Msg */
-                            {VOS_CPU_ID_1_PID_BUTT, 0, V_SendMsgByICC,     V_SendMsgByICC},        /* Send Msg to Other ARM */
-                            {VOS_CPU_ID_2_PID_BUTT, 0, VOS_NULL_PTR,       VOS_NULL_PTR},          /* Send Msg to DSP */
-                            {VOS_CPU_ID_3_PID_BUTT, 0, V_SendHifiMsgByICC, V_SendHifiMsgByICC},    /* Send Msg to HIFI */
-                            {VOS_CPU_ID_4_PID_BUTT, 0, VOS_SendMCUMsg,     VOS_SendMCUUrgentMsg}}; /* Send Msg to MCU */
-#endif
 
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
 VOS_SENDMSG_FUNCLIST_ST g_astVOSSendMsgProcTable[VOS_SUPPORT_CPU_NUM_MAX]={
                             {VOS_CPU_ID_0_PID_BUTT, 0, V_SendMsgByICC,     V_SendMsgByICC},        /*Send Msg to Other ARM*/
                             {VOS_CPU_ID_1_PID_BUTT, 0, V_SendLocalMsg,     V_SendLocalUrgentMsg},  /*Send Local Msg*/
                             {VOS_CPU_ID_2_PID_BUTT, 0, VOS_NULL_PTR,       VOS_NULL_PTR},          /*Send Msg to ZSP, RSV*/
                             {VOS_CPU_ID_3_PID_BUTT, 0, VOS_SendHIFIMsg,    VOS_SendHIFIUrgentMsg}, /*Send Msg to HIFI*/
                             {VOS_CPU_ID_4_PID_BUTT, 0, VOS_NULL_PTR,       VOS_NULL_PTR}};         /*Send Msg to MCU*/
-#endif
 
-#else/* mailbox */
-
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-VOS_SENDMSG_FUNCLIST_ST g_astVOSSendMsgProcTable[VOS_SUPPORT_CPU_NUM_MAX]={
-                            {VOS_CPU_ID_0_PID_BUTT, 0, V_SendLocalMsg,     V_SendLocalUrgentMsg},  /* Send Local Msg */
-                            {VOS_CPU_ID_1_PID_BUTT, 0, V_SendMsgByICC,     V_SendMsgByICC},        /* Send Msg to Other ARM */
-                            {VOS_CPU_ID_2_PID_BUTT, 0, VOS_NULL_PTR,       VOS_NULL_PTR},          /* Send Msg to DSP */
-                            {VOS_CPU_ID_3_PID_BUTT, 0, VOS_SendHIFIMsg,    VOS_SendHIFIUrgentMsg}, /* Send Msg to HIFI */
-                            {VOS_CPU_ID_4_PID_BUTT, 0, VOS_SendMCUMsg,     VOS_SendMCUUrgentMsg}}; /* Send Msg to MCU */
-#endif
-
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
-VOS_SENDMSG_FUNCLIST_ST g_astVOSSendMsgProcTable[VOS_SUPPORT_CPU_NUM_MAX]={
-                            {VOS_CPU_ID_0_PID_BUTT, 0, V_SendMsgByICC,     V_SendMsgByICC},        /*Send Msg to Other ARM*/
-                            {VOS_CPU_ID_1_PID_BUTT, 0, V_SendLocalMsg,     V_SendLocalUrgentMsg},  /*Send Local Msg*/
-                            {VOS_CPU_ID_2_PID_BUTT, 0, VOS_NULL_PTR,       VOS_NULL_PTR},          /*Send Msg to ZSP, RSV*/
-                            {VOS_CPU_ID_3_PID_BUTT, 0, VOS_SendHIFIMsg,    VOS_SendHIFIUrgentMsg}, /*Send Msg to HIFI*/
-                            {VOS_CPU_ID_4_PID_BUTT, 0, VOS_NULL_PTR,       VOS_NULL_PTR}};         /*Send Msg to MCU*/
-#endif
-
-#endif
 
 
 enum
@@ -183,7 +167,6 @@ Msg_Fun_Type    g_pfnVosAwakeFunHook[MODEM_ID_BUTT] = {VOS_NULL_PTR};
 VOS_SPINLOCK             g_stVosDumpMsgSpinLock;
 VOS_UINT32               g_ulVosDumpMsgFlag;
 
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
 VOS_UINT32 g_msglpm = VOS_FALSE;
 
 VOS_INT VOS_MsgLpmCb(VOS_INT x)
@@ -192,7 +175,6 @@ VOS_INT VOS_MsgLpmCb(VOS_INT x)
 
     return 0;
 }
-#endif
 
 enum PM_LOG_AOSA_PAM_ENUM
 {
@@ -269,13 +251,7 @@ VOS_UINT32 VOS_MsgDumpCheck(VOS_VOID)
  *****************************************************************************/
 MODULE_EXPORTED VOS_UINT32 VOS_RegisterAwakeFun(MODEM_ID_ENUM_UINT16 enModem, Msg_Fun_Type pfnHook)
 {
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-    g_pfnVosAwakeFunHook[enModem]   = pfnHook;
-
-    return VOS_OK;
-#else
     return VOS_ERR;
-#endif
 }
 
 /*****************************************************************************
@@ -287,23 +263,6 @@ MODULE_EXPORTED VOS_UINT32 VOS_RegisterAwakeFun(MODEM_ID_ENUM_UINT16 enModem, Ms
  *****************************************************************************/
 VOS_VOID VOS_ExecuteAwakeFun(MsgBlock *pstMsgCtrlBlk)
 {
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-    MODEM_ID_ENUM_UINT16                enModem = MODEM_ID_BUTT;
-
-    enModem = VOS_GetModemIDFromPid(pstMsgCtrlBlk->ulReceiverPid);
-
-    if (enModem >= MODEM_ID_BUTT)
-    {
-        return;
-    }
-
-    if ( VOS_NULL_PTR == g_pfnVosAwakeFunHook[enModem] )
-    {
-        return;
-    }
-
-    (g_pfnVosAwakeFunHook[enModem])(pstMsgCtrlBlk);
-#endif
 
     return;
 }
@@ -390,7 +349,6 @@ VOS_VOID VOS_DRVMB_OSAMsg_CB(VOS_VOID *pUserPara, VOS_VOID *pMailHandle, VOS_UIN
  *****************************************************************************/
 VOS_UINT32 VOS_DRVMB_Init(VOS_VOID)
 {
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
     /* Register HIFI->ACPU OSA normal Msg CallBack */
     if (VOS_OK != DRV_MAILBOX_REGISTERRECVFUNC(MAILBOX_MAILCODE_HIFI_TO_ACPU_VOS_MSG_NORMAL,
                                 VOS_DRVMB_OSAMsg_CB,
@@ -408,31 +366,7 @@ VOS_UINT32 VOS_DRVMB_Init(VOS_VOID)
         mdrv_err("<VOS_DRVMB_Init> Register HIFI->ACPU Urgent CB failed.\n");
         return VOS_ERR;
     }
-#endif
 
-#if (FEATURE_ON != FEATURE_HIFI_USE_ICC)
-
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-    /* Register HIFI->CCPU OSA Msg CallBack */
-    if (VOS_OK != DRV_MAILBOX_REGISTERRECVFUNC(MAILBOX_MAILCODE_HIFI_TO_CCPU_VOS_MSG_NORMAL,
-                                VOS_DRVMB_OSAMsg_CB,
-                                (VOS_VOID *)VOS_HIFI_TO_CCPU_VOS_MSG_NORMAL))
-    {
-        mdrv_err("<VOS_DRVMB_Init> Register HIFI->CCPU Normal CB failed.\n");
-        return VOS_ERR;
-    }
-
-    /* Register HIFI->CCPU OSA Msg CallBack */
-    if (VOS_OK != DRV_MAILBOX_REGISTERRECVFUNC(MAILBOX_MAILCODE_HIFI_TO_CCPU_VOS_MSG_URGENT,
-                                VOS_DRVMB_OSAMsg_CB,
-                                (VOS_VOID *)VOS_HIFI_TO_CCPU_VOS_MSG_URGENT))
-    {
-        mdrv_err("<VOS_DRVMB_Init> Register HIFI->CCPU Urgent CB failed.\n");
-        return VOS_ERR;
-    }
-#endif
-
-#endif
 
     return VOS_OK;
 }
@@ -518,13 +452,8 @@ VOS_UINT32 VOS_SendHIFIMsg(VOS_PID Pid, VOS_VOID **ppMsg,
     stMsgPara.lLineNo       = lLineNo;
     stMsgPara.ulFileID      = ulFileID;
 
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
     stMsgPara.ulMailBoxCode = MAILBOX_MAILCODE_ACPU_TO_HIFI_VOS_MSG_NORMAL;
-#endif
 
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-    stMsgPara.ulMailBoxCode = MAILBOX_MAILCODE_CCPU_TO_HIFI_VOS_MSG_NORMAL;
-#endif
 
     return VOS_SendMsgByDrvMB(Pid, ppMsg, &stMsgPara);
 }
@@ -546,13 +475,8 @@ VOS_UINT32 VOS_SendHIFIUrgentMsg(VOS_PID Pid, VOS_VOID **ppMsg,
     stMsgPara.lLineNo       = lLineNo;
     stMsgPara.ulFileID      = ulFileID;
 
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
     stMsgPara.ulMailBoxCode = MAILBOX_MAILCODE_ACPU_TO_HIFI_VOS_MSG_URGENT;
-#endif
 
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-    stMsgPara.ulMailBoxCode = MAILBOX_MAILCODE_CCPU_TO_HIFI_VOS_MSG_URGENT;
-#endif
 
     return VOS_SendMsgByDrvMB(Pid, ppMsg, &stMsgPara);
 }
@@ -574,13 +498,8 @@ VOS_UINT32 VOS_SendMCUMsg(VOS_PID Pid, VOS_VOID **ppMsg,
     stMsgPara.lLineNo       = lLineNo;
     stMsgPara.ulFileID      = ulFileID;
 
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
     stMsgPara.ulMailBoxCode = MAILBOX_MAILCODE_ACPU_TO_MCU_VOS_MSG_NORMAL;
-#endif
 
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-    stMsgPara.ulMailBoxCode = MAILBOX_MAILCODE_CCPU_TO_MCU_VOS_MSG_NORMAL;
-#endif
 
     return VOS_SendMsgByDrvMB(Pid, ppMsg, &stMsgPara);
 }
@@ -602,13 +521,8 @@ VOS_UINT32 VOS_SendMCUUrgentMsg( VOS_PID Pid, VOS_VOID **ppMsg,
     stMsgPara.lLineNo       = lLineNo;
     stMsgPara.ulFileID      = ulFileID;
 
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
     stMsgPara.ulMailBoxCode = MAILBOX_MAILCODE_ACPU_TO_MCU_VOS_MSG_URGENT;
-#endif
 
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-    stMsgPara.ulMailBoxCode = MAILBOX_MAILCODE_CCPU_TO_MCU_VOS_MSG_URGENT;
-#endif
 
     return VOS_SendMsgByDrvMB(Pid, ppMsg, &stMsgPara);
 }
@@ -629,7 +543,6 @@ MODULE_EXPORTED MsgBlock * V_AllocMsg(VOS_PID Pid, VOS_UINT32 ulLength,
     MSG_BLOCK_HEAD  *pMsgBlkHead;
     MsgBlock        *MsgBlock_Ptr;
 
-#if (VOS_YES == VOS_CHECK_PARA)
     if(Pid >= VOS_PID_BUTT)
     {
         return((MsgBlock*)VOS_NULL_PTR);
@@ -647,7 +560,6 @@ MODULE_EXPORTED MsgBlock * V_AllocMsg(VOS_PID Pid, VOS_UINT32 ulLength,
 
         return VOS_NULL_PTR;
     }
-#endif
 
     ulTotalLength =
         (VOS_INT)(VOS_MSG_BLOCK_HEAD_AND_RESERVED_LENGTH + ulLength);
@@ -668,14 +580,6 @@ MODULE_EXPORTED MsgBlock * V_AllocMsg(VOS_PID Pid, VOS_UINT32 ulLength,
     MsgBlock_Ptr->ulReceiverCpuId = VOS_LOCAL_CPUID;
     MsgBlock_Ptr->ulLength = (VOS_UINT32)ulLength;
 
-#if (VOS_DEBUG == VOS_DOPRA_VER)
-
-    if ( VOS_NULL_PTR != g_pfnAllocMsgHook )
-    {
-        g_pfnAllocMsgHook((VOS_UINT32)ulTotalLength);
-    }
-
-#endif
 
     return MsgBlock_Ptr;
 }
@@ -746,7 +650,6 @@ MODULE_EXPORTED VOS_UINT32 V_FreeMsg(VOS_PID Pid, VOS_VOID **ppMsg,
     VOS_UINT_PTR         ulBlockAdd;
     VOS_UINT_PTR         ulCtrlkAdd;
 
-#if ( VOS_YES == VOS_CHECK_PARA)
     if(Pid >= VOS_PID_BUTT)
     {
         (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_MSG_FREE_INPUTMSGISNULL);
@@ -767,7 +670,6 @@ MODULE_EXPORTED VOS_UINT32 V_FreeMsg(VOS_PID Pid, VOS_VOID **ppMsg,
         (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_MSG_FREE_INPUTPIDINVALID);
         return(VOS_ERRNO_MSG_FREE_INPUTPIDINVALID);
     }
-#endif
 
     pMsgBlkHead = (VOS_VOID*)( (VOS_UINT_PTR)(*ppMsg)
                          - VOS_MSG_BLK_HEAD_LEN );
@@ -788,13 +690,6 @@ MODULE_EXPORTED VOS_UINT32 V_FreeMsg(VOS_PID Pid, VOS_VOID **ppMsg,
         /* Clear user's pointer */
         *ppMsg = VOS_NULL_PTR;
 
-#if (VOS_DEBUG == VOS_DOPRA_VER)
-
-        if ( VOS_NULL_PTR != g_pfnFreeMsgHook )
-        {
-            g_pfnFreeMsgHook(0);
-        }
-#endif
 
         return VOS_MemCtrlBlkFree( (VOS_MEM_CTRL_BLOCK *)ulCtrlkAdd,
             (VOS_MEM_HEAD_BLOCK *)ulBlockAdd, ulFileID, Pid );
@@ -892,32 +787,19 @@ VOS_UINT32 V_UnreserveMsg( VOS_PID Pid, MsgBlock * pMsg,
 
 VOS_BOOL VOS_CheckMsgCPUId( VOS_UINT32 ulCPUId )
 {
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-    /* CCPU的id为0，如果消息接收的cpuid不为ccpu id，则为跨核消息 */
-    if (OSA_CPU_CCPU != ulCPUId)
-    {
-        return VOS_TRUE;
-    }
-#elif (OSA_CPU_ACPU == VOS_OSA_CPU)
     /* ACPU的id为1，如果消息接收的cpuid不为acpu id，则为跨核消息 */
     if (OSA_CPU_ACPU != ulCPUId)
     {
         return VOS_TRUE;
     }
-#endif
     return VOS_FALSE;
 }
 
 
 MODULE_EXPORTED VOS_UINT32 VOS_CheckInterrupt( VOS_VOID )
 {
-#if ((VOS_OS_VER == VOS_VXWORKS) || (VOS_OS_VER == VOS_RTOSCK))
-    return mdrv_int_is_inside_context();
-#endif
 
-#if (VOS_OS_VER == VOS_LINUX)
     return (VOS_UINT32)in_interrupt();
-#endif
 
     /*lint -e527 */
     return VOS_FALSE;
@@ -975,14 +857,6 @@ VOS_UINT32 V_FreeReservedMsg(VOS_PID Pid, VOS_VOID ** ppMsg,
         /* Clear user's pointer */
         *ppMsg = VOS_NULL_PTR;
 
-#if (VOS_DEBUG == VOS_DOPRA_VER)
-
-        if ( VOS_NULL_PTR != g_pfnFreeMsgHook )
-        {
-            g_pfnFreeMsgHook(0);
-        }
-
-#endif
 
         return VOS_MemCtrlBlkFree( (VOS_MEM_CTRL_BLOCK *)ulCtrlkAdd,
             (VOS_MEM_HEAD_BLOCK *)ulBlockAdd, ulFileID, Pid );
@@ -1034,7 +908,6 @@ VOS_UINT32 V_CheckMsgPara(VOS_PID Pid, VOS_VOID **ppMsg,
     VOS_UINT32          ulCpuID;
     MsgBlock           *pMsgCtrlBlk;
 
-#if (VOS_YES == VOS_CHECK_PARA)
     if ( VOS_NULL_PTR == ppMsg )
     {
         (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_MSG_FREE_INPUTPIDINVALID);
@@ -1057,7 +930,6 @@ VOS_UINT32 V_CheckMsgPara(VOS_PID Pid, VOS_VOID **ppMsg,
 
         return(VOS_ERRNO_MSG_FREE_INPUTPIDINVALID);
     }
-#endif
 
     pMsgCtrlBlk     = (MsgBlock*)(*ppMsg);
     ulPid           = pMsgCtrlBlk->ulReceiverPid;
@@ -1338,246 +1210,8 @@ VOS_UINT32 V_SendMsgByICC(VOS_PID Pid, VOS_VOID **ppMsg,
     return VOS_OK;
 }
 
-#if (FEATURE_ON == FEATURE_HIFI_USE_ICC)
 
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
 
-/*****************************************************************************
- Function   : V_SendHifiMsgByICC
- Description: Send the msg to another ARM's OSA by the ICC channle.
- Input      : Pid  -- process identifier
-              pMsg -- the pointer of message
- Return     : VOS_OK on success and error code on failure
- Other      : After sending message, the status would be changed to ready.
- *****************************************************************************/
-VOS_UINT32 V_SendHifiMsgByICC(VOS_PID Pid, VOS_VOID **ppMsg,
-                            VOS_UINT32 ulFileID, VOS_INT32 lLineNo )
-{
-    VOS_UINT32              ulDataLen;
-    VOS_INT                 lResult;
-    MsgBlock                *pMsgCtrlBlk;
-
-    pMsgCtrlBlk = (MsgBlock*)(*ppMsg);
-
-    if ( DOPRA_PID_TIMER == pMsgCtrlBlk->ulSenderPid )
-    {
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_MSG_ICC_PIDTERROR);
-
-        mdrv_err("<V_SendHifiMsgByICC> Error Timer Sender Icc Msg, Rec PID=%d\n", (VOS_INT)pMsgCtrlBlk->ulReceiverPid);
-
-        VOS_ProtectionReboot(VOS_ERRNO_MSG_ICC_PIDTERROR, (VOS_INT)pMsgCtrlBlk->ulReceiverPid, 0, 0, 0);
-
-        return(VOS_ERRNO_MSG_ICC_PIDTERROR);
-    }
-
-    ulDataLen   = pMsgCtrlBlk->ulLength + VOS_MSG_HEAD_LENGTH;/*Get the Msg Length*/
-
-    lResult     = DRV_ICC_WRITE(UDI_ICC_CCPU_HIFI_VOS_NORMAL_MSG, *ppMsg, (VOS_INT32)ulDataLen );
-
-    (VOS_VOID)VOS_FreeMsg( Pid, *ppMsg ); /*need free the Msg memory*/
-
-    /* 写ICC邮箱满，OSA发起主动复位 */
-    if ( ICC_INVALID_NO_FIFO_SPACE == lResult )
-    {
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_MSG_ICC_WRITEHIFIMSGFULL);
-
-        mdrv_err("<V_SendHifiMsgByICC> Error,Write ICC Channel Full, File=%d. line=%d. Size=%d result=%d.\n", (VOS_INT)ulFileID, lLineNo,(VOS_INT)ulDataLen,lResult);
-
-        return(VOS_ERRNO_MSG_ICC_WRITEHIFIMSGFULL);
-    }
-
-    if ( ulDataLen != lResult ) /*Write Data to ICC channle Success*/
-    {
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_MSG_ICC_WRITEMSGERROR);
-
-        mdrv_err("<V_SendHifiMsgByICC> Error,Write ICC Channel Error, File=%d. line=%d. Sizer%d result=%d.\n", (VOS_INT)ulFileID, lLineNo,(VOS_INT)ulDataLen,lResult);
-
-        return(VOS_ERRNO_MSG_ICC_WRITEMSGERROR);
-    }
-
-    g_stVosCcoreHifiIccDebugInfo.ulSendNum++;
-    g_stVosCcoreHifiIccDebugInfo.ulSendSlice = VOS_GetSlice();
-
-    return VOS_OK;
-}
-
-/*****************************************************************************
- Function   : V_SendHifiMsgByICCNormally
- Description: Send the msg to another ARM's OSA by the ICC channle.
- Input      : Pid  -- process identifier
-              pMsg -- the pointer of message
- Return     : VOS_OK on success and error code on failure
- Other      : After sending message, the status would be changed to ready.
- *****************************************************************************/
-VOS_UINT32 V_SendHifiMsgByICCNormally(VOS_PID Pid, VOS_VOID **ppMsg,
-                            VOS_UINT32 ulFileID, VOS_INT32 lLineNo )
-{
-    VOS_UINT32              ulDataLen;
-    VOS_INT                 lResult;
-    MsgBlock                *pMsgCtrlBlk;
-
-    pMsgCtrlBlk = (MsgBlock*)(*ppMsg);
-
-    if ( DOPRA_PID_TIMER == pMsgCtrlBlk->ulSenderPid )
-    {
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_MSG_ICC_PIDTERROR);
-
-        mdrv_err("<V_SendHifiMsgByICCNormally> Error Timer Sender Icc Msg, Rec PID=%d\n", (VOS_INT)pMsgCtrlBlk->ulReceiverPid);
-
-        VOS_ProtectionReboot(VOS_ERRNO_MSG_ICC_PIDTERROR, (VOS_INT)pMsgCtrlBlk->ulReceiverPid, 0, 0, 0);
-
-        return(VOS_ERRNO_MSG_ICC_PIDTERROR);
-    }
-
-    ulDataLen   = pMsgCtrlBlk->ulLength + VOS_MSG_HEAD_LENGTH;/*Get the Msg Length*/
-
-    lResult     = DRV_ICC_WRITE(UDI_ICC_CCPU_HIFI_VOS_NORMAL_MSG, *ppMsg, (VOS_INT32)ulDataLen );
-
-    (VOS_VOID)VOS_FreeMsg( Pid, *ppMsg ); /*need free the Msg memory*/
-
-    /* 写ICC邮箱满，OSA发起主动复位 */
-    if ( ICC_INVALID_NO_FIFO_SPACE == lResult )
-    {
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_MSG_ICC_WRITEHIFIMSGFULL);
-
-        mdrv_err("<V_SendHifiMsgByICCNormally> Error,Write ICC Channel Full, File=%d. line=%d. Size=%d result=%d.\n", (VOS_INT)ulFileID, lLineNo,(VOS_INT)ulDataLen,lResult);
-
-        return(VOS_ERRNO_MSG_ICC_WRITEHIFIMSGFULL);
-    }
-
-    g_stVosCcoreHifiIccDebugInfo.ulSendNum++;
-    g_stVosCcoreHifiIccDebugInfo.ulSendSlice = VOS_GetSlice();
-
-    if ( ulDataLen != lResult ) /*Write Data to ICC channle Success*/
-    {
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_MSG_ICC_WRITEMSGERROR);
-
-       mdrv_err("<V_SendHifiMsgByICCNormally> Error,Write ICC Channel Error, File=%d. line=%d. Size=%d result=%d.\n", (VOS_INT)ulFileID, lLineNo,(VOS_INT)ulDataLen,lResult);
-
-        return(VOS_ERRNO_MSG_ICC_WRITEMSGERROR);
-    }
-
-    return VOS_OK;
-}
-
-
-/*****************************************************************************
- Function   : V_ICC_OSAHifiMsg_CB
- Description: Receive the msg from the ICC channel, and send it to the Receive PID.
- Input      : ulChannelID   -- The ICC Channel ID
-              lLen          -- the Msg data len
- Return     : VOS_OK on success and error code on failure
- Other      : After sending message, the status would be changed to ready.
- *****************************************************************************/
-
-VOS_UINT V_ICC_OSAHifiMsg_CB(VOS_UINT ulChannelID,VOS_INT lLen)
-{
-    VOS_INT32               lResult;
-    VOS_UINT8               *pucMsgData;
-    MsgBlock                *pMsgCtrlBlk;
-    MsgBlock                stTempDebug;
-
-    g_stVosCcoreHifiIccDebugInfo.ulRcvNum++;
-    g_stVosCcoreHifiIccDebugInfo.ulRcvSlice = VOS_GetSlice();
-
-    if ( lLen <= VOS_MSG_HEAD_LENGTH )
-    {
-        mdrv_err("<V_ICC_OSAHifiMsg_CB> The Data Len is small.\n");
-
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_MSG_ICC_DATALENISNULL);
-
-        lResult = DRV_ICC_READ( UDI_ICC_CCPU_HIFI_VOS_NORMAL_MSG, (VOS_UINT8 *)&stTempDebug, lLen );
-
-        VOS_ProtectionReboot(VOS_ERRNO_MSG_ICC_DATALENISNULL, (VOS_INT)lLen, (VOS_INT)lResult,
-                             (VOS_CHAR*)&stTempDebug, sizeof(MsgBlock));
-
-        return VOS_ERR;
-    }
-
-    /* Alloc message space with static PID number */
-    pucMsgData = (VOS_UINT8*)VOS_AllocMsg( VOS_PID_DOPRAEND, (VOS_UINT32)(lLen-VOS_MSG_HEAD_LENGTH) );
-
-    if ( VOS_NULL_PTR == pucMsgData )
-    {
-        mdrv_err("<V_ICC_OSAHifiMsg_CB> Alloc Msg memory failed.\n");
-
-        return VOS_ERR;
-    }
-
-    /* get the Message data from the ICC channel */
-    lResult = DRV_ICC_READ( UDI_ICC_CCPU_HIFI_VOS_NORMAL_MSG, pucMsgData, lLen );
-
-    if ( lLen != lResult )
-    {
-        /* Record Debug info */
-        if ( VOS_NULL_PTR == VOS_MemCpy_s((VOS_CHAR *)&stTempDebug, sizeof(MsgBlock), (VOS_CHAR *)pucMsgData, sizeof(MsgBlock)) )
-        {
-            mdrv_om_system_error(VOS_REBOOT_MEMCPY_MEM, 0, (VOS_INT)((THIS_FILE_ID << 16) | __LINE__), 0, 0);
-        }
-
-        (VOS_VOID)VOS_FreeMsg( VOS_PID_DOPRAEND, pucMsgData );
-
-        mdrv_err("<V_ICC_OSAHifiMsg_CB> DRV_ICC_READ is Failed.\n");
-
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_MSG_ICC_READDATAFAIL);
-
-        VOS_ProtectionReboot(VOS_ERRNO_MSG_ICC_READDATAFAIL, (VOS_INT)lLen, (VOS_INT)lResult,
-                             (VOS_CHAR*)&stTempDebug, sizeof(MsgBlock));
-
-        return VOS_ERRNO_MSG_ICC_READDATAFAIL;
-    }
-
-    pMsgCtrlBlk = (MsgBlock*)(pucMsgData);
-
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
-    if(VOS_TRUE == g_msglpm)
-    {
-        g_msglpm = VOS_FALSE;
-
-        mdrv_err("<V_ICC_OSAHifiMsg_CB> v_msg senderpid=%d, receivepid=%d, msgid=0x%x.\n",
-            pMsgCtrlBlk->ulSenderPid, pMsgCtrlBlk->ulReceiverPid, *((VOS_UINT32*)(pMsgCtrlBlk->aucValue))); /* [false alarm]: 屏蔽Fortify错误 */
-    }
-#endif
-
-    VOS_ModifyMsgInfo( (VOS_VOID *)pMsgCtrlBlk, pMsgCtrlBlk->ulSenderPid );
-
-    return V_SendMsg(VOS_PID_DOPRAEND, (VOS_VOID**)(&(pucMsgData)), VOS_FILE_ID, __LINE__ );
-}
-
-/*****************************************************************************
- Function   : VOS_Hifi_ICC_Init
- Description: the init of the ICC channel of Hifi
- Input      : None
- Return     : ok or error
- Other      :
- *****************************************************************************/
-VOS_UINT32 VOS_Hifi_ICC_Init(VOS_VOID)
-{
-    VOS_ICC_UDI_CTRL_STRU               stICCCtrlTable  = {0};
-
-    stICCCtrlTable.ulICCId                  = UDI_ICC_CCPU_HIFI_VOS_NORMAL_MSG;
-    stICCCtrlTable.stICCAttr.read_cb        = V_ICC_OSAHifiMsg_CB;
-    stICCCtrlTable.stICCAttr.u32Priority    = VOS_ICC_CHANNEL_PRIORITY;  /* 统一使用最高优先级 */
-    stICCCtrlTable.stICCAttr.u32TimeOut     = VOS_ICC_HANDSHAKE_TIME_MAX;
-    stICCCtrlTable.stICCAttr.u32FIFOInSize  = OSA_ICC_BUFFER_SIZE;
-    stICCCtrlTable.stICCAttr.u32FIFOOutSize = OSA_ICC_BUFFER_SIZE;
-    stICCCtrlTable.stICCAttr.enChanMode     = ICC_CHAN_MODE_PACKET;
-    stICCCtrlTable.stICCAttr.event_cb       = VOS_NULL_PTR;
-    stICCCtrlTable.stICCAttr.write_cb       = VOS_NULL_PTR;
-
-    if (VOS_ERROR == DRV_ICC_OPEN(stICCCtrlTable.ulICCId, &stICCCtrlTable.stICCAttr))
-    {
-        /* 打开失败时记录当前ICC通道信息 */
-        VOS_ProtectionReboot(OM_APP_ICC_INIT_ERROR, THIS_FILE_ID, __LINE__, VOS_NULL_PTR,0);
-        return VOS_ERR;
-    }
-
-    return VOS_OK;
-}
-
-#endif
-
-#endif
 
 /*****************************************************************************
  Function   : V_SendMsg
@@ -1640,75 +1274,6 @@ MODULE_EXPORTED VOS_UINT32 V_SendMsg(VOS_PID Pid, VOS_VOID **ppMsg,
     return g_astVOSSendMsgProcTable[ulCpuID].pfSendMsg( Pid, ppMsg, ulFileID, lLineNo );
 }
 
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-/*****************************************************************************
- Function   : V_SendMsgNormally
- Description: Send the msg to a task, the task may be not in the same CPU.
-              Not rest when a error occures.
- Input      : Pid  -- process identifier
-              pMsg -- the pointer of message
- Return     : VOS_OK on success and error code on failure
- Other      : After sending message, the status would be changed to ready.
- *****************************************************************************/
-MODULE_EXPORTED VOS_UINT32 V_SendMsgNormally(VOS_PID Pid, VOS_VOID **ppMsg,
-                            VOS_UINT32 ulFileID, VOS_INT32 lLineNo)
-{
-    VOS_UINT32          ulResult;
-    VOS_UINT32          ulPid;
-    VOS_UINT32          ulCpuID;
-    MsgBlock           *pMsgCtrlBlk;
-    VOS_UINT32          ulSpanMsg;
-
-    ulResult = V_CheckMsgPara( Pid, ppMsg, ulFileID, lLineNo );
-
-    if ( VOS_OK != ulResult)
-    {
-        return ulResult;
-    }
-
-    pMsgCtrlBlk     = (MsgBlock*)(*ppMsg);
-    ulPid           = pMsgCtrlBlk->ulReceiverPid;
-    ulCpuID         = VOS_GET_CPU_ID(ulPid);
-
-    if ( VOS_CPU_ID_MEDDSP != ulCpuID )
-    {
-        mdrv_err("<V_SendMsgNormally> send api is null.F=%d L=%d SendPid=%d RecvPid=%d.\n",
-                    (VOS_INT)ulFileID, lLineNo, pMsgCtrlBlk->ulSenderPid, (VOS_INT)ulPid);
-
-        (VOS_VOID)VOS_FreeMsg( Pid, *ppMsg );
-
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_MSG_SEND_FUNCEMPTY);
-
-        return(VOS_ERRNO_MSG_SEND_FUNCEMPTY);
-    }
-
-    ulSpanMsg = VOS_CheckMsgCPUId(ulCpuID);
-
-    /* 中断中发送跨核消息，返回错误 */
-    if ( (VOS_TRUE == ulSpanMsg)
-        && (VOS_FALSE != VOS_CheckInterrupt()) )
-    {
-        (VOS_VOID)VOS_FreeMsg( Pid, *ppMsg );
-
-        return (VOS_ERRNO_MSG_INT_MSGERROR);
-    }
-
-    /* 跨核消息 勾子函数不为空 */
-    if ( (VOS_NULL_PTR != vos_MsgHook)
-        && (VOS_TRUE == ulSpanMsg))
-    {
-        (VOS_VOID)(vos_MsgHook)(*ppMsg);
-    }
-
-#if (FEATURE_ON == FEATURE_HIFI_USE_ICC)
-    return V_SendHifiMsgByICCNormally( Pid, ppMsg, ulFileID, lLineNo );
-#else
-    (VOS_VOID)VOS_FreeMsg( Pid, *ppMsg );
-
-    return VOS_ERRNO_MSG_SEND_FUNCEMPTY;
-#endif
-}
-#endif
 
 /*****************************************************************************
  Function   : OM_ComRx_ICC_OSAMsg_CB
@@ -1726,9 +1291,7 @@ VOS_UINT V_ICC_OSAMsg_CB(VOS_UINT ulChannelID,VOS_INT lLen)
     MsgBlock                *pMsgCtrlBlk;
     MsgBlock                stTempDebug;
 
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
     VOS_A_MSG_LOG_STRU      stOsaMsgLog;
-#endif
 
     g_stVosAcoreCcoreIccDebugInfo.ulRcvNum++;
     g_stVosAcoreCcoreIccDebugInfo.ulRcvSlice = VOS_GetSlice();
@@ -1782,7 +1345,6 @@ VOS_UINT V_ICC_OSAMsg_CB(VOS_UINT ulChannelID,VOS_INT lLen)
 
     pMsgCtrlBlk = (MsgBlock*)(pucMsgData);
 
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
     if(VOS_TRUE == g_msglpm)
     {
         g_msglpm = VOS_FALSE;
@@ -1801,7 +1363,6 @@ VOS_UINT V_ICC_OSAMsg_CB(VOS_UINT ulChannelID,VOS_INT lLen)
         mdrv_err("<V_ICC_OSAMsg_CB> v_msg senderpid=%d, receivepid=%d, msgid=0x%x.\n",
             pMsgCtrlBlk->ulSenderPid, pMsgCtrlBlk->ulReceiverPid, *((VOS_UINT32*)(pMsgCtrlBlk->aucValue))); /* [false alarm]: 屏蔽Fortify错误 */
     }
-#endif
 
     VOS_ModifyMsgInfo( (VOS_VOID *)pMsgCtrlBlk, pMsgCtrlBlk->ulSenderPid );
 
@@ -1830,13 +1391,11 @@ VOS_UINT32 VOS_ICC_Init(VOS_VOID)
         return VOS_ERR;
     }
 
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
     /* 注册icc 唤醒A核时的钩子函数，AP在睡眠状态下被CP唤醒 */
     if (VOS_OK != mdrv_icc_register_resume_cb(UDI_ICC_GUOM4, VOS_MsgLpmCb, 0))
     {
         return VOS_ERR;
     }
-#endif
 
     VOS_IccDebugInfoInit();
 
@@ -1860,15 +1419,6 @@ VOS_UINT32 VOS_MsgInit(VOS_VOID)
         ulResult |= 0x00100000;
     }
 
-#if (FEATURE_ON == FEATURE_HIFI_USE_ICC)
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-    /* HIFI ICC channel Init*/
-    if (VOS_OK != VOS_Hifi_ICC_Init())
-    {
-        ulResult |= 0x00200000;
-    }
-#endif
-#endif
 
     /* DRV MB Init */
     if (VOS_OK != VOS_DRVMB_Init())
@@ -2149,38 +1699,6 @@ VOS_UINT32 VOS_GetMsgName(VOS_UINT_PTR ulAddrress)
     return *((VOS_UINT32 *)(pstMsgBlock->aucValue));
 }
 
-#if (VOS_DEBUG == VOS_DOPRA_VER)
-
-/*****************************************************************************
- Function   : VOS_RegisterMemAllocHook
- Description: register a hook to msg alloc
- Input      : void
- Return     : void
- Other      : only for designer
- *****************************************************************************/
-VOS_UINT32 VOS_RegisterMsgAllocHook( VOS_UINT32 ulMode, MEMORY_HOOK_FUNC pfnHook)
-{
-    if ( VOS_ALLOC_MODE == ulMode )
-    {
-        g_pfnAllocMsgHook = pfnHook;
-
-        return VOS_OK;
-    }
-    else if ( VOS_FREE_MODE == ulMode )
-    {
-        g_pfnFreeMsgHook = pfnHook;
-
-        return VOS_OK;
-    }
-    else
-    {
-        mdrv_err("<VOS_RegisterMsgAllocHook> mode error.\n");
-
-        return VOS_ERR;
-    }
-}
-
-#endif
 
 
 

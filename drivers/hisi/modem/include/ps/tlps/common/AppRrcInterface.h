@@ -116,8 +116,10 @@ extern "C" {
 /* 收到切换重配置消息到回复数传用户面时延协议时间 */
 #define PS_OM_HO_PTL_USER_PLANE_TIME                 (100)            /* 100ms T11-T4*/
 
+/* add for AT&T LRRC DAM begin */
 /* 受限列表中保存最大的条目数 */
 #define RRC_APP_MAX_LIMITED_ITEM_COUNT         (32)
+/* add for AT&T LRRC DAM end */
 /* 新增测量消息中上报小区最大个数*/
 #define LRRC_LCSEL_INTRA_CELL_REPORT_NUM 4
 #define LRRC_LCSEL_INTER_CELL_REPORT_NUM 4
@@ -240,6 +242,7 @@ enum APP_RRC_MSG_ID_ENUM
     ID_RRC_APP_CELL_INFO_QUERY_CNF      = (PS_MSG_ID_RRC_TO_APP_BASE + 0x0e),   /* _H2ASN_MsgChoice RRC_APP_CELL_INFO_QUERY_CNF_STRU */
     ID_RRC_APP_LWCLASH_CNF              = (PS_MSG_ID_RRC_TO_APP_BASE + 0x0f),   /* _H2ASN_MsgChoice RRC_APP_PTL_LWCLASH_IND_STRU */
     ID_RRC_APP_LWCLASH_IND              = (PS_MSG_ID_RRC_TO_APP_BASE + 0x10),   /* _H2ASN_MsgChoice RRC_APP_PTL_LWCLASH_CNF_STRU */
+    /*niuxiufan DT begin */
     ID_RRC_APP_SERVING_CELL_INFO_QUERY_CNF    = (PS_MSG_ID_RRC_TO_APP_BASE + 0x11),   /* _H2ASN_MsgChoice RRC_APP_CELL_INFO_QUERY_CNF_STRU */
     ID_RRC_APP_SERVING_CELL_INFO_IND    = (PS_MSG_ID_RRC_TO_APP_BASE + 0x12),   /* _H2ASN_MsgChoice RRC_APP_CELL_INFO_QUERY_CNF_STRU */
     ID_RRC_APP_CSEL_INFO_QUERY_CNF      = (PS_MSG_ID_RRC_TO_APP_BASE + 0x13),   /* _H2ASN_MsgChoice RRC_APP_CELL_INFO_QUERY_CNF_STRU */
@@ -1505,6 +1508,7 @@ typedef struct
     VOS_INT32              ulReserv;
 }APP_LRRC_CON_TO_IDLE_NTF_STRU;
 
+/* gaojishan-fast-dorm-cfg */
 
 /*****************************************************************************
  枚举名    : LRRC_LPDCP_FAST_DORMANCY_CMD_ENUM
@@ -1652,6 +1656,7 @@ typedef struct
     VOS_UINT16                          usRev;              /* 保留 */
     LRRC_DAM_BAR_LIST_ITEM_STRU         astDamBarListItem[RRC_APP_MAX_LIMITED_ITEM_COUNT];
 }LRRC_APP_DAM_BAR_LIST_DBG_INFO_IND_STRU;
+/* add for AT&T LRRC DAM end */
 /*****************************************************************************
  结构名    : LRRC_APP_IDLE_SERVE_INFO_STRU
  协议表格  :

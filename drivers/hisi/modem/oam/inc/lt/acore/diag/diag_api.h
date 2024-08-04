@@ -151,7 +151,7 @@ VOS_UINT32 diag_LogPortSwich(VOS_UINT32 ulPhyPort, VOS_BOOL ulEffect);
  功能描述  : 层间消息上报接口，用于对OSA消息进行勾包
  输入参数  : pMsg(标准的VOS消息体，源模块、目的模块信息从消息体中获取)
 *****************************************************************************/
-VOS_UINT32 DIAG_LayerMsgReport(VOS_VOID *pMsg);
+VOS_VOID DIAG_LayerMsgReport(VOS_VOID *pMsg);
 
 VOS_UINT32 DIAG_ErrorLog(VOS_CHAR * cFileName,VOS_UINT32 ulFileId, VOS_UINT32 ulLine, VOS_UINT32 ulErrNo, VOS_VOID * pBuf, VOS_UINT32 ulLen);
 VOS_UINT32 diag_GetPrintPowerOnCfg(VOS_UINT32 ulLevel);

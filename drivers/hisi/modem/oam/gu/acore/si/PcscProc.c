@@ -52,8 +52,8 @@
   1 头文件包含
 *****************************************************************************/
 #include "PcscProc.h"
+#include "mdrv.h"
 #include "pam_tag.h"
-#include "sitypedef.h"
 
 /*****************************************************************************
     协议栈打印打点方式下的.C文件宏定义
@@ -68,6 +68,67 @@ extern VOS_VOID OM_RecordInfoStart(VOS_EXC_DUMP_MEM_NUM_ENUM_UINT32 enNumber, VO
 extern VOS_VOID OM_RecordInfoEnd(VOS_EXC_DUMP_MEM_NUM_ENUM_UINT32 enNumber);
 
 
+VOS_UINT32 PCSC_AcpuCmdReq(VOS_UINT32 ulCmdType, VOS_UINT8 *pucAPDU, VOS_UINT32 ulAPDULen)
+{
+    SI_PIH_PCSC_REQ_STRU     *pstMsg;
+
+    if((ulAPDULen > 5)&&(pucAPDU[4] != ulAPDULen-5))
+    {
+        PS_LOG(ACPU_PID_PCSC, 0, PS_PRINT_ERROR, "PCSC_AcpuCmdReq: Data Len is Not Eq P3");
+        return VOS_ERR;
+    }
+
+    pstMsg = (SI_PIH_PCSC_REQ_STRU *)VOS_AllocMsg(ACPU_PID_PCSC,
+                        (sizeof(SI_PIH_PCSC_REQ_STRU) - VOS_MSG_HEAD_LENGTH) + ulAPDULen);
+    if (VOS_NULL_PTR == pstMsg)
+    {
+        /* 打印错误 */
+        PS_LOG(ACPU_PID_PCSC, 0, PS_PRINT_WARNING, "PCSC_AcpuCmdReq: VOS_AllocMsg is Failed");
+        mdrv_err("<PCSC_AcpuCmdReq> VOS_AllocMsg is Failed.\n");
+
+        return VOS_ERR; /* 返回函数错误信息 */
+    }
+
+    pstMsg->stMsgHeader.ulReceiverPid = MAPS_PIH_PID;
+    pstMsg->stMsgHeader.ulMsgName     = SI_PIH_PCSC_DATA_REQ;
+    pstMsg->stMsgHeader.ulEventType   = ulCmdType;
+    pstMsg->stMsgHeader.usClient      = 0xFFFF;
+    pstMsg->ulCmdType                 = ulCmdType;
+    pstMsg->ulCmdLen                  = ulAPDULen;
+
+    if(ulAPDULen != 0)
+    {
+        PAM_MEM_CPY_S(pstMsg->aucAPDU,
+                      ulAPDULen,
+                      pucAPDU,
+                      ulAPDULen);
+    }
+
+    if (VOS_OK != VOS_SendMsg(ACPU_PID_PCSC, pstMsg))
+    {
+        /*打印错误*/
+        PS_LOG(ACPU_PID_PCSC, 0, PS_PRINT_WARNING, "PCSC_AcpuCmdReq: VOS_SendMsg is Failed.");
+        mdrv_err("<PCSC_AcpuCmdReq> VOS_SendMsg is Failed.");
+        return VOS_ERR;
+    }
+
+    return VOS_OK;
+}
+
+
+VOS_INT PCSC_AcpuGetCardStatus(VOS_VOID)
+{
+    if (USIMM_CARDAPP_SERVIC_ABSENT == g_enAcpuCardStatus)
+    {
+        /*上报无卡状态*/
+        return VOS_ERROR;
+    }
+    /*上报有卡状态*/
+    return VOS_OK;
+}
+
+
+
 VOS_VOID PCSC_UpdateCardStatus(USIMM_CARDSTATUS_IND_STRU *pstMsg)
 {
     if (USIMM_CARDAPP_SERVIC_BUTT == g_enAcpuCardStatus)
@@ -80,37 +141,44 @@ VOS_VOID PCSC_UpdateCardStatus(USIMM_CARDSTATUS_IND_STRU *pstMsg)
 
     mdrv_debug("<PCSC_UpdateCardStatus> g_enAcpuCardStatus=%d .\n", g_enAcpuCardStatus);
 
+
     return;
 }
 
 
 VOS_VOID  PCSC_AcpuMsgProc( MsgBlock *pMsg)
 {
-    PS_SI_MSG_STRU *pstPCSCMsg = VOS_NULL_PTR;
+    SI_PIH_PCSC_CNF_STRU *pstPCSCMsg;
 
-    pstPCSCMsg = (PS_SI_MSG_STRU*)pMsg;
-
-    if (pstPCSCMsg->ulLength < sizeof(pstPCSCMsg->ulMsgName)) {
-        mdrv_err("<PCSC_AcpuMsgProc> msg len too small.");
-
-        return;
-    }
+    pstPCSCMsg = (SI_PIH_PCSC_CNF_STRU*)pMsg;
 
     OM_RecordInfoStart(VOS_EXC_DUMP_MEM_NUM_1, pMsg->ulSenderPid, ACPU_PID_PCSC, *((VOS_UINT32*)pMsg->aucValue));
 
     switch(pstPCSCMsg->ulMsgName)
     {
+        case SI_PIH_PCSC_DATA_CNF:
+            break;
         case USIMM_CARDSTATUS_IND:
             PCSC_UpdateCardStatus((USIMM_CARDSTATUS_IND_STRU *)pMsg);
             break;
         default:
-            mdrv_err("<PCSC_AcpuMsgProc> msg err, %d.", pstPCSCMsg->ulMsgName);
+            PS_LOG(ACPU_PID_PCSC, 0, PS_PRINT_WARNING, "PCSC_AcpuMsgProc: unknow MsgType");
             break;
     }
 
     OM_RecordInfoEnd(VOS_EXC_DUMP_MEM_NUM_1);
 
     return;
+}
+
+
+VOS_UINT32 TestSendPcscCmd(VOS_UINT32 ulCmdType)
+{
+    VOS_UINT8 aucApduData[5] = {0};
+
+    aucApduData[4] = '\0';
+
+    return PCSC_AcpuCmdReq(ulCmdType,aucApduData,5);
 }
 
 

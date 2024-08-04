@@ -47,7 +47,6 @@
  */
 
 /*lint --e{533,750}*/
-#ifdef __KERNEL__
 /*lint -save -e537*/
 #include <linux/kernel.h>
 #include <linux/sched.h>
@@ -69,16 +68,6 @@
 #include <linux/hrtimer.h>
 #include <linux/kthread.h>
 /*lint -restore*/
-#else /* __VXWORKS__ */
-#include <stdio.h>
-#include <stdlib.h>
-#include <stat.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <semLib.h>
-
-#endif /* end of __KERNEL__ */
 
 #include "drv_comm.h"
 #include "osl_types.h"
@@ -96,7 +85,6 @@
 #define THIS_MODU mod_rfile
 
 
-#ifdef __KERNEL__
 
 #define rfile_print_info        printk
 
@@ -106,20 +94,8 @@ typedef  struct semaphore       rfile_sem_id;
 
 #define Rfile_Free(ptr)         kfree(ptr)
 
-#else /* __VXWORKS__ */
-
-typedef  SEM_ID                 rfile_sem_id;
-
-#define rfile_print_info        printf
-
-#define Rfile_Malloc(size)      malloc(size)
-
-#define Rfile_Free(ptr)         free(ptr)
-
-#endif /* end of __KERNEL__ */
 
 #define RFILE_TIMEOUT_MAX           (2000)           /* ×î³¤µÈ´ý2s */
-#define DATA_SIZE_1K                ((1024/sizeof(RFILE_DIRENT_STRU))*sizeof(RFILE_DIRENT_STRU))
 
 typedef struct
 {   
@@ -235,15 +211,11 @@ int rfile_getmode(const char *mode, int *flag)
 
 RFILE_FILE *rfile_stdioFpCreate (void)
 {
-    int ret;
     RFILE_FILE *fp = NULL;
 
     if ((fp = (RFILE_FILE *)Rfile_Malloc(sizeof(RFILE_FILE))) != NULL)
     {
-        ret = memset_s((void*)fp,sizeof(*fp),0,sizeof(RFILE_FILE));
-        if(ret != EOK){
-            bsp_err("[%s] memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-        }
+        memset_s((void*)fp,sizeof(*fp),0,sizeof(RFILE_FILE));
         fp->_flags  = 1;            /* caller sets real flags */
         fp->_file   = -1;           /* no file */  
     }
@@ -295,7 +267,9 @@ void *mdrv_file_open(const char *path, const char *mode)
     }
 
     g_err = RFILE_INVALID_ERROR_NO;
+    /* coverity[example_assign] */
     ret = bsp_open((const s8 *)path, oflags, 0664);
+    /* coverity[example_checked] */
     if(ret < 0)
     {
          bsp_err("[%s] bsp_open failed,path=%s, ret = %x.\n", __FUNCTION__, path, ret);
@@ -450,24 +424,17 @@ int mdrv_file_rmdir(const char *path)
 
 DRV_DIR_S *rfile_stdioDirCreate (void)
 {
-    int ret;
     DRV_DIR_S *dir = NULL;
 
     dir = (DRV_DIR_S *)Rfile_Malloc(sizeof(DRV_DIR_S));
     if (dir != NULL)
     {
-        ret = memset_s((void*)dir,sizeof(*dir),0,sizeof(DRV_DIR_S));
-        if(ret != EOK){
-            bsp_err("[%s] memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-        }
+        memset_s((void*)dir,sizeof(*dir),0,sizeof(DRV_DIR_S));
         dir->dd_fd      = -1;
         dir->dd_cookie  = 0;
         dir->dd_eof     = 0;
 
-        ret = memset_s(&dir->dd_dirent,sizeof(DRV_DIRENT_S),0, sizeof(DRV_DIRENT_S));
-        if(ret != EOK){
-            bsp_err("[%s] memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-        }
+        memset_s(&dir->dd_dirent,sizeof(DRV_DIRENT_S),0, sizeof(DRV_DIRENT_S));
     }
 
     return (dir);
@@ -476,15 +443,11 @@ DRV_DIR_S *rfile_stdioDirCreate (void)
 
 int rfile_stdioDirDestroy(DRV_DIR_S *dir)
 {
-    int ret;
     if(NULL == dir)
         return -1;
 
     dir->dd_fd = -1;
-    ret = memset_s(&dir->dd_dirent,sizeof(DRV_DIRENT_S), 0, sizeof(DRV_DIRENT_S));
-    if(ret != EOK){
-        bsp_err("[%s] memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s(&dir->dd_dirent,sizeof(DRV_DIRENT_S), 0, sizeof(DRV_DIRENT_S));
 
     Rfile_Free ((char *) dir);
 
@@ -522,10 +485,7 @@ DRV_DIR_S* mdrv_file_opendir(const char *dirName)
 
     dir->dd_fd = ret;
     min_length = min_t(size_t,strlen(dirName),DRV_NAME_MAX);
-    ret = memcpy_s(dir->dd_dirent.d_name,DRV_NAME_MAX, dirName, min_length);
-    if(ret != EOK){
-        bsp_err("[%s] memcpy_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memcpy_s(dir->dd_dirent.d_name,DRV_NAME_MAX, dirName, min_length);
 
     return dir;
 }
@@ -553,11 +513,7 @@ void adp_rfile_init()
 {
     INIT_LIST_HEAD(&g_adp_rfile.rfile_listhead);
 
-#ifdef __KERNEL__
     sema_init(&g_adp_rfile.semList, 1);
-#else /* __VXWORKS__ */
-    g_adp_rfile.semList = semBCreate(SEM_Q_FIFO, (SEM_B_STATE)SEM_FULL);
-#endif /* end of __KERNEL__ */
 
 }
 
@@ -658,11 +614,10 @@ void adp_del_node(DRV_DIR_S *dirp)
 DRV_DIRENT_S* mdrv_file_readdir(DRV_DIR_S *dirp)
 {
     int ret;
-    int len;
-    char data[DATA_SIZE_1K] = {0};
+    char data[1024] = {0};
     struct rfile_dirent_info *pstDirent = NULL;
-    RFILE_DIRENT_STRU *pdirent = NULL;
-    RFILE_DIRENT_STRU *pdirentcur = NULL;
+    RFILE_DIRENT_STRU *pdirent;
+    RFILE_DIRENT_STRU *pdirentcur;
 
     if(0 == dirp)
     {
@@ -675,87 +630,75 @@ DRV_DIRENT_S* mdrv_file_readdir(DRV_DIR_S *dirp)
 
     if(NULL == pstDirent)
     {
-        len = bsp_readdir((unsigned int)dirp->dd_fd, data, DATA_SIZE_1K);
+        ret = bsp_readdir((unsigned int)dirp->dd_fd, data, 1024);
 
-        if(len <= 0)
+        if(ret <= 0)
         {
             return 0;
         }
 
-        pdirent = (RFILE_DIRENT_STRU*)Rfile_Malloc(DATA_SIZE_1K);
+        /* coverity[alloc_fn] */
+        pdirent = (RFILE_DIRENT_STRU*)Rfile_Malloc(1024);
         if(!pdirent)
         {
             return 0;
         }
-        ret = memset_s((void*)pdirent,DATA_SIZE_1K,0,DATA_SIZE_1K);
-        if(ret != EOK){
-            bsp_err("[%s] memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-        }
+        memset_s((void*)pdirent,1024,0,1024);/*lint !e669 */
 
+        /* coverity[alloc_fn] */
         pstDirent = Rfile_Malloc(sizeof(struct rfile_dirent_info));
         if(!pstDirent)
         {
-            goto err;
+            Rfile_Free(pdirent);
+            return 0;
         }
-        ret = memset_s((void*)pstDirent,sizeof(struct rfile_dirent_info),0,sizeof(struct rfile_dirent_info));
-        if(ret != EOK){
-            bsp_err("[%s] memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-        }
-        ret = memcpy_s((void*)pdirent,DATA_SIZE_1K, data, (unsigned int)len);
-        if(ret != EOK){
-            bsp_err("[%s] memcpy_s err. ret =  %d.\n", __FUNCTION__, ret);
-        }
+        memset_s((void*)pstDirent,sizeof(*pstDirent),0,sizeof(struct rfile_dirent_info));
+
+        /* coverity[noescape] */
+        memcpy_s((void*)pdirent,1024, data, (unsigned int)ret);
+
         pstDirent->phandle = dirp;
 
+        /* coverity[var_assign] */
         pstDirent->pdirent = pdirent;
-        pstDirent->len = len;
+        pstDirent->len = ret;
         pstDirent->ptr = 0;
 
-        if((len = adp_add_node(pstDirent)) != 0)
+        /* coverity[noescape] */
+        if((ret = adp_add_node(pstDirent)) != 0)
         {
-            goto err;
+            Rfile_Free(pdirent);
+            Rfile_Free(pstDirent);
+            return 0;
         }
     }
 
     if(pstDirent->ptr >= pstDirent->len)
     {
-        bsp_err("[%s] ptr %d, len %d.\n", __FUNCTION__, pstDirent->ptr, pstDirent->len);
-        goto err;
+         bsp_err("[%s] ptr %d, len %d.\n", __FUNCTION__, pstDirent->ptr, pstDirent->len);
+        return 0;
     }
 
+    /* coverity[var_assign] */
     pdirentcur = (RFILE_DIRENT_STRU *)((u8*)(pstDirent->pdirent) + pstDirent->ptr);
     pstDirent->stdirent.d_ino = pdirentcur->d_ino;
 
-    ret = memset_s((void*)pstDirent->stdirent.d_name,(DRV_NAME_MAX+1),0, (DRV_NAME_MAX+1));
-    if(ret != EOK){
-        bsp_err("[%s] memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)pstDirent->stdirent.d_name,(DRV_NAME_MAX+1),0, (DRV_NAME_MAX+1));
+
     if(strlen((char*)pdirentcur->d_name) > DRV_NAME_MAX)
     {
-        ret = memcpy_s(pstDirent->stdirent.d_name,DRV_NAME_MAX+1,pdirentcur->d_name, DRV_NAME_MAX);
-        if(ret != EOK){
-            bsp_err("[%s] memcpy_s err. ret =  %d.\n", __FUNCTION__, ret);
-        }
+        memcpy_s(pstDirent->stdirent.d_name,DRV_NAME_MAX+1,pdirentcur->d_name, DRV_NAME_MAX);
     }
     else
     {
-        ret = strncpy_s(pstDirent->stdirent.d_name,DRV_NAME_MAX+1,(char*)pdirentcur->d_name, (unsigned long)DRV_NAME_MAX);
-        if(ret != EOK){
-            bsp_err("[%s] strncpy_s err. ret =  %d.\n", __FUNCTION__, ret);
-        }
+        /* coverity[secure_coding] */
+        strncpy_s(pstDirent->stdirent.d_name,DRV_NAME_MAX+1,(char*)pdirentcur->d_name, (unsigned long)DRV_NAME_MAX); /* [false alarm]:fortify */
     }
 
     pstDirent->ptr += pdirentcur->d_reclen;
 
+    /* coverity[leaked_storage] */
     return &(pstDirent->stdirent);
-err:
-    if(pdirent != NULL) {
-        Rfile_Free(pdirent);
-    }
-    if(pstDirent != NULL) {
-        Rfile_Free(pstDirent);
-    }
-    return NULL;
 }
 
 int mdrv_file_closedir(DRV_DIR_S *dirp)

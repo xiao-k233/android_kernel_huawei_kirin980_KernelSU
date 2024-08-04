@@ -146,7 +146,7 @@ TAF_UINT32 At_String2Hex(TAF_UINT8 *nptr,TAF_UINT16 usLen,TAF_UINT32 *pRtn)
 {
     TAF_UINT32 c     = 0;         /* current Char */
     TAF_UINT32 total = 0;         /* current total */
-    TAF_UINT32 Length = 0;         /* current Length */
+    TAF_UINT8 Length = 0;         /* current Length */
 
     c = (TAF_UINT32)*nptr++;
 
@@ -477,13 +477,7 @@ VOS_VOID* At_HeapAllocD(VOS_UINT32 ulSize)
         return NULL;
     }
 
-#if (VOS_VXWORKS == VOS_OS_VER)
-    ret = (VOS_VOID *)malloc(ulSize);
-#elif (VOS_LINUX == VOS_OS_VER)
     ret = (VOS_VOID *)kmalloc(ulSize, GFP_KERNEL);
-#else
-    ret = (VOS_VOID *)malloc(ulSize);
-#endif
 
     return ret;
 }
@@ -496,13 +490,7 @@ VOS_VOID At_HeapFreeD(VOS_VOID *pAddr)
         return ;
     }
 
-#if (VOS_VXWORKS == VOS_OS_VER)
-    free(pAddr);
-#elif (VOS_LINUX == VOS_OS_VER)
     kfree(pAddr);
-#else
-    free(pAddr);
-#endif
 
     return;
 }

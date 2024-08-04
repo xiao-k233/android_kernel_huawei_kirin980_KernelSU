@@ -93,19 +93,13 @@ u32 modem_reset_fail_id_get(void)
 static inline void cp_reset_invoke_dump(char *cb_name)
 {
     u32 slice;
-	int ret = 0;
     if (g_reset_debug.dump_state == (u32)RESET_DUMP_MAGIC) {
-        ret = strncpy_s(g_reset_debug.dump_info.invoke_addr, DRV_RESET_MODULE_NAME_LEN, cb_name, DRV_RESET_MODULE_NAME_LEN - 1);
-	if (ret)
-	{
-		reset_print_err("strncpy fail(%d)\n",ret);
-	}
+        /* coverity[secure_coding] */
+        (void)strncpy_s(g_reset_debug.dump_info.invoke_addr, DRV_RESET_MODULE_NAME_LEN, cb_name, DRV_RESET_MODULE_NAME_LEN);
         slice = bsp_get_slice_value();
-        ret = memcpy_s((void *)(g_reset_debug.dump_info.invoke_addr + (DRV_RESET_MODULE_NAME_LEN + 3)), sizeof(u32),(void *)(&slice), sizeof(u32));
-	if (ret)
-	{
-		reset_print_err("memcpy fail(%d)\n",ret);
-	}
+        /* coverity[secure_coding] */
+        (void)memcpy_s((void *)(g_reset_debug.dump_info.invoke_addr + (DRV_RESET_MODULE_NAME_LEN + 3)), sizeof(u32),(void *)(&slice), sizeof(u32));
+
         if (g_reset_debug.dump_info.invoke_addr < (char *)((unsigned long)g_reset_debug.dump_info.base_addr + CP_RESET_DUMP_INVOKE_END))
             g_reset_debug.dump_info.invoke_addr += 2*(DRV_RESET_MODULE_NAME_LEN - 1);
     }
@@ -150,7 +144,7 @@ s32 reset_prepare(enum MODEM_ACTION action)
 	g_modem_reset_ctrl.modem_action = action;
 	spin_unlock_irqrestore(&g_modem_reset_ctrl.action_lock, flags);
 	cp_reset_timestamp_dump(RESET_DUMP_PREPARE);
-	__pm_stay_awake(&(g_modem_reset_ctrl.wake_lock));
+	wake_lock(&(g_modem_reset_ctrl.wake_lock));
 	reset_print_debug("(%d) wake_lock\n", ++g_reset_debug.main_stage);
 
 	if ((MODEM_POWER_OFF ==  current_action) || (MODEM_RESET ==  current_action))
@@ -169,11 +163,7 @@ extern s32 bsp_icc_channel_reset(DRV_RESET_CB_MOMENT_E stage, int usrdata);
 extern void ipc_modem_reset_cb(DRV_RESET_CB_MOMENT_E eparam, int usrdata);
 extern s32 bsp_mem_ccore_reset_cb(DRV_RESET_CB_MOMENT_E enParam, int userdata);
 extern int bsp_dump_sec_channel_free(DRV_RESET_CB_MOMENT_E eparam, s32 usrdata);
-#if(FEATURE_TDS_WCDMA_DYNAMIC_LOAD == FEATURE_ON)
-extern s32 bsp_loadps_reset_cb(DRV_RESET_CB_MOMENT_E eparam, s32 userdata);
-#else
 static inline s32 bsp_loadps_reset_cb(DRV_RESET_CB_MOMENT_E eparam, s32 userdata){return 0;}
-#endif
 
 s32 icc_channel_reset (DRV_RESET_CB_MOMENT_E stage, int userdata)
 {
@@ -272,7 +262,7 @@ fail:
 s32 invoke_reset_cb(DRV_RESET_CB_MOMENT_E stage)
 {
 	struct reset_cb_list *p = g_modem_reset_ctrl.list_head;
-	int ret = RESET_OK;
+	s32 ret = RESET_OK;
 
 	reset_print_debug("(%d) @reset %d\n", ++g_reset_debug.main_stage, (u32)stage);
 
@@ -299,7 +289,6 @@ s32 invoke_reset_cb(DRV_RESET_CB_MOMENT_E stage)
 	return ret;
 }
 
-#if defined(CONFIG_HISI_RPROC)
 s32 send_sync_msg_to_mcore(u32 reset_info, u32 *ack_val)
 {
 	s32 ret = 0;
@@ -323,14 +312,6 @@ s32 send_sync_msg_to_mcore(u32 reset_info, u32 *ack_val)
 	return ret;
 }
 
-#else
-s32 send_sync_msg_to_mcore(u32 reset_info, u32 *ack_val)
-{
-	reset_print_err("is stub\n");
-	return 0;
-}
-
-#endif
 
 s32 send_msg_to_hifi(DRV_RESET_CB_MOMENT_E stage)
 {
@@ -394,7 +375,6 @@ s32 wait_for_ccore_reset_done(u32 timeout)
 
 void master_in_idle_timestamp_dump(void)
 {
-	int ret = 0;
     reset_print_shorterr( "[indedicator   ]0x%-8x [fiq_cnt       ]0x%-8x [fail_cnt     ]0x%-8x [flow_begin   ]0x%-8x\n",
     reset_stamp(STAMP_RESET_BASE_ADDR), reset_stamp(STAMP_RESET_FIQ_COUNT), reset_stamp(STAMP_RESET_IDLE_FAIL_COUNT), reset_stamp(STAMP_RESET_MASTER_ENTER_IDLE));
     reset_print_shorterr( "[nxdsp_inidle  ]0x%-8x [cipher_chn_dis]0x%-8x [cipher_inidle]0x%-8x [cipher_reset ]0x%-8x\n",
@@ -421,12 +401,7 @@ void master_in_idle_timestamp_dump(void)
     if (g_reset_debug.dump_state == (u32)RESET_DUMP_MAGIC)
     {
         /* coverity[secure_coding] */
-        ret = memcpy_s((void*)g_reset_debug.dump_info.master_addr, (u32)(STAMP_RESET_FIQ_OUT_COUNT  + 1 - STAMP_RESET_BASE_ADDR), (void*)STAMP_RESET_BASE_ADDR, (u32)(STAMP_RESET_FIQ_OUT_COUNT - STAMP_RESET_BASE_ADDR + 1));
-	if (ret)
-	{
-		reset_print_err("memcpy fail(%d)\n",ret);
-		return;
-	}
+        (void)memcpy_s((void*)g_reset_debug.dump_info.master_addr, (u32)(STAMP_RESET_FIQ_OUT_COUNT  + 1 - STAMP_RESET_BASE_ADDR), (void*)STAMP_RESET_BASE_ADDR, (u32)(STAMP_RESET_FIQ_OUT_COUNT - STAMP_RESET_BASE_ADDR + 1));
     }
 }
 
@@ -709,7 +684,7 @@ int modem_reset_task(void *arg)
 		spin_unlock_irqrestore(&g_modem_reset_ctrl.action_lock, flags);
 
 		osl_sem_up(&(g_modem_reset_ctrl.action_sem));
-		__pm_relax(&(g_modem_reset_ctrl.wake_lock));/*lint !e455 */
+		wake_unlock(&(g_modem_reset_ctrl.wake_lock));/*lint !e455 */
 
 		cp_reset_timestamp_dump(RESET_DUMP_END);
 		g_modem_reset_ctrl.exec_time = get_timer_slice_delta(g_modem_reset_ctrl.exec_time, bsp_get_slice_value());
@@ -759,7 +734,6 @@ struct reset_cb_list *do_cb_func_register(struct reset_cb_list * list_head, cons
 {
     struct reset_cb_list *cb_func_node = NULL;
 	u32 name_len = 0;
-	int ret = 0;
 
     if (!func_name || !func || (prior < RESET_CBFUNC_PRIO_LEVEL_LOWT || prior > RESET_CBFUNC_PRIO_LEVEL_HIGH))
     {
@@ -771,20 +745,10 @@ struct reset_cb_list *do_cb_func_register(struct reset_cb_list * list_head, cons
     if (cb_func_node)
     {
 		name_len = (u32)min((u32)DRV_RESET_MODULE_NAME_LEN, (u32)strlen(func_name));
-		ret = memset_s((void*)cb_func_node, (sizeof(*cb_func_node)), 0, (sizeof(struct reset_cb_list)));
-		if (ret)
-		{
-			reset_print_err("memset fail(%d)\n",ret);
-			kfree(cb_func_node);
-			return list_head;
-		}
-		ret = memcpy_s((void*)cb_func_node->cb_info.name, (u32)min((u32)DRV_RESET_MODULE_NAME_LEN, (u32)strlen(func_name)), (void*)func_name, (int)name_len);
-		if (ret)
-		{
-			reset_print_err("memcpy fail(%d)\n",ret);
-			kfree(cb_func_node);
-			return list_head;
-		}
+		/* coverity[secure_coding] */
+		memset_s((void*)cb_func_node, (sizeof(*cb_func_node)), 0, (sizeof(struct reset_cb_list)));
+		/* coverity[secure_coding] */
+		memcpy_s((void*)cb_func_node->cb_info.name, (u32)min((u32)DRV_RESET_MODULE_NAME_LEN, (u32)strlen(func_name)), (void*)func_name, (int)name_len);
 		cb_func_node->cb_info.priolevel = prior;
 		cb_func_node->cb_info.userdata = user_data;
 		cb_func_node->cb_info.cbfun = func;
@@ -1065,19 +1029,10 @@ int __init bsp_reset_init(void)
 		return RESET_ERROR;
 	}
 
-	ret = memset_s(&(g_modem_reset_ctrl), sizeof(struct modem_reset_ctrl), 0, sizeof(g_modem_reset_ctrl));
-	if (ret)
-	{
-		reset_print_err("memset fail(%d)\n",ret);
-		return RESET_ERROR;
-	}
-
-	ret = memset_s(&g_reset_debug, sizeof(struct modem_reset_debug), 0, sizeof(g_reset_debug));
-	if (ret)
-	{
-		reset_print_err("memset fail(%d)\n",ret);
-		return RESET_ERROR;
-	}
+	/* coverity[secure_coding] */
+	memset_s(&(g_modem_reset_ctrl), sizeof(struct modem_reset_ctrl), 0, sizeof(g_modem_reset_ctrl));
+	/* coverity[secure_coding] */
+	memset_s(&g_reset_debug, sizeof(struct modem_reset_debug), 0, sizeof(g_reset_debug));
 	g_reset_debug.print_sw = 1;
 
 	/* NV控制是否打开单独复位功能以及与RIL的对接 */
@@ -1101,7 +1056,7 @@ int __init bsp_reset_init(void)
 	osl_sem_init(0, &g_modem_reset_ctrl.wait_ccore_reset_ok_sem);
 	osl_sem_init(0, &g_modem_reset_ctrl.wait_modem_master_in_idle_sem);
 
-	wakeup_source_init(&g_modem_reset_ctrl.wake_lock, "modem_reset wake");
+	wake_lock_init(&g_modem_reset_ctrl.wake_lock, WAKE_LOCK_SUSPEND, "modem_reset wake");
 	spin_lock_init(&g_modem_reset_ctrl.action_lock);
 
     g_modem_reset_ctrl.task = kthread_run(modem_reset_task,  NULL, "modem_reset");
@@ -1209,6 +1164,3 @@ EXPORT_SYMBOL(reset_ril_on); /*lint !e19 */
 EXPORT_SYMBOL(reset_ctrl_debug_show); /*lint !e19 */
 EXPORT_SYMBOL(bsp_reset_is_connect_ril); /*lint !e19 */
 EXPORT_SYMBOL(bsp_reset_is_feature_on); /*lint !e19 */
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-module_init(bsp_reset_init); /*lint !e19*/
-#endif

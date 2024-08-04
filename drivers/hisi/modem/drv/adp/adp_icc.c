@@ -56,92 +56,6 @@ extern struct icc_control g_icc_ctrl;
 
 #define ICC_DEFAULT_SUB_CHANNEL   (0)
 
-#ifndef CONFIG_ICC   /* ´ò×® */
-
-s32 bsp_icc_send(u32 cpuid,u32 channel_id,u8 *buffer,u32 data_len)
-{
-	icc_print_error( "is stub\n");
-	return data_len;
-}
-
-s32 bsp_icc_send_sync(u32 cpuid,u32 channel_id,u8 * data,u32 data_len,long timeout)
-{
-	icc_print_error( "is stub\n");
-	return data_len;
-}
-
-s32 bsp_icc_read(u32 channel_id,u8 * buf,u32 buf_len)
-{
-	icc_print_error( "is stub\n");
-	return buf_len;
-}
-
-s32 bsp_icc_event_register(u32 channel_id, read_cb_func read_cb, void *read_context,
-                                              write_cb_func write_cb, void *write_context)
-{
-	icc_print_error( "is stub\n");
-	return ICC_OK;
-}
-
-s32 bsp_icc_event_unregister(u32 channel_id)
-{
-	icc_print_error( "is stub\n");
-	return ICC_OK;
-}
-
-s32 bsp_icc_init(void)
-{
-	icc_print_error( "is stub\n");
-	return ICC_OK;
-}
-
-void bsp_icc_release(void)
-{
-	icc_print_error( "is stub\n");
-	return;
-}
-
-s32 bsp_icc_suspend(void)
-{
-	icc_print_error( "is stub\n");
-	return ICC_OK;
-}
-
-BSP_S32 BSP_ICC_Open(BSP_U32 u32ChanId, ICC_CHAN_ATTR_S *pChanAttr)
-{
-	icc_print_error( "is stub\n");
-	return ICC_OK;
-}
-
-BSP_S32 BSP_ICC_Write(BSP_U32 u32ChanId, BSP_U8* pData, BSP_S32 s32Size)
-{
-	icc_print_error( "is stub\n");
-	return s32Size;
-}
-
-BSP_S32 BSP_ICC_Read(BSP_U32 u32ChanId, BSP_U8* pData, BSP_S32 s32Size)
-{
-	icc_print_error( "is stub\n");
-	return s32Size;
-}
-
-BSP_S32 BSP_ICC_Debug_Register(BSP_U32 u32ChanId, FUNCPTR_1 debug_routine, int param)
-{
-	icc_print_error( "is stub\n");
-	return ICC_OK;
-}
-
-s32 bsp_icc_debug_register(u32 channel_id, FUNCPTR_1 debug_routine, int param)
-{
-	icc_print_error( "is stub\n");
-	return ICC_OK;
-}
-
-int mdrv_icc_open(unsigned int u32ChanId, ICC_CHAN_ATTR_S *pChanAttr) {return 0;}
-int mdrv_icc_read(unsigned int u32ChanId, unsigned char* pData, int s32Size) {return s32Size;}
-int mdrv_icc_write(unsigned int u32ChanId, unsigned char* pData, int s32Size) {return s32Size;}
-
-#elif (defined(__KERNEL__) || defined(__OS_VXWORKS__)||defined(__OS_RTOSCK__))  /* CONFIG_ICC */
 
 struct bsp_icc_cb_info
 {
@@ -238,8 +152,8 @@ int BSP_ICC_Open(unsigned int u32ChanId, ICC_CHAN_ATTR_S *pChanAttr)
     }
     else if(pChanAttr->u32FIFOOutSize != pChanAttr->u32FIFOInSize)
     {
-        icc_print_error("invalid param u32ChanId[%d],fifo_in[0x%x],fifo_out[0x%x]\n",
-            channel_index, pChanAttr->u32FIFOInSize, pChanAttr->u32FIFOOutSize);
+        icc_print_error("invalid param u32ChanId[%d],pChanAttr[0x%p],fifo_in[0x%x],fifo_out[0x%x]\n",
+            channel_index, pChanAttr, pChanAttr->u32FIFOInSize, pChanAttr->u32FIFOOutSize);
         goto out; /*lint !e801 */
     }
 
@@ -290,7 +204,7 @@ int BSP_ICC_Read(unsigned int u32ChanId, unsigned char* pData, int s32Size)
 
 	if(!pData || channel_index >= ICC_CHN_ID_MAX)
 	{
-		icc_print_error("invalid param[%d]\n", channel_index);
+		icc_print_error("invalid param[%d], pData[0x%p]\n", channel_index, pData);
 		return ICC_INVALID_PARA;
 	}
 
@@ -314,7 +228,7 @@ int BSP_ICC_Write(unsigned int u32ChanId, unsigned char* pData, int s32Size)
 
     if(!pData || channel_index >= ICC_CHN_ID_MAX)
     {
-        icc_print_error("invalid param[%d]\n", channel_index);
+        icc_print_error("invalid param[%d], pData[0x%p]\n", channel_index, pData);
         return ICC_INVALID_PARA;
     }
 
@@ -348,5 +262,4 @@ int mdrv_icc_read(unsigned int u32ChanId, unsigned char* pData, int s32Size)   _
 int mdrv_icc_write(unsigned int u32ChanId, unsigned char* pData, int s32Size)  __attribute__((alias("BSP_ICC_Write")));
 /*lint -restore +e762 */
 
-#endif /* CONFIG_ICC */
 

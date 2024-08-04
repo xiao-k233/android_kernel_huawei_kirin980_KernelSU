@@ -258,21 +258,11 @@ VOS_UINT32 ADS_DL_ConfigAdq(
         /* 填写AD描述符: OUTPUT0 ---> 目的地址; OUTPUT1 ---> SKBUFF */
         pstAdDesc = ADS_DL_GET_IPF_AD_DESC_PTR(enAdType, ulCnt);
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0))
-#ifndef CONFIG_NEW_PLATFORM
-        pstAdDesc->u32OutPtr0 = (VOS_UINT32)virt_to_phys((VOS_VOID *)pstImmZc->data);
-        pstAdDesc->u32OutPtr1 = (VOS_UINT32)virt_to_phys((VOS_VOID *)pstImmZc);
-#else
         pstAdDesc->OutPtr0 = (modem_phy_addr)virt_to_phys((VOS_VOID *)pstImmZc->data);
         pstAdDesc->OutPtr1 = (modem_phy_addr)virt_to_phys((VOS_VOID *)pstImmZc);
-#endif
-#else
-#ifndef CONFIG_NEW_PLATFORM
-        pstAdDesc->u32OutPtr0 = (VOS_UINT32)ADS_IPF_GetMemDma(pstImmZc);
-        pstAdDesc->u32OutPtr1 = (VOS_UINT32)virt_to_phys((VOS_VOID *)pstImmZc);
 #else
         pstAdDesc->OutPtr0 = (modem_phy_addr)ADS_IPF_GetMemDma(pstImmZc);
         pstAdDesc->OutPtr1 = (modem_phy_addr)virt_to_phys((VOS_VOID *)pstImmZc);
-#endif
 #endif/* (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0) */
 
         /* 记录描述符信息 */
@@ -286,11 +276,7 @@ VOS_UINT32 ADS_DL_ConfigAdq(
             }
 
             pstAdRecord->astAdBuff[pstAdRecord->ulPos].ulSlice      = ulSlice;
-#ifndef CONFIG_NEW_PLATFORM
-            pstAdRecord->astAdBuff[pstAdRecord->ulPos].ulPhyAddr    = pstAdDesc->u32OutPtr1;
-#else
             pstAdRecord->astAdBuff[pstAdRecord->ulPos].pulPhyAddr   = (VOS_VOID *)pstAdDesc->OutPtr1;
-#endif
             pstAdRecord->astAdBuff[pstAdRecord->ulPos].pstImmZc     = pstImmZc;
             pstAdRecord->ulPos++;
         }
@@ -310,11 +296,7 @@ VOS_UINT32 ADS_DL_ConfigAdq(
         for (ulCnt = 0; ulCnt < ulTmp; ulCnt++)
         {
             pstAdDesc = ADS_DL_GET_IPF_AD_DESC_PTR(enAdType, ulCnt);
-#ifndef CONFIG_NEW_PLATFORM
-            pstImmZc  = (IMM_ZC_STRU *)phys_to_virt((unsigned long)pstAdDesc->u32OutPtr1);
-#else
             pstImmZc  = (IMM_ZC_STRU *)phys_to_virt((unsigned long)pstAdDesc->OutPtr1); //lint !e661
-#endif
             IMM_ZcFreeAny(pstImmZc);
             ADS_DBG_DL_ADQ_FREE_MEM_NUM(1);
         }
@@ -541,11 +523,7 @@ VOS_VOID ADS_DL_FreeIpfUsedAd0(VOS_VOID)
         /* 释放ADQ0的内存 */
         for (i = 0; i < PS_MIN(ulAdNum, IPF_DLAD0_DESC_SIZE); i++)
         {
-#ifndef CONFIG_NEW_PLATFORM
-            IMM_ZcFreeAny((IMM_ZC_STRU *)phys_to_virt((unsigned long)pstAdDesc[i].u32OutPtr1));
-#else
             IMM_ZcFreeAny((IMM_ZC_STRU *)phys_to_virt((unsigned long)pstAdDesc[i].OutPtr1));
-#endif
         }
     }
     else
@@ -586,11 +564,7 @@ VOS_VOID ADS_DL_FreeIpfUsedAd1(VOS_VOID)
         /* 释放ADQ1的内存 */
         for (i = 0; i < PS_MIN(ulAdNum, IPF_DLAD1_DESC_SIZE); i++)
         {
-#ifndef CONFIG_NEW_PLATFORM
-            IMM_ZcFreeAny((IMM_ZC_STRU *)phys_to_virt((unsigned long)pstAdDesc[i].u32OutPtr1));
-#else
             IMM_ZcFreeAny((IMM_ZC_STRU *)phys_to_virt((unsigned long)pstAdDesc[i].OutPtr1));
-#endif
         }
     }
     else
@@ -816,17 +790,6 @@ VOS_UINT32 ADS_DL_ValidateImmMem(IMM_ZC_STRU *pstImmZc)
     return VOS_OK;
 }
 
-#if (FEATURE_ON == FEATURE_PC5_DATA_CHANNEL)
-
-VOS_VOID ADS_DL_ProcPc5Pkt(IMM_ZC_STRU *pstImmZc)
-{
-    ADS_MNTN_RecPc5DLPktInfo(pstImmZc);
-
-    (VOS_VOID)mdrv_pcv_xmit(pstImmZc);
-
-    ADS_DBG_DL_RDQ_RX_PC5_PKT_NUM(1);
-}
-#endif
 
 
 VOS_VOID ADS_DL_Xmit(
@@ -836,9 +799,7 @@ VOS_VOID ADS_DL_Xmit(
 )
 {
     RCV_DL_DATA_FUNC                    pRcvDlDataFunc    = VOS_NULL_PTR;
-#if (FEATURE_ON == FEATURE_RNIC_NAPI_GRO)
     RCV_RD_LAST_DATA_FUNC               pRcvRdLstDataFunc = VOS_NULL_PTR;
-#endif
     IMM_ZC_STRU                        *pstLstImmZc       = VOS_NULL_PTR;
     VOS_UINT32                          ulExParam;
     VOS_UINT16                          usIpfResult;
@@ -846,9 +807,7 @@ VOS_VOID ADS_DL_Xmit(
     VOS_UINT8                           ucExRabId;
 
     pRcvDlDataFunc    = ADS_DL_GET_DATA_CALLBACK_FUNC(ulInstance, ulRabId);
-#if (FEATURE_ON == FEATURE_RNIC_NAPI_GRO)
     pRcvRdLstDataFunc = ADS_DL_GET_RD_LST_DATA_CALLBACK_FUNC(ulInstance, ulRabId);
-#endif
 
     /* 获取缓存的数据 */
     pstLstImmZc = ADS_DL_GET_LST_DATA_PTR(ulInstance, ulRabId);
@@ -864,14 +823,12 @@ VOS_VOID ADS_DL_Xmit(
         {
             (VOS_VOID)pRcvDlDataFunc(ucExRabId, pstLstImmZc, enIpType, ulExParam);
 
-#if (FEATURE_ON == FEATURE_RNIC_NAPI_GRO)
             /* 最后一个报文 */
             pRcvRdLstDataFunc = ADS_DL_GET_RD_LST_DATA_CALLBACK_FUNC(ulInstance, ulRabId);
             if ((VOS_NULL_PTR == pstImmZc) && (VOS_NULL_PTR != pRcvRdLstDataFunc))
             {
                 pRcvRdLstDataFunc(ulExParam);
             }
-#endif
             ADS_DBG_DL_RMNET_TX_PKT_NUM(1);
         }
         else
@@ -1078,9 +1035,6 @@ VOS_VOID ADS_DL_ProcIpfResult(VOS_VOID)
         return;
     }
 
-#if (FEATURE_OFF == FEATURE_LTE)
-    mdrv_wdt_feed(0);
-#endif
 
     /* 增加RD统计个数 */
     ADS_DBG_DL_RDQ_RX_RD_NUM(ulRdNum);
@@ -1106,14 +1060,6 @@ VOS_VOID ADS_DL_ProcIpfResult(VOS_VOID)
             continue;
         }
 
-#if (FEATURE_ON == FEATURE_PC5_DATA_CHANNEL)
-        /* 获取下行PC5 IPF过滤链号 */
-        if (IPF_LTEV_DLFC == pstRdDesc->fc_head)
-        {
-            ADS_DL_ProcPc5Pkt(pstImmZc);
-        }
-        else
-#endif
         {
             /* 校验IMM内存 */
             if (VOS_OK != ADS_DL_ValidateImmMem(pstImmZc))
@@ -1187,9 +1133,6 @@ VOS_VOID ADS_DL_ProcIpfResult(VOS_VOID)
 
     ADS_MNTN_ReportDLPktInfo();
 
-#if (FEATURE_ON == FEATURE_PC5_DATA_CHANNEL)
-    ADS_MNTN_ReportPc5DLPktInfo();
-#endif
 
     ADS_DL_EnableTxWakeLockTimeout(ulTxTimeout);
     return;
@@ -1337,7 +1280,6 @@ VOS_UINT32 ADS_DL_DeregFilterDataCallback(VOS_UINT32 ulRabId)
     return VOS_OK;
 }
 
-#if (FEATURE_ON == FEATURE_RNIC_NAPI_GRO)
 
 VOS_UINT32 ADS_DL_RegNapiCallback(
     VOS_UINT8                           ucExRabId,
@@ -1375,7 +1317,6 @@ VOS_UINT32 ADS_DL_RegNapiCallback(
 
     return VOS_OK;
 }
-#endif
 
 
 VOS_UINT32 ADS_DL_RcvTafPdpStatusInd(MsgBlock *pMsg)
@@ -1422,9 +1363,7 @@ VOS_UINT32 ADS_DL_RcvTafPdpStatusInd(MsgBlock *pMsg)
         if (ADS_CLEAN_RCV_CB_FUNC_TURE == pstPdpStatusInd->enCleanRcvCbFlag)
         {
             pstDlRabInfo->pRcvDlDataFunc    = VOS_NULL_PTR;
-#if (FEATURE_ON == FEATURE_RNIC_NAPI_GRO)
             pstDlRabInfo->pRcvRdLstDataFunc  = VOS_NULL_PTR;
-#endif
         }
         else
         {

@@ -121,7 +121,7 @@ struct nv_global_ctrl_stru
 #define NV_DLOAD_CUST_SEC_NAME         PARTITION_MODEM_NVDLOAD_CUST_NAME
 #define NV_BACK_SEC_NAME               PARTITION_MODEM_NVBACKUP_NAME
 #define NV_DEF_SEC_NAME                PARTITION_MODEM_NVDEFAULT_NAME
-#define NV_COLD_SEC_NAME               PARTITION_MODEM_NVPATCH_NAME
+#define NV_COLD_SEC_NAME               "modem_patch_nv_a"
 
 #else
 

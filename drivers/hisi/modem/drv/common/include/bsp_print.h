@@ -254,8 +254,6 @@ typedef enum _module_tag
 	mod_dfc,
 	mod_at_uart,
 	mod_console,
-	mod_ringbuf,
-	mod_virtshell,
 	mod_cshell,
 	mod_cshell_logger,
 	mod_dynmem_rpt,

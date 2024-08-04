@@ -214,8 +214,6 @@ enum SI_PIH_EVENT_ENUM
 #endif
     SI_PIH_EVENT_IMSI_POLLING_SET_CNF  = 47, /* PIH周期性IMSI轮询使用，为了格式统一 */
 
-    SI_PIH_EVENT_BWT_SET_CNF        = 51,
-
     /*从500开始作为PIH内部可维可测消息的勾包*/
     SI_PIH_USIMREG_PID_HOOK         = 500,
     SI_PIH_REFRESHREG_PID_HOOK      = 501,
@@ -946,7 +944,9 @@ typedef struct
 
 extern int TC_NS_RegisterServiceCallbackFunc(char *uuid, void *func, void *private_data);
 
-extern VOS_VOID SI_PIH_TEETimeOutCB (VOS_VOID *timerDataCb);
+extern VOS_VOID SI_PIH_TEETimeOutCB (
+    TEEC_TIMER_PROPERTY_STRU            *pstTimerData
+);
 
 #endif/*CONFIG_TZDRIVER*/
 #endif/*(FEATURE_ON == FEATURE_VSIM)*/
@@ -991,16 +991,6 @@ extern VOS_UINT32 SI_PIH_CchoSetReq(
     SI_PIH_CCHO_COMMAND_STRU           *pstCchoCmd);
 
 extern VOS_UINT32 SI_PIH_CchpSetReq(
-    MN_CLIENT_ID_T                      ClientId,
-    MN_OPERATION_ID_T                   OpId,
-    SI_PIH_CCHP_COMMAND_STRU           *pstCchopCmd);
-
-extern VOS_UINT32 SI_PIH_PrivateCchoSetReq(
-    MN_CLIENT_ID_T                      ClientId,
-    MN_OPERATION_ID_T                   OpId,
-    SI_PIH_CCHO_COMMAND_STRU           *pstCchoCmd);
-
-extern VOS_UINT32 SI_PIH_PrivateCchpSetReq(
     MN_CLIENT_ID_T                      ClientId,
     MN_OPERATION_ID_T                   OpId,
     SI_PIH_CCHP_COMMAND_STRU           *pstCchopCmd);
@@ -1063,11 +1053,6 @@ extern VOS_UINT32 SI_PIH_SciCfgSet (
 extern VOS_UINT32 SI_PIH_SciCfgQuery (
     MN_CLIENT_ID_T                      ClientId,
     MN_OPERATION_ID_T                   OpId);
-
-extern VOS_UINT32 SI_PIH_BwtSet (
-    MN_CLIENT_ID_T                      ClientId,
-    MN_OPERATION_ID_T                   OpId,
-    VOS_UINT16                          usProtectTime);
 
 extern VOS_UINT32 SI_PIH_HvCheckCardQuery(
     MN_CLIENT_ID_T                      ClientId,

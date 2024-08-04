@@ -51,7 +51,6 @@
   1 头文件包含
 *****************************************************************************/
 #include "product_config.h"
-#if(FEATURE_ON == FEATURE_ACPU_FC_POINT_REG)
 #include "Fc.h"
 #include "FcInterface.h"
 #include "FcCdsInterface.h"
@@ -177,10 +176,8 @@ STATIC VOS_VOID  FC_DownProcess(VOS_RATMODE_ENUM_UINT32 enRateMode);
 STATIC VOS_UINT32  FC_RcvCstMsg( MsgBlock * pMsg );
 STATIC VOS_UINT32  FC_RcvCdsMsg( MsgBlock * pMsg );
 STATIC VOS_UINT32  FC_ACORE_RcvTimerMsg(REL_TIMER_MSG *pTimerMsg);
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 STATIC VOS_UINT32  FC_CDMA_DownProcess( VOS_VOID );
 STATIC VOS_UINT32  FC_CDMA_UpProcess( VOS_VOID );
-#endif
 STATIC VOS_UINT32  FC_GPRS_DownProcess( VOS_VOID );
 
 STATIC VOS_UINT32  FC_GPRS_UpProcess( VOS_VOID );
@@ -188,43 +185,6 @@ STATIC VOS_UINT32  FC_GPRS_UpProcess( VOS_VOID );
 /*****************************************************************************
   3 函数实现
 *****************************************************************************/
-#if(FEATURE_ON == FEATURE_NFEXT)
-#if(FEATURE_ON == FEATURE_ACPU_STAT)
-
-STATIC VOS_VOID  FC_BRIDGE_CalcRate( VOS_UINT32 ulPeriod )
-{
-    VOS_UINT32                          ulCurrentByteCnt;
-    VOS_UINT32                          ulLastByteCnt;
-    VOS_UINT32                          ulRate;
-    VOS_UINT32                          ulDeltaPacketCnt;
-
-    if (0 == ulPeriod)
-    {
-        g_stFcBridgeRate.ulRate = 0;
-        return;
-    }
-
-    ulLastByteCnt       = g_stFcBridgeRate.ulLastByteCnt;
-    ulCurrentByteCnt    = NFExt_GetBrBytesCnt();
-    ulDeltaPacketCnt    = (ulCurrentByteCnt - ulLastByteCnt);
-
-    /* 换算成bps,注意防止计算溢出 */
-    if (ulDeltaPacketCnt < ulPeriod)
-    {
-        ulRate = (ulDeltaPacketCnt * 1000 * 8) / ulPeriod ;
-    }
-    else
-    {
-        ulRate = ((ulDeltaPacketCnt * 8) / ulPeriod) * 1000;
-    }
-
-
-    g_stFcBridgeRate.ulLastByteCnt      = ulCurrentByteCnt;
-    g_stFcBridgeRate.ulRate             = ulRate;
-
-    return;
-}
-#endif
 
 
 STATIC VOS_VOID  FC_BRIDGE_ResetRate( VOS_VOID )
@@ -252,44 +212,6 @@ STATIC VOS_UINT32  FC_RmRateJudge( VOS_VOID )
 
     return VOS_FALSE;
 }
-#else
-
-STATIC VOS_VOID  FC_BRIDGE_CalcRate( VOS_UINT32 ulPeriod )
-{
-    return;
-}
-
-
-
-STATIC VOS_VOID  FC_BRIDGE_ResetRate( VOS_VOID )
-{
-    return;
-}
-
-
-
-STATIC VOS_UINT32  FC_UmRateOverThreshold( VOS_VOID )
-{
-    VOS_UINT32                          ulUlRate = 0;
-    VOS_UINT32                          ulDlRate = 0;
-
-
-    /* 获取UM口速率, ADS获取速率接口被删除，后续启用该功能时寻找新接口 */
-    /* ADS_GetCurrentRate(&ulUlRate, &ulDlRate); */
-
-
-    /* 如果上行或下行速率超过门限，则认为是速率高引起CPU高 */
-    if ( (ulUlRate > g_stFcAcoreCfg.stFcCfgCpuA.ulUmUlRateThreshold)
-        || (ulDlRate > g_stFcAcoreCfg.stFcCfgCpuA.ulUmDlRateThreshold) )
-    {
-        return VOS_TRUE;
-    }
-
-    return VOS_FALSE;
-}
-
-
-#endif
 
 
 VOS_UINT32 FC_ACORE_RegDrvAssemFunc(FC_ACORE_DRV_ASSEMBLE_PARA_FUNC pFcDrvSetAssemParaFuncUe, FC_ACORE_DRV_ASSEMBLE_PARA_FUNC pFcDrvSetAssemParaFuncPc)
@@ -559,11 +481,7 @@ STATIC VOS_UINT32  FC_PsRateJudge( VOS_VOID )
     STICK形态判断空口速率
     E5形态判断网桥速率
     */
-#if(FEATURE_ON == FEATURE_NFEXT)
     return (FC_RmRateJudge());
-#else
-    return (FC_UmRateOverThreshold());
-#endif
 }
 
 
@@ -571,16 +489,9 @@ STATIC VOS_UINT32  FC_PsRateJudge( VOS_VOID )
 STATIC VOS_VOID  FC_GetPsRate( VOS_UINT32 *pulUlRate, VOS_UINT32 *pulDlRate )
 {
     /* E5形态下，获取网桥速率 */
-#if(FEATURE_ON == FEATURE_NFEXT)
    /* 网桥上，上下行速率都赋值成网桥速率 */
    *pulUlRate   = FC_BRIDGE_GetRate();
    *pulDlRate   = *pulUlRate;
-#else
-    /* STICK形态下，获取网桥速率 ADS获取速率接口被删除，后续启用该功能时寻找新接口 */
-    /* ADS_GetCurrentRate(pulUlRate, pulDlRate); */
-    *pulUlRate = 0;
-    *pulDlRate = 0;
-#endif
 }
 
 
@@ -627,10 +538,6 @@ VOS_UINT32 FC_CPUA_UpJudge
         return VOS_FALSE;
     }
 
-#if(FEATURE_ON == FEATURE_ACPU_STAT)
-    /* A核ulSmoothTimerLen >= 2，详见FC_CFG_CheckParam函数内注释 */
-    FC_BRIDGE_CalcRate((pstFcCfgCpu->ulSmoothTimerLen - 1) * CPULOAD_GetRegularTimerLen());
-#endif
 
     g_stFcCpuACtrl.ulSmoothTimerLen  = 0;
 
@@ -737,9 +644,6 @@ VOS_UINT32  FC_CPUA_StopFcAttempt( VOS_UINT32 ulParam1, VOS_UINT32 ulParam2 )
         return VOS_OK;
     }
 
-#if(FEATURE_ON == FEATURE_ACPU_STAT)
-    CPULOAD_ResetUserDefLoad();
-#endif
 
     /*如果定时器已经开启，则不需要再次启动*/
     if (VOS_NULL_PTR == g_stFcCpuACtrl.pstStopAttemptTHandle)
@@ -813,9 +717,6 @@ STATIC VOS_UINT32  FC_CPUA_StopFlowCtrl( VOS_VOID )
     pstFcCfgCpu = &(g_stFcAcoreCfg.stFcCfgCpuA);
     pstFcPolicy = FC_POLICY_Get(FC_PRIVATE_POLICY_ID_CPU_A_MODEM_0);
 
-#if (FEATURE_ON == FEATURE_ACPU_STAT)
-    ulCpuLoad   = CPULOAD_GetUserDefLoad();
-#endif
 
     /* 当前CPU小于解流控门限值,解流控 */
     /*lint --e(685) FEATURE_ACPU_STAT没打开ulCpuLoad为0所以第一个判断恒成立 */
@@ -833,17 +734,6 @@ STATIC VOS_UINT32  FC_CPUA_StopFlowCtrl( VOS_VOID )
 STATIC VOS_UINT32  FC_CPUA_Init( VOS_VOID )
 {
     /* 增加使用宏开关判断是否注册回调函数 */
-#if(FEATURE_ON == FEATURE_ACPU_STAT)
-    /* 向CPU监测模块注册回调函数 */
-    if ( VOS_OK != CPULOAD_RegRptHook((CPULOAD_RPT_HOOK_FUNC)FC_CPUA_RcvCpuLoad) )
-    {
-        FC_LOG(PS_PRINT_ERROR, "FC_CPUA_Init, ERROR, CPULOAD_RegRptHook return error!\n");
-        return VOS_ERR;
-    }
-
-    /* A核CPU流控策略初始化 */
-    g_astFcPolicy[FC_POLICY_ID_CPU_A].pPostFunc   = FC_CPUA_StopFcAttempt;
-#endif
 
     PSACORE_MEM_SET(&g_stFcBridgeRate, (VOS_UINT32)sizeof(FC_BRIDGE_RATE_STRU), 0, (VOS_UINT32)sizeof(FC_BRIDGE_RATE_STRU));
     PSACORE_MEM_SET(&g_stFcCpuACtrl, (VOS_UINT32)sizeof(g_stFcCpuACtrl), 0, (VOS_UINT32)sizeof(g_stFcCpuACtrl));
@@ -1531,14 +1421,12 @@ STATIC VOS_VOID  FC_UpProcess(VOS_RATMODE_ENUM_UINT32 enRateMode)
             FC_GPRS_UpProcess();
 
             break;
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
         case VOS_RATMODE_1X:
         case VOS_RATMODE_HRPD:
 
             FC_CDMA_UpProcess();
 
             break;
-#endif
         default:
 
             FC_LOG1(PS_PRINT_WARNING, "FC_UpProcess RateMode Is Invalid %d\n", (VOS_INT32)enRateMode);
@@ -1584,14 +1472,12 @@ STATIC VOS_VOID  FC_DownProcess(VOS_RATMODE_ENUM_UINT32 enRateMode)
             FC_GPRS_DownProcess();
 
             break;
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
         case VOS_RATMODE_1X:
         case VOS_RATMODE_HRPD:
 
             FC_CDMA_DownProcess();
 
             break;
-#endif
         default:
 
             FC_LOG1(PS_PRINT_WARNING, "FC_DownProcess RateMode Is Invalid %d\n", (VOS_INT32)enRateMode);
@@ -1624,7 +1510,6 @@ STATIC VOS_UINT32  FC_GPRS_DownProcess( VOS_VOID )
     return VOS_OK;
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 STATIC VOS_UINT32  FC_CDMA_UpProcess( VOS_VOID )
 {
@@ -1669,7 +1554,6 @@ STATIC VOS_UINT32  FC_CDMA_DownProcess( VOS_VOID )
 
     return VOS_OK;
 }
-#endif
 
 VOS_VOID  FC_ChannelMapCreate(FC_ID_ENUM_UINT8 enFcId, VOS_UINT8 ucRabId, MODEM_ID_ENUM_UINT16  enModemId)
 {
@@ -1812,57 +1696,6 @@ STATIC VOS_UINT32  FC_RcvCdsMsg( MsgBlock * pMsg )
 
 STATIC VOS_UINT32  FC_ACORE_RegPoint( VOS_VOID )
 {
-#if(FEATURE_OFF == FEATURE_UE_MODE_CDMA)
-/* V9R1项目中增加使用宏开关判断FC模块是否需要进行流控点注册 */
-#if(FEATURE_ON == FEATURE_NFEXT)
-    FC_REG_POINT_STRU                   stFcRegPoint;
-
-    PSACORE_MEM_SET(&stFcRegPoint, sizeof(FC_REG_POINT_STRU), 0, sizeof(FC_REG_POINT_STRU));
-
-    /* CPU负载流控点注册 */
-    stFcRegPoint.enPolicyId = FC_POLICY_ID_CPU_A;
-    stFcRegPoint.enFcPri    = FC_PRI_FOR_BRIDGE_FORWARD_DISCARD;
-    stFcRegPoint.enFcId     = FC_ID_BRIDGE_FORWARD_DISACRD;
-    stFcRegPoint.ulParam1   = 0;
-    stFcRegPoint.ulParam2   = 0;
-    stFcRegPoint.pSetFunc   = (FC_SET_FUNC)NFExt_BrSetFlowCtrl;
-    stFcRegPoint.pClrFunc   = (FC_SET_FUNC)NFExt_BrStopFlowCtrl;
-    stFcRegPoint.pRstFunc   = VOS_NULL_PTR;
-    FC_POINT_Reg(&stFcRegPoint);
-
-    stFcRegPoint.enPolicyId = FC_POLICY_ID_CPU_A;
-    stFcRegPoint.enFcPri    = FC_PRI_HIGHEST;
-    stFcRegPoint.enFcId     = FC_ID_WIFI_ETH;
-    stFcRegPoint.ulParam1   = 0;
-    stFcRegPoint.ulParam2   = 0;
-    stFcRegPoint.pSetFunc   = (FC_SET_FUNC)DRV_WIFI_SET_RX_FCTL;
-    stFcRegPoint.pClrFunc   = (FC_SET_FUNC)DRV_WIFI_CLR_RX_FCTL;
-    stFcRegPoint.pRstFunc   = VOS_NULL_PTR;
-    FC_POINT_Reg(&stFcRegPoint);
-
-    /* 内存流控点注册 */
-    stFcRegPoint.enPolicyId = FC_POLICY_ID_MEM;
-    stFcRegPoint.enFcPri    = FC_PRI_FOR_BRIDGE_FORWARD_DISCARD;
-    stFcRegPoint.enFcId     = FC_ID_BRIDGE_FORWARD_DISACRD;
-    stFcRegPoint.ulParam1   = 0;
-    stFcRegPoint.ulParam2   = 0;
-    stFcRegPoint.pSetFunc   = (FC_SET_FUNC)NFExt_BrSetFlowCtrl;
-    stFcRegPoint.pClrFunc   = (FC_SET_FUNC)NFExt_BrStopFlowCtrl;
-    stFcRegPoint.pRstFunc   = VOS_NULL_PTR;
-    FC_POINT_Reg(&stFcRegPoint);
-
-    stFcRegPoint.enPolicyId = FC_POLICY_ID_MEM;
-    stFcRegPoint.enFcPri    = FC_PRI_FOR_MEM_LEV_4;
-    stFcRegPoint.enFcId     = FC_ID_WIFI_ETH;
-    stFcRegPoint.ulParam1   = 0;
-    stFcRegPoint.ulParam2   = 0;
-    stFcRegPoint.pSetFunc   = (FC_SET_FUNC)DRV_WIFI_SET_RX_FCTL;
-    stFcRegPoint.pClrFunc   = (FC_SET_FUNC)DRV_WIFI_CLR_RX_FCTL;
-    stFcRegPoint.pRstFunc   = VOS_NULL_PTR;
-    FC_POINT_Reg(&stFcRegPoint);
-
-#endif
-#endif
 
     return VOS_OK;
 }
@@ -1966,7 +1799,7 @@ VOS_UINT32  FC_ACORE_RcvIntraMsg( MsgBlock * pMsg )
 
 
 
-VOS_VOID FC_ACORE_MsgProc(MsgBlock * pMsg)
+VOS_UINT32  FC_ACORE_MsgProc( MsgBlock * pMsg )
 {
     switch (pMsg->ulSenderPid)
     {
@@ -1991,6 +1824,7 @@ VOS_VOID FC_ACORE_MsgProc(MsgBlock * pMsg)
             break;
     }
 
+    return VOS_OK;
 } /* FC_MsgProc */
 
 
@@ -2109,9 +1943,7 @@ VOS_VOID FC_ACORE_CFG_Init(VOS_VOID)
     g_stFcAcoreCfg.ulFcEnableMask |= FC_POLICY_MASK_GPRS;
     g_stFcAcoreCfg.ulFcEnableMask |= FC_POLICY_MASK_TMP;
     g_stFcAcoreCfg.ulFcEnableMask |= FC_POLICY_MASK_CPU_C;
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     g_stFcAcoreCfg.ulFcEnableMask |= FC_POLICY_MASK_CDMA;
-#endif
     FC_SetFcEnableMask(g_stFcAcoreCfg.ulFcEnableMask);
 
     if ( NV_OK != ulResult )
@@ -2244,7 +2076,6 @@ VOS_UINT32 FC_ACORE_FidInit(enum VOS_INIT_PHASE_DEFINE enPhase)
 
 
 
-#endif
 
 
 

@@ -65,9 +65,7 @@ static ssize_t Modem_NvWrite(struct file *file,const char __user *buf, size_t le
     ret = nv_upgrade_set_flag((bool)true);
     if(ret)
         return -EIO;
-#ifdef BSP_CONFIG_PHONE_TYPE
     (void)nv_set_coldpatch_upgrade_flag((bool)true);
-#endif
     nv_record("modify upgrade flag success !\n");
     /*lint -save -e713*/
     return len;
@@ -81,12 +79,10 @@ static const struct file_operations g_ModemNv ={
 
 int modemNv_ProcInit(void)
 {
-#ifdef BSP_CONFIG_PHONE_TYPE
     if(NULL == proc_create("ModemNv", 0660, NULL, &g_ModemNv))
     {
         return -1;
     }
-#endif
     return 0;
 }
 /*lint -restore*/

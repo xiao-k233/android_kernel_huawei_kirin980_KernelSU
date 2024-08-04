@@ -1,4 +1,4 @@
-/* MD5: 7df446e4ebec446a6004af090f5b3a24*/
+/* MD5: 5cc8c2391610b0e8f558490989af5faa*/
 #if !defined(__PRODUCT_CONFIG_TLPS_H__)
 #define __PRODUCT_CONFIG_TLPS_H__
 
@@ -158,8 +158,8 @@
 #define FEATURE_R1_WIFI_DATA_RETRY                 	 FEATURE_OFF 
 #endif 
 
-#ifndef FEATURE_CUSTOMISED_IMS                 	
-#define FEATURE_CUSTOMISED_IMS                 	 FEATURE_OFF 
+#ifndef FEATURE_VERIZON_IMS                 	
+#define FEATURE_VERIZON_IMS                 	 FEATURE_OFF 
 #endif 
 
 #ifndef FEATURE_SUPPORT_5G_RTT_TIME_DOMAIN_BBIT

@@ -115,6 +115,7 @@ extern int DMS_InitGetSliceFile(void);
 extern int DMS_InitPorCfgFile(void);
 extern int ADS_PlatDevInit(void);
 extern int act_cdev_init(void);
+extern int mdmcp_coresight_init(void);
 extern int his_boot_init(void);
 extern int hisi_sim_hotplug_init(void);
 extern int bastet_modem_driver_init(void);
@@ -244,6 +245,9 @@ static modem_module_init_func g_modem_module_init_func[] = {
 #endif
 
     /* late_initcall */
+#ifdef CONFIG_CORESIGHT
+    mdmcp_coresight_init,
+#endif
     his_boot_init,
     hisi_sim_hotplug_init,
     his_modem_init_driver,

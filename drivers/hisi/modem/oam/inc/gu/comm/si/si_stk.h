@@ -281,8 +281,6 @@ typedef VOS_UINT32 (*DS2TLV)(VOS_UINT8 Tag,VOS_UINT8 *pDes,VOS_UINT8 *pSrc,VOS_U
                                                              ||(SI_STK_ENVELOPE_SMSCRTL == ucDataType)  \
                                                              ||(SI_STK_ENVELOPE_USSDDOWN == ucDataType)  )
 
-#define STK_SSD_OR_USSD_DCS_LEN 420
-
 /*******************************************************************************
   3 Ã¶¾Ù¶¨Òå
 *******************************************************************************/
@@ -1039,7 +1037,7 @@ extern VOS_VOID SI_STKSimpleResponse(SI_PIH_CARD_SLOT_ENUM_UINT32 enSlotId, SI_S
 
 extern VOS_VOID SI_STKCommDataFree(SI_PIH_CARD_SLOT_ENUM_UINT32 enSlotId, VOS_UINT32 ulCmdType, SI_SAT_COMMDATA_STRU *pstData);
 
-extern VOS_UINT32 SI_STKDecodeTagData(SI_PIH_CARD_SLOT_ENUM_UINT32 enSlotId, VOS_UINT8 *pucCmdData, VOS_UINT32 cmdDataLen, VOS_UINT8 ucTag, VOS_VOID *pDec);
+extern VOS_UINT32 SI_STKDecodeTagData(SI_PIH_CARD_SLOT_ENUM_UINT32 enSlotId, VOS_UINT8 *pucCmdData, VOS_UINT8 ucTag, VOS_VOID *pDec);
 
 extern VOS_UINT32 SI_STK_CheckProfileCfg(SI_PIH_CARD_SLOT_ENUM_UINT32 enSlotId, VOS_UINT32 ulCmdType, SI_STK_CMD_PROFILE_CFG_STRU *pstCfgTbl, VOS_UINT32 ulTblSize);
 

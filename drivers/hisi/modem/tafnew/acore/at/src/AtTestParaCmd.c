@@ -67,35 +67,11 @@ VOS_UINT32 At_TestCgdcont(VOS_UINT8 ucIndex)
 {
     VOS_UINT16 usLength = 0;
 
-#if (FEATURE_ON == FEATURE_LTE)
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-    usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr,
-                                       "%s: (0-31),\"IP\",,,(0-2),(0-3),(0,1),(0,1),(0-2),(0,1),(0,1),,,,,,(0-2),,(0,1),(0,1),(0,1),(0,1)\r\n",
-                                       g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-
-
-#if (FEATURE_ON == FEATURE_IPV6)
-    if (AT_IPV6_CAPABILITY_IPV4_ONLY != AT_GetIpv6Capability())
-    {
-        usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR*)pgucAtSndCodeAddr,(TAF_CHAR*)pgucAtSndCodeAddr + usLength,
-                                           "%s: (0-31),\"IPV6\",,,(0-2),(0-3),(0,1),(0,1),(0-2),(0,1),(0,1),,,,,,(0-2),,(0,1),(0,1),(0,1),(0,1)\r\n",
-                                           g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-        usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR*)pgucAtSndCodeAddr,(TAF_CHAR*)pgucAtSndCodeAddr + usLength,
-                                           "%s: (0-31),\"IPV4V6\",,,(0-2),(0-3),(0,1),(0,1),(0-2),(0,1),(0,1),,,,,,(0-2),,(0,1),(0,1),(0,1),(0,1)\r\n",
-                                           g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-    }
-#endif
-
-    usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr + usLength,
-                                       "%s: (0-31),\"PPP\",,,(0-2),(0-3),(0,1),(0,1),(0-2),(0,1),(0,1),,,,,,(0-2),,(0,1),(0,1),(0,1),(0,1)",
-                                       g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-#else
     usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr,
                                        "%s: (0-31),\"IP\",,,(0-2),(0-3),(0,1),(0,1),(0-2),(0,1),(0,1)\r\n",
                                        g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
 
 
-#if (FEATURE_ON == FEATURE_IPV6)
     if (AT_IPV6_CAPABILITY_IPV4_ONLY != AT_GetIpv6Capability())
     {
         usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR*)pgucAtSndCodeAddr,(TAF_CHAR*)pgucAtSndCodeAddr + usLength,
@@ -105,35 +81,10 @@ VOS_UINT32 At_TestCgdcont(VOS_UINT8 ucIndex)
                                            "%s: (0-31),\"IPV4V6\",,,(0-2),(0-3),(0,1),(0,1),(0-2),(0,1),(0,1)\r\n",
                                            g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
     }
-#endif
 
     usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr + usLength,
                                        "%s: (0-31),\"PPP\",,,(0-2),(0-3),(0,1),(0,1),(0-2),(0,1),(0,1)",
                                        g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-#endif
-#else
-    usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr,
-                                       "%s: (1-11),\"IP\",,,(0-2),(0-3),(0,1),(0,1),(0-2),(0,1),(0,1)\r\n",
-                                       g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-
-#if (FEATURE_ON == FEATURE_IPV6)
-    if (AT_IPV6_CAPABILITY_IPV4_ONLY != AT_GetIpv6Capability())
-    {
-        usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR*)pgucAtSndCodeAddr,(TAF_CHAR*)pgucAtSndCodeAddr + usLength,
-                                           "%s: (1-11),\"IPV6\",,,(0-2),(0-3),(0,1),(0,1),(0-2),(0,1),(0,1)\r\n",
-                                           g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-        usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR*)pgucAtSndCodeAddr,(TAF_CHAR*)pgucAtSndCodeAddr + usLength,
-                                           "%s: (1-11),\"IPV4V6\",,,(0-2),(0-3),(0,1),(0,1),(0-2),(0,1),(0,1)\r\n",
-                                           g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-    }
-#endif
-
-    usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr + usLength,
-                                       "%s: (1-11),\"PPP\",,,(0-2),(0-3),(0,1),(0,1),(0-2),(0,1),(0,1)",
-                                       g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-
-
-#endif
 
     gstAtSendData.usBufLen = usLength;
 
@@ -145,16 +96,9 @@ VOS_UINT32 At_TestCgdscont(VOS_UINT8 ucIndex)
 {
     VOS_UINT16 usLength = 0;
 
-#if (FEATURE_ON == FEATURE_LTE)
     usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr,
                                         "%s: (1-31),(0-31),(0-2),(0-3),(0-1)",
                                         g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-#else
-    usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr,
-                                        "%s: (1-11),(0-11),(0-2),(0-3),(0-1)",
-                                        g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-
-#endif
 
     gstAtSendData.usBufLen = usLength;
 
@@ -169,15 +113,9 @@ VOS_UINT32 At_TestCgtft(VOS_UINT8 ucIndex)
 
     if (AT_IsSupportReleaseRst(AT_ACCESS_STRATUM_REL11))
     {
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-        usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr,
-                                           "%s: \"IP\",(1-16),(0-255),,(0-255),,,(00000000-FFFFFFFF),,(00000-FFFFF),(0-3),,(0-255)\r\n",
-                                           g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-#else
         usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr,
                                            "%s: \"IP\",(1-16),(0-255),,(0-255),,,(00000000-FFFFFFFF),,(00000-FFFFF),(0-3),\r\n",
                                            g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-#endif
     }
     else
     {
@@ -186,26 +124,16 @@ VOS_UINT32 At_TestCgtft(VOS_UINT8 ucIndex)
                                            g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
     }
 
-#if (FEATURE_ON == FEATURE_IPV6)
     if (AT_IPV6_CAPABILITY_IPV4_ONLY != AT_GetIpv6Capability())
     {
         if (AT_IsSupportReleaseRst(AT_ACCESS_STRATUM_REL11))
         {
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-            usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR*)pgucAtSndCodeAddr,(TAF_CHAR*)pgucAtSndCodeAddr + usLength,
-                                               "%s: \"IPV6\",(1-16),(0-255),,(0-255),,,(00000000-FFFFFFFF),,(00000-FFFFF),(0-3),,(0-255)\r\n",
-                                               g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-            usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR*)pgucAtSndCodeAddr,(TAF_CHAR*)pgucAtSndCodeAddr + usLength,
-                                               "%s: \"IPV4V6\",(1-16),(0-255),,(0-255),,,(00000000-FFFFFFFF),,(00000-FFFFF),(0-3),,(0-255)",
-                                               g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-#else
             usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR*)pgucAtSndCodeAddr,(TAF_CHAR*)pgucAtSndCodeAddr + usLength,
                                                "%s: \"IPV6\",(1-16),(0-255),,(0-255),,,(00000000-FFFFFFFF),,(00000-FFFFF),(0-3),\r\n",
                                                g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
             usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR*)pgucAtSndCodeAddr,(TAF_CHAR*)pgucAtSndCodeAddr + usLength,
                                                "%s: \"IPV4V6\",(1-16),(0-255),,(0-255),,,(00000000-FFFFFFFF),,(00000-FFFFF),(0-3),",
                                                g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-#endif
         }
         else
         {
@@ -217,7 +145,6 @@ VOS_UINT32 At_TestCgtft(VOS_UINT8 ucIndex)
                                                g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
         }
     }
-#endif
 
     gstAtSendData.usBufLen = usLength;
 
@@ -287,15 +214,9 @@ VOS_UINT32 At_TestAuhtdata(VOS_UINT8 ucIndex)
 {
     VOS_UINT16 usLength = 0;
 
-#if (FEATURE_ON == FEATURE_LTE)
     usLength = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr,
                                    "%s: (0-31),(0-2),,",
                                    g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-#else
-    usLength = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr,
-                                       "%s: (1-11),(0-2),,",
-                                       g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-#endif
 
     gstAtSendData.usBufLen = usLength;
 
@@ -309,15 +230,9 @@ VOS_UINT32 At_TestNdisconn(VOS_UINT8 ucIndex)
 
     usLength = 0;
 
-#if (FEATURE_ON == FEATURE_LTE)
     usLength = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr,
                                        "%s: (1-20),(0,1),,,,(0,1,2,3)",
                                        g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-#else
-    usLength = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr,
-                                       "%s: (1-16),(0,1),,,,(0,1,2,3)",
-                                       g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-#endif
 
     gstAtSendData.usBufLen = usLength;
 
@@ -331,15 +246,9 @@ VOS_UINT32 At_TestNdisDup(VOS_UINT8 ucIndex)
 
     usLength = 0;
 
-#if (FEATURE_ON == FEATURE_LTE)
     usLength = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr,
                                        "%s: (1-20),(0-1)",
                                        g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-#else
-    usLength = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr,
-                                       "%s: (1-16),(0-1)",
-                                       g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-#endif
 
     gstAtSendData.usBufLen = usLength;
 
@@ -360,27 +269,6 @@ VOS_UINT32 At_TestCgeqos(VOS_UINT8 ucIndex)
     return AT_OK;
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-
-VOS_UINT32 At_TestC5gqos(VOS_UINT8 ucIndex)
-{
-    VOS_UINT16 usLength = 0;
-
-    usLength = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR *)pgucAtSndCodeAddr, (VOS_CHAR *)pgucAtSndCodeAddr,
-                                       "%s: (0-31),(0-254),(0-4294967295),(0-4294967295),(0-4294967295),(0-4294967295)",
-                                       g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-    gstAtSendData.usBufLen = usLength;
-
-    return AT_OK;
-}
-
-
-VOS_UINT32 At_TestC5gQosRdp(VOS_UINT8 ucIndex)
-{
-    return At_TestCgeqnegPara(ucIndex);
-}
-
-#endif
 
 VOS_UINT32 At_TestCgeqosrdp(VOS_UINT8 ucIndex)
 {
@@ -646,7 +534,6 @@ VOS_UINT32 AT_TestCpasPara(VOS_UINT8 ucIndex)
 
     return AT_OK;
 }
-#if ((FEATURE_ON == FEATURE_GCBS) || (FEATURE_ON == FEATURE_WCBS))
 
 VOS_UINT32 AT_TestCscbPara(VOS_UINT8 ucIndex)
 {
@@ -656,7 +543,6 @@ VOS_UINT32 AT_TestCscbPara(VOS_UINT8 ucIndex)
                                         g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
     return AT_OK;
 }
-#endif
 
 
 VOS_UINT32 AT_TestCpmsPara(VOS_UINT8 ucIndex)
@@ -688,7 +574,6 @@ VOS_UINT32 AT_TestCpmsPara(VOS_UINT8 ucIndex)
 }
 
 
-#if (FEATURE_ON == FEATURE_CSG)
 
 VOS_UINT32 AT_TestCsgIdSearchPara(VOS_UINT8 ucIndex)
 {
@@ -709,7 +594,6 @@ VOS_UINT32 AT_TestCsgIdSearchPara(VOS_UINT8 ucIndex)
 
     return AT_ERROR;
 }
-#endif
 
 
 
@@ -720,12 +604,10 @@ VOS_UINT32 At_TestCopsPara(TAF_UINT8 ucIndex)
     stPlmnListPara.usQryNum    = TAF_MMA_MAX_PLMN_NAME_LIST_NUM;
     stPlmnListPara.usCurrIndex = 0;
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     if (VOS_TRUE == At_CheckCurrRatModeIsCL((VOS_UINT8)(gastAtClientTab[ucIndex].usClientId)))
     {
         return AT_CME_OPERATION_NOT_ALLOWED_IN_CL_MODE;
     }
-#endif
 
     if (VOS_TRUE == Taf_PhonePlmnList(WUEPS_PID_AT, gastAtClientTab[ucIndex].usClientId, 0, &stPlmnListPara))
     {
@@ -809,7 +691,6 @@ VOS_UINT32 At_TestCgeqreqPara(VOS_UINT8 ucIndex)
                                         CGEQREQ_TEST_CMD_PARA_STRING,
                                         gaucAtCrLf);
 
-#if (FEATURE_ON == FEATURE_IPV6)
 
     usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
                                         (VOS_CHAR *)pgucAtSndCodeAddr,(VOS_CHAR *)pgucAtSndCodeAddr + usLength,
@@ -824,7 +705,6 @@ VOS_UINT32 At_TestCgeqreqPara(VOS_UINT8 ucIndex)
                                         "%s: \"IPV4V6\",%s",
                                         g_stParseContext[ucIndex].pstCmdElement->pszCmdName,
                                         CGEQREQ_TEST_CMD_PARA_STRING);
-#endif
 
     gstAtSendData.usBufLen = usLength;
 
@@ -942,7 +822,6 @@ VOS_UINT32 AT_TestRefclkfreqPara(VOS_UINT8 ucIndex)
     return AT_OK;
 }
 
-#if (FEATURE_ON == FEATURE_IMS)
 
 VOS_UINT32 AT_TestCiregPara(VOS_UINT8 ucIndex)
 {
@@ -968,54 +847,7 @@ VOS_UINT32 AT_TestCirepPara(VOS_UINT8 ucIndex)
 
     return AT_OK;
 }
-#endif
 
-#if (FEATURE_ON == FEATURE_AT_HSUART)
-
-VOS_UINT32 AT_TestIprPara(VOS_UINT8 ucIndex)
-{
-    VOS_UINT16                          usLength = 0;
-
-    usLength = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                      (VOS_CHAR *)pgucAtSndCodeAddr,
-                                      (VOS_CHAR *)pgucAtSndCodeAddr,
-                                      "%s: (0,300,600,1200,2400,4800,9600,19200,38400,57600,115200,230400,460800,921600,2764800,4000000)",
-                                      g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-
-    gstAtSendData.usBufLen = usLength;
-    return AT_OK;
-}
-
-
-VOS_UINT32 AT_TestIcfPara(VOS_UINT8 ucIndex)
-{
-    VOS_UINT16                          usLength = 0;
-
-    usLength = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                      (VOS_CHAR *)pgucAtSndCodeAddr,
-                                      (VOS_CHAR *)pgucAtSndCodeAddr,
-                                      "%s: (1-6),(0-1)",
-                                      g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-
-    gstAtSendData.usBufLen = usLength;
-    return AT_OK;
-}
-
-
-VOS_UINT32 AT_TestIfcPara(VOS_UINT8 ucIndex)
-{
-    VOS_UINT16                          usLength = 0;
-
-    usLength = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                      (VOS_CHAR *)pgucAtSndCodeAddr,
-                                      (VOS_CHAR *)pgucAtSndCodeAddr,
-                                      "%s: (0,2),(0,2)",
-                                      g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-
-    gstAtSendData.usBufLen = usLength;
-    return AT_OK;
-}
-#endif
 
 
 VOS_UINT32 AT_TestUECenterPara(VOS_UINT8 ucIndex)
@@ -1074,7 +906,6 @@ VOS_UINT32 At_TestCesqPara(VOS_UINT8 ucIndex)
 
     return AT_OK;
 }
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 AT_TestClDbDomainStatusPara(
     VOS_UINT8                           ucIndex
@@ -1094,5 +925,4 @@ VOS_UINT32 AT_TestClDbDomainStatusPara(
 
     return AT_OK;
 }
-#endif
 

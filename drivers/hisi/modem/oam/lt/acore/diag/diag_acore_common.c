@@ -98,7 +98,7 @@ DIAG_DUMP_INFO_STRU g_stDumpInfo = {0};
 extern DIAG_TRANS_HEADER_STRU g_stBbpTransHead;
 extern DIAG_TRANS_HEADER_STRU g_stPSTransHead;
 
-struct wakeup_source diag_wakelock;
+struct wake_lock diag_wakelock;
 
 /*****************************************************************************
   3 Function
@@ -145,9 +145,7 @@ VOS_INT diag_ResetCcoreCB(DRV_RESET_CB_MOMENT_E enParam, int userdata)
         diag_crit("Diag report ccore reset to HIDP,and reset SOCP timer.\n");
         /* modem单独复位时，把中断超时时间恢复为默认值，让HIDP尽快收到复位消息 */
         mdrv_socp_set_ind_mode(SOCP_IND_MODE_DIRECT);
-#ifdef DIAG_SEC_TOOLS
         g_ulAuthState = DIAG_AUTH_TYPE_DEFAULT;
-#endif
     }
     else if(enParam == MDRV_RESET_CB_AFTER)
     {
@@ -170,7 +168,7 @@ VOS_UINT32 diag_AppAgentMsgProcInit(enum VOS_INIT_PHASE_DEFINE ip)
 
     if(ip == VOS_IP_LOAD_CONFIG)
     {
-        wakeup_source_init(&diag_wakelock, "diag_wakelock");
+        wake_lock_init(&diag_wakelock, WAKE_LOCK_SUSPEND, "diag_wakelock");
         ret = (VOS_UINT32)mdrv_sysboot_register_reset_notify(resetName, (pdrv_reset_cbfun)diag_ResetCcoreCB, 0, resetLevel);
         if(ret)
         {
@@ -204,6 +202,9 @@ VOS_UINT32 diag_AppAgentMsgProcInit(enum VOS_INIT_PHASE_DEFINE ip)
             diag_PushHighTs();
             diag_StartHighTsTimer();
             g_ulDiagCfgInfo |= DIAG_CFG_POWERONLOG;
+
+            /* 开机log中推送维测信息 */
+            diag_StartMntnTimer(DIAG_OPENLOG_MNTN_TIMER_LEN);
         }
 
         mdrv_scm_reg_ind_coder_dst_send_fuc();
@@ -341,7 +342,6 @@ VOS_VOID diag_TimerMsgProc(MsgBlock* pMsgBlock)
 
     return;
 }
-
 /*****************************************************************************
  Function Name   : diag_AppAgentMsgProc
  Description        : DIAG APP AGENT接收到的消息处理入口
@@ -364,7 +364,7 @@ VOS_VOID diag_AppAgentMsgProc(MsgBlock* pMsgBlock)
     }
 
     /*任务开始处理，不允许睡眠*/
-    __pm_stay_awake(&diag_wakelock);
+    wake_lock(&diag_wakelock);
 
     diag_DumpMsgInfo(pMsgBlock->ulSenderPid, (*(VOS_UINT32*)pMsgBlock->aucValue), pMsgBlock->ulLength);
 
@@ -410,8 +410,8 @@ VOS_VOID diag_AppAgentMsgProc(MsgBlock* pMsgBlock)
 
     }
 
-    /*任务开始结束，允许睡眠*/
-    __pm_relax(&diag_wakelock);
+   /*任务开始结束，允许睡眠*/
+   wake_unlock(&diag_wakelock);
 
    return ;
 }
@@ -425,9 +425,7 @@ DIAG_TRANS_NODE_STRU* diag_AddTransInfoToList(VOS_UINT8 * pstReq, VOS_UINT32 ulR
     DIAG_TRANS_NODE_STRU* pNewNode = NULL;
     VOS_UINT32 ret, ulHigh32, ulLow32;
     VOS_UINT32 ulNodeSize = 0;
-#ifdef CONFIG_ARM64
     VOS_UINT_PTR ullAddr;
-#endif
 
     ulNodeSize = sizeof(DIAG_TRANS_NODE_STRU) + ulRcvlen;
 
@@ -443,16 +441,10 @@ DIAG_TRANS_NODE_STRU* diag_AddTransInfoToList(VOS_UINT8 * pstReq, VOS_UINT32 ulR
     (VOS_VOID)VOS_MemCpy_s(pNewNode->ucRcvData, ulRcvlen, pstReq, ulRcvlen);
 
     ulLow32 = (uintptr_t)pNewNode;
-#ifdef CONFIG_ARM64
     {
         ullAddr = (VOS_UINT_PTR)pNewNode;
         ulHigh32 = (VOS_UINT32)(ullAddr>>32);
     }
-#else
-    {
-        ulHigh32 = 0;
-    }
-#endif
 
     /* 启动定时器，以便没有回复时能够超时删除节点 */
     ret = VOS_StartRelTimer(&pNewNode->Timer, MSP_PID_DIAG_APP_AGENT, DIAG_TRANS_TIMEOUT_LEN, ulHigh32, \
@@ -485,9 +477,7 @@ VOS_UINT32 diag_TransReqProcEntry(DIAG_FRAME_INFO_STRU *pstReq, DIAG_TRANS_HEADE
     VOS_UINT32              ulCmdParasize;
     DIAG_TRANS_MSG_STRU     *pstSendReq = NULL;
     DIAG_TRANS_NODE_STRU    *pNode;
-#ifdef CONFIG_ARM64
     VOS_UINT_PTR            ullAddr;
-#endif
     DIAG_OSA_MSG_STRU       *pstMsg = NULL;
 
     mdrv_diag_PTR(EN_DIAG_PTR_MSGMSP_TRANS, 1, pstReq->ulCmdId, 0);
@@ -526,13 +516,11 @@ VOS_UINT32 diag_TransReqProcEntry(DIAG_FRAME_INFO_STRU *pstReq, DIAG_TRANS_HEADE
     pstSendReq->ulSN = (uintptr_t)pNode;
 
     /* 如果是64位CPU，需要把高32位也传过去 */
-#ifdef CONFIG_ARM64
     {
         ullAddr = (VOS_UINT_PTR)pNode;
         pstSendReq->usOriginalId    = (VOS_UINT16)((ullAddr>>32)&0x0000FFFF);
         pstSendReq->usTerminalId    = (VOS_UINT16)((ullAddr>>48)&0x0000FFFF);
     }
-#endif
 
     if(DIAG_DEBUG_TRANS & g_ulDebugCfg)
     {
@@ -602,23 +590,15 @@ VOS_VOID diag_TransTimeoutProc(REL_TIMER_MSG *pTimer)
 {
     DIAG_TRANS_NODE_STRU *pNode;
     DIAG_FRAME_INFO_STRU *pFrame;
-#ifdef CONFIG_ARM64
     VOS_UINT_PTR ullAddr;
-#endif
 
     /* 兼容64位 */
-#ifndef CONFIG_ARM64
-    {
-        pNode = (DIAG_TRANS_NODE_STRU *)pTimer->ulPara;
-    }
-#else
     {
         ullAddr = (VOS_UINT_PTR)pTimer->ulName;
         ullAddr = (ullAddr<<32) | pTimer->ulPara;
 
         pNode = (DIAG_TRANS_NODE_STRU *)ullAddr;
     }
-#endif
 
     pFrame = (DIAG_FRAME_INFO_STRU *)pNode->ucRcvData;
 
@@ -637,20 +617,14 @@ DIAG_TRANS_NODE_STRU * diag_IsTransCnf(DIAG_TRANS_MSG_STRU* pstPsCnf, DIAG_TRANS
     DIAG_TRANS_NODE_STRU    *pNode;
     DIAG_TRANS_NODE_STRU    *pTempNode;
     LIST_S                  *me = NULL;
-#ifdef CONFIG_ARM64
     VOS_UINT_PTR ullAddr;
-#endif
 
     /* 兼容64位 */
-#ifndef CONFIG_ARM64
-    pNode = (DIAG_TRANS_NODE_STRU *)pstPsCnf->ulSN;
-#else
     ullAddr = (VOS_UINT_PTR)pstPsCnf->usTerminalId;
     ullAddr = (ullAddr<<16) | pstPsCnf->usOriginalId;
     ullAddr = (ullAddr<<32) | pstPsCnf->ulSN;
 
     pNode = (DIAG_TRANS_NODE_STRU *)ullAddr;
-#endif
 
     /*添加信号量保护*/
     (VOS_VOID)VOS_SmP(pstHead->TransSem,0);

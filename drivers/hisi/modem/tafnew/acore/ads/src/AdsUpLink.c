@@ -54,10 +54,8 @@
 #include "AdsDebug.h"
 #include "AdsMntn.h"
 #include "AdsNdisInterface.h"
-#if (defined(CONFIG_HUAWEI_BASTET) || defined(CONFIG_HW_DPIMARK_MODULE))
 #include <net/inet_sock.h>
 #include <linux/version.h>
-#endif
 
 /*****************************************************************************
     协议栈打印打点方式下的.C文件宏定义
@@ -68,9 +66,6 @@
 /*****************************************************************************
   2 全局变量定义
 *****************************************************************************/
-#if (FEATURE_ON == FEATURE_PC5_DATA_CHANNEL)
-VOS_UINT32                              g_ulPc5NodeCnt = 0;
-#endif
 
 /*****************************************************************************
   3 函数实现
@@ -170,115 +165,6 @@ VOS_VOID ADS_UL_StopDsFlowStats(
     return;
 }
 
-#if (FEATURE_ON == FEATURE_PC5_DATA_CHANNEL)
-
-VOS_INT ADS_Pc5DataIngress(IMM_ZC_STRU *pstImmZc)
-{
-    /* 判断是否为空数据包 */
-    if (VOS_NULL_PTR == pstImmZc)
-    {
-        ADS_WARNING_LOG(ACPU_PID_ADS_UL, "ADS_Pc5DataIngress: pstImmZc is null!");
-        return VOS_ERROR;
-    }
-
-    if (0 == IMM_ZcGetUsedLen(pstImmZc))
-    {
-        ADS_WARNING_LOG(ACPU_PID_ADS_UL, "ADS_Pc5DataIngress: len is 0!");
-        return VOS_ERROR;
-    }
-
-    /* 增加上行LTE-V接收数据统计个数 */
-    ADS_DBG_UL_PC5_RX_PKT_NUM(1);
-
-    /* 将pstImmZc插入到PC5缓存队列中 */
-    if (VOS_OK != ADS_UL_InsertPc5Queue(pstImmZc))
-    {
-        return VOS_ERROR;
-    }
-
-    return VOS_OK;
-}
-
-
-VOS_VOID ADS_UL_PC5_FillIpfCfgParam(
-    IPF_CONFIG_ULPARAM_S               *pstUlCfgParam,
-    ADS_IPF_BD_BUFF_STRU               *pstUlBdBuff,
-    IMM_ZC_STRU                        *pstImmZc
-)
-{
-    if (VOS_NULL_PTR == pstImmZc)
-    {
-        return;
-    }
-
-    pstUlBdBuff->pstPkt = pstImmZc;
-
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0))
-    /*lint -e64 */
-    pstUlCfgParam->Data    = (modem_phy_addr)virt_to_phys((VOS_VOID *)pstImmZc->data);
-    /*lint +e64 */
-    pstUlCfgParam->mode    = IPF_MODE_FILTERANDTRANS;
-    pstUlCfgParam->fc_head = IPF_LTEV_ULFC;
-    pstUlCfgParam->u16Len = (VOS_UINT16)pstImmZc->len;
-#endif
-
-    ADS_MNTN_RecPc5ULPktInfo(pstImmZc);
-
-    /* 刷CAHCE */
-    ADS_IPF_UL_MEM_MAP(pstImmZc, pstImmZc->len);
-
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0))
-    pstUlCfgParam->Data         = (modem_phy_addr)ADS_IPF_GetMemDma(pstImmZc);
-    pstUlCfgParam->mode         = IPF_MODE_FILTERANDTRANS;
-    pstUlCfgParam->fc_head      = IPF_LTEV_ULFC
-    pstUlCfgParam->u16Len       = (VOS_UINT16)pstImmZc->len;
-#endif
-
-    ADS_DBG_UL_PC5_BDQ_CFG_BD_SUCC_NUM(1);
-}
-
-
-VOS_UINT32 ADS_UL_GetPrioQueue(VOS_VOID)
-{
-    VOS_UINT32                          ulInstanceIndex;
-    VOS_UINT32                          ulComQueTotalLen;
-    VOS_UINT32                          ulPc5QueLen;
-
-    ulComQueTotalLen = 0;
-    ulPc5QueLen = IMM_ZcQueueLen(ADS_UL_GET_PC5_QUEUE_HEAD());
-
-    /* PC5队列为空，直接返回LOW */
-    if (0 == ulPc5QueLen)
-    {
-        g_ulPc5NodeCnt = 0;
-        return LOW_PRIO_QUE;
-    }
-
-    /* PC5队列不为空且计数小于10，返回HIGH */
-    if (g_ulPc5NodeCnt < ADS_UL_PC5_PKT_SEND_WEIGHT)
-    {
-        g_ulPc5NodeCnt++;
-        return HIGH_PRIO_QUE;
-    }
-
-    /* 计算普通队列的报文个数 */
-    for (ulInstanceIndex = 0; ulInstanceIndex < ADS_INSTANCE_MAX_NUM; ulInstanceIndex++)
-    {
-        ulComQueTotalLen = ulComQueTotalLen + ADS_UL_GetInstanceAllQueueDataNum(ulInstanceIndex);
-    }
-
-    /* 普通队列为空，直接返回HIGH */
-    if (0 == ulComQueTotalLen)
-    {
-        g_ulPc5NodeCnt++;
-        return HIGH_PRIO_QUE;
-    }
-
-    /* 普通队列不为空，PC5队列不为空且已取出10个包，返回LOW */
-    g_ulPc5NodeCnt = 0;
-    return LOW_PRIO_QUE;
-}
-#endif
 
 
 VOS_INT ADS_UL_SendPacket(
@@ -461,12 +347,8 @@ IMM_ZC_STRU* ADS_UL_GetInstanceNextQueueNode(
             /* 获取该结点的RabId */
             *pulRabId = ADS_UL_GET_PRIO_QUEUE_INDEX(ulInstanceIndex, *pulCurIndex);
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
             /* 获取该节点是否是1X或者HRPD的包 */
             *puc1XorHrpdUlIpfFlag = ADS_UL_GET_1X_OR_HRPD_UL_IPF_FLAG(ulInstanceIndex, *pulCurIndex);
-#else
-            *puc1XorHrpdUlIpfFlag = VOS_FALSE;
-#endif
 
             /* 本队列记录数增加 1*/
             ADS_UL_SET_RECORD_NUM_IN_WEIGHTED(ulInstanceIndex, *pulCurIndex, 1);
@@ -655,11 +537,7 @@ VOS_UINT8 ADS_UL_GetBdFcHead(
 {
     VOS_UINT8                           ucTempBdFcHead;
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     ucTempBdFcHead = ((VOS_TRUE == uc1XorHrpdUlIpfFlag) ? (VOS_UINT8)ADS_UL_IPF_1XHRPD : (VOS_UINT8)ulInstance);
-#else
-    ucTempBdFcHead = (VOS_UINT8)ulInstance;
-#endif
 
     return ucTempBdFcHead;
 }
@@ -681,11 +559,8 @@ VOS_UINT32 ADS_UL_CalcBuffTime(VOS_UINT32 ulBeginSlice, VOS_UINT32 ulEndSlice)
 
 VOS_UINT32 ADS_UL_BuildBdUserField2(IMM_ZC_STRU *pstImmZc)
 {
-#if (defined(CONFIG_HUAWEI_BASTET) || defined(CONFIG_HW_DPIMARK_MODULE))
     struct sock                        *pstSk        = VOS_NULL_PTR;
-#ifdef CONFIG_HW_DPIMARK_MODULE
     VOS_UINT8                          *pucTmp       = VOS_NULL_PTR;
-#endif
     VOS_UINT32                          ulUserField2;
 
     if( VOS_NULL_PTR == pstImmZc )
@@ -701,20 +576,15 @@ VOS_UINT32 ADS_UL_BuildBdUserField2(IMM_ZC_STRU *pstImmZc)
     if( VOS_NULL_PTR != pstSk )
     {
         ulUserField2 = 0;
-#ifdef CONFIG_HUAWEI_BASTET
         /* 第一个字节bit0为高优先级状态 第二个字节为超时主动弃包配置*/
         ulUserField2 |= (pstSk->acc_state & 0x01);
         ulUserField2 |= (((VOS_UINT32)pstSk->discard_duration << 8) & 0xFF00);
-#endif
-#ifdef CONFIG_HW_DPIMARK_MODULE
         pucTmp = (VOS_UINT8 *)&(pstSk->sk_hwdpi_mark);
         /* sk_hwdpi_mark中1,2字节均配置到userfield2的第一字节 */
         ulUserField2 |= pucTmp[0];
         ulUserField2 |= pucTmp[1];
-#endif
         return ulUserField2;
     }
-#endif
 
     return 0;
 }
@@ -733,9 +603,6 @@ VOS_VOID ADS_UL_ConfigBD(VOS_UINT32 ulBdNum)
     VOS_UINT32                          ulInstance;
     VOS_UINT32                          ulRabId;
     VOS_UINT8                           uc1XorHrpdUlIpfFlag;
-#if (FEATURE_ON == FEATURE_PC5_DATA_CHANNEL)
-    VOS_UINT32                          ulQuePrio;
-#endif
 
     ulEndSlice = VOS_GetSlice();
 
@@ -744,22 +611,7 @@ VOS_VOID ADS_UL_ConfigBD(VOS_UINT32 ulBdNum)
         pstUlBdBuff   = ADS_UL_GET_BD_BUFF_PTR(ulCnt);
         pstUlCfgParam = ADS_UL_GET_BD_CFG_PARA_PTR(ulCnt);
 
-#if (FEATURE_ON == FEATURE_PC5_DATA_CHANNEL)
-        ulQuePrio = ADS_UL_GetPrioQueue();
-
-        if (HIGH_PRIO_QUE == ulQuePrio)
-        {
-            pstImmZc = ADS_UL_GetPc5QueueNode();
-            ADS_UL_PC5_FillIpfCfgParam(pstUlCfgParam, pstUlBdBuff, pstImmZc);
-            continue;
-        }
-        else
-        {
-            pstImmZc = ADS_UL_GetNextQueueNode(&ulRabId, &ulInstance, &uc1XorHrpdUlIpfFlag);
-        }
-#else
         pstImmZc = ADS_UL_GetNextQueueNode(&ulRabId, &ulInstance, &uc1XorHrpdUlIpfFlag);
-#endif
 
         if (VOS_NULL_PTR == pstImmZc)
         {
@@ -771,14 +623,9 @@ VOS_VOID ADS_UL_ConfigBD(VOS_UINT32 ulBdNum)
         ulBeginSlice  = ADS_UL_GET_SLICE_FROM_IMM(pstImmZc);
         /* Attribute: 中断使能，过滤加搬移，过滤器组号modem0用0，modem1用1 */
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0))
-#ifndef CONFIG_NEW_PLATFORM
-        pstUlCfgParam->u32Data      = (VOS_UINT32)virt_to_phys((VOS_VOID *)pstImmZc->data);
-        pstUlCfgParam->u16Attribute = ADS_UL_BUILD_BD_ATTRIBUTE(VOS_FALSE, IPF_MODE_FILTERANDTRANS, ADS_UL_GetBdFcHead(ulInstance, uc1XorHrpdUlIpfFlag));
-#else
         pstUlCfgParam->Data         = (modem_phy_addr)virt_to_phys((VOS_VOID *)pstImmZc->data);
         pstUlCfgParam->mode         = IPF_MODE_FILTERANDTRANS;
         pstUlCfgParam->fc_head      = ADS_UL_GetBdFcHead(ulInstance, uc1XorHrpdUlIpfFlag);
-#endif /* CONFIG_NEW_PLATFORM */
         pstUlCfgParam->u16Len       = (VOS_UINT16)pstImmZc->len;
 #endif
         pstUlCfgParam->u16UsrField1 = (VOS_UINT16)ADS_UL_BUILD_BD_USER_FIELD_1(ulInstance, ulRabId);
@@ -795,14 +642,9 @@ VOS_VOID ADS_UL_ConfigBD(VOS_UINT32 ulBdNum)
         ADS_IPF_UL_MEM_MAP(pstImmZc, pstImmZc->len);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0))
-#ifndef CONFIG_NEW_PLATFORM
-        pstUlCfgParam->u32Data      = (VOS_UINT32)ADS_IPF_GetMemDma(pstImmZc);
-        pstUlCfgParam->u16Attribute = ADS_UL_BUILD_BD_ATTRIBUTE(VOS_FALSE, IPF_MODE_FILTERANDTRANS, ADS_UL_GetBdFcHead(ulInstance, uc1XorHrpdUlIpfFlag));
-#else
         pstUlCfgParam->Data         = (modem_phy_addr)ADS_IPF_GetMemDma(pstImmZc);
         pstUlCfgParam->mode         = IPF_MODE_FILTERANDTRANS;
         pstUlCfgParam->fc_head      = ADS_UL_GetBdFcHead(ulInstance, uc1XorHrpdUlIpfFlag);
-#endif
         pstUlCfgParam->u16Len       = (VOS_UINT16)pstImmZc->len;
 #endif
     }
@@ -815,11 +657,7 @@ VOS_VOID ADS_UL_ConfigBD(VOS_UINT32 ulBdNum)
 
     /* 最后一个BD配置中断使能 */
     pstUlCfgParam = ADS_UL_GET_BD_CFG_PARA_PTR(ulCnt - 1);
-#ifndef CONFIG_NEW_PLATFORM
-    ADS_UL_SET_BD_ATTR_INT_FLAG(pstUlCfgParam->u16Attribute);
-#else
     pstUlCfgParam->int_en = 1;
-#endif
     /* 配置IPF上行BD */
     lRslt = mdrv_ipf_config_ulbd(ulCnt, ADS_UL_GET_BD_CFG_PARA_PTR(0));
     if (IPF_SUCCESS != lRslt)
@@ -844,9 +682,6 @@ VOS_VOID ADS_UL_ConfigBD(VOS_UINT32 ulBdNum)
 
     ADS_MNTN_ReportULPktInfo();
 
-#if (FEATURE_ON == FEATURE_PC5_DATA_CHANNEL)
-    ADS_MNTN_ReportPc5ULPktInfo();
-#endif
 
     ADS_UL_EnableRxWakeLockTimeout(ADS_UL_RX_WAKE_LOCK_TMR_LEN);
     return;

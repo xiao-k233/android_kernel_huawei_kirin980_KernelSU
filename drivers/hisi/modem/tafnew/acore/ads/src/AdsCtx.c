@@ -76,102 +76,13 @@ VOS_UINT32                              g_ulAdsDLTaskReadyFlag = 0;  /* ADSÏÂÐÐÈ
 ADS_CTX_STRU                            g_stAdsCtx;
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0))
-#ifdef CONFIG_ARM64
 VOS_UINT64                              g_ullAdsDmaMask = 0xffffffffffffffffULL;
-#else
-VOS_UINT64                              g_ullAdsDmaMask = 0xffffffffULL;
-#endif
 #else
 struct device                          *g_pstDmaDev;
 #endif
 /*****************************************************************************
   3 º¯ÊýÊµÏÖ
 *****************************************************************************/
-#if (FEATURE_ON == FEATURE_PC5_DATA_CHANNEL)
-
-VOS_UINT32 ADS_UL_InsertPc5Queue(
-    IMM_ZC_STRU                        *pstImmZc
-)
-{
-    VOS_UINT32                          ulNonEmptyEvent;
-    VOS_UINT32                          ulAllUlQueueDataNum;
-    VOS_UINT32                          ulSlice;
-    VOS_UINT                            ulQueueLen;
-
-    ulNonEmptyEvent = VOS_FALSE;
-
-    ulQueueLen = IMM_ZcQueueLen(ADS_UL_GET_PC5_QUEUE_HEAD());
-    if (ulQueueLen >= ADS_UL_GET_PC5_MAX_QUEUE_LEN())
-    {
-        ADS_DBG_UL_PC5_PKT_ENQUE_FAIL_NUM(1);
-        return VOS_ERR;
-    }
-
-    /* ²åÈë¶ÓÁÐÇ°½«Êý¾Ý´òÉÏÊ±¼ä´Á */
-    ulSlice = VOS_GetSlice();
-    ADS_UL_SAVE_SLICE_TO_IMM(pstImmZc, ulSlice);
-
-    /* ²åÈë¶ÓÁÐ */
-    IMM_ZcQueueTail(ADS_UL_GET_PC5_QUEUE_HEAD(), pstImmZc);
-    ADS_DBG_UL_PC5_PKT_ENQUE_SUCC_NUM(1);
-
-    /* ¶ÓÁÐÓÉ¿Õ±äÎª·Ç¿Õ */
-    if (1 == IMM_ZcQueueLen(ADS_UL_GET_PC5_QUEUE_HEAD()))
-    {
-        ulNonEmptyEvent = VOS_TRUE;
-    }
-
-    if (VOS_TRUE == ulNonEmptyEvent)
-    {
-        ADS_UL_SndEvent(ADS_UL_EVENT_DATA_PROC);
-        ADS_DBG_UL_PC5_QUE_NON_EMPTY_TRIG_EVENT(1);
-    }
-    else
-    {
-        ulAllUlQueueDataNum = ADS_UL_GetAllQueueDataNum();
-
-        if (ADS_UL_IS_REACH_THRESHOLD(ulAllUlQueueDataNum, ADS_UL_GET_SENDING_FLAG()))
-        {
-            ADS_UL_SndEvent(ADS_UL_EVENT_DATA_PROC);
-            ADS_DBG_UL_QUE_HIT_THRES_TRIG_EVENT(1);
-        }
-    }
-
-    return VOS_OK;
-}
-
-
-IMM_ZC_STRU* ADS_UL_GetPc5QueueNode(VOS_VOID)
-{
-    IMM_ZC_STRU *pstNode = VOS_NULL_PTR;
-
-    /* »ñÈ¡¶ÓÁÐµÚÒ»¸öÔªËØ */
-    pstNode = IMM_ZcDequeueHead(ADS_UL_GET_PC5_QUEUE_HEAD());
-
-    return pstNode;
-}
-
-
-VOS_VOID ADS_UL_ClearPc5Queue(VOS_VOID)
-{
-    /* Ïú»Ù¶ÓÁÐÖÐµÄÊý¾Ý */
-    ADS_UL_ClearQueue(ADS_UL_GET_PC5_QUEUE_HEAD());
-
-    return;
-}
-
-
-VOS_VOID ADS_InitPc5Ctx(VOS_VOID)
-{
-    /* ³õÊ¼»¯Pc5ÉÏÏÂÎÄ */
-    IMM_ZcQueueHeadInit(ADS_UL_GET_PC5_QUEUE_HEAD());
-
-    ADS_UL_SET_PC5_MAX_QUEUE_LEN(ADS_UL_MAX_QUEUE_LENGTH);
-
-    /* Ïòµ×Èí×¢²áPC5ÉÏÐÐ·¢ËÍ½Ó¿Ú*/
-    (VOS_VOID)mdrv_pcv_cb_register(ADS_Pc5DataIngress);
-}
-#endif
 
 
 VOS_UINT32 ADS_UL_CheckAllQueueEmpty(VOS_UINT32 ulInstanceIndex)
@@ -400,9 +311,6 @@ VOS_UINT32 ADS_UL_GetAllQueueDataNum(VOS_VOID)
         ulTotalNum = ulTotalNum + ADS_UL_GetInstanceAllQueueDataNum(i);
     }
 
-#if (FEATURE_ON == FEATURE_PC5_DATA_CHANNEL)
-    ulTotalNum += IMM_ZcQueueLen(ADS_UL_GET_PC5_QUEUE_HEAD());
-#endif
 
     return ulTotalNum;
 }
@@ -678,11 +586,7 @@ VOS_VOID ADS_UL_SetQueue(
     g_stAdsCtx.astAdsSpecCtx[ulInstanceIndex].stAdsUlCtx.astAdsUlQueue[ulRabId].enPrio         = enPrio;
     g_stAdsCtx.astAdsSpecCtx[ulInstanceIndex].stAdsUlCtx.astAdsUlQueue[ulRabId].usRecordNum    = 0;
     g_stAdsCtx.astAdsSpecCtx[ulInstanceIndex].stAdsUlCtx.astAdsUlQueue[ulRabId].enPktType      = enPktType;
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     g_stAdsCtx.astAdsSpecCtx[ulInstanceIndex].stAdsUlCtx.astAdsUlQueue[ulRabId].uc1XorHrpdUlIpfFlag = uc1XorHrpdUlIpfFlag;
-#else
-    g_stAdsCtx.astAdsSpecCtx[ulInstanceIndex].stAdsUlCtx.astAdsUlQueue[ulRabId].uc1XorHrpdUlIpfFlag = VOS_FALSE;
-#endif
 }
 
 
@@ -808,7 +712,8 @@ VOS_UINT32 ADS_UL_WakeLockTimeout(VOS_VOID)
 
     if (0 != pstIpfCntxt->ulRxWakeLockTimeout)
     {
-        __pm_wakeup_event(&(pstIpfCntxt->stRxWakeLock), pstIpfCntxt->ulRxWakeLockTimeout);
+        wake_lock_timeout(&(pstIpfCntxt->stRxWakeLock),
+                          (VOS_LONG)msecs_to_jiffies(pstIpfCntxt->ulRxWakeLockTimeout));
     }
 
     pstIpfCntxt->ulRxWakeLockTimeout = 0;
@@ -828,7 +733,7 @@ VOS_UINT32 ADS_UL_WakeLock(VOS_VOID)
         return 0;
     }
 
-    __pm_stay_awake(&(pstIpfCntxt->stUlBdWakeLock));
+    wake_lock(&(pstIpfCntxt->stUlBdWakeLock));
     pstIpfCntxt->ulUlBdWakeLockCnt++;
 
     ulRet = pstIpfCntxt->ulUlBdWakeLockCnt;
@@ -849,7 +754,7 @@ VOS_UINT32 ADS_UL_WakeUnLock(VOS_VOID)
 
     ADS_UL_WakeLockTimeout();
 
-    __pm_relax(&(pstIpfCntxt->stUlBdWakeLock));
+    wake_unlock(&(pstIpfCntxt->stUlBdWakeLock));
     pstIpfCntxt->ulUlBdWakeLockCnt--;
 
     ulRet = pstIpfCntxt->ulUlBdWakeLockCnt;
@@ -881,7 +786,8 @@ VOS_UINT32 ADS_DL_WakeLockTimeout(VOS_VOID)
 
     if (0 != pstIpfCntxt->ulTxWakeLockTimeout)
     {
-        __pm_wakeup_event(&(pstIpfCntxt->stTxWakeLock), pstIpfCntxt->ulTxWakeLockTimeout);
+        wake_lock_timeout(&(pstIpfCntxt->stTxWakeLock),
+                          (VOS_LONG)msecs_to_jiffies(pstIpfCntxt->ulTxWakeLockTimeout));
     }
 
     pstIpfCntxt->ulTxWakeLockTimeout = 0;
@@ -901,7 +807,7 @@ VOS_UINT32 ADS_DL_WakeLock(VOS_VOID)
         return 0;
     }
 
-    __pm_stay_awake(&(pstIpfCntxt->stDlRdWakeLock));
+    wake_lock(&(pstIpfCntxt->stDlRdWakeLock));
     pstIpfCntxt->ulDlRdWakeLockCnt++;
 
     ulRet = pstIpfCntxt->ulDlRdWakeLockCnt;
@@ -922,7 +828,7 @@ VOS_UINT32 ADS_DL_WakeUnLock(VOS_VOID)
 
     ADS_DL_WakeLockTimeout();
 
-    __pm_relax(&(pstIpfCntxt->stDlRdWakeLock));
+    wake_unlock(&(pstIpfCntxt->stDlRdWakeLock));
     pstIpfCntxt->ulDlRdWakeLockCnt--;
 
     ulRet = pstIpfCntxt->ulDlRdWakeLockCnt;
@@ -1158,9 +1064,7 @@ VOS_VOID ADS_InitDlCtx(VOS_UINT32 ulInstance)
         pstAdsSpecCtx->stAdsDlCtx.astAdsDlRabInfo[i].ulExParam            = 0;
         pstAdsSpecCtx->stAdsDlCtx.astAdsDlRabInfo[i].pRcvDlDataFunc       = VOS_NULL_PTR;
         pstAdsSpecCtx->stAdsDlCtx.astAdsDlRabInfo[i].pRcvDlFilterDataFunc = VOS_NULL_PTR;
-#if (FEATURE_ON == FEATURE_RNIC_NAPI_GRO)
         pstAdsSpecCtx->stAdsDlCtx.astAdsDlRabInfo[i].pRcvRdLstDataFunc    = VOS_NULL_PTR;
-#endif
         pstAdsSpecCtx->stAdsDlCtx.astAdsDlRabInfo[i].pstLstPkt            = VOS_NULL_PTR;
     }
 
@@ -1268,9 +1172,7 @@ VOS_VOID ADS_ResetSpecDlCtx(VOS_UINT32 ulInstance)
         pstAdsSpecCtx->stAdsDlCtx.astAdsDlRabInfo[i].ulExParam            = 0;
         pstAdsSpecCtx->stAdsDlCtx.astAdsDlRabInfo[i].pRcvDlDataFunc       = VOS_NULL_PTR;
         pstAdsSpecCtx->stAdsDlCtx.astAdsDlRabInfo[i].pRcvDlFilterDataFunc = VOS_NULL_PTR;
-#if (FEATURE_ON == FEATURE_RNIC_NAPI_GRO)
         pstAdsSpecCtx->stAdsDlCtx.astAdsDlRabInfo[i].pRcvRdLstDataFunc    = VOS_NULL_PTR;
-#endif
         pstAdsSpecCtx->stAdsDlCtx.astAdsDlRabInfo[i].pstLstPkt            = VOS_NULL_PTR;
     }
 
@@ -1444,11 +1346,11 @@ VOS_VOID ADS_InitIpfCtx(VOS_VOID)
     g_stAdsCtx.stAdsIpfCtx.stDev.dma_mask = &g_ullAdsDmaMask;
 #endif
 
-    wakeup_source_init(&g_stAdsCtx.stAdsIpfCtx.stUlBdWakeLock, "ipf_bd_wake");
-    wakeup_source_init(&g_stAdsCtx.stAdsIpfCtx.stDlRdWakeLock, "ipf_rd_wake");
+    wake_lock_init(&g_stAdsCtx.stAdsIpfCtx.stUlBdWakeLock, WAKE_LOCK_SUSPEND, "ipf_bd_wake");
+    wake_lock_init(&g_stAdsCtx.stAdsIpfCtx.stDlRdWakeLock, WAKE_LOCK_SUSPEND, "ipf_rd_wake");
 
-    wakeup_source_init(&g_stAdsCtx.stAdsIpfCtx.stRxWakeLock, "ads_rx_wake");
-    wakeup_source_init(&g_stAdsCtx.stAdsIpfCtx.stTxWakeLock, "ads_tx_wake");
+    wake_lock_init(&g_stAdsCtx.stAdsIpfCtx.stRxWakeLock, WAKE_LOCK_SUSPEND, "ads_rx_wake");
+    wake_lock_init(&g_stAdsCtx.stAdsIpfCtx.stTxWakeLock, WAKE_LOCK_SUSPEND, "ads_tx_wake");
 
     g_stAdsCtx.stAdsIpfCtx.ulWakeLockEnable         = VOS_FALSE;
 
@@ -1575,9 +1477,6 @@ VOS_VOID ADS_InitCtx(VOS_VOID)
     /* ³õÊ¼»¯Ã¿¸öÊµÀýµÄÉÏÏÂÎÄ */
     ADS_InitSpecCtx();
 
-#if (FEATURE_ON == FEATURE_PC5_DATA_CHANNEL)
-    ADS_InitPc5Ctx();
-#endif
 
     /* ³õÊ¼»¯Êý¾ÝÍ³¼ÆµÄÉÏÏÂÎÄ */
     ADS_InitStatsInfoCtx();
@@ -1650,10 +1549,6 @@ VOS_VOID __exit ADS_PlatDevExit(void)
 	platform_driver_unregister(&g_stAdsPlatDevDriver);
 }
 
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-module_init(ADS_PlatDevInit);
-module_exit(ADS_PlatDevExit);
-#endif
 #endif
 
 

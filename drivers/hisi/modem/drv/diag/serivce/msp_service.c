@@ -72,8 +72,9 @@ struct MSP_SERVICE_TABLE g_astMspService[DIAG_FRAME_MSP_SID_BUTT] = {
     {DIAG_FRAME_MSP_SID_CBT_SERVICE,       NULL}
 };
 
-void msp_ServiceProc(SOCP_DECODER_DST_ENUM_U32 enChanID,u8 *pucData, u32 ulSize,u8 *pucRBData, u32 ulRBSize)
+u32 msp_ServiceProc(SOCP_DECODER_DST_ENUM_U32 enChanID,u8 *pucData, u32 ulSize,u8 *pucRBData, u32 ulRBSize)
 {
+    u32 ulRet = ERR_MSP_INVALID_PARAMETER;
     u32 ulTotalLen = 0;
     u8* pData;
     u32 ulSID = 0;
@@ -82,7 +83,7 @@ void msp_ServiceProc(SOCP_DECODER_DST_ENUM_U32 enChanID,u8 *pucData, u32 ulSize,
     if(pucData == NULL)
     {
         diag_PTR(EN_DIAG_PTR_MSP_SERVICE_ERR1,  0, 0, 0);
-        return ;
+        return ERR_MSP_INVALID_PARAMETER;
     }
 
     diag_PTR(EN_DIAG_PTR_MSP_SERVICE_1, 1, 0, 0);
@@ -92,14 +93,14 @@ void msp_ServiceProc(SOCP_DECODER_DST_ENUM_U32 enChanID,u8 *pucData, u32 ulSize,
     if(!ulTotalLen)
     {
         diag_PTR(EN_DIAG_PTR_MSP_SERVICE_ERR2, 1, 0, 0);
-        return ;
+        return ERR_MSP_INVALID_PARAMETER;
     }
 
     pData = osl_malloc(ulTotalLen);
     if(pData == NULL)
     {
         diag_PTR(EN_DIAG_PTR_MSP_SERVICE_ERR3, 1, 0, 0);
-        return ;
+        return ERR_MSP_MALLOC_FAILUE;
     }
 
     memcpy_s(pData, ulTotalLen, pucData, ulSize);
@@ -117,7 +118,7 @@ void msp_ServiceProc(SOCP_DECODER_DST_ENUM_U32 enChanID,u8 *pucData, u32 ulSize,
     {
         osl_free(pData);
         diag_error("msg len is smaller than service header, msglen:0x%x\n", ulTotalLen);
-        return ;
+        return ERR_MSP_INVALID_PARAMETER;
     }
 
     ulSID = SERVICE_HEAD_SID(pData);
@@ -127,7 +128,8 @@ void msp_ServiceProc(SOCP_DECODER_DST_ENUM_U32 enChanID,u8 *pucData, u32 ulSize,
     {
         if(g_astMspService[ulSID].fnService)
         {
-            g_astMspService[ulSID].fnService((void*)pHeader, ulTotalLen);
+            /* coverity[tainted_data] */
+            ulRet = g_astMspService[ulSID].fnService(pHeader, ulTotalLen);
         }
         else
         {
@@ -141,7 +143,7 @@ void msp_ServiceProc(SOCP_DECODER_DST_ENUM_U32 enChanID,u8 *pucData, u32 ulSize,
 
     osl_free(pData);
 
-    return ;
+    return ulRet;
 }
 
 void msp_ServiceInit(void)

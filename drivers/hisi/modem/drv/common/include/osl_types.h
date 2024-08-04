@@ -67,13 +67,14 @@ typedef enum {
 
 /*lint -save -e761*/
 
+#ifndef BSP_U32
+typedef unsigned int        BSP_U32;
+#endif
 
 #ifdef __KERNEL__
 #include <linux/types.h>
 #ifndef __ASSEMBLY__
-#ifndef UNUSED
-#define UNUSED(a) (void)(a)
-#endif
+#define UNUSED(a) (a=a)
 #endif
 
 #ifndef __inline__
@@ -119,9 +120,7 @@ typedef unsigned int size_t;/*lint !e410 !e452*/
 #endif
 #endif
 
-#ifndef UNUSED
-#define UNUSED(a) (void)(a)
-#endif
+#define UNUSED(a) (a=a)
 
 
 #else /* __ASSEMBLY__ */
@@ -184,9 +183,7 @@ typedef unsigned long long u64;
 #undef NULL
 #define NULL ((void *)0)
 
-#ifndef UNUSED
-#define UNUSED(a) (void)(a)
-#endif
+#define UNUSED(a) ((a) = (a))
 
 #endif
 

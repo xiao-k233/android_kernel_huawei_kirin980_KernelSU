@@ -55,7 +55,6 @@
 #include <osl_types.h>
 #include <osl_spinlock.h>
 #include <osl_sem.h>
-#include <mdrv.h>
 #include <bsp_print.h>
 #include "hdlc.h"
 #include "ring_buffer.h"
@@ -70,8 +69,8 @@ extern "C"{
 /**************************************************************************
   2 宏定义
 **************************************************************************/
-#define SCM_DATA_RCV_BUFFER_SIZE    (36*1024)      /* SCM数据接收buffer大小 */
-#define SCM_DATA_RCV_PKT_SIZE       (36*1024)      /* SCM数据接收PKT大小 */
+#define SCM_DATA_RCV_BUFFER_SIZE    (100*1024)      /* SCM数据接收buffer大小 */
+#define SCM_DATA_RCV_PKT_SIZE       (8*1024)        /* SCM数据接收PKT大小 */
 
 #define soft_decode_crit(fmt,...)        printk(KERN_ERR"[%s]:"fmt, BSP_MOD(THIS_MODU), ##__VA_ARGS__)
 #define soft_decode_error(fmt,...)       printk(KERN_ERR"[%s]:<%s %d>"fmt, BSP_MOD(THIS_MODU), __FUNCTION__, __LINE__,##__VA_ARGS__)
@@ -143,7 +142,7 @@ extern SCM_SOFTDECODE_INFO_STRU   g_stScmSoftDecodeInfo;
 u32 SCM_SoftDecodeCfgDataRcv(u8 *pucBuffer, u32 ulLen);
 u32 SCM_SoftDecodeDataRcv(u8 *pucBuffer, u32 ulLen);
 int SCM_SoftDecodeCfgRcvTaskInit(void);
-int SCM_SoftDecodeCfgRcvSelfTask(void* para);
+void SCM_SoftDecodeCfgRcvSelfTask(void);
 void scm_soft_decode_init(void);
 u32 SCM_SoftDecodeAcpuRcvData(OM_HDLC_STRU *pstHdlcCtrl, u8 *pucData, u32 ulLen);
 u32 SCM_SoftDecodeCfgHdlcInit(OM_HDLC_STRU *pstHdlc);

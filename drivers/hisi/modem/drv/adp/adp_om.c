@@ -53,38 +53,6 @@
 
 
 
-#ifndef ENABLE_BUILD_OM
-void mdrv_om_system_error(int mod_id, int arg1, int arg2, char * arg3, int arg3_len)
-{
-    return;
-}
-
-u8 * mdrv_om_register_field(u32 field_id, char * field_name, void * virt_addr, void * phy_addr, u32 length, u16 version)
-{
-    return 0;
-}
-
-u8 * mdrv_om_get_field_addr(u32 field_id)
-{
-    return 0;
-}
-
-u8 * mdrv_om_get_field_phy_addr(u32 field_id)
-{
-    return 0;
-}
-
-dump_handle mdrv_om_register_callback(char * name, dump_hook p_func)
-{
-    return 0;
-}
-
-s32  mdrv_om_unregister_callback(dump_handle handle)
-{
-    return 0;
-}
-
-#else
 void mdrv_om_system_error(int mod_id, int arg1, int arg2, char * arg3, int arg3_len)
 {
     system_error(mod_id, arg1, arg2, (char *)arg3, arg3_len);
@@ -125,7 +93,6 @@ EXPORT_SYMBOL_GPL(mdrv_om_system_error);
 EXPORT_SYMBOL_GPL(mdrv_om_unregister_callback);
 
 
-#endif
 
 
 

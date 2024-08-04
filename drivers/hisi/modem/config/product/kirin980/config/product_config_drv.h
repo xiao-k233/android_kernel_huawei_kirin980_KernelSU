@@ -1,4 +1,4 @@
-/* MD5: 248310eb813be11a57b5fbce0c5ba68f*/
+/* MD5: f83e34538d0423abe5051d7595edb619*/
 #if !defined(__PRODUCT_CONFIG_DRV_H__)
 #define __PRODUCT_CONFIG_DRV_H__
 
@@ -676,10 +676,6 @@
 
 #ifndef CONFIG_BALONG_CCLK
 #define CONFIG_BALONG_CCLK 
-#endif 
-
-#ifndef CONFIG_BALONG_CCLK_ATUOGATE
-#define CONFIG_BALONG_CCLK_ATUOGATE 
 #endif 
 
 #ifndef CONFIG_CCORE_CPU_IDLE

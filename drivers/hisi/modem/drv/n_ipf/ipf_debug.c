@@ -90,7 +90,7 @@ int bsp_ipf_bdinfo(IPF_CHANNEL_TYPE_E eChnType, unsigned int u32BdqPtr)
             }
 			g_ipf_ctx.desc->bd_h2s(&sw_bd, g_ipf_ctx.ul_info.pstIpfBDQ, u32BdqPtr);
             bsp_err("==========BD Info=========\n");
-            bsp_err("BD position:         %d\n", u32BdqPtr);
+            bsp_err("BD位置:         %d\n", u32BdqPtr);
             bsp_err("int_en:   %d\n", sw_bd.int_en);
             bsp_err("fc_head:   %d\n", sw_bd.fc_head);
             bsp_err("u16PktLen:      %d\n", sw_bd.u16Len);
@@ -106,7 +106,7 @@ int bsp_ipf_bdinfo(IPF_CHANNEL_TYPE_E eChnType, unsigned int u32BdqPtr)
             }
 			g_ipf_ctx.desc->bd_h2s(&sw_bd, g_ipf_ctx.dl_info.pstIpfBDQ, u32BdqPtr);
             bsp_err("==========BD Info=========\n");
-            bsp_err("BD postion:         %d\n",u32BdqPtr);
+            bsp_err("BD位置:         %d\n",u32BdqPtr);
             bsp_err("int_en:   %d\n", sw_bd.int_en);
             bsp_err("fc_head:   %d\n", sw_bd.fc_head);
 			bsp_err("u16PktLen:      %d\n", sw_bd.u16Len);
@@ -114,6 +114,7 @@ int bsp_ipf_bdinfo(IPF_CHANNEL_TYPE_E eChnType, unsigned int u32BdqPtr)
             bsp_err("u16UsrField1:   %d\n", sw_bd.u16UsrField1);
             bsp_err("u32UsrField2:   0x%x\n", sw_bd.u32UsrField2);
             bsp_err("u32UsrField3:   0x%x\n", sw_bd.u32UsrField3);
+//			bsp_err("BD Desc Virt Addr:	0x%llx\n",(unsigned long long)(g_ipf_ctx.dl_info.pstIpfBDQ + u32BdqPtr));
             break; 
         default:
             break;
@@ -153,11 +154,17 @@ int bsp_ipf_dump_bdinfo(IPF_CHANNEL_TYPE_E eChnType)
 
 unsigned long bsp_ipf_ad0_info(unsigned long *ad0_addr)
 {
+//	struct ipf_share_mem_map* sm = bsp_ipf_get_sharemem();
+	
+//	*ad0_addr = *((unsigned long*)&sm->dad0);
 	return 0;
 }
 
 unsigned long bsp_ipf_ad1_info(unsigned long *ad1_addr)
 {
+//	struct ipf_share_mem_map* sm = bsp_ipf_get_sharemem();
+	
+//	*ad1_addr = *((unsigned long*)&sm->dad1);
 	return 0;
 }
 
@@ -173,7 +180,7 @@ int bsp_ipf_rdinfo(IPF_CHANNEL_TYPE_E eChnType, unsigned int u32RdqPtr)
             }
 			g_ipf_ctx.desc->rd_h2s(&sw_rd, g_ipf_ctx.ul_info.pstIpfRDQ, u32RdqPtr);
             bsp_err("===========RD Info==========\n");
-            bsp_err("RD position:             %d\n",u32RdqPtr);
+            bsp_err("RD位置:             %d\n",u32RdqPtr);
             bsp_err("u16Attribute:       %d\n",sw_rd.u16Attribute);
             bsp_err("u16PktLen:          %d\n",sw_rd.u16PktLen);
             bsp_err("InPtr:              0x%lx\n",(unsigned long)sw_rd.InPtr);
@@ -190,7 +197,7 @@ int bsp_ipf_rdinfo(IPF_CHANNEL_TYPE_E eChnType, unsigned int u32RdqPtr)
             }
 			g_ipf_ctx.desc->rd_h2s(&sw_rd, g_ipf_ctx.dl_info.pstIpfRDQ, u32RdqPtr);
             bsp_err("============RD Info===========\n");
-            bsp_err("RD position:             %d\n",u32RdqPtr);
+            bsp_err("RD位置:             %d\n",u32RdqPtr);
             bsp_err("u16Attribute:       %d\n",sw_rd.u16Attribute);
             bsp_err("u16PktLen:          %d\n",sw_rd.u16PktLen);
             bsp_err("InPtr:           0x%lx\n",(unsigned long)sw_rd.InPtr);
@@ -249,7 +256,7 @@ int bsp_ipf_adinfo(IPF_CHANNEL_TYPE_E eChnType, unsigned int u32AdqPtr, unsigned
             {
             	g_ipf_ctx.desc->ad_h2s(&sw_ad, g_ipf_ctx.ul_info.pstIpfADQ0, u32AdqPtr);
                  bsp_err("===========UL AD0 Info==========\n");
-                 bsp_err("AD position:             %d\n",u32AdqPtr);
+                 bsp_err("AD位置:             %d\n",u32AdqPtr);
                  bsp_err("OutPtr0(phy_addr, use by hardware):       0x%lx\n",(unsigned long)sw_ad.OutPtr0);
                  bsp_err("OutPtr1(usrfield skb_addr default):          0x%lx\n",(unsigned long)sw_ad.OutPtr1);
             }
@@ -257,7 +264,7 @@ int bsp_ipf_adinfo(IPF_CHANNEL_TYPE_E eChnType, unsigned int u32AdqPtr, unsigned
             {
             	g_ipf_ctx.desc->ad_h2s(&sw_ad, g_ipf_ctx.ul_info.pstIpfADQ1, u32AdqPtr);
                  bsp_err("===========UL AD1 Info==========\n");
-                 bsp_err("AD position:             %d\n",u32AdqPtr);
+                 bsp_err("AD位置:             %d\n",u32AdqPtr);
                  bsp_err("OutPtr0(phy_addr, use by hardware):       0x%lx\n",(unsigned long)sw_ad.OutPtr0);
                  bsp_err("OutPtr1(usrfield skb_addr default):          0x%lx\n",(unsigned long)sw_ad.OutPtr1);
             }
@@ -271,7 +278,7 @@ int bsp_ipf_adinfo(IPF_CHANNEL_TYPE_E eChnType, unsigned int u32AdqPtr, unsigned
 	      	{
 	      		g_ipf_ctx.desc->ad_h2s(&sw_ad, g_ipf_ctx.dl_info.pstIpfADQ0, u32AdqPtr);
                  bsp_err("===========DL AD0 Info==========\n");
-                 bsp_err("AD position:             %d\n",u32AdqPtr);
+                 bsp_err("AD位置:             %d\n",u32AdqPtr);
                  bsp_err("OutPtr0(phy_addr, use by hardware):       0x%lx\n",(unsigned long)sw_ad.OutPtr0);
                  bsp_err("OutPtr1(usrfield skb_addr default):          0x%lx\n",(unsigned long)sw_ad.OutPtr1);
             }
@@ -279,7 +286,7 @@ int bsp_ipf_adinfo(IPF_CHANNEL_TYPE_E eChnType, unsigned int u32AdqPtr, unsigned
             {
             	g_ipf_ctx.desc->ad_h2s(&sw_ad, g_ipf_ctx.dl_info.pstIpfADQ1, u32AdqPtr);
                  bsp_err("===========DL AD1 Info==========\n");
-                 bsp_err("AD position:             %d\n",u32AdqPtr);
+                 bsp_err("AD位置:             %d\n",u32AdqPtr);
                  bsp_err("OutPtr0(phy_addr, use by hardware):       0x%lx\n",(unsigned long)sw_ad.OutPtr0);
                  bsp_err("OutPtr1(usrfield skb_addr default):          0x%lx\n",(unsigned long)sw_ad.OutPtr1);
             }
@@ -396,21 +403,21 @@ int bsp_ipf32_info(IPF_CHANNEL_TYPE_E eChnType)
         return 1;
     }
     bsp_err("============================\n");
-    bsp_err("channel status:            0x%x\n", u32status);
-    bsp_err("BD depth:            %d\n", u32BdqDepth);
-    bsp_err("BD wptr:          %d\n", u32BdqWptr);
-    bsp_err("BD rptr:          %d\n", u32BdqRptr);
-    bsp_err("BD write addr:          0x%x\n", u32BdqWaddr);
-    bsp_err("BD read addr:          0x%x\n", u32BdqRaddr);
-    bsp_err("RD depth:            %d\n", u32RdqDepth);
-    bsp_err("RD rptr:          %d\n", u32RdqRptr);
-    bsp_err("RD wptr:          %d\n", u32RdqWptr);
-    bsp_err("RD read addr:          0x%x\n", u32RdqRaddr);
-    bsp_err("RD write addr:          0x%x\n", u32RdqWaddr);
-    bsp_err("AD0 rptr:          %d\n", u32Adq0Rptr);
-    bsp_err("AD0 wptr:          %d\n", u32Adq0Wptr);
-    bsp_err("AD1 rptr:          %d\n", u32Adq1Rptr);
-    bsp_err("AD1 wptr:          %d\n", u32Adq1Wptr);
+    bsp_err("通道 状态:            0x%x\n", u32status);
+    bsp_err("BD 深度:            %d\n", u32BdqDepth);
+    bsp_err("BD 写指针:          %d\n", u32BdqWptr);
+    bsp_err("BD 读指针:          %d\n", u32BdqRptr);
+    bsp_err("BD 写地址:          0x%x\n", u32BdqWaddr);
+    bsp_err("BD 读地址:          0x%x\n", u32BdqRaddr);
+    bsp_err("RD 深度:            %d\n", u32RdqDepth);
+    bsp_err("RD 读指针:          %d\n", u32RdqRptr);
+    bsp_err("RD 写指针:          %d\n", u32RdqWptr);
+    bsp_err("RD 读地址:          0x%x\n", u32RdqRaddr);
+    bsp_err("RD 写地址:          0x%x\n", u32RdqWaddr);
+    bsp_err("AD0 读指针:          %d\n", u32Adq0Rptr);
+    bsp_err("AD0 写指针:          %d\n", u32Adq0Wptr);
+    bsp_err("AD1 读指针:          %d\n", u32Adq1Rptr);
+    bsp_err("AD1 写指针:          %d\n", u32Adq1Wptr);
     bsp_err("============================\n");
     return 0;
 }
@@ -501,21 +508,21 @@ int bsp_ipf64_info(IPF_CHANNEL_TYPE_E eChnType)
         return 1;
     }
     bsp_err("============================\n");
-    bsp_err("channel status:            0x%x\n", u32status);
-    bsp_err("BD depth:            %d\n", u32BdqDepth);
-    bsp_err("BD wptr:          %d\n", u32BdqWptr);
-    bsp_err("BD rptr:          %d\n", u32BdqRptr);
-    bsp_err("BD write addr:          0x%x\n", u32BdqWaddr);
-    bsp_err("BD read addr:          0x%x\n", u32BdqRaddr);
-    bsp_err("RD depth:            %d\n", u32RdqDepth);
-    bsp_err("RD rptr:          %d\n", u32RdqRptr);
-    bsp_err("RD wptr:          %d\n", u32RdqWptr);
-    bsp_err("RD read addr:          0x%x\n", u32RdqRaddr);
-    bsp_err("RD write addr:          0x%x\n", u32RdqWaddr);
-    bsp_err("AD0 rptr:          %d\n", u32Adq0Rptr);
-    bsp_err("AD0 wptr:          %d\n", u32Adq0Wptr);
-    bsp_err("AD1 rptr:          %d\n", u32Adq1Rptr);
-    bsp_err("AD1 wptr:          %d\n", u32Adq1Wptr);
+    bsp_err("通道 状态:            0x%x\n", u32status);
+    bsp_err("BD 深度:            %d\n", u32BdqDepth);
+    bsp_err("BD 写指针:          %d\n", u32BdqWptr);
+    bsp_err("BD 读指针:          %d\n", u32BdqRptr);
+    bsp_err("BD 写地址:          0x%x\n", u32BdqWaddr);
+    bsp_err("BD 读地址:          0x%x\n", u32BdqRaddr);
+    bsp_err("RD 深度:            %d\n", u32RdqDepth);
+    bsp_err("RD 读指针:          %d\n", u32RdqRptr);
+    bsp_err("RD 写指针:          %d\n", u32RdqWptr);
+    bsp_err("RD 读地址:          0x%x\n", u32RdqRaddr);
+    bsp_err("RD 写地址:          0x%x\n", u32RdqWaddr);
+    bsp_err("AD0 读指针:          %d\n", u32Adq0Rptr);
+    bsp_err("AD0 写指针:          %d\n", u32Adq0Wptr);
+    bsp_err("AD1 读指针:          %d\n", u32Adq1Rptr);
+    bsp_err("AD1 写指针:          %d\n", u32Adq1Wptr);
     bsp_err("============================\n");
     return 0;
 }
@@ -724,22 +731,22 @@ void bsp_err_statx(void)
 }
 
 struct ipf_mannul_unit ipf_mannul[] = {
-    {SYMBOL(bsp_ipf_show_status),   "\n"},
-    {SYMBOL(bsp_ipf_info),      "\n"},
-    {SYMBOL(bsp_ipf_bdinfo),    "\n"},
-    {SYMBOL(bsp_ipf_rdinfo),    "\n"},
-    {SYMBOL(bsp_ipf_adinfo),    "\n"},
-    {SYMBOL(bsp_ipf_dump_bdinfo),   "\n"},
-    {SYMBOL(bsp_ipf_dump_rdinfo),   "\n"},
-    {SYMBOL(bsp_ipf_dump_adinfo),   "\n"},
-    {SYMBOL(ipf_enable_dl_time_stamp),  "\n"},
-    {SYMBOL(ipf_clear_time_stamp),  "\n"},
-    {SYMBOL(ipf_dump_time_stamp),   "\n"},
-    {SYMBOL(bsp_ipf_mem),   "\n"},
-    {SYMBOL(ipf_enable_dl_time_stamp),    "\n"},
-    {SYMBOL(ipf_clear_time_stamp),  "\n"},
-    {SYMBOL(ipf_dump_time_stamp),  "\n"},
-    {SYMBOL(bsp_ipf_ad_status),  "\n"},
+    {SYMBOL(bsp_ipf_show_status),   "无参数 显示 IPF计数信息\n"},
+    {SYMBOL(bsp_ipf_info),      "参数1:通道类型  0为上行，1为下行\n"},
+    {SYMBOL(bsp_ipf_bdinfo),    "参数1:通道类型  参数2:BD指针\n"},
+    {SYMBOL(bsp_ipf_rdinfo),    "参数1:通道类型  参数2:RD指针\n"},
+    {SYMBOL(bsp_ipf_adinfo),    "参数1:通道类型  参数2:AD指针参数3:AD 队列类型0为短,1为长\n"},
+    {SYMBOL(bsp_ipf_dump_bdinfo),   "参数1:通道类型\n"},
+    {SYMBOL(bsp_ipf_dump_rdinfo),   "参数1:通道类型\n"},
+    {SYMBOL(bsp_ipf_dump_adinfo),   "参数1:通道类型\n"},
+    {SYMBOL(ipf_enable_dl_time_stamp),  "参数1:0-disable, 1-enable\n"},
+    {SYMBOL(ipf_clear_time_stamp),  "清除实际戳记录\n"},
+    {SYMBOL(ipf_dump_time_stamp),   "Linux:下行时间差, vxWorks:上行时间差\n"},
+    {SYMBOL(bsp_ipf_mem),   "无参数，显示 IPF内存信息"},
+    {SYMBOL(ipf_enable_dl_time_stamp),    "参数1:0-disable, 1-enable\n"},
+    {SYMBOL(ipf_clear_time_stamp),  "无参数 清除时间戳信息"},
+    {SYMBOL(ipf_dump_time_stamp),  "无参数 显示时间戳信息"},
+    {SYMBOL(bsp_ipf_ad_status),  "无参数 显示AD状态"},
 };
 
 void bsp_ipf_help(void)

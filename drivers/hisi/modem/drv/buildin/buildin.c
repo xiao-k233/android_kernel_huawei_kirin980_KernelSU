@@ -267,7 +267,6 @@ u32 mdrv_socp_bbpmemenable(void)
 }
 EXPORT_SYMBOL(mdrv_socp_bbpmemenable);
 
-#if (FEATURE_SOCP_MEM_RESERVED == FEATURE_ON)
 /*****************************************************************************
 * º¯ Êý Ãû  : socp_reserve_area
 *
@@ -322,5 +321,4 @@ static int socp_reserve_area(struct reserved_mem *rmem)
 /*lint -save -e611*/
 RESERVEDMEM_OF_DECLARE(hisilicon, "hisi_mdmlog", (reservedmem_of_init_fn)socp_reserve_area);
 /*lint -restore +e611*/
-#endif
 

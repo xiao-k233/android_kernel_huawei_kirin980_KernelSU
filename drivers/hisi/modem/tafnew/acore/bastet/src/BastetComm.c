@@ -15,7 +15,6 @@
  *
  */
 
-#ifdef CONFIG_HUAWEI_BASTET_COMM_NEW
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/sched.h>
@@ -29,13 +28,10 @@
 #include <linux/poll.h>
 #include <linux/platform_device.h>
 #include <linux/of.h>
-#ifdef CONFIG_COMPAT
 #include <linux/compat.h>
-#endif
 #include "BastetComm.h"
 #include "securec.h"
 
-#endif
 
 #include "v_typdef.h"
 #include "VosPidDef.h"
@@ -49,7 +45,6 @@
 
 
 
-#ifdef CONFIG_HUAWEI_BASTET_COMM_NEW
 
 #define THIS_FILE_ID                    PS_FILE_ID_BST_COMM_C
 
@@ -137,7 +132,6 @@ static long bastet_modem_ioctl(struct file *flip, unsigned int cmd, unsigned lon
     }
     
     switch (cmd) {
-#ifdef CONFIG_HUAWEI_BASTET_COMM
     case BST_MODEM_IOC_GET_MODEM_RAB_ID:
     {
         BST_PR_LOGI("bastet_modem ioctl get modem rab id.\n");
@@ -176,20 +170,17 @@ static long bastet_modem_ioctl(struct file *flip, unsigned int cmd, unsigned lon
         BST_PR_LOGE("unknown ioctl: %u", cmd);
         break;
     }
-#endif
     }
 
     return rc;
 }
 
 /* support of 32bit userspace on 64bit platforms */
-#ifdef CONFIG_COMPAT
 static long compat_bastet_modem_ioctl(struct file *flip,
     unsigned int cmd, unsigned long arg)
 {
     return bastet_modem_ioctl(flip, cmd, (unsigned long) compat_ptr(arg));
 }
-#endif
 
 #define BST_MAX_WRITE_PAYLOAD           (2048)
 #define BST_MAX_QUEUE_SIZE           (256)
@@ -209,23 +200,16 @@ int post_modem_packet(void *info, unsigned int len)
         BST_PR_LOGE("failed to kmalloc");
         return -ENOMEM;
     }
-    if(memset_s(pkt, sizeof(struct bastet_modem_packet) + BST_MAX_WRITE_PAYLOAD, 0, sizeof(struct bastet_modem_packet) + len))
-    {
-        BST_PR_LOGE("memset failed");
-    }
+    memset_s(pkt, sizeof(struct bastet_modem_packet) + BST_MAX_WRITE_PAYLOAD, 0, sizeof(struct bastet_modem_packet) + len);
 
 
     BST_PR_LOGI("bastet modem post packet len %d \n", len);
+    print_hex_dump(KERN_INFO, "readbuf: ", 0, 16, 1, (void *)info, len, 1);
 
     pkt->data.cons = 0;
     pkt->data.len = len;
     if (NULL != info)
-    {
-        if(memcpy_s(pkt->data.value, BST_MAX_WRITE_PAYLOAD, info, len))
-        {
-            BST_PR_LOGE("memcpy failed");
-        }
-    }
+        memcpy_s(pkt->data.value, BST_MAX_WRITE_PAYLOAD, info, len);
 
     spin_lock_bh(&bastet_modem_data.read_lock);
     if(bastet_modem_data.queuelen >= BST_MAX_QUEUE_SIZE)
@@ -369,7 +353,6 @@ static ssize_t bastet_modem_read(struct file *filp,
     return bastet_modem_packet_read(buf, count);
 }
 /*lint +e666*/
-#ifdef CONFIG_HUAWEI_BASTET_COMM
 static ssize_t bastet_modem_write(struct file *filp,
     const char __user *buf, size_t count, loff_t *ppos)
 {
@@ -384,10 +367,7 @@ static ssize_t bastet_modem_write(struct file *filp,
         return -1;
     }
 
-    if(memset_s(msg, BST_MAX_WRITE_PAYLOAD, 0, BST_MAX_WRITE_PAYLOAD))
-    {
-        BST_PR_LOGE("memset failed!");
-    }
+    memset_s(msg, BST_MAX_WRITE_PAYLOAD, 0, BST_MAX_WRITE_PAYLOAD);
     if(NULL == buf)
     {
         BST_PR_LOGE("buf is null!");
@@ -422,6 +402,7 @@ static ssize_t bastet_modem_write(struct file *filp,
     TAF_MEM_CPY_S((VOS_VOID*)((unsigned char *)pMsg + VOS_MSG_HEAD_LENGTH), BST_MAX_WRITE_PAYLOAD, msg, (VOS_UINT32)count);
 
     BST_PR_LOGI("bastet modem write count %d  len %d\n", (int)count, (int)ulLength);
+    print_hex_dump(KERN_INFO, "writebuf: ", 0, 16, 1, (void *)pMsg, ulLength, 1);
     kfree(msg);
 
     if (PS_SEND_MSG(ACPU_PID_BASTET_COMM, pMsg) != 0)
@@ -432,7 +413,6 @@ static ssize_t bastet_modem_write(struct file *filp,
 
     return count;
 }
-#endif
 
 static unsigned int bastet_modem_poll(struct file *file, poll_table *wait)
 {
@@ -472,13 +452,9 @@ static const struct file_operations bastet_modem_dev_fops = {
     .owner = THIS_MODULE,
     .open = bastet_modem_open,
     .unlocked_ioctl = bastet_modem_ioctl,
-#ifdef CONFIG_COMPAT
     .compat_ioctl = compat_bastet_modem_ioctl,
-#endif
     .read = bastet_modem_read,
-#ifdef CONFIG_HUAWEI_BASTET_COMM
     .write = bastet_modem_write,
-#endif
     .poll = bastet_modem_poll,
     .release = bastet_modem_release,
 };
@@ -497,13 +473,10 @@ static void bastet_comm_init(void)
     BASTET_CommRegRecvCallBack((RECV_MSG_PROC)bastet_comm_recv);
 }
 
-#if defined CONFIG_BALONG_MODEM_RESET
 #include <linux/hisi/reset.h>
 
-#if   defined CONFIG_HISI_BALONG_MODEM_HI3650
 extern int bsp_reset_cb_func_register(const char *pname,
 	pdrv_reset_cbfun pcbfun, int userdata, int priolevel);
-#endif
 
 static int bastet_modem_ccorereset_cb(DRV_RESET_CB_MOMENT_E eparam, int userdata)
 {
@@ -518,6 +491,7 @@ static int bastet_modem_ccorereset_cb(DRV_RESET_CB_MOMENT_E eparam, int userdata
         msg.enMsgType =  BST_ACORE_CORE_MSG_TYPE_RESET_INFO;
         msg.ulLen = 4;
         msg.aucValue[0] = 0x01;
+        print_hex_dump(KERN_INFO, "readbuf: ", 0, 16, 1, (void *)(&msg), 32, 1);
 
         post_modem_packet((void *)((unsigned char *)(&msg) + VOS_MSG_HEAD_LENGTH), sizeof(BST_ACOM_MSG_STRU) - VOS_MSG_HEAD_LENGTH);
     }
@@ -529,20 +503,10 @@ static int bastet_modem_ccorereset_cb(DRV_RESET_CB_MOMENT_E eparam, int userdata
 static void bastet_modem_reset_cb_register(void)
 {
     BST_PR_LOGI("register balong mss reset notification");
-#if   defined CONFIG_HISI_BALONG_MODEM_HI3650
     bsp_reset_cb_func_register("BASTET", bastet_modem_ccorereset_cb,
         0, BSP_DRV_CBFUN_PRIOLEVEL);
-#endif
 }
 
-#else
-
-static void bastet_modem_reset_cb_register(void)
-{
-    BST_PR_LOGI("balong mss reset not supported");
-}
-
-#endif
 
 int __init bastet_modem_driver_init(void)
 {
@@ -551,9 +515,7 @@ int __init bastet_modem_driver_init(void)
 
     bastet_data_init();
     bastet_modem_reset_cb_register();
-#ifdef CONFIG_HUAWEI_BASTET_COMM
     bastet_comm_init();
-#endif
 
     /* register bastet major and minor number */
     ret = alloc_chrdev_region(&bastet_modem_dev,
@@ -608,171 +570,5 @@ void __exit bastet_modem_driver_exit(void)
 
 }
 
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-module_init(bastet_modem_driver_init);
-module_exit(bastet_modem_driver_exit);
 
-MODULE_AUTHOR("huawei.com");
-MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("Bastet Modem driver");
-#endif
-
-#else
-
-
-#define THIS_FILE_ID                    PS_FILE_ID_BST_COMM_C
-#define BST_MAX_WRITE_PAYLOAD           (2048)
-
-struct bst_modem_rab_id {
-    uint16_t modem_id;
-    uint16_t rab_id;
-};
-
-extern char cur_netdev_name[IFNAMSIZ];
-extern void ind_hisi_com(void *info, u32 len);
-#ifdef CONFIG_HUAWEI_EMCOM
-extern void Emcom_Ind_Modem_Support(u8 ucState);
-#endif
-
-int bastet_comm_write(u8 *msg, u32 len, u32 type)
-{
-    BST_ACOM_MSG_STRU *pMsg = NULL;
-    VOS_UINT32 ulLength = 0;
-
-    if (NULL == msg)
-    {
-        return -1;
-    }
-
-    ulLength        = sizeof(BST_ACOM_MSG_STRU) + len;
-    pMsg            = (BST_ACOM_MSG_STRU *)PS_ALLOC_MSG_WITH_HEADER_LEN(ACPU_PID_BASTET_COMM, ulLength);
-    if (NULL == pMsg)
-    {
-        BST_PR_LOGE("PS_ALLOC_MSG_WITH_HEADER_LEN failed\n");
-        return -1;
-    }
-
-    pMsg->ulReceiverPid = UEPS_PID_BASTET;
-    TAF_MEM_CPY_S((VOS_VOID*)pMsg->aucValue, BST_MAX_WRITE_PAYLOAD, msg, (VOS_UINT32)len);
-
-    pMsg->ulLen     = len;
-    pMsg->enMsgType = type;
-    if (PS_SEND_MSG(ACPU_PID_BASTET_COMM, pMsg) != 0)
-    {
-        BST_PR_LOGE("PS_SEND_MSG failed\n");
-        return -1;
-    }
-
-    return 0;
-}
-
-#ifdef CONFIG_HUAWEI_EMCOM
-int bastet_comm_keypsInfo_write(u32 ulState)
-{
-    BST_KEY_PSINFO_STRU *pMsg = NULL;
-    VOS_UINT32 ulLength = 0;
-
-    ulLength        = sizeof( BST_KEY_PSINFO_STRU );
-    pMsg            = (BST_KEY_PSINFO_STRU *)PS_ALLOC_MSG(ACPU_PID_BASTET_COMM, ulLength);
-    if (NULL == pMsg)
-    {
-        BST_PR_LOGE("PS_ALLOC_MSG_WITH_HEADER_LEN failed\n");
-        return -1;
-    }
-    pMsg->enState = ulState;
-
-    pMsg->enMsgType   = BST_ACORE_CORE_MSG_TYPE_EMCOM_KEY_PSINFO;
-
-    pMsg->ulReceiverPid = UEPS_PID_BASTET;
-    BST_PR_LOGD("state: %d", pMsg->enState);
-    if (PS_SEND_MSG(ACPU_PID_BASTET_COMM, pMsg) != 0)
-    {
-        BST_PR_LOGE("PS_SEND_MSG failed\n");
-        return -1;
-    }
-
-    return 0;
-}
-#endif
-
-
-void bastet_comm_recv(MsgBlock *pMsg)
-{
-    u32                 len;
-    BST_ACOM_MSG_STRU  *pTmpMsg;
-
-    /*lint -e826*/
-    pTmpMsg             = (BST_ACOM_MSG_STRU *)pMsg;
-    /*lint +e826*/
-    if ( NULL == pMsg )
-    {
-        BST_PR_LOGE("MsgBlock is empty\n");
-        return;
-    }
-
-    len                 = pTmpMsg->ulLen;
-    if ( len > BST_MAX_WRITE_PAYLOAD )
-    {
-        len             = BST_MAX_WRITE_PAYLOAD;
-    }
-
-    switch( pTmpMsg->enMsgType )
-    {
-        case BST_ACORE_CORE_MSG_TYPE_DSPP:
-        {
-            ind_hisi_com( pTmpMsg->aucValue, len );
-            break;
-        }
-        #ifdef CONFIG_HUAWEI_EMCOM
-        case BST_ACORE_CORE_MSG_TYPE_EMCOM_SUPPORT:
-        {
-            BST_EMCOM_SUPPORT_STRU *pIndMsg = (BST_EMCOM_SUPPORT_STRU *)pMsg; //lint !e826
-            Emcom_Ind_Modem_Support( pIndMsg->enState );
-            break;
-        }
-        #endif
-        default:
-            BST_PR_LOGE("pTmpMsg->enMsgType type error,state: %d\n", pTmpMsg->enMsgType);
-            break;
-    }
- }
-
-/*
- * Get modem id and rab id.
- */
-int get_modem_rab_id(struct bst_modem_rab_id *info)
-{
-    BST_RNIC_MODEM_INFO_STRU stModemInfo;
-    VOS_INT rslt;
-
-    if (NULL == info) {
-        return -EINVAL;
-    }
-
-    rslt = RNIC_BST_GetModemInfo(cur_netdev_name,&stModemInfo);
-    if (VOS_OK != rslt)
-    {
-        BST_PR_LOGE("get modem rab id fail\n");
-        return -EPERM;
-    }
-
-    if (BST_RNIC_PDP_STATE_ACTIVE != stModemInfo.enIPv4State) {
-        BST_PR_LOGE("Ipv4 pdp reg status inactive\n");
-        return -EPERM;
-    }
-
-    info->modem_id = stModemInfo.usModemId;
-    /* Bastet only running in IPv4 mode,
-     * so, get IPv4 Pdp info */
-    info->rab_id = stModemInfo.ucRabId;
-
-    return 0;
-}
-
-void bastet_comm_init(void)
-{
-    BASTET_CommRegRecvCallBack((RECV_MSG_PROC)bastet_comm_recv);
-}
-
-#endif
 

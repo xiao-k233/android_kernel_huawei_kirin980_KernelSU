@@ -54,9 +54,7 @@
 #include <linux/slab.h>
 #include <linux/of.h>
 #include <linux/dma-mapping.h>
-#ifdef CONFIG_ARM64
 #include <linux/of_device.h>
-#endif
 #include <linux/device.h>
 #include <asm/io.h>
 #include <linux/gfp.h>

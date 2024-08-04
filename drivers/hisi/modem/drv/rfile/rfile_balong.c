@@ -65,10 +65,41 @@
 
 
 #define RFILE_AUTO_MKDIR
-#define RFILE_PM_SIZE       257
 
 struct bsp_rfile_main_stru g_stRfileMain = {EN_RFILE_INIT_INVALID, };
 
+
+typedef s32 (*RFILE_REQ_FUN)(void *pstRfileQue, u32 ulId);
+
+
+struct bsp_rfile_table_stru
+{
+    u32                             enRfileType;
+    void                            *pFun;
+};
+
+
+/* 接收C核的请求处理函数表 */
+struct bsp_rfile_table_stru astAcoreRfileReq[] = {
+    {EN_RFILE_OP_OPEN,              rfile_AcoreOpenReq},
+    {EN_RFILE_OP_CLOSE,             rfile_AcoreCloseReq},
+    {EN_RFILE_OP_WRITE,             rfile_AcoreWriteReq},
+    {EN_RFILE_OP_WRITE_SYNC,        rfile_AcoreWriteSyncReq},
+    {EN_RFILE_OP_READ,              rfile_AcoreReadReq},
+    {EN_RFILE_OP_SEEK,              rfile_AcoreSeekReq},
+    {EN_RFILE_OP_TELL,              rfile_AcoreTellReq},
+    {EN_RFILE_OP_REMOVE,            rfile_AcoreRemoveReq},
+    {EN_RFILE_OP_MKDIR,             rfile_AcoreMkdirReq},
+    {EN_RFILE_OP_RMDIR,             rfile_AcoreRmdirReq},
+    {EN_RFILE_OP_OPENDIR,           rfile_AcoreOpendirReq},
+    {EN_RFILE_OP_READDIR,           rfile_AcoreReaddirReq},
+    {EN_RFILE_OP_CLOSEDIR,          rfile_AcoreClosedirReq},
+    {EN_RFILE_OP_STAT,              rfile_AcoreStatReq},
+    {EN_RFILE_OP_ACCESS,            rfile_AcoreAccessReq},
+    {EN_RFILE_OP_MASSRD,            rfile_AcoreMassrdReq},
+    {EN_RFILE_OP_MASSWR,            rfile_AcoreMasswrReq},
+    {EN_RFILE_OP_RENAME,            rfile_AcoreRenameReq},
+};
 
 struct rfile_mntn_stru g_stRfileMntnInfo;
 
@@ -116,14 +147,10 @@ s8 *rfile_getfilepath(s32 fp)
 
 #define RFILE_LPM_PRINT_PATH(op, path) \
 do{ \
-    s32 ret;\
-	if(g_stRfileMain.lpmstate) \
+    if(g_stRfileMain.lpmstate) \
     { \
-        char rfile_pm[RFILE_PM_SIZE]={0};\
-        ret = snprintf_s(rfile_pm,RFILE_PM_SIZE,RFILE_PM_SIZE-1,"op %d,path %s.\n",op,path);\
-		if(ret != EOK){\
-            bsp_err("<%s> snprintf_s err. ret =  %d.\n", __FUNCTION__, ret);\
-        }\
+        char rfile_pm[257]={0};\
+        snprintf_s(rfile_pm,257,256,"op %d,path %s.\n",op,path);\
         bsp_pm_log(PM_OM_ARFILE, strlen(rfile_pm),rfile_pm);\
         g_stRfileMain.lpmstate = 0; \
         bsp_info("[C SR] rfile op %d, path %s.\n", op, path); \
@@ -132,14 +159,10 @@ do{ \
 
 #define RFILE_LPM_PRINT_DIRPATH(op, fd) \
 do{ \
-    s32 ret;\
     if(g_stRfileMain.lpmstate) \
     { \
-        char rfile_pm[RFILE_PM_SIZE]={0};\
-        ret = snprintf_s(rfile_pm,RFILE_PM_SIZE,RFILE_PM_SIZE-1,"op %d,path %s.\n",op,rfile_getdirpath((s32)fd));\
-		if(ret != EOK){\
-            bsp_err("<%s> snprintf_s err. ret =  %d.\n", __FUNCTION__, ret);\
-        }\
+        char rfile_pm[257]={0};\
+        snprintf_s(rfile_pm,257,256,"op %d,path %s.\n",op,rfile_getdirpath((s32)fd));\
         bsp_pm_log(PM_OM_ARFILE, strlen(rfile_pm),rfile_pm);\
         g_stRfileMain.lpmstate = 0; \
         bsp_info("[C SR] rfile op %d, path %s.\n", op, rfile_getdirpath((s32)fd)); \
@@ -148,84 +171,15 @@ do{ \
 
 #define RFILE_LPM_PRINT_FILEPATH(op, fd) \
 do{ \
-    s32 ret;\
     if(g_stRfileMain.lpmstate) \
     { \
-        char rfile_pm[RFILE_PM_SIZE]={0};\
-        ret = snprintf_s(rfile_pm,RFILE_PM_SIZE,RFILE_PM_SIZE-1,"op %d,path %s.\n",op,rfile_getfilepath((s32)fd));\
-		if(ret != EOK){\
-            bsp_err("<%s> snprintf_s err. ret =  %d.\n", __FUNCTION__, ret);\
-        }\
+        char rfile_pm[257]={0};\
+        snprintf_s(rfile_pm,257,256,"op %d,path %s.\n",op,rfile_getfilepath((s32)fd));\
         bsp_pm_log(PM_OM_ARFILE, strlen(rfile_pm),rfile_pm);\
         g_stRfileMain.lpmstate = 0; \
         bsp_info("[C SR] rfile op %d, path %s.\n", op, rfile_getfilepath((s32)fd)); \
     } \
 }while(0);
-
-int rfile_check_path(const char *path)
-{
-    unsigned int i, f_num;
-    const char *d_str = "../";
-    const char *f_str[] = { MODEM_LOG_ROOT, "/mnvm2:0/SC/", "/modem_secure/", "/modem_fw/","/mnt/modem/mnvm2:0/SC/", "/mnt/modem/modem_secure/", "/vendor/modem/modem_fw/"};
-
-    if (path == NULL) {
-        bsp_err("<%s> path is NULL.\n", __FUNCTION__);
-        return -1;
-    }
-
-    if (strstr(path, d_str)) {
-        bsp_err("<%s> %s is not allow %s.\n", __FUNCTION__, path, d_str);
-        return -1;
-    }
-
-    f_num = sizeof(f_str) / sizeof(f_str[0]);
-
-    for (i = 0; i < f_num; i++) {
-        if (0 == strncmp(path, f_str[i], strlen(f_str[i]))) {
-            return 0;
-        }
-    }
-
-    bsp_err("<%s> %s is not in list.\n", __FUNCTION__, path);
-
-    return -1;
-}
-
-int rfile_check_fp(u32 fp)
-{
-    struct list_head *p = NULL;
-    struct list_head *n = NULL;
-    struct fp_list *tmp = NULL;
-
-    list_for_each_safe(p, n, &(g_stRfileMain.fplist))
-    {
-        tmp = list_entry(p, struct fp_list, stlist);
-        if (tmp->fp == (s32)fp) {
-            return 0;
-        }
-    }
-
-    bsp_err("<%s> fp %d is not in list.\n", __FUNCTION__, fp);
-    return -1;
-}
-
-int rfile_check_dp(u32 dp)
-{
-    struct list_head *p = NULL;
-    struct list_head *n = NULL;
-    struct dir_list *tmp = NULL;
-
-    list_for_each_safe(p, n, &(g_stRfileMain.dplist))
-    {
-        tmp = list_entry(p, struct dir_list, stlist);
-        if (tmp->dp == (s32)dp) {
-            return 0;
-        }
-    }
-
-    bsp_err("<%s> dp %d is not in list.\n", __FUNCTION__, dp);
-    return -1;
-}
 
 void rfile_MntnDotRecord(u32 line)
 {
@@ -327,21 +281,19 @@ void rfile_FpListAdd(s32 fp, s8 *name)
 {/*lint --e{429}*/
     struct fp_list *fp_elemt;
     u32 len;
-    s32 ret;
 
     rfile_MntnDotRecord(__LINE__);
 
+    /* coverity[alloc_fn] */
     fp_elemt = (struct fp_list *)Rfile_Malloc(sizeof(struct fp_list));
     if(fp_elemt == NULL)
     {
         bsp_err("<%s> malloc fp_elemt failed.\n", __FUNCTION__);
+            
 
-        return ;
+        return;
     }
-    ret = memset_s((void*)fp_elemt,sizeof(*fp_elemt),0,sizeof(struct fp_list));
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)fp_elemt,sizeof(*fp_elemt),0,sizeof(struct fp_list));
     fp_elemt->fp=fp;
 
     len = (u32)strlen(name);
@@ -350,15 +302,13 @@ void rfile_FpListAdd(s32 fp, s8 *name)
         len = RFILE_NAME_MAX;
     }
 
-    ret = memcpy_s(fp_elemt->name,RFILE_NAME_MAX ,name, (s32)len);
-    if(ret != EOK){
-        bsp_err("<%s> memcpy_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memcpy_s(fp_elemt->name,RFILE_NAME_MAX ,name, (s32)len);
     fp_elemt->name[len] = '\0';
 
     list_add(&(fp_elemt->stlist), &(g_stRfileMain.fplist));
 
-    return ;
+    /* coverity[leaked_storage] */
+    return;
 }
 
 void rfile_DpListDel(s32 dp)
@@ -383,21 +333,19 @@ void rfile_DpListAdd(s32 dp, s8 *name)
 {/*lint --e{429}*/
     struct dir_list *dp_elemt;
     u32 len;
-    s32 ret;
 
     rfile_MntnDotRecord(__LINE__);
 
+    /* coverity[alloc_fn] */
     dp_elemt=(struct dir_list *)Rfile_Malloc(sizeof(struct dir_list));
     if(dp_elemt == NULL)
     {
         bsp_err("<%s> malloc dp_elemt failed.\n", __FUNCTION__);
+            
 
-        return ;
+        return;
     }
-    ret = memset_s((void*)dp_elemt,sizeof(*dp_elemt),0,sizeof(struct dir_list));
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)dp_elemt,sizeof(*dp_elemt),0,sizeof(struct dir_list));
     dp_elemt->dp=dp;
 
     len = (u32)strlen(name);
@@ -406,15 +354,13 @@ void rfile_DpListAdd(s32 dp, s8 *name)
         len = RFILE_NAME_MAX;
     }
 
-    ret = memcpy_s(dp_elemt->name,RFILE_NAME_MAX,name, (s32)len);
-    if(ret != EOK){
-        bsp_err("<%s> memcpy_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memcpy_s(dp_elemt->name,RFILE_NAME_MAX,name, (s32)len);
     dp_elemt->name[len] = '\0';
 
     list_add(&(dp_elemt->stlist), &(g_stRfileMain.dplist));
 
-    return ;
+    /* coverity[leaked_storage] */
+    return;
 }
 
 s32 bsp_fs_ok(void)
@@ -442,10 +388,7 @@ s32 bsp_open(const s8 *path, s32 flags, s32 mode)
         return -1;
     }
 
-    ret = memcpy_s(pathtmp, sizeof(pathtmp), (char *)path, strlen(path));
-    if(ret != EOK){
-        bsp_err("<%s> memcpy_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memcpy_s(pathtmp,256, (char *)path, strlen(path));
 
     /* 路径中包含'/'并且不在根目录，则检查当前目录是否存在，不存在则创建目录 */
     p = strrchr(pathtmp, '/');
@@ -692,10 +635,7 @@ s32 bsp_mkdir(s8 *dirName, s32 mode)
         return -1;
     }
 
-    ret = memcpy_s(pathtmp, sizeof(pathtmp), (char *)dirName, strlen(dirName));
-    if(ret != EOK){
-        bsp_err("<%s> memcpy_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memcpy_s(pathtmp,256, (char *)dirName, strlen(dirName));
 
     ret = AccessCreate((char *)pathtmp, mode);
     if(ret)
@@ -912,11 +852,11 @@ void rfile_IccSend(void *pdata, u32 len, u32 ulId)
 s32 rfile_AcoreOpenReq(struct bsp_rfile_open_req *pstRfileReq, u32 ulId)
 {
     u32 ulNameLen;
-    s32 ret;
     BSP_CHAR *pcName;
     struct bsp_rfile_open_cnf stRfileCnf = {0};
 
 #ifdef RFILE_AUTO_MKDIR
+    s32 ret;
     char *p;
     char pathtmp[256] = {0};
 #endif
@@ -939,29 +879,15 @@ s32 rfile_AcoreOpenReq(struct bsp_rfile_open_req *pstRfileReq, u32 ulId)
     {
         goto rfile_AcoreFopenCnf;
     }
-    ret = memset_s((void*)pcName,ulNameLen,0,ulNameLen);
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)pcName,ulNameLen,0,ulNameLen);
 
     pcName[0] = '\0' ;
-    ret = strncat_s(pcName,ulNameLen, (char*)pstRfileReq->aucData, (unsigned long)(pstRfileReq->nameLen));
-    if(ret != EOK){
-        bsp_err("<%s> strncat_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    /* coverity[secure_coding] */
+    strncat_s(pcName,ulNameLen, (char*)pstRfileReq->aucData, (unsigned long)ulNameLen); /* [false alarm]: 屏蔽Fortify错误 */
 
-    if (rfile_check_path((const char *)pcName)) {
-        bsp_err("<%s> path %s rfile_check_path failed.\n", __FUNCTION__, pcName);
-        Rfile_Free(pcName);
-        return BSP_ERROR;
-    }
 #ifdef RFILE_AUTO_MKDIR
 
-    ret = memcpy_s(pathtmp, sizeof(pathtmp), pcName, ulNameLen);/*lint !e713 */
-    if(ret != EOK){
-        bsp_err("<%s> memcpy_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
-
+    memcpy_s(pathtmp,256, pcName, ulNameLen);/*lint !e713 */
 
     /* 路径中包含'/'并且不在根目录，则检查当前目录是否存在，不存在则创建目录 */
     p = strrchr(pathtmp, '/');
@@ -1008,10 +934,6 @@ s32 rfile_AcoreCloseReq(struct bsp_rfile_close_req *pstRfileReq, u32 ulId)
     stRfileCnf.ret = BSP_ERROR;
 
     RFILE_LPM_PRINT_FILEPATH(EN_RFILE_OP_CLOSE, pstRfileReq->fd);
-    if (rfile_check_fp(pstRfileReq->fd)) {
-        bsp_err("<%s> fd %d rfile_check_fp failed.\n", __FUNCTION__, pstRfileReq->fd);
-        return BSP_ERROR;
-    }
 
     stRfileCnf.ret = bsp_close(pstRfileReq->fd);
 
@@ -1027,7 +949,6 @@ s32 rfile_AcoreCloseReq(struct bsp_rfile_close_req *pstRfileReq, u32 ulId)
 s32 rfile_AcoreWriteReq(struct bsp_rfile_write_req *pstRfileReq, u32 ulId)
 {
     struct bsp_rfile_common_cnf stRfileCnf = {0};
-    s32 ret;
 
     rfile_MntnDotRecord(__LINE__);
 
@@ -1036,23 +957,12 @@ s32 rfile_AcoreWriteReq(struct bsp_rfile_write_req *pstRfileReq, u32 ulId)
     stRfileCnf.ret = BSP_ERROR;
 
     RFILE_LPM_PRINT_FILEPATH(EN_RFILE_OP_WRITE, pstRfileReq->fd);
-    if (rfile_check_fp(pstRfileReq->fd)) {
-        bsp_err("<%s> fd %d rfile_check_fp failed.\n", __FUNCTION__, pstRfileReq->fd);
-        return BSP_ERROR;
-    }
-    if (pstRfileReq->ulSize > RFILE_WR_LEN_MAX) {
-        bsp_err("<%s> write size too large , size = %d.\n", __FUNCTION__, pstRfileReq->ulSize);
-        return BSP_ERROR;
-    }
 
     stRfileCnf.ret = bsp_write(pstRfileReq->fd, (s8*)pstRfileReq->aucData, pstRfileReq->ulSize);
 
     rfile_IccSend(&stRfileCnf, sizeof(stRfileCnf), ulId);
 
-    ret = memset_s((void*)pstRfileReq,RFILE_LEN_MAX,0,(pstRfileReq->ulSize+sizeof(struct bsp_rfile_write_req)));
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)pstRfileReq,RFILE_LEN_MAX,0,(pstRfileReq->ulSize+sizeof(struct bsp_rfile_write_req)));
 
     return BSP_OK;
 }
@@ -1061,7 +971,6 @@ s32 rfile_AcoreWriteReq(struct bsp_rfile_write_req *pstRfileReq, u32 ulId)
 s32 rfile_AcoreWriteSyncReq(struct bsp_rfile_write_req *pstRfileReq, u32 ulId)
 {
     struct bsp_rfile_common_cnf stRfileCnf = {0};
-    s32 ret;
 
     rfile_MntnDotRecord(__LINE__);
 
@@ -1070,24 +979,12 @@ s32 rfile_AcoreWriteSyncReq(struct bsp_rfile_write_req *pstRfileReq, u32 ulId)
     stRfileCnf.ret = BSP_ERROR;
 
     RFILE_LPM_PRINT_FILEPATH(EN_RFILE_OP_WRITE_SYNC, pstRfileReq->fd);
-    if (rfile_check_fp(pstRfileReq->fd)) {
-        bsp_err("<%s> fd %d rfile_check_fp failed.\n", __FUNCTION__, pstRfileReq->fd);
-        return BSP_ERROR;
-    }
-    if (pstRfileReq->ulSize > RFILE_WR_LEN_MAX) {
-        bsp_err("<%s> write size too large , size = %d.\n", __FUNCTION__, pstRfileReq->ulSize);
-        return BSP_ERROR;
-    }
-
 
     stRfileCnf.ret = bsp_write_sync(pstRfileReq->fd, (s8*)pstRfileReq->aucData, pstRfileReq->ulSize);
 
     rfile_IccSend(&stRfileCnf, sizeof(stRfileCnf), ulId);
 
-    ret = memset_s((void*)pstRfileReq,RFILE_LEN_MAX,0,(pstRfileReq->ulSize+sizeof(struct bsp_rfile_write_req)));
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)pstRfileReq,RFILE_LEN_MAX,0,(pstRfileReq->ulSize+sizeof(struct bsp_rfile_write_req)));
 
     return BSP_OK;
 }
@@ -1097,19 +994,14 @@ s32 rfile_AcoreWriteSyncReq(struct bsp_rfile_write_req *pstRfileReq, u32 ulId)
 s32 rfile_AcoreReadReq(struct bsp_rfile_read_req *pstRfileReq, u32 ulId)
 {
     u32 ulLen;
-    s32 ret;
 
     struct bsp_rfile_read_cnf *pstRfileCnf;
 
     rfile_MntnDotRecord(__LINE__);
-    if((u32)pstRfileReq->ulSize > RFILE_RD_LEN_MAX)
+    if((u32)pstRfileReq->ulSize > RFILE_LEN_MAX)
     {
-        bsp_err("<%s> pstRfileCnf->Size %d > RFILE_RD_LEN_MAX.\n", __FUNCTION__, pstRfileReq->ulSize);
+        bsp_err("<%s> pstRfileCnf->Size %d > RFILE_LEN_MAX.\n", __FUNCTION__, pstRfileReq->ulSize);
             
-        return BSP_ERROR;
-    }
-    if (rfile_check_fp(pstRfileReq->fd)) {
-        bsp_err("<%s> fd %d rfile_check_fp failed.\n", __FUNCTION__, pstRfileReq->fd);
         return BSP_ERROR;
     }
     ulLen = sizeof(struct bsp_rfile_read_cnf) + pstRfileReq->ulSize;
@@ -1120,10 +1012,7 @@ s32 rfile_AcoreReadReq(struct bsp_rfile_read_req *pstRfileReq, u32 ulId)
         bsp_err("<%s> Rfile_Malloc failed.\n", __FUNCTION__);
         return BSP_ERROR;
     }
-    ret = memset_s((void*)pstRfileCnf,ulLen,0,ulLen);
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)pstRfileCnf,ulLen,0,ulLen);
 
     pstRfileCnf->opType = pstRfileReq->opType;
     pstRfileCnf->pstlist = pstRfileReq->pstlist;
@@ -1136,10 +1025,7 @@ s32 rfile_AcoreReadReq(struct bsp_rfile_read_req *pstRfileReq, u32 ulId)
 
     rfile_IccSend(pstRfileCnf, ulLen, ulId);
 
-    ret = memset_s((void*)pstRfileCnf,ulLen,0,ulLen);
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)pstRfileCnf,ulLen,0,ulLen);
 
     Rfile_Free(pstRfileCnf);
 
@@ -1157,10 +1043,6 @@ s32 rfile_AcoreSeekReq(struct bsp_rfile_seek_req *pstRfileReq, u32 ulId)
     stRfileCnf.pstlist = pstRfileReq->pstlist;
 
     RFILE_LPM_PRINT_FILEPATH(EN_RFILE_OP_SEEK, pstRfileReq->fd);
-    if (rfile_check_fp(pstRfileReq->fd)) {
-        bsp_err("<%s> fd %d rfile_check_fp failed.\n", __FUNCTION__, pstRfileReq->fd);
-        return BSP_ERROR;
-    }
 
     stRfileCnf.ret = bsp_lseek(pstRfileReq->fd, (long)pstRfileReq->offset, pstRfileReq->whence);
 
@@ -1182,10 +1064,6 @@ s32 rfile_AcoreTellReq(struct bsp_rfile_tell_req *pstRfileReq, u32 ulId)
     stRfileCnf.pstlist = pstRfileReq->pstlist;
 
     RFILE_LPM_PRINT_FILEPATH(EN_RFILE_OP_TELL, pstRfileReq->fd);
-    if (rfile_check_fp(pstRfileReq->fd)) {
-        bsp_err("<%s> fd %d rfile_check_fp failed.\n", __FUNCTION__, pstRfileReq->fd);
-        return BSP_ERROR;
-    }
 
     ret = (s32)bsp_tell(pstRfileReq->fd);
 
@@ -1206,7 +1084,6 @@ s32 rfile_AcoreRemoveReq(struct bsp_rfile_remove_req *pstRfileReq, u32 ulId)
     struct bsp_rfile_common_cnf stRfileCnf = {0};
     BSP_CHAR *pcPath;
     u32 ulPathLen;
-    s32 ret;
 
     rfile_MntnDotRecord(__LINE__);
 
@@ -1225,23 +1102,13 @@ s32 rfile_AcoreRemoveReq(struct bsp_rfile_remove_req *pstRfileReq, u32 ulId)
     {
         goto rfile_AcoreRemoveCnf;
     }
-    ret = memset_s((void*)pcPath,ulPathLen,0,ulPathLen);
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)pcPath,ulPathLen,0,ulPathLen);
 
     pcPath[0] = '\0' ;
-    ret = strncat_s(pcPath,ulPathLen, (char*)pstRfileReq->aucData, (unsigned long)(pstRfileReq->pathLen));
-    if(ret != EOK){
-        bsp_err("<%s> strncat_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    /* coverity[secure_coding] */
+    strncat_s(pcPath,ulPathLen, (char*)pstRfileReq->aucData, (unsigned long)ulPathLen); /* [false alarm]: 屏蔽Fortify错误 */
 
     RFILE_LPM_PRINT_PATH(EN_RFILE_OP_REMOVE, pcPath);
-    if (rfile_check_path((const char *)pcPath)) {
-        bsp_err("<%s> path %s rfile_check_path failed.\n", __FUNCTION__, pcPath);
-        Rfile_Free(pcPath);
-        return BSP_ERROR;
-    }
 
     stRfileCnf.ret = bsp_remove((s8*)pcPath);
 
@@ -1261,7 +1128,6 @@ s32 rfile_AcoreMkdirReq(struct bsp_rfile_mkdir_req *pstRfileReq, u32 ulId)
     struct bsp_rfile_common_cnf stRfileCnf = {0};
     BSP_CHAR *pcPath;
     u32 ulPathLen;
-    s32 ret;
 
 #ifdef RFILE_AUTO_MKDIR
     char pathtmp[255+1] = {0};
@@ -1285,32 +1151,17 @@ s32 rfile_AcoreMkdirReq(struct bsp_rfile_mkdir_req *pstRfileReq, u32 ulId)
     {
         goto rfile_AcoreMkdirCnf;
     }
-    ret = memset_s((void*)pcPath,ulPathLen,0,ulPathLen);
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)pcPath,ulPathLen,0,ulPathLen);
 
     pcPath[0] = '\0' ;
-    ret = strncat_s(pcPath, ulPathLen,(char*)pstRfileReq->aucData, (unsigned long)(pstRfileReq->pathLen));
-    if(ret != EOK){
-        bsp_err("<%s> strncat_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    /* coverity[secure_coding] */
+    strncat_s(pcPath, ulPathLen,(char*)pstRfileReq->aucData, (unsigned long)ulPathLen); /* [false alarm]: 屏蔽Fortify错误 */
 
     RFILE_LPM_PRINT_PATH(EN_RFILE_OP_MKDIR, pcPath);
-    if (rfile_check_path((const char *)pcPath)) {
-        bsp_err("<%s> path %s rfile_check_path failed.\n", __FUNCTION__, pcPath);
-        Rfile_Free(pcPath);
-        return BSP_ERROR;
-    }
-
 
 #ifdef RFILE_AUTO_MKDIR
 
-    ret = memcpy_s(pathtmp, sizeof(pathtmp), pcPath, ulPathLen);/*lint !e713 */
-    if(ret != EOK){
-        bsp_err("<%s> memcpy_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
-
+    memcpy_s(pathtmp,256, pcPath, ulPathLen);/*lint !e713 */
 
     stRfileCnf.ret = AccessCreate((char *)pathtmp, pstRfileReq->mode);
     if(stRfileCnf.ret)
@@ -1336,7 +1187,6 @@ s32 rfile_AcoreRmdirReq(struct bsp_rfile_rmdir_req *pstRfileReq, u32 ulId)
     struct bsp_rfile_common_cnf stRfileCnf = {0};
     BSP_CHAR *pcPath;
     u32 ulPathLen;
-    s32 ret;
 
     rfile_MntnDotRecord(__LINE__);
 
@@ -1356,23 +1206,13 @@ s32 rfile_AcoreRmdirReq(struct bsp_rfile_rmdir_req *pstRfileReq, u32 ulId)
     {
         goto rfile_AcoreRmdirCnf;
     }
-    ret = memset_s((void*)pcPath,ulPathLen,0,ulPathLen);
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)pcPath,ulPathLen,0,ulPathLen);
 
     pcPath[0] = '\0' ;
-    ret = strncat_s(pcPath,ulPathLen ,(char*)pstRfileReq->aucData, (unsigned long)(pstRfileReq->pathLen));
-    if(ret != EOK){
-        bsp_err("<%s> strncat_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    /* coverity[secure_coding] */
+    strncat_s(pcPath,ulPathLen ,(char*)pstRfileReq->aucData, (unsigned long)ulPathLen); /* [false alarm]: 屏蔽Fortify错误 */
 
     RFILE_LPM_PRINT_PATH(EN_RFILE_OP_RMDIR, pcPath);
-    if (rfile_check_path((const char *)pcPath)) {
-        bsp_err("<%s> path %s rfile_check_path failed.\n", __FUNCTION__, pcPath);
-        Rfile_Free(pcPath);
-        return BSP_ERROR;
-    }
 
     stRfileCnf.ret = bsp_rmdir(pcPath);
 
@@ -1392,7 +1232,6 @@ s32 rfile_AcoreOpendirReq(struct bsp_rfile_opendir_req *pstRfileReq, u32 ulId)
     struct bsp_rfile_opendir_cnf stRfileCnf = {0};
     BSP_CHAR *pcPath;
     u32 ulPathLen;
-    s32 ret;
 
     rfile_MntnDotRecord(__LINE__);
 
@@ -1412,23 +1251,13 @@ s32 rfile_AcoreOpendirReq(struct bsp_rfile_opendir_req *pstRfileReq, u32 ulId)
     {
         goto rfile_AcoreOpendirCnf;
     }
-    ret = memset_s((void*)pcPath,ulPathLen,0,ulPathLen);
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)pcPath,ulPathLen,0,ulPathLen);
 
     pcPath[0] = '\0' ;
-    ret = strncat_s(pcPath, ulPathLen,(char*)pstRfileReq->aucData, (unsigned long)(pstRfileReq->nameLen));
-    if(ret != EOK){
-        bsp_err("<%s> strncat_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    /* coverity[secure_coding] */
+    strncat_s(pcPath, ulPathLen,(char*)pstRfileReq->aucData, (unsigned long)ulPathLen); /* [false alarm]: 屏蔽Fortify错误 */
 
     RFILE_LPM_PRINT_PATH(EN_RFILE_OP_OPENDIR, pcPath);
-    if (rfile_check_path((const char *)pcPath)) {
-        bsp_err("<%s> path %s rfile_check_path failed.\n", __FUNCTION__, pcPath);
-        Rfile_Free(pcPath);
-        return BSP_ERROR;
-    }
 
     stRfileCnf.dirhandle = bsp_opendir(pcPath);
 
@@ -1451,7 +1280,6 @@ rfile_AcoreOpendirCnf:
 s32 rfile_AcoreReaddirReq(struct bsp_rfile_readdir_req *pstRfileReq, u32 ulId)
 {
     u32 ulLen;
-    s32 ret;
     struct bsp_rfile_readdir_cnf *pstRfileCnf = NULL;
 
     rfile_MntnDotRecord(__LINE__);
@@ -1460,10 +1288,7 @@ s32 rfile_AcoreReaddirReq(struct bsp_rfile_readdir_req *pstRfileReq, u32 ulId)
     {
         return BSP_ERROR;
     }
-    if (rfile_check_dp(pstRfileReq->dir)) {
-        bsp_err("<%s> dir %d rfile_check_dp failed.\n", __FUNCTION__, pstRfileReq->dir);
-        return BSP_ERROR;
-    }
+
     ulLen = sizeof(struct bsp_rfile_readdir_cnf) + pstRfileReq->count;
 
     pstRfileCnf = Rfile_Malloc(ulLen);
@@ -1472,10 +1297,7 @@ s32 rfile_AcoreReaddirReq(struct bsp_rfile_readdir_req *pstRfileReq, u32 ulId)
         bsp_err("<%s> Rfile_Malloc failed.\n", __FUNCTION__);
         return BSP_ERROR;
     }
-    ret = memset_s((void*)pstRfileCnf,ulLen,0,ulLen);
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)pstRfileCnf,ulLen,0,ulLen);
 
     pstRfileCnf->opType = pstRfileReq->opType;
     pstRfileCnf->pstlist = pstRfileReq->pstlist;
@@ -1503,10 +1325,6 @@ s32 rfile_AcoreClosedirReq(struct bsp_rfile_closedir_req *pstRfileReq, u32 ulId)
     stRfileCnf.pstlist = pstRfileReq->pstlist;
 
     RFILE_LPM_PRINT_DIRPATH(EN_RFILE_OP_CLOSEDIR, pstRfileReq->dir);
-    if (rfile_check_dp(pstRfileReq->dir)) {
-        bsp_err("<%s> dir %d rfile_check_dp failed.\n", __FUNCTION__, pstRfileReq->dir);
-        return BSP_ERROR;
-    }
 
     stRfileCnf.ret = bsp_closedir(pstRfileReq->dir);
 
@@ -1524,7 +1342,6 @@ s32 rfile_AcoreStatReq(struct bsp_rfile_stat_req *pstRfileReq, u32 ulId)
     struct bsp_rfile_stat_cnf stRfileCnf = {0};
     BSP_CHAR *pcPath;
     u32 ulPathLen;
-    s32 ret;
 
     rfile_MntnDotRecord(__LINE__);
 
@@ -1545,23 +1362,13 @@ s32 rfile_AcoreStatReq(struct bsp_rfile_stat_req *pstRfileReq, u32 ulId)
     {
         goto rfile_AcoreStatCnf;
     }
-    ret = memset_s((void*)pcPath,ulPathLen,0,ulPathLen);
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)pcPath,ulPathLen,0,ulPathLen);
 
     pcPath[0] = '\0' ;
-    ret = strncat_s(pcPath,ulPathLen ,(char*)pstRfileReq->aucData, (unsigned long)(pstRfileReq->ulSize));
-    if(ret != EOK){
-        bsp_err("<%s> strncat_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    /* coverity[secure_coding] */
+    strncat_s(pcPath,ulPathLen ,(char*)pstRfileReq->aucData, (unsigned long)ulPathLen); /* [false alarm]: 屏蔽Fortify错误 */
 
     RFILE_LPM_PRINT_PATH(EN_RFILE_OP_STAT, pcPath);
-    if (rfile_check_path((const char *)pcPath)) {
-        bsp_err("<%s> path %s rfile_check_path failed.\n", __FUNCTION__, pcPath);
-        Rfile_Free(pcPath);
-        return BSP_ERROR;
-    }
 
     stRfileCnf.ret = bsp_stat(pcPath, &(stRfileCnf.ststat));    /*lint !e740*/
 
@@ -1582,7 +1389,6 @@ s32 rfile_AcoreRenameReq(struct bsp_rfile_rename_req *pstRfileReq, u32 ulId)
     char * oldname;
     char * newname;
     u32 uloldnamelen, ulnewnamelen;
-    s32 ret;
 
     rfile_MntnDotRecord(__LINE__);
 
@@ -1608,10 +1414,7 @@ s32 rfile_AcoreRenameReq(struct bsp_rfile_rename_req *pstRfileReq, u32 ulId)
     {
         goto rfile_AcoreRenameCnf;
     }
-    ret = memset_s((void*)oldname,uloldnamelen,0,uloldnamelen);
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)oldname,uloldnamelen,0,uloldnamelen);
 
     newname = Rfile_Malloc(ulnewnamelen);
     if(!newname)
@@ -1619,36 +1422,16 @@ s32 rfile_AcoreRenameReq(struct bsp_rfile_rename_req *pstRfileReq, u32 ulId)
         Rfile_Free(oldname);
         goto rfile_AcoreRenameCnf;
     }
-    ret = memset_s((void*)newname,ulnewnamelen,0,ulnewnamelen);
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)newname,ulnewnamelen,0,ulnewnamelen);
 
     oldname[0] = '\0' ;
-    ret = strncat_s(oldname,uloldnamelen ,(char*)pstRfileReq->aucData, (unsigned long)(strlen((char*)(pstRfileReq->aucData)) + 1));
-    if(ret != EOK){
-        bsp_err("<%s> strncat_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    /* coverity[secure_coding] */
+    strncat_s(oldname,uloldnamelen ,(char*)pstRfileReq->aucData, (unsigned long)uloldnamelen); /* [false alarm]: 屏蔽Fortify错误 */   
     newname[0] = '\0' ;
-    ret = strncat_s(newname,ulnewnamelen ,(char*)(pstRfileReq->aucData + uloldnamelen ), (unsigned long)(strlen((char*)(pstRfileReq->aucData+ uloldnamelen)) + 1));
-    if(ret != EOK){
-        bsp_err("<%s> strncat_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    /* coverity[secure_coding] */
+    strncat_s(newname,ulnewnamelen ,(char*)(pstRfileReq->aucData + uloldnamelen ), (unsigned long)ulnewnamelen); /* [false alarm]: 屏蔽Fortify错误 */  
 
     RFILE_LPM_PRINT_PATH(EN_RFILE_OP_RENAME, newname);
-    if (rfile_check_path((const char *)oldname)) {
-        bsp_err("<%s> path %s rfile_check_path failed.\n", __FUNCTION__, oldname);
-        Rfile_Free(oldname);
-        Rfile_Free(newname);
-        return BSP_ERROR;
-    }
-
-    if (rfile_check_path((const char *)newname)) {
-        bsp_err("<%s> path %s rfile_check_path failed.\n", __FUNCTION__, newname);
-        Rfile_Free(oldname);
-        Rfile_Free(newname);
-        return BSP_ERROR;
-    }
 
     stRfileCnf.ret = bsp_rename(oldname, newname);
 
@@ -1669,7 +1452,6 @@ s32 rfile_AcoreAccessReq(struct bsp_rfile_access_req *pstRfileReq, u32 ulId)
     struct bsp_rfile_common_cnf stRfileCnf = {0};
     BSP_CHAR *pcPath;
     u32 ulPathLen;
-    s32 ret;
 
     rfile_MntnDotRecord(__LINE__);
 
@@ -1689,23 +1471,13 @@ s32 rfile_AcoreAccessReq(struct bsp_rfile_access_req *pstRfileReq, u32 ulId)
     {
         goto rfile_AcoreAccessCnf;
     }
-    ret = memset_s((void*)pcPath,ulPathLen,0,ulPathLen);
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)pcPath,ulPathLen,0,ulPathLen);
 
     pcPath[0] = '\0' ;
-    ret = strncat_s(pcPath,ulPathLen, (char*)pstRfileReq->aucData, (unsigned long)(pstRfileReq->pathlen));
-    if(ret != EOK){
-        bsp_err("<%s> strncat_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    /* coverity[secure_coding] */
+    strncat_s(pcPath,ulPathLen, (char*)pstRfileReq->aucData, (unsigned long)ulPathLen); /* [false alarm]: 屏蔽Fortify错误 */
 
     RFILE_LPM_PRINT_PATH(EN_RFILE_OP_ACCESS, pcPath);
-    if (rfile_check_path((const char *)pcPath)) {
-        bsp_err("<%s> path %s rfile_check_path failed.\n", __FUNCTION__, pcPath);
-        Rfile_Free(pcPath);
-        return BSP_ERROR;
-    }
 
     stRfileCnf.ret = bsp_access(pcPath, pstRfileReq->mode);
 
@@ -1754,7 +1526,7 @@ s32 bsp_RfileCallback(u32 channel_id, u32 len, void *context)
 
         return BSP_OK;
     }
-    __pm_stay_awake(&g_stRfileMain.wake_lock);
+    wake_lock(&g_stRfileMain.wake_lock);
     osl_sem_up(&g_stRfileMain.semTask);
 
     return BSP_OK;
@@ -1802,80 +1574,6 @@ void rfile_ResetProc(void)
     }
 
 }
-s32 rfile_AcoreReqFunc_part2(u32 enOptype, u32 channel_id)
-{
-    switch (enOptype) {
-        case EN_RFILE_OP_OPENDIR: {
-            return rfile_AcoreOpendirReq((struct bsp_rfile_opendir_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_READDIR: {
-            return rfile_AcoreReaddirReq((struct bsp_rfile_readdir_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_CLOSEDIR: {
-            return rfile_AcoreClosedirReq((struct bsp_rfile_closedir_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_STAT: {
-            return rfile_AcoreStatReq((struct bsp_rfile_stat_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_ACCESS: {
-            return rfile_AcoreAccessReq((struct bsp_rfile_access_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_MASSRD: {
-            return rfile_AcoreMassrdReq((struct bsp_rfile_massread_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_MASSWR: {
-            return rfile_AcoreMasswrReq((struct bsp_rfile_masswrite_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_RENAME: {
-            return rfile_AcoreRenameReq((struct bsp_rfile_rename_req *)g_stRfileMain.data, channel_id);
-        }
-
-        default: {
-            bsp_fatal("<%s> enOptype %d  is bigger than EN_RFILE_OP_BUTT.\n", __FUNCTION__, enOptype);
-            return BSP_ERROR;
-        }
-    }
-}
-
-s32 rfile_AcoreReqFunc_part1(u32 enOptype, u32 channel_id)
-{
-    switch (enOptype) {
-        case EN_RFILE_OP_OPEN: {
-            return rfile_AcoreOpenReq((struct bsp_rfile_open_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_CLOSE: {
-            return rfile_AcoreCloseReq((struct bsp_rfile_close_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_WRITE: {
-            return rfile_AcoreWriteReq((struct bsp_rfile_write_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_WRITE_SYNC: {
-            return rfile_AcoreWriteSyncReq((struct bsp_rfile_write_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_READ: {
-            return rfile_AcoreReadReq((struct bsp_rfile_read_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_SEEK: {
-            return rfile_AcoreSeekReq((struct bsp_rfile_seek_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_TELL: {
-            return rfile_AcoreTellReq((struct bsp_rfile_tell_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_REMOVE: {
-            return rfile_AcoreRemoveReq((struct bsp_rfile_remove_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_MKDIR: {
-            return rfile_AcoreMkdirReq((struct bsp_rfile_mkdir_req *)g_stRfileMain.data, channel_id);
-        }
-        case EN_RFILE_OP_RMDIR: {
-            return rfile_AcoreRmdirReq((struct bsp_rfile_rmdir_req *)g_stRfileMain.data, channel_id);
-        }
-        default: {
-            return rfile_AcoreReqFunc_part2(enOptype, channel_id);
-        }
-    }
-}
-
 
 /*lint -save -e716*/
 
@@ -1884,11 +1582,13 @@ s32 rfile_TaskProc(void* obj)
     s32 ret;
     u32 enOptype;
     u32 channel_id;
+    RFILE_REQ_FUN   pReqFun;
 
     bsp_debug("<%s> entry.\n", __FUNCTION__);
 
     while(1)
     {
+        /* coverity[check_return] */
         osl_sem_down(&g_stRfileMain.semTask);
 
         if(EN_RFILE_INIT_SUSPEND == g_stRfileMain.eInitFlag)
@@ -1912,7 +1612,7 @@ s32 rfile_TaskProc(void* obj)
         }
 
         g_stRfileMain.opState = EN_RFILE_DOING;
-        __pm_stay_awake(&g_stRfileMain.wake_lock);
+        wake_lock(&g_stRfileMain.wake_lock);
         if(g_stRfileMain.pmState == EN_RFILE_SLEEP_STATE)
         {
             bsp_err("%s cur state in sleeping,wait for resume end!\n",__func__);
@@ -1924,7 +1624,7 @@ s32 rfile_TaskProc(void* obj)
         if(((u32)ret > RFILE_LEN_MAX) || (ret <= 0))
         {
             bsp_debug("<%s> icc_read %d.\n", __FUNCTION__, ret);
-            __pm_relax(&g_stRfileMain.wake_lock);
+            wake_unlock(&g_stRfileMain.wake_lock);
             g_stRfileMain.opState = EN_RFILE_IDLE;
             continue;   /* A-C通道没读到数据 */
         }
@@ -1939,13 +1639,15 @@ s32 rfile_TaskProc(void* obj)
         }
         else
         {
-            ret = rfile_AcoreReqFunc_part1(enOptype, channel_id);
+            pReqFun = astAcoreRfileReq[enOptype].pFun;
+
+            ret = pReqFun(g_stRfileMain.data, channel_id);
             if(BSP_OK != ret)
             {
                 bsp_err("<%s> pFun failed %d.\n", __FUNCTION__, enOptype);
             }
         }
-        __pm_relax(&g_stRfileMain.wake_lock);
+        wake_unlock(&g_stRfileMain.wake_lock);
 
         /* 处理结束后避免ICC通道中有缓存，再次启动读取 */
         osl_sem_up(&g_stRfileMain.semTask);
@@ -1971,6 +1673,7 @@ s32 bsp_rfile_reset_cb(DRV_RESET_CB_MOMENT_E eparam, s32 userdata)    /*lint !e8
         /* 启动任务中的close处理 */
         osl_sem_up(&g_stRfileMain.semTask);
 
+        /* coverity[check_return] */
         osl_sem_down(&g_stRfileMain.semCloseFps);
     }
 
@@ -1997,7 +1700,7 @@ s32 bsp_rfile_init(void)
     osl_sem_init(0, &(g_stRfileMain.semTask));
     osl_sem_init(0, &(g_stRfileMain.semCloseFps));
 
-    wakeup_source_init(&g_stRfileMain.wake_lock, "rfile_wakelock");
+    wake_lock_init(&g_stRfileMain.wake_lock,WAKE_LOCK_SUSPEND, "rfile_wakelock");
 
     g_stRfileMain.taskid = kthread_run(rfile_TaskProc, BSP_NULL, "rfile");
     if (IS_ERR(g_stRfileMain.taskid))
@@ -2015,10 +1718,7 @@ s32 bsp_rfile_init(void)
     INIT_LIST_HEAD(&g_stRfileMain.fplist);
     INIT_LIST_HEAD(&g_stRfileMain.dplist);
 
-    ret = memset_s((void*)&g_stRfileMntnInfo,sizeof(g_stRfileMntnInfo),0, sizeof(g_stRfileMntnInfo));
-    if(ret != EOK){
-        bsp_err("<%s> memset_s err. ret =  %d.\n", __FUNCTION__, ret);
-    }
+    memset_s((void*)&g_stRfileMntnInfo,sizeof(g_stRfileMntnInfo),0, sizeof(g_stRfileMntnInfo));
 
     g_stRfileMain.eInitFlag = EN_RFILE_INIT_FINISH;
 
@@ -2083,7 +1783,6 @@ EXPORT_SYMBOL(bsp_readdir);
 EXPORT_SYMBOL(bsp_closedir);
 EXPORT_SYMBOL(bsp_stat);
 
-#if (FEATURE_ON == FEATURE_DELAY_MODEM_INIT)
 
 static int  modem_rfile_probe(struct platform_device *dev)
 {
@@ -2103,7 +1802,6 @@ static void  modem_rfile_shutdown(struct platform_device *dev)
 
     g_stRfileMain.eInitFlag = EN_RFILE_INIT_INVALID;
 }
-#ifdef CONFIG_PM
 static s32 modem_rfile_suspend(struct device *dev)
 {
     static s32 count = 0;
@@ -2134,9 +1832,6 @@ static const struct dev_pm_ops modem_rfile_pm_ops ={
 };
 
 #define BALONG_RFILE_PM_OPS (&modem_rfile_pm_ops)
-#else
-#define BALONG_RFILE_PM_OPS  NULL
-#endif
 static struct platform_driver modem_rfile_drv = {
     .probe      = modem_rfile_probe,
     .shutdown   = modem_rfile_shutdown,
@@ -2188,9 +1883,6 @@ void  modem_rfile_exit(void)
 //module_init(modem_rfile_init);
 //module_exit(modem_rfile_exit);
 
-#else
-module_init(bsp_rfile_init);
-#endif
 
 
 

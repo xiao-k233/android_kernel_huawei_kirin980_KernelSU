@@ -312,9 +312,7 @@ VOS_VOID DMS_UsbPortWrtCB(
     {
         if (NULL != pcVirAddr)
         {
-#if (VOS_LINUX== VOS_OS_VER)
             kfree(pcVirAddr);
-#endif
         }
     }
 

@@ -90,7 +90,7 @@ s32 icc_channel_has_data(void)
 			{
 				while(read < write)
 				{
-					if(fifo_get(fifo, ((u32)i << 16), (u8 *)&packet, sizeof(packet), &read) != sizeof(packet))
+					if(fifo_get(fifo, (u8 *)&packet, sizeof(packet), &read) != sizeof(packet))
 					{
 						break;
 					}
@@ -103,7 +103,7 @@ s32 icc_channel_has_data(void)
 					read = (read >= fifo->size)? (read - fifo->size): (read);
 				}
 			}
-			__pm_stay_awake(&g_icc_ctrl.wake_lock);
+			wake_lock(&g_icc_ctrl.wake_lock);
 			if(!g_icc_ctrl.channels[i]->mode.union_stru.no_task)
 			{
 				if(g_icc_ctrl.channels[i]->mode.union_stru.task_shared)
@@ -135,8 +135,7 @@ void icc_private_sem_init(osl_sem_id *private_sem)
 
 int icc_shared_task_init(void)
 {
-    return osl_task_init("icc_shared", ICC_TASK_SHARED_PRI, ICC_TASK_STK_SIZE,
-        (OSL_TASK_FUNC)icc_task_shared_func, NULL, /*lint !e611 */
+    return osl_task_init("icc_shared", ICC_TASK_SHARED_PRI, ICC_TASK_STK_SIZE ,(void *)icc_task_shared_func, NULL, /*lint !e611 */
 		(void*)&g_icc_ctrl.shared_task_id); /*lint !e611 */
 }
 
@@ -164,17 +163,17 @@ static void icc_pm_notify_init(void)
 	register_pm_notifier(&g_icc_ctrl.pm_notify);
 }
 
-void icc_wake_lock_init(struct wakeup_source *lock, const char *name)
+void icc_wake_lock_init(struct wake_lock *lock, int lock_id, const char *name)
 {
-    wakeup_source_init(lock, name);
+    wake_lock_init(lock, lock_id, name);
 }
-void icc_wake_lock(struct wakeup_source *lock)
+void icc_wake_lock(struct wake_lock *lock)
 {
-    __pm_stay_awake(lock);/*lint !e454 */
+    wake_lock(lock);/*lint !e454 */
 }/*lint !e454 */
-void icc_wake_unlock(struct wakeup_source *lock)
+void icc_wake_unlock(struct wake_lock *lock)
 {
-    __pm_relax(lock); /*lint !e455 */
+    wake_unlock(lock); /*lint !e455 */
 }
 
 extern s32 bsp_reset_ccpu_status_get(void);
@@ -205,16 +204,12 @@ s32 bsp_icc_channel_reset(DRV_RESET_CB_MOMENT_E stage, int usrdata)
 				}
 				channel->fifo_send->read  = 0;
 				channel->fifo_send->write = 0;
-				channel->fifo_recv->read  = 0;
-				channel->fifo_recv->write = 0;
 			}
             if(g_icc_ctrl.channels[ICC_CHN_IQI])
             {
                 //新增的IQI 通道单独处理
                 g_icc_ctrl.channels[ICC_CHN_IQI]->fifo_send->read  = 0;
                 g_icc_ctrl.channels[ICC_CHN_IQI]->fifo_send->write = 0;
-				g_icc_ctrl.channels[ICC_CHN_IQI]->fifo_recv->read  = 0;
-                g_icc_ctrl.channels[ICC_CHN_IQI]->fifo_recv->write = 0;
             }
 		}
 		return ICC_OK;

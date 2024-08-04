@@ -58,18 +58,13 @@
 #include "TafDrvAgent.h"
 #include "AtOamInterface.h"
 #include "MnCommApi.h"
-#if( FEATURE_ON == FEATURE_CSD )
-#include "AtCsdInterface.h"
-#endif
 
 #include "AtInputProc.h"
 #include "FcInterface.h"
 #include "AtCmdMsgProc.h"
 
-#if(FEATURE_ON == FEATURE_LTE)
 #include "gen_msg.h"
 #include "at_lte_common.h"
-#endif
 
 #include "TafAppMma.h"
 
@@ -106,11 +101,7 @@
 /*****************************************************************************
   4 全局变量定义
 *****************************************************************************/
-#if(FEATURE_ON == FEATURE_UE_MODE_NR)
-extern AT_MT_INFO_STRU                         g_stMtInfoCtx;
-#else
 extern AT_DEVICE_CMD_CTRL_STRU                 g_stAtDevCmdCtrl;
-#endif
 
 const AT_SMS_ERROR_CODE_MAP_STRU        g_astAtSmsErrorCodeMap[] =
 {
@@ -333,17 +324,14 @@ const AT_PS_EVT_FUNC_TBL_STRU           g_astAtPsEvtFuncTbl[] =
     {ID_EVT_TAF_PS_GET_AUTHDATA_INFO_CNF,
         AT_RcvTafPsEvtGetAuthDataInfoCnf},
 
-#if (FEATURE_ON == FEATURE_IPV6)
     {ID_EVT_TAF_PS_CALL_PDP_IPV6_INFO_IND,
         AT_RcvTafPsEvtReportRaInfo},
-#endif
 
     {ID_EVT_TAF_PS_CALL_PDP_DISCONNECT_IND,
         AT_RcvTafPsEvtPdpDisconnectInd},
     {ID_EVT_TAF_PS_GET_NEGOTIATION_DNS_CNF,
         AT_RcvTafPsEvtGetDynamicDnsInfoCnf},
 
-#if(FEATURE_ON == FEATURE_LTE)
     {ID_EVT_TAF_PS_LTECS_INFO_CNF,
         atReadLtecsCnfProc},
     {ID_EVT_TAF_PS_CEMODE_INFO_CNF,
@@ -356,7 +344,6 @@ const AT_PS_EVT_FUNC_TBL_STRU           g_astAtPsEvtFuncTbl[] =
     {ID_MSG_TAF_PS_GET_LTE_ATTACH_INFO_CNF,
         AT_RcvTafGetLteAttachInfoCnf},
 
-#endif
     {ID_EVT_TAF_PS_SET_APDSFLOW_RPT_CFG_CNF,
         AT_RcvTafPsEvtSetApDsFlowRptCfgCnf},
     {ID_EVT_TAF_PS_GET_APDSFLOW_RPT_CFG_CNF,
@@ -369,7 +356,6 @@ const AT_PS_EVT_FUNC_TBL_STRU           g_astAtPsEvtFuncTbl[] =
     {ID_EVT_TAF_PS_GET_DSFLOW_NV_WRITE_CFG_CNF,
         AT_RcvTafPsEvtGetDsFlowNvWriteCfgCnf},
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     {ID_EVT_TAF_PS_SET_CTA_INFO_CNF,
         AT_RcvTafPsEvtSetPktCdataInactivityTimeLenCnf},
     {ID_EVT_TAF_PS_GET_CTA_INFO_CNF,
@@ -382,18 +368,15 @@ const AT_PS_EVT_FUNC_TBL_STRU           g_astAtPsEvtFuncTbl[] =
 
     {ID_EVT_TAF_PS_CGMTU_VALUE_CHG_IND,
         AT_RcvTafPsEvtCgmtuValueChgInd},
-#endif
 
     {ID_EVT_TAF_PS_SET_IMS_PDP_CFG_CNF,
         AT_RcvTafPsEvtSetImsPdpCfgCnf},
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     {ID_EVT_TAF_PS_SET_1X_DORM_TIMER_CNF,
         AT_RcvTafPsEvtSet1xDormTimerCnf},
 
     {ID_EVT_TAF_PS_GET_1X_DORM_TIMER_CNF,
         AT_RcvTafPsEvtGet1xDormTimerCnf},
-#endif
 
     /* 处理rabid change消息 */
     {ID_EVT_TAF_PS_CALL_PDP_RABID_CHANGE_IND,
@@ -446,17 +429,6 @@ const AT_PS_EVT_FUNC_TBL_STRU           g_astAtPsEvtFuncTbl[] =
     {ID_EVT_TAF_PS_DATA_SYSTEM_CHG_NTF,
         AT_RcvTafPsEvtDataSystemChgNtf},
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-    /* +C5GQOS */
-    {ID_EVT_TAF_PS_SET_5G_QOS_INFO_CNF,
-        AT_RcvTafPsEvtSet5gQosInfoCnf},
-    {ID_EVT_TAF_PS_GET_5G_QOS_INFO_CNF,
-        AT_RcvTafPsEvtGet5gQosInfoCnf},
-
-    /* +C5GQOSRDP */
-    {ID_EVT_TAF_PS_GET_DYNAMIC_5G_QOS_INFO_CNF,
-        AT_RcvTafPsEvtGetDynamic5gQosInfoCnf},
-#endif
 
 };
 
@@ -541,52 +513,6 @@ AT_CMS_SMS_ERR_CODE_MAP_STRU           g_astAtCmsSmsErrCodeMapTbl[] =
 };
 
 
-#if ((FEATURE_ON == FEATURE_UE_MODE_CDMA)&&(FEATURE_ON == FEATURE_CHINA_TELECOM_VOICE_ENCRYPT))
-AT_ENCRYPT_VOICE_ERR_CODE_MAP_STRU                  g_astAtEncVoiceErrCodeMapTbl[] =
-{
-    { AT_ENCRYPT_VOICE_SUCC,                                TAF_CALL_APP_ENCRYPT_VOICE_SUCC},
-    { AT_ENCRYPT_VOICE_TIMEOUT,                             TAF_CALL_APP_ENCRYPT_VOICE_TIMEOUT},
-    { AT_ENCRYPT_VOICE_TIMEOUT,                             TAF_CALL_APP_ENCRYPT_VOICE_TX01_TIMEOUT},
-    { AT_ENCRYPT_VOICE_TIMEOUT,                             TAF_CALL_APP_ENCRYPT_VOICE_TX02_TIMEOUT},
-    { AT_ENCRYPT_VOICE_LOCAL_TERMINAL_NO_AUTHORITY,         TAF_CALL_APP_ENCRYPT_VOICE_LOCAL_TERMINAL_NO_AUTHORITY},
-    { AT_ENCRYPT_VOICE_REMOTE_TERMINAL_NO_AUTHORITY,        TAF_CALL_APP_ENCRYPT_VOICE_REMOTE_TERMINAL_NO_AUTHORITY},
-    { AT_ENCRYPT_VOICE_LOCAL_TERMINAL_ILLEGAL,              TAF_CALL_APP_ENCRYPT_VOICE_LOCAL_TERMINAL_ILLEGAL},
-    { AT_ENCRYPT_VOICE_REMOTE_TERMINAL_ILLEGAL,             TAF_CALL_APP_ENCRYPT_VOICE_REMOTE_TERMINAL_ILLEGAL},
-    { AT_ENCRYPT_VOICE_UNKNOWN_ERROR,                       TAF_CALL_APP_ENCRYPT_VOICE_UNKNOWN_ERROR },
-    { AT_ENCRYPT_VOICE_SIGNTURE_VERIFY_FAILURE,             TAF_CALL_APP_ENCRYPT_VOICE_SIGNTURE_VERIFY_FAILURE},
-    { AT_ENCRYPT_VOICE_MT_CALL_NOTIFICATION,                TAF_CALL_APP_ENCRYPT_VOICE_MT_CALL_NOTIFICATION},
-
-    /* Internal err code */
-    { AT_ENCRYPT_VOICE_XSMS_SEND_RESULT_FAIL,               TAF_CALL_APP_ENCRYPT_VOICE_XSMS_SEND_RESULT_FAIL},
-    { AT_ENCRYPT_VOICE_XSMS_SEND_RESULT_POOL_FULL,          TAF_CALL_APP_ENCRYPT_VOICE_XSMS_SEND_RESULT_POOL_FULL},
-    { AT_ENCRYPT_VOICE_XSMS_SEND_RESULT_LINK_ERR,           TAF_CALL_APP_ENCRYPT_VOICE_XSMS_SEND_RESULT_LINK_ERR},
-    { AT_ENCRYPT_VOICE_XSMS_SEND_RESULT_NO_TL_ACK,          TAF_CALL_APP_ENCRYPT_VOICE_XSMS_SEND_RESULT_NO_TL_ACK},
-    { AT_ENCRYPT_VOICE_XSMS_SEND_RESULT_ENCODE_ERR,         TAF_CALL_APP_ENCRYPT_VOICE_XSMS_SEND_RESULT_ENCODE_ERR},
-    { AT_ENCRYPT_VOICE_XSMS_SEND_RESULT_UNKNOWN,            TAF_CALL_APP_ENCRYPT_VOICE_XSMS_SEND_RESULT_UNKNOWN},
-    { AT_ENCRYPT_VOICE_SO_NEGO_FAILURE,                     TAF_CALL_APP_ENCRYPT_VOICE_SO_NEGO_FAILURE},
-    { AT_ENCRYPT_VOICE_TWO_CALL_ENTITY_EXIST,               TAT_CALL_APP_ENCRYPT_VOICE_TWO_CALL_ENTITY_EXIST},
-    { AT_ENCRYPT_VOICE_NO_MO_CALL,                          TAF_CALL_APP_ENCRYPT_VOICE_NO_MO_CALL},
-    { AT_ENCRYPT_VOICE_NO_MT_CALL,                          TAF_CALL_APP_ENCRYPT_VOICE_NO_MT_CALL},
-    { AT_ENCRYPT_VOICE_NO_CALL_EXIST,                       TAF_CALL_APP_ENCRYPT_VOICE_NO_CALL_EXIST},
-    { AT_ENCRYPT_VOICE_CALL_STATE_NOT_ALLOWED,              TAF_CALL_APP_ENCRYPT_VOICE_CALL_STATE_NOT_ALLOWED},
-    { AT_ENCRYPT_VOICE_CALL_NUM_MISMATCH,                   TAF_CALL_APP_ENCRYPT_VOICE_CALL_NUM_MISMATCH},
-    { AT_ENCRYPT_VOICE_ENC_VOICE_STATE_MISMATCH,            TAF_CALL_APP_ENCRYPT_VOICE_ENC_VOICE_STATE_MISMATCH},
-    { AT_ENCRYPT_VOICE_MSG_ENCODE_FAILUE,                   TAF_CALL_APP_ENCRYPT_VOICE_MSG_ENCODE_FAILUE},
-    { AT_ENCRYPT_VOICE_MSG_DECODE_FAILUE,                   TAF_CALL_APP_ENCRYPT_VOICE_MSG_DECODE_FAILUE},
-    { AT_ENCRYPT_VOICE_GET_TEMP_PUB_PIVA_KEY_FAILURE,       TAF_CALL_APP_ENCRYPT_VOICE_GET_TEMP_PUB_PIVA_KEY_FAILURE},
-    { AT_ENCRYPT_VOICE_FILL_CIPHER_TEXT_FAILURE,            TAF_CALL_APP_ENCRYPT_VOICE_FILL_CIPHER_TEXT_FAILURE},
-    { AT_ENCRYPT_VOICE_ECC_CAP_NOT_SUPPORTED,               TAF_CALL_APP_ENCRYPT_VOICE_ECC_CAP_NOT_SUPPORTED},
-    { AT_ENCRYPT_VOICE_ENC_VOICE_MODE_UNKNOWN,              TAF_CALL_APP_ENCRYPT_VOICE_ENC_VOICE_MODE_UNKNOWN},
-    { AT_ENCRYPT_VOICE_ENC_VOICE_MODE_MIMATCH,              TAF_CALL_APP_ENCRYPT_VOICE_ENC_VOICE_MODE_MIMATCH},
-    { AT_ENCRYPT_VOICE_CALL_RELEASED,                       TAF_CALL_APP_ENCRYPT_VOICE_CALL_RELEASED},
-    { AT_ENCRYPT_VOICE_CALL_ANSWER_REQ_FAILURE,             TAF_CALL_APP_ENCRYPT_VOICE_CALL_ANSWER_REQ_FAILURE},
-    { AT_ENCRYPT_VOICE_DECRYPT_KS_FAILURE,                  TAF_CALL_APP_ENCRYPT_VOICE_DECRYPT_KS_FAILURE},
-    { AT_ENCRYPT_VOICE_FAILURE_CAUSED_BY_INCOMING_CALL,     TAF_CALL_APP_ENCRYPT_VOICE_FAILURE_CAUSED_BY_INCOMING_CALL},
-    { AT_ENCRYPT_VOICE_INIT_VOICE_FUNC_FAILURE,             TAF_CALL_APP_ENCRYPT_VOICE_INIT_VOICE_FUNC_FAILURE},
-    { AT_ENCRYPT_VOICE_ERROR_ENUM_BUTT,                     TAF_CALL_APP_ENCRYPT_VOICE_STATUS_ENUM_BUTT}
-
-};
-#endif
 
 AT_SMS_RSP_PROC_FUN g_aAtSmsMsgProcTable[MN_MSG_EVT_MAX] = {
     /*MN_MSG_EVT_SUBMIT_RPT*/           At_SendSmRspProc,
@@ -620,27 +546,14 @@ AT_SMS_RSP_PROC_FUN g_aAtSmsMsgProcTable[MN_MSG_EVT_MAX] = {
     /*MN_MSG_EVT_SET_LINK_CTRL_PARAM*/  At_SetCmmsRspProc,
     /*MN_MSG_EVT_GET_LINK_CTRL_PARAM*/  At_GetCmmsRspProc,
     /*MN_MSG_EVT_STUB_RESULT*/          At_SmsStubRspProc,
-#if ((FEATURE_ON == FEATURE_GCBS) || (FEATURE_ON == FEATURE_WCBS))
     /*MN_MSG_EVT_DELIVER_CBM*/          At_SmsDeliverCbmProc,
     /*MN_MSG_EVT_GET_CBTYPE*/           At_GetCbActiveMidsRspProc,
     /*MN_MSG_EVT_ADD_CBMIDS*/           AT_ChangeCbMidsRsp,
     /*MN_MSG_EVT_DELETE_CBMIDS*/        AT_ChangeCbMidsRsp,
     /*MN_MSG_EVT_DELETE_ALL_CBMIDS*/    AT_ChangeCbMidsRsp,
 
-#if (FEATURE_ON == FEATURE_ETWS)
     /*MN_MSG_EVT_DELIVER_ETWS_PRIM_NOTIFY*/  At_ProcDeliverEtwsPrimNotify,
-#else
-    /*MN_MSG_EVT_DELIVER_ETWS_PRIM_NOTIFY*/  At_SmsRspNop,
-#endif
 
-#else
-    /*MN_MSG_EVT_DELIVER_CBM*/          At_SmsRspNop,
-    /*MN_MSG_EVT_GET_CBTYPE*/           At_SmsRspNop,
-    /*MN_MSG_EVT_ADD_CBMIDS*/           At_SmsRspNop,
-    /*MN_MSG_EVT_DELETE_CBMIDS*/        At_SmsRspNop,
-    /*MN_MSG_EVT_DELETE_ALL_CBMIDS*/    At_SmsRspNop
-    /*MN_MSG_EVT_DELIVER_ETWS_PRIM_NOTIFY*/   At_SmsRspNop,
-#endif
    /*MN_MSG_EVT_SET_SEND_DOMAIN_PARAM*/ At_SetCgsmsRspProc,
    /*MN_MSG_EVT_GET_SEND_DOMAIN_PARAM*/ At_GetCgsmsRspProc,
 };
@@ -665,17 +578,6 @@ AT_QUERY_TYPE_FUNC_STRU     g_aAtQryTypeProcFuncTbl[] =
     {TAF_TELE_PARA_BUTT,               TAF_NULL_PTR}
 };
 
-#if (VOS_WIN32 == VOS_OS_VER)
-LOCAL TAF_UINT8                         gaucAtStin[] = "^STIN:";
-LOCAL TAF_UINT8                         gaucAtStmn[] = "^STMN:";
-LOCAL TAF_UINT8                         gaucAtStgi[] = "^STGI:";
-LOCAL TAF_UINT8                         gaucAtStsf[] = "^STSF:";
-LOCAL TAF_UINT8                         gaucAtCsin[] = "^CSIN:";
-LOCAL TAF_UINT8                         gaucAtCstr[] = "^CSTR:";
-LOCAL TAF_UINT8                         gaucAtCsen[] = "^CSEN:";
-LOCAL TAF_UINT8                         gaucAtCsmn[] = "^CSMN:";
-LOCAL TAF_UINT8                         gaucAtCcin[] = "^CCIN:";
-#else
 TAF_UINT8                               gaucAtStin[] = "^STIN:";
 TAF_UINT8                               gaucAtStmn[] = "^STMN:";
 TAF_UINT8                               gaucAtStgi[] = "^STGI:";
@@ -685,7 +587,6 @@ TAF_UINT8                               gaucAtCstr[] = "^CSTR:";
 TAF_UINT8                               gaucAtCsen[] = "^CSEN:";
 TAF_UINT8                               gaucAtCsmn[] = "^CSMN:";
 TAF_UINT8                               gaucAtCcin[] = "^CCIN:";
-#endif
 
 static AT_CALL_CUUSU_MSG_STRU g_stCuusuMsgType[] =
 {
@@ -715,10 +616,6 @@ static AT_PH_SYS_MODE_TBL_STRU g_astSysModeTbl[] =
     {MN_PH_SYS_MODE_EX_EVDO_RAT     ,"EVDO"},
     {MN_PH_SYS_MODE_EX_HYBRID_RAT   ,"CDMA1X+EVDO(HYBRID)"},
     {MN_PH_SYS_MODE_EX_SVLTE_RAT    ,"CDMA1X+LTE"},
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-    {MN_PH_SYS_MODE_EX_EUTRAN_5GC_RAT,  "EUTRAN-5GC"},
-    {MN_PH_SYS_MODE_EX_NR_5GC_RAT,      "NR-5GC"},
-#endif
 };
 
 AT_PH_SUB_SYS_MODE_TBL_STRU g_astSubSysModeTbl[] =
@@ -750,18 +647,12 @@ AT_PH_SUB_SYS_MODE_TBL_STRU g_astSubSysModeTbl[] =
 
     {MN_PH_SUB_SYS_MODE_EX_EHRPD_RAT           ,"EHRPD"},
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-    {MN_PH_SUB_SYS_MODE_EX_EUTRAN_5GC_RAT      ,"EUTRAN-5GC"},
-    {MN_PH_SUB_SYS_MODE_EX_NR_5GC_RAT          ,"NR-5GC"},
-#endif
 
 };
 /* end V7R1 PhaseI Modify */
 
-#if(FEATURE_ON == FEATURE_LTE)
 VOS_UINT32  g_ulGuTmodeCnf  = 0;
 VOS_UINT32  g_ulLteTmodeCnf = 0;
- #endif
 
 /* +CLCK命令参数CLASS与Service Type Code对应扩展表 */
 AT_CLCK_CLASS_SERVICE_TBL_STRU          g_astClckClassServiceExtTbl[] = {
@@ -896,15 +787,10 @@ AT_PIH_RSP_PROC_FUNC_STRU     g_aAtPihRspProcFuncTbl[] =
     {SI_PIH_EVENT_SESSION_QRY_CNF,          At_ProcPihSessionQryCnf},
     {SI_PIH_EVENT_CIMI_QRY_CNF,             At_ProcPihCimiQryCnf},
     {SI_PIH_EVENT_CCIMI_QRY_CNF,            At_ProcPihCcimiQryCnf},
-#if (FEATURE_ON == FEATURE_IMS)
     {SI_PIH_EVENT_UICCAUTH_CNF,             AT_UiccAuthCnf},
     {SI_PIH_EVENT_URSM_CNF,                 AT_UiccAccessFileCnf},
-#endif
-#if (FEATURE_ON == FEATURE_PHONE_SC)
     {SI_PIH_EVENT_SILENT_PIN_SET_CNF,       At_PrintSilentPinInfo},
     {SI_PIH_EVENT_SILENT_PININFO_SET_CNF,   At_PrintSilentPinInfo},
-#endif
-    {SI_PIH_EVENT_BWT_SET_CNF,              At_ProcPihBwtSetCnf},
 };
 
 /*****************************************************************************
@@ -913,12 +799,10 @@ AT_PIH_RSP_PROC_FUNC_STRU     g_aAtPihRspProcFuncTbl[] =
 
 extern TAF_UINT8                               gucSTKCmdQualify ;
 
-#if(FEATURE_ON == FEATURE_LTE)
 extern   VOS_UINT32 g_ulGuOnly;
 extern   VOS_UINT32 g_ulGuTmodeCnfNum;
 extern   VOS_UINT32 g_ulLteIsSend2Dsp;
 extern   VOS_UINT32 g_ulTmodeLteMode;
- #endif
 
 /*****************************************************************************
    6 函数实现
@@ -930,21 +814,12 @@ LOCAL VOS_VOID AT_ConvertSysCfgStrToAutoModeStr(
     VOS_UINT8                           ucRatNum
 );
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-LOCAL VOS_VOID AT_RcvMmaNrCERssiChangeInd(
-    TAF_UINT8                           ucIndex,
-    TAF_MMA_RSSI_INFO_IND_STRU         *pstRssiInfoInd,
-    VOS_UINT8                           ucSystemAppConfig
-);
-#endif
 
-#if (FEATURE_ON == FEATURE_LTE)
 LOCAL VOS_VOID AT_RcvMmaLteCERssiChangeInd(
     TAF_UINT8                           ucIndex,
     TAF_MMA_RSSI_INFO_IND_STRU         *pstRssiInfoInd,
     VOS_UINT8                           ucSystemAppConfig
 );
-#endif
 
 LOCAL VOS_VOID AT_RcvMmaWcdmaCERssiChangeInd(
     TAF_UINT8                           ucIndex,
@@ -1091,7 +966,6 @@ VOS_UINT32 At_ChgMnErrCodeToAt(
     return ulRtn;
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 TAF_UINT32 At_ChgXsmsErrorCodeToAt(
     TAF_UINT32                          ulXsmsError
@@ -1133,7 +1007,6 @@ TAF_UINT32 At_ChgXsmsErrorCodeToAt(
             return AT_ERROR;
     }
 }
-#endif
 
 TAF_UINT32 At_ChgTafErrorCode(TAF_UINT8 ucIndex, TAF_ERROR_CODE_ENUM_UINT32 enTafErrorCode)
 {
@@ -1433,50 +1306,6 @@ TAF_UINT32 At_ReadNumTypePara(TAF_UINT8 *pucDst,TAF_UINT8 *pucSrc)
     }
     return usLength;
 }
-#if( FEATURE_ON == FEATURE_CSD )
-
-VOS_UINT32 AT_SendCsdCallStateInd(
-    VOS_UINT8                           ucIndex,
-    AT_CSD_CALL_TYPE_STATE_ENUM_UINT16  enCallState
-)
-{
-    AT_CSD_CALL_STATE_TYPE_IND_STRU     *pstMsg;
-
-    /* 申请AT_CSD_CALL_STATE_TYPE_IND_STRU消息 */
-    pstMsg = (AT_CSD_CALL_STATE_TYPE_IND_STRU *)PS_ALLOC_MSG_WITH_HEADER_LEN(
-                            WUEPS_PID_AT,
-                            sizeof(AT_CSD_CALL_STATE_TYPE_IND_STRU));
-
-    if (VOS_NULL_PTR == pstMsg)
-    {
-        AT_WARN_LOG("AT_SendCsdCallStateInd: alloc msg fail!");
-        return VOS_ERR;
-    }
-
-    /* 初始化消息 */
-    TAF_MEM_SET_S((VOS_CHAR*)pstMsg + VOS_MSG_HEAD_LENGTH,
-               sizeof(AT_CSD_CALL_STATE_TYPE_IND_STRU) - VOS_MSG_HEAD_LENGTH,
-               0x00,
-               sizeof(AT_CSD_CALL_STATE_TYPE_IND_STRU) - VOS_MSG_HEAD_LENGTH);
-
-    /* 填写消息头 */
-    pstMsg->ulReceiverCpuId = VOS_LOCAL_CPUID;
-    pstMsg->ulReceiverPid   = ACPU_PID_CSD;
-    pstMsg->enMsgId         = ID_AT_CSD_CALL_STATE_IND;
-
-    /* 填写消息体 */
-    pstMsg->enCallState     = enCallState;
-    pstMsg->ucIndex         = ucIndex;
-
-    if (VOS_OK != PS_SEND_MSG(WUEPS_PID_AT, pstMsg))
-    {
-        AT_WARN_LOG("AT_SendCsdCallStateInd: Send msg fail!");
-        return VOS_ERR;
-    }
-
-    return VOS_OK;
-}
-#endif
 
 
 
@@ -1503,12 +1332,6 @@ VOS_BOOL  AT_IsFindVedioModemStatus(
         /* 返回命令模式 */
         At_SetMode(ucIndex, AT_CMD_MODE, AT_NORMAL_MODE);
 
-#if( FEATURE_ON == FEATURE_CSD )
-        /* 去注册Modem端口VIDEO PHONE流控点 */
-        AT_DeRegModemVideoPhoneFCPoint(ucIndex);
-
-        AT_SendCsdCallStateInd(ucIndex, AT_CSD_CALL_STATE_OFF);
-#endif
 
         TAF_MEM_SET_S(&stMscStru, sizeof(stMscStru), 0x00, sizeof(stMscStru));
 
@@ -1540,9 +1363,6 @@ VOS_BOOL  AT_IsFindVedioModemStatus(
         return VOS_TRUE;
     }
 
-#if (VOS_WIN32 == VOS_OS_VER)
-    At_SetMode(ucIndex, AT_CMD_MODE, AT_NORMAL_MODE);
-#endif
 
     return VOS_FALSE;
 }
@@ -1566,10 +1386,6 @@ VOS_VOID  AT_CsRspEvtReleasedProc(
     g_ucDtrDownFlag = VOS_FALSE;
 
 
-#if (FEATURE_ON == FEATURE_AT_HSUART)
-    /* 停止RING TE */
-    AT_VoiceStopRingTe(pstCallInfo->callId);
-#endif
 
 
     /* 记录cause值和文本信息 */
@@ -1683,10 +1499,6 @@ VOS_VOID  AT_CsRspEvtConnectProc(
 
     pstSsCtx = AT_GetModemSsCtxAddrFromModemId(enModemId);
 
-#if (FEATURE_ON == FEATURE_AT_HSUART)
-    /* 停止RING TE */
-    AT_VoiceStopRingTe(pstCallInfo->callId);
-#endif
 
     /* CS呼叫成功, 清除CS域错误码和文本信息 */
     AT_UpdateCallErrInfo(ucIndex, TAF_CS_CAUSE_SUCCESS, &(pstCallInfo->stErrInfoText));
@@ -1743,12 +1555,6 @@ VOS_VOID  AT_CsRspEvtConnectProc(
         /* 如果是PCUI口发起的拨打可视电话的操作，则不迁到数据态，只有MODEM口发起的VP操作才需迁到数据态  */
         if (AT_MODEM_USER == gastAtClientTab[ucIndex].UserType)
         {
-#if( FEATURE_ON == FEATURE_CSD )
-            /* 注册Modem端口VIDEO PHONE的流控点 */
-            AT_RegModemVideoPhoneFCPoint(ucIndex, FC_ID_MODEM);
-
-            AT_SendCsdCallStateInd(ucIndex, AT_CSD_CALL_STATE_ON);
-#endif
 
             At_SetMode(ucIndex, AT_DATA_MODE, AT_CSD_DATA_MODE);   /* 开始数传 */
         }
@@ -1902,7 +1708,6 @@ VOS_UINT8 At_GetCssiForwardCauseCode(MN_CALL_CF_CAUSE_ENUM_UINT8 enCode)
     }
 }
 
-#if (FEATURE_ON == FEATURE_IMS)
 
 VOS_VOID At_ProcCsEvtCssuexNotifiy_Ims(
     const MN_CALL_INFO_STRU            *pstCallInfo,
@@ -2159,7 +1964,6 @@ VOS_VOID At_ProcCsEvtImsHoldToneNotifiy_Ims(
                                          "%s", gaucAtCrLf);
 
 }
-#endif
 
 
 VOS_VOID At_ProcCsEvtCssuNotifiy_NonIms(
@@ -2357,13 +2161,11 @@ VOS_VOID At_ProcCsRspEvtCssuNotifiy(
             return;
         }
 
-#if (FEATURE_ON == FEATURE_IMS)
         if (TAF_CALL_VOICE_DOMAIN_IMS == pstCallInfo->enVoiceDomain)
         {
             At_ProcCsEvtCssuNotifiy_Ims(pstCallInfo, ucCode, &usLength);
         }
         else
-#endif
         {
             At_ProcCsEvtCssuNotifiy_NonIms(pstCallInfo, ucCode, &usLength);
         }
@@ -2394,14 +2196,12 @@ VOS_VOID At_ProcCsRspEvtCssiNotifiy(
      && ((MN_CALL_SS_NTFY_BE_DEFLECTED >= pstCallInfo->stSsNotify.enCode)
       || (MN_CALL_SS_NTFY_CCBS_RECALL  == pstCallInfo->stSsNotify.enCode)))
     {
-#if (FEATURE_ON == FEATURE_IMS)
         /* ^CSSI: <code1>[,<index>[,<number>,<type>]] */
         if (TAF_CALL_VOICE_DOMAIN_IMS == pstCallInfo->enVoiceDomain)
         {
             At_ProcCsEvtCssiNotifiy_Ims(pstCallInfo, &usLength);
         }
         else
-#endif
         /* +CSSI: <code1>[,<index>] */
         {
             At_ProcCsEvtCssiNotifiy_NonIms(pstCallInfo, &usLength);
@@ -2429,12 +2229,10 @@ VOS_VOID  AT_ProcCsRspEvtSsNotify(
 
     At_ProcCsRspEvtCssuNotifiy(ucIndex, pstCallInfo, &usLength);
 
-#if (FEATURE_ON == FEATURE_IMS)
     if (TAF_CALL_VOICE_DOMAIN_IMS == pstCallInfo->enVoiceDomain)
     {
         At_ProcCsEvtImsHoldToneNotifiy_Ims(pstCallInfo, &usLength);
     }
-#endif
 
     if ((AT_BROADCAST_CLIENT_INDEX_MODEM_0 != ucIndex)
      && (AT_BROADCAST_CLIENT_INDEX_MODEM_1 != ucIndex)
@@ -2608,14 +2406,12 @@ TAF_VOID AT_CsSsNotifyEvtIndProc(
      && ((MN_CALL_SS_NTFY_BE_DEFLECTED >= pstCallInfo->stSsNotify.enCode)
       || (MN_CALL_SS_NTFY_CCBS_RECALL  == pstCallInfo->stSsNotify.enCode)))
     {
-#if (FEATURE_ON == FEATURE_IMS)
         /* ^CSSI: <code1>[,<index>[,<number>,<type>]] */
         if (TAF_CALL_VOICE_DOMAIN_IMS == pstCallInfo->enVoiceDomain)
         {
             At_ProcCsEvtCssiNotifiy_Ims(pstCallInfo, &usLength);
         }
         else
-#endif
         /* +CSSI: <code1>[,<index>] */
         {
             At_ProcCsEvtCssiNotifiy_NonIms(pstCallInfo, &usLength);
@@ -2638,26 +2434,22 @@ TAF_VOID AT_CsSsNotifyEvtIndProc(
             return;
         }
 
-#if (FEATURE_ON == FEATURE_IMS)
         if (TAF_CALL_VOICE_DOMAIN_IMS == pstCallInfo->enVoiceDomain)
         {
             /* ^CSSU: <code2>[,<index>[,<number>,<type>[,<subaddr>,<satype>]]] */
             At_ProcCsEvtCssuNotifiy_Ims(pstCallInfo, ucCode, &usLength);
         }
         else
-#endif
         {
             /* +CSSU: <code2>[,<index>[,<number>,<type>[,<subaddr>,<satype>]]] */
             At_ProcCsEvtCssuNotifiy_NonIms(pstCallInfo, ucCode, &usLength);
         }
     }
 
-#if (FEATURE_ON == FEATURE_IMS)
     if (TAF_CALL_VOICE_DOMAIN_IMS == pstCallInfo->enVoiceDomain)
     {
         At_ProcCsEvtImsHoldToneNotifiy_Ims(pstCallInfo, &usLength);
     }
-#endif
 
     At_SendResultData(ucIndex, pgucAtSndCodeAddr, usLength);
 
@@ -2691,7 +2483,6 @@ TAF_VOID At_CsIncomingEvtOfIncomeStateIndProc(
     {
         /* +CRC -- +CRING: <type> */
 
-#if (FEATURE_ON == FEATURE_IMS)
         if (TAF_CALL_VOICE_DOMAIN_IMS == pstCallInfo->enVoiceDomain)
         {
             usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,
@@ -2702,7 +2493,6 @@ TAF_VOID At_CsIncomingEvtOfIncomeStateIndProc(
                                                 gaucAtCrLf);
         }
         else
-#endif
         {
             usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,
                                                (TAF_CHAR *)pgucAtSndCodeAddr,
@@ -2763,7 +2553,6 @@ TAF_VOID At_CsIncomingEvtOfIncomeStateIndProc(
                             VOS_NULL_PTR, NAS_OM_EVENT_NO_PARA);
         }
 
-#if (FEATURE_ON == FEATURE_IMS)
         if (TAF_CALL_VOICE_DOMAIN_IMS == pstCallInfo->enVoiceDomain)
         {
             usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,
@@ -2774,7 +2563,6 @@ TAF_VOID At_CsIncomingEvtOfIncomeStateIndProc(
                                                 gaucAtCrLf);
         }
         else
-#endif
         {
             /* +CRC -- RING */
             if( AT_V_ENTIRE_TYPE == gucAtVType )
@@ -2804,7 +2592,6 @@ TAF_VOID At_CsIncomingEvtOfIncomeStateIndProc(
         +CLIP: <number>,<type>
         其它部分[,<subaddr>,<satype>[,[<alpha>][,<CLI validity>]]]不用上报
         */
-        AT_ERR_LOG("At_CsIncomingEvtOfIncomeStateIndProc:+CLIP:");
         usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,
                                            (TAF_CHAR *)pgucAtSndCodeAddr,
                                            (TAF_CHAR *)pgucAtSndCodeAddr + usLength,
@@ -2945,7 +2732,6 @@ TAF_VOID At_CsIncomingEvtOfWaitStateIndProc(
 
     if( AT_CCWA_ENABLE_TYPE == pstSsCtx->ucCcwaType )         /* 命令与协议不符 */
     {
-#if (FEATURE_ON == FEATURE_IMS)
         if (TAF_CALL_VOICE_DOMAIN_IMS == pstCallInfo->enVoiceDomain)
         {
             usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,
@@ -2955,7 +2741,6 @@ TAF_VOID At_CsIncomingEvtOfWaitStateIndProc(
                                                 gaucAtCrLf);
         }
         else
-#endif
         {
             usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,
                                                (TAF_CHAR *)pgucAtSndCodeAddr,
@@ -3104,13 +2889,6 @@ TAF_VOID At_CsIncomingEvtIndProc(
         return;
     }
 
-#if (FEATURE_ON == FEATURE_AT_HSUART)
-    if ( PS_TRUE == At_CheckUartRingTeCallType(pstCallInfo->enCallType) )
-    {
-        /* 通过UART端口的RING脚输出波形通知TE */
-        AT_VoiceStartRingTe(pstCallInfo->callId);
-    }
-#endif
 
     return;
 }
@@ -3649,7 +3427,6 @@ VOS_VOID At_ProcQryClccResult(
     gstAtSendData.usBufLen = usLength;
 
 }
-#if (FEATURE_ON == FEATURE_IMS)
 
 VOS_UINT32 At_ProcQryClccEconfResult(
     TAF_CCM_QRY_ECONF_CALLED_INFO_CNF_STRU                 *pstCallInfos,
@@ -3703,7 +3480,6 @@ VOS_UINT32 At_ProcQryClccEconfResult(
     return AT_OK;
 
 }
-#endif
 
 
 VOS_VOID At_CsAllCallInfoEvtCnfProc(
@@ -3823,10 +3599,6 @@ VOS_VOID AT_ProcCsCallConnectInd(
         return;
     }
 
-#if (FEATURE_ON == FEATURE_AT_HSUART)
-    /* 停止RING TE */
-    AT_VoiceStopRingTe(pstCallInfo->callId);
-#endif
 
     /* CS呼叫成功, 清除CS域错误码 */
 
@@ -3932,10 +3704,6 @@ TAF_VOID At_CsIndProc(
                 pstCcCtx->stS0TimeInfo.ulTimerName = 0;
             }
 
-#if (FEATURE_ON == FEATURE_AT_HSUART)
-            /* 停止RING TE */
-            AT_VoiceStopRingTe(pstCallInfo->callId);
-#endif
 
             AT_ReportCendResult(ucIndex, pstCallInfo);
 
@@ -4308,12 +4076,6 @@ TAF_VOID At_CsMsgProc(MN_AT_IND_EVT_STRU *pstData,TAF_UINT16 usLen)
             break;
 
 
-#if (FEATURE_ON == FEATURE_ECALL)
-        case MN_CALL_EVT_QRY_ECALL_INFO_CNF:
-            At_RcvTafCallQryEcallInfoCnf(pstData);
-            break;
-#endif
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
         case TAF_CALL_EVT_SEND_FLASH_RSLT:
             AT_RcvTafCallSndFlashRslt(pstData);
             break;
@@ -4381,10 +4143,8 @@ TAF_VOID At_CsMsgProc(MN_AT_IND_EVT_STRU *pstData,TAF_UINT16 usLen)
         case TAF_CALL_EVT_CCLPR_SET_CNF:
             AT_RcvTafCallCclprCnf(pstData);
             break;
-#endif
 
 
-#if (FEATURE_ON == FEATURE_IMS)
 
 
         case TAF_CALL_EVT_ECONF_DIAL_CNF:
@@ -4398,7 +4158,6 @@ TAF_VOID At_CsMsgProc(MN_AT_IND_EVT_STRU *pstData,TAF_UINT16 usLen)
         case TAF_CALL_EVT_CCWAI_SET_CNF:
             AT_RcvTafCallCcwaiSetCnf(pstData);
             break;
-#endif
 
         default:
             At_CsEventProc(pstData,usLen);
@@ -5358,9 +5117,7 @@ TAF_VOID At_SsRspInterrogateCnfProc(
     TAF_UINT16                          *pusLength
 )
 {
-    if (g_stParseContext[ucIndex].pstCmdElement == VOS_NULL_PTR) {
-        return;
-    }
+   /* TAF_UINT8                           ucTmp    = 0;*/
 
     switch(g_stParseContext[ucIndex].pstCmdElement->ulCmdIndex)
     {
@@ -5404,11 +5161,9 @@ TAF_VOID At_SsRspInterrogateCnfProc(
         AT_SsRspInterrogateCnfCnapProc(ucIndex, pEvent, pulResult, pusLength);
         break;
 
-    /* 直接返回 防止错误清除其他命令处理状态 */
     default:
-        return;
+        break;
     }
-    AT_STOP_TIMER_CMD_READY(ucIndex);
 }
 
 
@@ -5543,6 +5298,7 @@ TAF_VOID At_SsRspProc(TAF_UINT8  ucIndex,TAF_SS_CALL_INDEPENDENT_EVENT_STRU  *pE
         {
         case TAF_SS_EVT_INTERROGATESS_CNF:          /* 查询结果上报 */
             At_SsRspInterrogateCnfProc(ucIndex, pEvent, &ulResult, &usLength);
+            AT_STOP_TIMER_CMD_READY(ucIndex);
             break;
 
         case TAF_SS_EVT_ERASESS_CNF:
@@ -5637,7 +5393,6 @@ TAF_UINT32 At_PhReadCreg(TAF_PH_REG_STATE_STRU  *pPara,TAF_UINT8 *pDst)
 {
     TAF_UINT16 usLength = 0;
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     if ((TAF_PH_ACCESS_TECH_CDMA_1X == pPara->ucAct)
         ||(TAF_PH_ACCESS_TECH_EVDO == pPara->ucAct)
         )
@@ -5655,24 +5410,10 @@ TAF_UINT32 At_PhReadCreg(TAF_PH_REG_STATE_STRU  *pPara,TAF_UINT8 *pDst)
 
         return usLength;
     }
-#endif
 
     if(pPara->CellId.ucCellNum > 0)
     {
         /* lac */
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-        if (TAF_PH_ACCESS_TECH_NR_5GC == pPara->ucAct)
-        {
-            usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR *)pgucAtSndCodeAddr,(TAF_CHAR *)pDst + usLength,",\"%X%X%X%X%X%X\"",
-                    0x000f & (pPara->ulLac >> 20),
-                    0x000f & (pPara->ulLac >> 16),
-                    0x000f & (pPara->ulLac >> 12),
-                    0x000f & (pPara->ulLac >> 8),
-                    0x000f & (pPara->ulLac >> 4),
-                    0x000f & (pPara->ulLac >> 0));
-        }
-        else
-#endif
         {
             usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR *)pgucAtSndCodeAddr,(TAF_CHAR *)pDst + usLength,",\"%X%X%X%X\"",
                     0x000f & (pPara->ulLac >> 12),
@@ -5715,63 +5456,6 @@ TAF_UINT32 At_PhReadCreg(TAF_PH_REG_STATE_STRU  *pPara,TAF_UINT8 *pDst)
     return usLength;
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-
-TAF_UINT32 At_PhReadC5greg(TAF_PH_REG_STATE_STRU  *pPara,TAF_UINT8 *pDst)
-{
-    TAF_UINT16 usLength = 0;
-
-    if(pPara->CellId.ucCellNum > 0)
-    {
-        /* tac */
-        usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR *)pgucAtSndCodeAddr,(TAF_CHAR *)pDst + usLength,",\"%X%X%X%X%X%X\"",
-                0x000f & (pPara->ulLac >> 20),
-                0x000f & (pPara->ulLac >> 16),
-                0x000f & (pPara->ulLac >> 12),
-                0x000f & (pPara->ulLac >> 8),
-                0x000f & (pPara->ulLac >> 4),
-                0x000f & (pPara->ulLac >> 0));
-
-        /* ci */
-        if (CREG_CGREG_CI_RPT_FOUR_BYTE == gucCiRptByte)
-        {
-            /* VDF需求: CREG/CGREG的<CI>域以4字节方式上报 */
-            usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR *)pgucAtSndCodeAddr,(TAF_CHAR *)pDst + usLength,",\"%X%X%X%X%X%X%X%X\"",
-                    0x000f & (pPara->CellId.aulCellId[0] >> 28),
-                    0x000f & (pPara->CellId.aulCellId[0] >> 24),
-                    0x000f & (pPara->CellId.aulCellId[0] >> 20),
-                    0x000f & (pPara->CellId.aulCellId[0] >> 16),
-                    0x000f & (pPara->CellId.aulCellId[0] >> 12),
-                    0x000f & (pPara->CellId.aulCellId[0] >> 8),
-                    0x000f & (pPara->CellId.aulCellId[0] >> 4),
-                    0x000f & (pPara->CellId.aulCellId[0] >> 0));
-        }
-        else
-        {
-            /* <CI>域以2字节方式上报 */
-            usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR *)pgucAtSndCodeAddr,(TAF_CHAR *)pDst + usLength,",\"%X%X%X%X\"",
-                    0x000f & (pPara->CellId.aulCellId[0] >> 12),
-                    0x000f & (pPara->CellId.aulCellId[0] >> 8),
-                    0x000f & (pPara->CellId.aulCellId[0] >> 4),
-                    0x000f & (pPara->CellId.aulCellId[0] >> 0));
-        }
-
-        if (VOS_TRUE == g_usReportCregActParaFlg)
-        {
-            /* rat */
-            usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN, (TAF_CHAR *)pgucAtSndCodeAddr, (TAF_CHAR *)pDst + usLength, ",%d", pPara->ucAct);
-        }
-        else
-        {
-            /* rat */
-            usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN, (TAF_CHAR *)pgucAtSndCodeAddr, (TAF_CHAR *)pDst + usLength, ",");
-        }
-
-    }
-
-    return usLength;
-}
-#endif
 
 
 VOS_VOID AT_PhSendPinReady( VOS_UINT16 usModemID )
@@ -6001,7 +5685,6 @@ VOS_VOID AT_ReportSysCfgQryCmdResult(
             }
             break;
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
         case TAF_MMA_RAT_1X:
             if (VOS_TRUE == AT_IsSupportHrpdMode(&pstSysCfg->stMultiModeRatCfg))
             {
@@ -6023,7 +5706,6 @@ VOS_VOID AT_ReportSysCfgQryCmdResult(
                 enAccessMode = AT_SYSCFG_RAT_HRPD;
             }
             break;
-#endif
 
         default:
             /* 只支持L的情况，syscfg查询与标杆上报一致 */
@@ -6078,17 +5760,6 @@ LOCAL VOS_VOID AT_ConvertSysCfgStrToAutoModeStr(
 )
 {
 
-#if ((FEATURE_ON == FEATURE_UE_MODE_NR) && (FEATURE_ON == FEATURE_LTE))
-    if ((0 == VOS_StrCmp((VOS_CHAR *)pucAcqOrderBegin, "08030201"))
-     && (TAF_PH_MAX_GULNR_RAT_NUM == ucRatNum))
-    {
-        /* 接入技术的个数为4且接入优先顺序为NR->L->W->G,acqorder上报00 */
-        pucAcqOrder = pucAcqOrderBegin;
-        VOS_StrCpy_s((VOS_CHAR *)pucAcqOrder, TAF_MMA_RAT_BUTT * 2 + 1, "00");
-        pucAcqOrder += AT_SYSCFGEX_RAT_MODE_STR_LEN;
-        *pucAcqOrder = '\0';
-    }
-#elif (FEATURE_ON == FEATURE_LTE)
     if ((0 == VOS_StrCmp((VOS_CHAR *)pucAcqOrderBegin, "030201"))
      && (TAF_PH_MAX_GUL_RAT_NUM == ucRatNum))
     {
@@ -6098,27 +5769,6 @@ LOCAL VOS_VOID AT_ConvertSysCfgStrToAutoModeStr(
         pucAcqOrder += AT_SYSCFGEX_RAT_MODE_STR_LEN;
         *pucAcqOrder = '\0';
     }
-#elif (FEATURE_ON == FEATURE_UE_MODE_NR)
-    if ((0 == VOS_StrCmp((VOS_CHAR *)pucAcqOrderBegin, "080201"))
-     && (TAF_PH_MAX_GUNR_RAT_NUM == ucRatNum))
-    {
-        /* 接入技术的个数为3且接入优先顺序为NR->W->G,acqorder上报00 */
-        pucAcqOrder = pucAcqOrderBegin;
-        VOS_StrCpy_s((VOS_CHAR *)pucAcqOrder, TAF_MMA_RAT_BUTT * 2 + 1, "00");
-        pucAcqOrder += AT_SYSCFGEX_RAT_MODE_STR_LEN;
-        *pucAcqOrder = '\0';
-    }
-#else
-    if ((0 == VOS_StrCmp((VOS_CHAR *)pucAcqOrderBegin, "0201"))
-     && (TAF_PH_MAX_GU_RAT_NUM == ucRatNum))
-    {
-        /* 接入技术的个数为2且接入优先顺序为W->G,acqorder上报00 */
-        pucAcqOrder = pucAcqOrderBegin;
-        VOS_StrCpy_s((VOS_CHAR *)pucAcqOrder, TAF_MMA_RAT_BUTT * 2 + 1, "00");
-        pucAcqOrder += AT_SYSCFGEX_RAT_MODE_STR_LEN;
-        *pucAcqOrder = '\0';
-    }
-#endif
 
     return;
 }
@@ -6151,15 +5801,12 @@ VOS_VOID AT_ConvertSysCfgRatOrderToStr(
              pucAcqOrder += AT_SYSCFGEX_RAT_MODE_STR_LEN;
              ulLength -= AT_SYSCFGEX_RAT_MODE_STR_LEN;
         }
-#if (FEATURE_ON == FEATURE_LTE)
         else if (TAF_MMA_RAT_LTE == pstRatOrder->aenRatOrder[i])
         {
              VOS_StrCpy_s((VOS_CHAR *)pucAcqOrder, ulLength, "03");
              pucAcqOrder += AT_SYSCFGEX_RAT_MODE_STR_LEN;
              ulLength -= AT_SYSCFGEX_RAT_MODE_STR_LEN;
         }
-#endif
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
         else if (TAF_MMA_RAT_1X == pstRatOrder->aenRatOrder[i])
         {
              VOS_StrCpy_s((VOS_CHAR *)pucAcqOrder, ulLength, "04");
@@ -6172,15 +5819,6 @@ VOS_VOID AT_ConvertSysCfgRatOrderToStr(
              pucAcqOrder += AT_SYSCFGEX_RAT_MODE_STR_LEN;
              ulLength -= AT_SYSCFGEX_RAT_MODE_STR_LEN;
         }
-#endif
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-        else if (TAF_MMA_RAT_NR == pstRatOrder->aenRatOrder[i])
-        {
-             VOS_StrCpy_s((VOS_CHAR *)pucAcqOrder, ulLength, "08");
-             pucAcqOrder += AT_SYSCFGEX_RAT_MODE_STR_LEN;
-             ulLength -= AT_SYSCFGEX_RAT_MODE_STR_LEN;
-        }
-#endif
 
         else
         {
@@ -6338,12 +5976,10 @@ VOS_UINT32 AT_ConvertSysCfgRatOrderToWs46No(
         {
             ucWcdmaSupportFlag = VOS_TRUE;
         }
-#if (FEATURE_ON == FEATURE_LTE)
         else if (TAF_MMA_RAT_LTE == pstRatOrder->aenRatOrder[i])
         {
             ucLteSupportFlag = VOS_TRUE;
         }
-#endif
         else
         {
         }
@@ -6399,7 +6035,6 @@ VOS_UINT32 AT_ReportWs46QryCmdResult(
 
 
 
-#if(FEATURE_ON == FEATURE_LTE)
 
 VOS_VOID AT_ReportCeregResult(
     VOS_UINT8                           ucIndex,
@@ -6487,7 +6122,6 @@ VOS_VOID AT_ReportCeregResult(
     return;
 
 }
-#endif
 
 
 
@@ -6628,121 +6262,6 @@ VOS_VOID AT_ReportCregResult(
     return;
 }
 
-#if(FEATURE_ON == FEATURE_UE_MODE_NR)
-
-LOCAL VOS_VOID AT_ReportC5gregResult(
-    VOS_UINT8                           ucIndex,
-    TAF_MMA_REG_STATUS_IND_STRU        *pstRegInd,
-    VOS_UINT16                         *pusLength
-)
-{
-    AT_MODEM_NET_CTX_STRU              *pstNetCtx = VOS_NULL_PTR;
-    VOS_UINT32                          ulRst;
-    MODEM_ID_ENUM_UINT16                enModemId;
-    VOS_UINT32                          i;
-
-
-    enModemId = MODEM_ID_0;
-
-    ulRst = AT_GetModemIdFromClient(ucIndex, &enModemId);
-    if (VOS_OK != ulRst)
-    {
-        AT_ERR_LOG1("AT_ReportC5gregResult: ERROR: Get ModemID From ClientID fail,ClientID:", ucIndex);
-        return;
-    }
-
-    /* 当前平台是否支持NR */
-    if (VOS_TRUE != AT_IsModemSupportRat(enModemId, TAF_MMA_RAT_NR))
-    {
-        return;
-    }
-
-    pstNetCtx = AT_GetModemNetCtxAddrFromModemId(enModemId);
-
-    if ((AT_C5GREG_RESULT_CODE_BREVITE_TYPE == pstNetCtx->ucC5gregType)
-     && (VOS_TRUE == pstRegInd->stRegStatus.OP_PsRegState))
-    {
-        /* +C5GREG: <stat> */
-        *pusLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                             (VOS_CHAR *)pgucAtSndCodeAddr,
-                                             (VOS_CHAR *)pgucAtSndCodeAddr + *pusLength,
-                                             "%s%s%d%s",
-                                             gaucAtCrLf,
-                                             gastAtStringTab[AT_STRING_C5GREG].pucText,
-                                             pstRegInd->stRegStatus.ucPsRegState,
-                                             gaucAtCrLf);
-    }
-    else if ((AT_C5GREG_RESULT_CODE_ENTIRE_TYPE == pstNetCtx->ucC5gregType)
-          && (VOS_TRUE == pstRegInd->stRegStatus.OP_PsRegState))
-    {
-
-        if ((TAF_PH_REG_REGISTERED_HOME_NETWORK == pstRegInd->stRegStatus.ucPsRegState)
-         || (TAF_PH_REG_REGISTERED_ROAM == pstRegInd->stRegStatus.ucPsRegState))
-        {
-             /* +C5GREG: <stat>[,<lac>,<ci>,[rat]][,<Allowed_NSSAI_length>,<Allowed_NSSAI>]   */
-            *pusLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                 (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                 (VOS_CHAR *)pgucAtSndCodeAddr + *pusLength,
-                                                 "%s%s%d", gaucAtCrLf,
-                                                 gastAtStringTab[AT_STRING_C5GREG].pucText,
-                                                 pstRegInd->stRegStatus.ucPsRegState);
-
-            if (TAF_PH_INFO_NR_5GC_RAT == pstRegInd->stRegStatus.ucRatType)
-            {
-                *pusLength += (VOS_UINT16)At_PhReadC5greg(&(pstRegInd->stRegStatus),pgucAtSndCodeAddr + *pusLength);
-            }
-
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-            if (TAF_PH_ACCESS_TECH_NR_5GC == pstRegInd->stRegStatus.ucAct)
-            {
-                /* 组装切片消息格式 */
-                *pusLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                    (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                    (VOS_CHAR *)pgucAtSndCodeAddr + *pusLength,
-                                                    ",%d,\"",
-                                                    pstRegInd->stRegStatus.stNssai.ucLen);
-
-                for (i = 0; i < AT_MIN(pstRegInd->stRegStatus.stNssai.ucLen, TAF_NSSAI_MAX_LEN); i++)
-                {
-                    *pusLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                        (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                        (VOS_CHAR *)pgucAtSndCodeAddr + *pusLength,
-                                                        "%02X",
-                                                        pstRegInd->stRegStatus.stNssai.aucNssai[i]);
-                }
-
-                *pusLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                    (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                    (VOS_CHAR *)pgucAtSndCodeAddr + *pusLength,
-                                                    "\"");
-            }
-#endif
-
-            *pusLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                 (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                 (VOS_CHAR *)pgucAtSndCodeAddr + *pusLength,
-                                                 "%s", gaucAtCrLf);
-        }
-        else
-        {
-            /* +C5GREG: <stat> */
-            *pusLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                 (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                 (VOS_CHAR *)pgucAtSndCodeAddr + *pusLength,
-                                                 "%s%s%d%s", gaucAtCrLf,
-                                                 gastAtStringTab[AT_STRING_C5GREG].pucText,
-                                                 pstRegInd->stRegStatus.ucPsRegState, gaucAtCrLf);
-        }
-    }
-    else
-    {
-
-    }
-
-    return;
-
-}
-#endif
 
 
 
@@ -6759,15 +6278,9 @@ VOS_VOID AT_ProcRegStatusInfoInd(
 
     AT_ReportCgregResult(ucIndex, pstRegInfo, &usLength);
 
-#if(FEATURE_ON == FEATURE_LTE)
     /* 通过NV判断当前是否支持LTE */
     AT_ReportCeregResult(ucIndex, pstRegInfo, &usLength);
-#endif
 
-#if(FEATURE_ON == FEATURE_UE_MODE_NR)
-    /* 通过NV判断当前是否支持NR */
-    AT_ReportC5gregResult(ucIndex, pstRegInfo, &usLength);
-#endif
 
 
     At_SendResultData(ucIndex, pgucAtSndCodeAddr, usLength);
@@ -7114,18 +6627,12 @@ VOS_VOID    At_QryCpinRspProc(
     return;
 }
 
-#if(FEATURE_ON == FEATURE_LTE)
 
 TAF_UINT32 AT_ProcOperModeWhenLteOn(VOS_UINT8 ucIndex)
 {
-#if(FEATURE_OFF == FEATURE_UE_MODE_NR)
     return atSetTmodePara(ucIndex, g_stAtDevCmdCtrl.ucCurrentTMode);
-#else
-    return atSetTmodePara(ucIndex, g_stMtInfoCtx.enCurrentTMode);
-#endif
 
 }
-#endif
 
 
 TAF_UINT32 At_ProcPinQuery(
@@ -7427,10 +6934,8 @@ TAF_UINT32 At_ProcPhoneEvtOperModeCnf(
 )
 {
     TAF_UINT32                          ulResult;
-#if(FEATURE_ON == FEATURE_LTE)
     VOS_UINT8                           ucSptLteFlag;
     VOS_UINT8                           ucSptUtralTDDFlag;
-#endif
 
     ulResult = AT_FAILURE;
 
@@ -7450,16 +6955,13 @@ TAF_UINT32 At_ProcPhoneEvtOperModeCnf(
     }
 
     /* V7R2 ^PSTANDBY命令复用关机处理流程 */
-#ifdef FEATURE_UPGRADE_TL
     if(AT_CMD_PSTANDBY_SET == (AT_LTE_CMD_CURRENT_OPT_ENUM)gastAtClientTab[ucIndex].CmdCurrentOpt)
     {
         AT_STOP_TIMER_CMD_READY(ucIndex);
 
         return AT_RRETURN_CODE_BUTT;
     }
-#endif
 
-#if((FEATURE_ON == FEATURE_LTE) || (FEATURE_ON == FEATURE_UE_MODE_TDS))
     /* 如果GU处理结果正确，则发送到TL测并等待结果 */
     if (ulResult == AT_OK)
     {
@@ -7478,7 +6980,6 @@ TAF_UINT32 At_ProcPhoneEvtOperModeCnf(
             }
         }
     }
-#endif
 
     AT_STOP_TIMER_CMD_READY(ucIndex);
 
@@ -7835,7 +7336,6 @@ TAF_VOID At_PhEventProc(TAF_UINT8* pData,TAF_UINT16 usLen)
         At_PhRspProc(ucIndex,pEvent);
     }
 }
-#if (FEATURE_ON == FEATURE_CSG)
 
 VOS_VOID AT_ReportCsgListSearchCnfResult(
     TAF_MMA_CSG_LIST_CNF_PARA_STRU     *pstCsgList,
@@ -8285,7 +7785,6 @@ VOS_UINT32 AT_RcvMmaQryCampCsgIdInfoCnfProc(
     return VOS_OK;
 }
 
-#endif
 
 
 LOCAL VOS_CHAR* AT_ConvertRatModeForQryParaPlmnList(
@@ -8307,11 +7806,6 @@ LOCAL VOS_CHAR* AT_ConvertRatModeForQryParaPlmnList(
         case TAF_PH_RA_LTE:
             pcCopsRat = "7";
             break;
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-        case TAF_PH_RA_NR:
-            pcCopsRat = "12";
-            break;
-#endif
         default:
             pcCopsRat = "";
 
@@ -8330,7 +7824,7 @@ VOS_UINT32 At_QryParaPlmnListProc(
     AT_RRETURN_CODE_ENUM_UINT32         enResult;
     VOS_CHAR                           *pcRatMode;
     VOS_UINT16                          usLength;
-    VOS_UINT32                          ulTmp;
+    VOS_UINT8                           ucTmp;
     VOS_UINT8                           ucIndex;
 
     usLength       = 0;
@@ -8383,10 +7877,9 @@ VOS_UINT32 At_QryParaPlmnListProc(
         usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR *)pgucAtSndCodeAddr,(TAF_CHAR *)pgucAtSndCodeAddr + usLength,"%s: ",g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
     }
 
-    pstPlmnList->ulPlmnNum = AT_MIN(pstPlmnList->ulPlmnNum, TAF_MMA_MAX_PLMN_NAME_LIST_NUM);
-    for(ulTmp = 0; ulTmp < pstPlmnList->ulPlmnNum; ulTmp++)
+    for(ucTmp = 0; ucTmp < pstPlmnList->ulPlmnNum; ucTmp++)
     {
-        if((0 != ulTmp)
+        if((0 != ucTmp)
         || (0 != pstPlmnList->ulCurrIndex))/* 除第一项外，其它以前要加逗号 */
         {
             usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR *)pgucAtSndCodeAddr,(TAF_CHAR *)pgucAtSndCodeAddr + usLength, ",");
@@ -8396,26 +7889,26 @@ VOS_UINT32 At_QryParaPlmnListProc(
                                            (TAF_CHAR *)pgucAtSndCodeAddr,
                                            (TAF_CHAR *)pgucAtSndCodeAddr + usLength,
                                            "(%d,\"%s\",\"%s\"",
-                                           pstPlmnList->astPlmnInfo[ulTmp].PlmnStatus,
-                                           pstPlmnList->astPlmnName[ulTmp].aucOperatorNameLong,
-                                           pstPlmnList->astPlmnName[ulTmp].aucOperatorNameShort);
+                                           pstPlmnList->astPlmnInfo[ucTmp].PlmnStatus,
+                                           pstPlmnList->astPlmnName[ucTmp].aucOperatorNameLong,
+                                           pstPlmnList->astPlmnName[ucTmp].aucOperatorNameShort);
 
         usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR *)pgucAtSndCodeAddr,(TAF_CHAR *)pgucAtSndCodeAddr + usLength, ",\"%X%X%X",
-                                           (0x0f00 & pstPlmnList->astPlmnName[ulTmp].PlmnId.Mcc) >> 8,
-                                           (0x00f0 & pstPlmnList->astPlmnName[ulTmp].PlmnId.Mcc) >> 4,
-                                           (0x000f & pstPlmnList->astPlmnName[ulTmp].PlmnId.Mcc));
+                                           (0x0f00 & pstPlmnList->astPlmnName[ucTmp].PlmnId.Mcc) >> 8,
+                                           (0x00f0 & pstPlmnList->astPlmnName[ucTmp].PlmnId.Mcc) >> 4,
+                                           (0x000f & pstPlmnList->astPlmnName[ucTmp].PlmnId.Mcc));
 
-        if(0x0F != ((0x0f00 & pstPlmnList->astPlmnName[ulTmp].PlmnId.Mnc) >> 8))
+        if(0x0F != ((0x0f00 & pstPlmnList->astPlmnName[ucTmp].PlmnId.Mnc) >> 8))
         {
             usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR *)pgucAtSndCodeAddr,(TAF_CHAR *)pgucAtSndCodeAddr + usLength, "%X",
-                                               (0x0f00 & pstPlmnList->astPlmnName[ulTmp].PlmnId.Mnc) >> 8);
+                                               (0x0f00 & pstPlmnList->astPlmnName[ucTmp].PlmnId.Mnc) >> 8);
         }
 
         usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR *)pgucAtSndCodeAddr,(TAF_CHAR *)pgucAtSndCodeAddr + usLength, "%X%X\"",
-                                           (0x00f0 & pstPlmnList->astPlmnName[ulTmp].PlmnId.Mnc) >> 4,
-                                           (0x000f & pstPlmnList->astPlmnName[ulTmp].PlmnId.Mnc));
+                                           (0x00f0 & pstPlmnList->astPlmnName[ucTmp].PlmnId.Mnc) >> 4,
+                                           (0x000f & pstPlmnList->astPlmnName[ucTmp].PlmnId.Mnc));
 
-        pcRatMode = AT_ConvertRatModeForQryParaPlmnList(pstPlmnList->astPlmnInfo[ulTmp].RaMode);
+        pcRatMode = AT_ConvertRatModeForQryParaPlmnList(pstPlmnList->astPlmnInfo[ucTmp].RaMode);
         usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR *)pgucAtSndCodeAddr,(TAF_CHAR *)pgucAtSndCodeAddr + usLength, ",%s)", pcRatMode);
 
     }
@@ -9088,7 +8581,6 @@ TAF_VOID At_ForwardMsgToTeInCmt(
     *pusSendLength = usLength;
 }
 
-#if (FEATURE_ON == FEATURE_BASTET )
 
 TAF_VOID At_ForwardMsgToTeInBst(
     TAF_UINT8                            ucIndex,
@@ -9196,7 +8688,6 @@ TAF_VOID AT_BlackSmsReport(
 
     At_SendResultData(ucIndex, pgucAtSndCodeAddr, usLength);
 }
-#endif
 
 
 TAF_VOID  AT_ForwardDeliverMsgToTe(
@@ -9244,13 +8735,11 @@ TAF_VOID  AT_ForwardDeliverMsgToTe(
         }
     }
 
-#if (FEATURE_ON == FEATURE_BASTET )
     if ( VOS_TRUE == pstEvent->u.stDeliverInfo.ucBlackRptFlag )
     {
         AT_BlackSmsReport(ucIndex, pstEvent, pstTsDataInfo);
         return;
     }
-#endif
 
     usLength = (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,
                                        (TAF_CHAR *)pgucAtSndCodeAddr,
@@ -9440,7 +8929,6 @@ TAF_VOID  AT_ForwardPppMsgToTe(
 
 }
 
-#if ((FEATURE_ON == FEATURE_GCBS) || (FEATURE_ON == FEATURE_WCBS))
 
 VOS_VOID AT_ForwardCbMsgToTe(
     MN_MSG_EVENT_INFO_STRU              *pstEvent
@@ -9570,7 +9058,6 @@ VOS_VOID AT_ForwardCbMsgToTe(
     At_SendResultData(ucIndex, pgucAtSndCodeAddr, usLength);
 }
 
-#endif
 
 TAF_VOID At_ForwardMsgToTe(
     MN_MSG_EVENT_ENUM_U32               enEvent,
@@ -9586,11 +9073,9 @@ TAF_VOID At_ForwardMsgToTe(
         AT_ForwardPppMsgToTe(pstEvent);
         break;
 
-#if ((FEATURE_ON == FEATURE_GCBS) || (FEATURE_ON == FEATURE_WCBS))
     case MN_MSG_EVT_DELIVER_CBM:
         AT_ForwardCbMsgToTe(pstEvent);
         break;
-#endif
     default:
         AT_WARN_LOG("At_SendSmtInd: invalid tpdu type.");
         break;
@@ -9904,12 +9389,10 @@ VOS_VOID At_SmsStorageListProc(
     {
 
         /* 接收到NV的短信容量上报，修改NV的短信容量等待标志已接收到NV的短信容量 */
-#if (NAS_FEATURE_SMS_FLASH_SMSEXIST == FEATURE_ON)
         if (MN_MSG_MEM_STORE_ME == pstStorageListInfo->enMemStroe)
         {
             gastAtClientTab[ucIndex].AtSmsData.bWaitForNvStorageStatus = TAF_FALSE;
         }
-#endif
         /* 接收到SIM的短信容量上报，修改SIM的短信容量等待标志已接收到SIM的短信容量 */
         if (MN_MSG_MEM_STORE_SIM == pstStorageListInfo->enMemStroe)
         {
@@ -10007,9 +9490,6 @@ VOS_VOID At_SmsDeliverProc(
 
     AT_StubSaveAutoReplyData(ucUserId, pstEvent, pstTsDataInfo);
 
-#if (FEATURE_ON == FEATURE_AT_HSUART)
-    AT_SmsStartRingTe(VOS_TRUE);
-#endif
 
     if ( (MN_MSG_TPDU_DELIVER == pstTsDataInfo->enTpduType)
       && (MN_MSG_MSG_CLASS_0 == pstTsDataInfo->u.stDeliver.stDcs.enMsgClass)
@@ -11167,7 +10647,6 @@ TAF_VOID At_SendSmRspProc(
     return;
 }
 
-#if ((FEATURE_ON == FEATURE_GCBS) || (FEATURE_ON == FEATURE_WCBS))
 
 
 VOS_VOID At_SmsDeliverCbmProc(
@@ -11343,7 +10822,6 @@ VOS_VOID AT_ChangeCbMidsRsp(
 }
 
 
-#if (FEATURE_ON == FEATURE_ETWS)
 
 VOS_VOID  At_ProcDeliverEtwsPrimNotify(
     VOS_UINT8                                               ucIndex,
@@ -11431,10 +10909,8 @@ VOS_VOID  At_ProcDeliverEtwsPrimNotify(
     At_SendResultData(ucIndex, pgucAtSndCodeAddr, usLength);
 
 }
-#endif  /* (FEATURE_ON == FEATURE_ETWS) */
 
 
-#endif
 
 
 TAF_VOID At_SetCmmsRspProc(
@@ -11644,14 +11120,12 @@ VOS_VOID At_ProcVcSetVoiceMode(
     {
         pstVmSetCmdCtx->ulResult = AT_ERROR;
     }
-#if (2 <= MULTI_MODEM_NUMBER)
     /* VMSET收齐所有MODEM回复后再上报结果 */
     pstVmSetCmdCtx->ulReportedModemNum++;
     if (MULTI_MODEM_NUMBER > pstVmSetCmdCtx->ulReportedModemNum)
     {
         return;
     }
-#endif
 
     AT_STOP_TIMER_CMD_READY(ucIndex);
     At_FormatResultData(ucIndex, pstVmSetCmdCtx->ulResult);
@@ -11850,15 +11324,6 @@ VOS_VOID At_VcEventProc(
             At_ProcVcGetMuteStatusEvent(ucIndex, pstVcEvt);
             return;
 
-#if (FEATURE_ON == FEATURE_ECALL)
-        case APP_VC_EVT_ECALL_TRANS_STATUS:
-            At_ProcVcReportEcallStateEvent(ucIndex, pstVcEvt);
-            return;
-
-        case APP_VC_EVT_SET_ECALL_CFG:
-            At_ProcVcSetEcallCfgEvent(ucIndex, pstVcEvt);
-            return;
-#endif
 
         default:
             return;
@@ -12202,15 +11667,6 @@ VOS_VOID At_QryParaRspCopsProc(
                                            (TAF_CHAR *)pgucAtSndCodeAddr + usLength,
                                            ",7");
     }
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-    else if (TAF_PH_RA_NR == stCops.RaMode)   /* NR */
-    {
-         usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                           (TAF_CHAR *)pgucAtSndCodeAddr,
-                                           (TAF_CHAR *)pgucAtSndCodeAddr + usLength,
-                                           ",12");
-    }
-#endif
     else
     {
 
@@ -12222,7 +11678,6 @@ VOS_VOID At_QryParaRspCopsProc(
 
 }
 
-#if(FEATURE_ON == FEATURE_LTE)
 TAF_VOID At_QryParaRspCellRoamProc(
     TAF_UINT8                           ucIndex,
     TAF_UINT8                           OpId,
@@ -12248,7 +11703,6 @@ TAF_VOID At_QryParaRspCellRoamProc(
     At_FormatResultData(ucIndex,ulResult);
 
 }
-#endif
 
 
 TAF_VOID At_QryParaRspSysinfoProc(
@@ -12523,7 +11977,6 @@ VOS_VOID At_QryParaRspCgregProc(
     return;
 }
 
-#if(FEATURE_ON == FEATURE_LTE)
 
 VOS_VOID AT_QryParaRspCeregProc(
     VOS_UINT8                           ucIndex,
@@ -12572,82 +12025,7 @@ VOS_VOID AT_QryParaRspCeregProc(
     return;
 }
 
-#endif
 
-#if(FEATURE_ON == FEATURE_UE_MODE_NR)
-
-VOS_VOID AT_QryParaRspC5gregProc(
-    VOS_UINT8                           ucIndex,
-    VOS_UINT8                           ucOpId,
-    VOS_VOID                           *pPara
-)
-{
-    VOS_UINT32                          ulResult = AT_FAILURE;
-    VOS_UINT16                          usLength = 0;
-    VOS_UINT32                          i;
-
-    TAF_PH_REG_STATE_STRU               stC5greg;
-    AT_MODEM_NET_CTX_STRU              *pstNetCtx = VOS_NULL_PTR;
-
-    pstNetCtx = AT_GetModemNetCtxAddrFromClientId(ucIndex);
-
-    TAF_MEM_SET_S(&stC5greg, sizeof(stC5greg), 0x00, sizeof(TAF_PH_REG_STATE_STRU));
-    TAF_MEM_CPY_S(&stC5greg, sizeof(stC5greg), pPara, sizeof(TAF_PH_REG_STATE_STRU));
-
-    usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                       (VOS_CHAR *)pgucAtSndCodeAddr,
-                                       (VOS_CHAR *)pgucAtSndCodeAddr + usLength,"%s: %d",
-                                       g_stParseContext[ucIndex].pstCmdElement->pszCmdName,
-                                       (VOS_UINT32)pstNetCtx->ucC5gregType);
-
-    usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                       (VOS_CHAR *)pgucAtSndCodeAddr,
-                                       (VOS_CHAR *)pgucAtSndCodeAddr + usLength,",%d",
-                                       stC5greg.ucPsRegState);
-
-    if ((AT_C5GREG_RESULT_CODE_ENTIRE_TYPE == pstNetCtx->ucC5gregType)
-     && (TAF_PH_ACCESS_TECH_NR_5GC == stC5greg.ucAct)
-     && ((TAF_PH_REG_REGISTERED_HOME_NETWORK == stC5greg.ucPsRegState)
-      || (TAF_PH_REG_REGISTERED_ROAM == stC5greg.ucPsRegState)))
-    {
-        usLength += (VOS_UINT16)At_PhReadC5greg(&stC5greg, pgucAtSndCodeAddr + usLength);
-
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-        if (TAF_PH_ACCESS_TECH_NR_5GC == stC5greg.ucAct)
-        {
-            /* 组装切片消息格式 */
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                (VOS_CHAR *)pgucAtSndCodeAddr + usLength,
-                                                ",%d,\"",
-                                                stC5greg.stNssai.ucLen);
-
-            for (i = 0; i < AT_MIN(stC5greg.stNssai.ucLen, TAF_NSSAI_MAX_LEN); i++)
-            {
-                usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                  (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                  (VOS_CHAR *)pgucAtSndCodeAddr + usLength,
-                                                  "%02X",
-                                                  stC5greg.stNssai.aucNssai[i]);
-            }
-
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                (VOS_CHAR *)pgucAtSndCodeAddr + usLength,
-                                                "\"");
-        }
-#endif
-    }
-
-    ulResult = AT_OK;
-
-    gstAtSendData.usBufLen = usLength;
-
-    At_FormatResultData(ucIndex, ulResult);
-
-    return;
-}
-#endif
 
 
 
@@ -13705,59 +13083,6 @@ VOS_UINT32 AT_RcvDrvAgentAuthorityIdQryRsp(VOS_VOID *pMsg)
     return VOS_OK;
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 AT_RcvDrvAgentGodloadSetRsp(VOS_VOID *pMsg)
-{
-    VOS_UINT32                          ulRet;
-    VOS_UINT8                           ucIndex;
-    DRV_AGENT_GODLOAD_SET_CNF_STRU     *pstEvent;
-    DRV_AGENT_MSG_STRU                 *pstRcvMsg;
-
-    /* 初始化 */
-    pstRcvMsg              = (DRV_AGENT_MSG_STRU *)pMsg;
-    pstEvent               = (DRV_AGENT_GODLOAD_SET_CNF_STRU *)pstRcvMsg->aucContent;
-
-    /* 通过clientid获取index */
-    if (AT_FAILURE == At_ClientIdToUserId(pstEvent->stAtAppCtrl.usClientId, &ucIndex))
-    {
-        AT_WARN_LOG("AT_RcvDrvAgentGodloadSetRsp: AT INDEX NOT FOUND!");
-        return VOS_ERR;
-    }
-
-    if (AT_IS_BROADCAST_CLIENT_INDEX(ucIndex))
-    {
-        AT_WARN_LOG("AT_RcvDrvAgentGodloadSetRsp: AT_BROADCAST_INDEX.");
-        return VOS_ERR;
-    }
-
-    /* AT模块在等待GODLOAD查询命令的结果事件上报 */
-    if (AT_CMD_GODLOAD_SET != gastAtClientTab[ucIndex].CmdCurrentOpt)
-    {
-        return VOS_ERR;
-    }
-
-    /* 使用AT_STOP_TIMER_CMD_READY恢复AT命令实体状态为READY状态 */
-    AT_STOP_TIMER_CMD_READY(ucIndex);
-
-    /* 输出设置操作结果 :  */
-    gstAtSendData.usBufLen = 0;
-    if (DRV_AGENT_GODLOAD_SET_NO_ERROR == pstEvent->enResult)
-    {
-        /* 设置错误码为AT_OK */
-        ulRet = AT_OK;
-    }
-    else
-    {
-        /* 设置失败返回ERROR字符串 */
-        ulRet = AT_ERROR;
-    }
-
-    /* 调用At_FormatResultData输出结果 */
-    At_FormatResultData(ucIndex, ulRet);
-    return VOS_OK;
-}
-#endif
 
 VOS_UINT32 AT_RcvDrvAgentPfverQryRsp(VOS_VOID *pMsg)
 {
@@ -14107,7 +13432,6 @@ VOS_UINT32 AT_RcvDrvAgentInfoRbuSetRsp(VOS_VOID *pMsg)
     return VOS_OK;
 }
 
-#if ( FEATURE_ON == FEATURE_LTE )
 
 VOS_UINT32 AT_RcvDrvAgentInfoRrsSetRsp(VOS_VOID *pMsg)
 {
@@ -14146,7 +13470,6 @@ VOS_UINT32 AT_RcvDrvAgentInfoRrsSetRsp(VOS_VOID *pMsg)
 
     return VOS_OK;
 }
-#endif
 
 
 VOS_UINT32 AT_RcvDrvAgentCpnnQryRsp(VOS_VOID *pMsg)
@@ -14657,7 +13980,6 @@ TAF_VOID At_PIHIndProc(TAF_UINT8 ucIndex, SI_PIH_EVENT_INFO_STRU *pEvent)
     return;
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_SC)
 
 VOS_UINT32 At_PrintSilentPinInfo(
     TAF_UINT8                           ucIndex,
@@ -14713,7 +14035,6 @@ VOS_UINT32 At_PrintSilentPinInfo(
 
     return AT_OK;
 }
-#endif
 
 
 TAF_VOID At_PIHRspProc(TAF_UINT8 ucIndex, SI_PIH_EVENT_INFO_STRU *pEvent)
@@ -14785,7 +14106,7 @@ TAF_VOID At_PIHRspProc(TAF_UINT8 ucIndex, SI_PIH_EVENT_INFO_STRU *pEvent)
  Calls          : ---
  Called By      : ---
 
- History        : 
+ History        : h59254
   1.Date        : 2013-05-29
     Author      : ---
     Modification: Created function
@@ -15295,7 +14616,6 @@ TAF_VOID At_PIHMsgProc(VOS_VOID* pMsg)
 
     return;
 }
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_VOID At_XsmsIndProc(
     VOS_UINT8                           ucIndex,
@@ -15486,7 +14806,6 @@ VOS_VOID AT_ProcXsmsMsg(VOS_VOID *pMsg)
 
     return;
 }
-#endif
 
 
 /* PC工程中AT从A核移到C核, At_sprintf有重复定义,故在此处添加条件编译宏 */
@@ -16141,29 +15460,6 @@ VOS_UINT32 AT_ConvertCallError(TAF_CS_CAUSE_ENUM_UINT32 enCause)
     return AT_CME_UNKNOWN;
 }
 
-#if ((FEATURE_ON == FEATURE_UE_MODE_CDMA)&&(FEATURE_ON == FEATURE_CHINA_TELECOM_VOICE_ENCRYPT))
-
-AT_ENCRYPT_VOICE_ERROR_ENUM_UINT32  AT_MapEncVoiceErr(
-    TAF_CALL_APP_ENCRYPT_VOICE_STATUS_ENUM_UINT32           enTafEncVoiceErr
-)
-{
-    VOS_UINT32                          i;
-    AT_ENCRYPT_VOICE_ERR_CODE_MAP_STRU *pstAtEncVoiceErrMapTbl;
-    VOS_UINT32                          ulAtEncVoiceErrMapSize;
-
-    pstAtEncVoiceErrMapTbl = AT_GET_ENC_VOICE_ERR_CODE_MAP_TBL_PTR();
-    ulAtEncVoiceErrMapSize = AT_GET_ENC_VOICE_ERR_CODE_MAP_TBL_SIZE();
-
-    for (i = 0; i < ulAtEncVoiceErrMapSize; i++)
-    {
-        if (pstAtEncVoiceErrMapTbl[i].enTafEncErr == enTafEncVoiceErr)
-        {
-            return pstAtEncVoiceErrMapTbl[i].enAtEncErr;
-        }
-    }
-    return AT_ENCRYPT_VOICE_ERROR_ENUM_BUTT;
-}
-#endif
 
 
 TAF_UINT32 At_CmdCmgdMsgProc(
@@ -16348,10 +15644,8 @@ TAF_VOID At_CmdCnfMsgProc(TAF_UINT8* pData,TAF_UINT16 usLen)
     case AT_CMD_CMGD_TEST:
     case AT_CMD_CSMP_SET:
     case AT_CMD_CSCA_SET:
-#if ((FEATURE_ON == FEATURE_GCBS) || (FEATURE_ON == FEATURE_WCBS))
     case AT_CMD_CSCB_SET:
     case AT_CMD_CSCB_READ:
-#endif
         ulResult = At_ChgMnErrCodeToAt(ucIndex,ulErrorCode);                     /* 发生错误 */
         AT_STOP_TIMER_CMD_READY(ucIndex);
         break;
@@ -17104,13 +16398,11 @@ VOS_VOID  AT_QryParaAnQueryProc(
     MN_MMA_ANQUERY_PARA_STRU            stAnqueryPara;
     AT_CMD_ANTENNA_LEVEL_ENUM_UINT8     enCurAntennaLevel;
     AT_MODEM_NET_CTX_STRU              *pstNetCtx = VOS_NULL_PTR;
-#if (FEATURE_ON == FEATURE_LTE)
     VOS_UINT8                          *pucSystemAppConfig = VOS_NULL_PTR;
     VOS_INT16                           sRsrp;
     VOS_INT16                           sRsrq;
     VOS_UINT8                           ucLevel;
     VOS_INT16                           sRssi;
-#endif
 
     /* 初始化 */
     ulResult   = AT_OK;
@@ -17145,7 +16437,6 @@ VOS_VOID  AT_QryParaAnQueryProc(
         stAnqueryPara.u.st2G3GCellSignInfo.sCpichRscp     = -stAnqueryPara.u.st2G3GCellSignInfo.sCpichRscp;
         stAnqueryPara.u.st2G3GCellSignInfo.sCpichEcNo     = -stAnqueryPara.u.st2G3GCellSignInfo.sCpichEcNo;
 
-#if (FEATURE_ON == FEATURE_LTE)
         pucSystemAppConfig                  = AT_GetSystemAppConfigAddr();
 
         if ( SYSTEM_APP_WEBUI == *pucSystemAppConfig)
@@ -17166,7 +16457,6 @@ VOS_VOID  AT_QryParaAnQueryProc(
 
             return;
         }
-#endif
         gstAtSendData.usBufLen = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
                                                        (VOS_CHAR *)pgucAtSndCodeAddr,
                                                        (VOS_CHAR *)pgucAtSndCodeAddr,
@@ -17185,7 +16475,6 @@ VOS_VOID  AT_QryParaAnQueryProc(
     }
     else if(TAF_MMA_RAT_LTE == stAnqueryPara.enServiceSysMode)
     {
- #if (FEATURE_ON == FEATURE_LTE)
             sRsrp   = stAnqueryPara.u.st4GCellSignInfo.sRsrp;
             sRsrq   = stAnqueryPara.u.st4GCellSignInfo.sRsrq;
             sRssi   = stAnqueryPara.u.st4GCellSignInfo.sRssi;
@@ -17208,7 +16497,6 @@ VOS_VOID  AT_QryParaAnQueryProc(
             At_FormatResultData(ucIndex,ulResult);
 
             return;
-#endif
     }
     else
     {
@@ -17568,62 +16856,6 @@ VOS_VOID AT_ConvertTftSrcAddrParaToString(
 }
 
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-
-VOS_VOID AT_ConvertSNssaiToString(
-    PS_S_NSSAI_STRU                    *pstSNssai,
-    VOS_UINT16                         *pusLength
-)
-{
-    /*  27007 rel15, 10.1.1章节
-     *  sst                                     only slice/service type (SST) is present
-     *  sst;mapped_sst                          SST and mapped configured SST are present
-     *  sst.sd                                  SST and slice differentiator (SD) are present
-     *  sst.sd;mapped_sst                       SST, SD and mapped configured SST are present
-     *  sst.sd;mapped_sst.mapped_sd             SST, SD, mapped configured SST and mapped configured SD are present
-    */
-
-    if ((VOS_TRUE == pstSNssai->bitOpSd)
-     && (VOS_TRUE == pstSNssai->bitOpMappedSst)
-     && (VOS_TRUE == pstSNssai->bitOpMappedSd))
-    {
-        /* sst.sd;mapped_sst.mapped_sd             SST, SD, mapped configured SST and mapped configured SD are present */
-        *pusLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR*)pgucAtSndCodeAddr, (VOS_CHAR*)pgucAtSndCodeAddr + *pusLength,
-                                             ",\"%x.%x;%x.%x\"", pstSNssai->ucSst, pstSNssai->ulSd, pstSNssai->ucMappedSst, pstSNssai->ulMappedSd);
-    }
-    else if ((VOS_TRUE == pstSNssai->bitOpSd)
-          && (VOS_TRUE == pstSNssai->bitOpMappedSst))
-    {
-        *pusLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR*)pgucAtSndCodeAddr, (VOS_CHAR*)pgucAtSndCodeAddr + *pusLength,
-                                             ",\"%x.%x;%x\"", pstSNssai->ucSst, pstSNssai->ulSd, pstSNssai->ucMappedSst);
-    }
-    else if (VOS_TRUE == pstSNssai->bitOpSd)
-    {
-        *pusLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR*)pgucAtSndCodeAddr, (VOS_CHAR*)pgucAtSndCodeAddr + *pusLength,
-                                             ",\"%x.%x\"", pstSNssai->ucSst, pstSNssai->ulSd);
-    }
-    else if (VOS_TRUE == pstSNssai->bitOpMappedSst)
-    {
-        *pusLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR*)pgucAtSndCodeAddr, (VOS_CHAR*)pgucAtSndCodeAddr + *pusLength,
-                                             ",\"%x;%x\"", pstSNssai->ucSst, pstSNssai->ucMappedSst);
-    }
-    else
-    {
-        if (0 == pstSNssai->ucSst)
-        {
-            *pusLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR*)pgucAtSndCodeAddr, (VOS_CHAR*)pgucAtSndCodeAddr + *pusLength, ",");
-        }
-        else
-        {
-            *pusLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR*)pgucAtSndCodeAddr, (VOS_CHAR*)pgucAtSndCodeAddr + *pusLength,
-                                                 ",\"%x\"", pstSNssai->ucSst);
-        }
-    }
-
-    return;
-}
-
-#endif
 
 
 VOS_VOID AT_RcvTafPsEvt(
@@ -17660,7 +16892,9 @@ VOS_VOID AT_RcvTafPsEvt(
     }
 
     /* 在事件处理表中查找处理函数 */
+    /* Modified by l60609 for DSDA Phase III, 2013-3-5, Begin */
     for ( i = 0; i < AT_ARRAY_SIZE(g_astAtPsEvtFuncTbl); i++ )
+    /* Modified by l60609 for DSDA Phase III, 2013-3-5, End */
     {
         if ( pstEvt->ulEvtId == g_astAtPsEvtFuncTbl[i].ulEvtId )
         {
@@ -17851,7 +17085,6 @@ VOS_UINT32 AT_RcvTafPsCallEvtPdpManageInd(
                                                (VOS_CHAR*)pgucAtSndCodeAddr + usLength,
                                                "%s",gastAtStringTab[AT_STRING_IP].pucText);
         }
-#if (FEATURE_ON == FEATURE_IPV6)
         else if (TAF_PDP_IPV6 == pstEvent->stPdpAddr.enPdpType)
         {
             usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
@@ -17866,7 +17099,6 @@ VOS_UINT32 AT_RcvTafPsCallEvtPdpManageInd(
                                                (VOS_CHAR*)pgucAtSndCodeAddr + usLength,
                                                "%s", gastAtStringTab[AT_STRING_IPV4V6].pucText);
         }
-#endif
         else
         {
             usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
@@ -18272,226 +17504,6 @@ VOS_UINT32 AT_RcvTafPsCallEvtCallHangupCnf(
     return VOS_OK;
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-
-VOS_UINT32 AT_RcvTafPsEvtSet5gQosInfoCnf(
-    VOS_UINT8                           ucIndex,
-    VOS_VOID                           *pEvtInfo
-)
-{
-    TAF_PS_SET_5G_QOS_INFO_CNF_STRU    *pstSet5gQosInfoCnf;
-
-    pstSet5gQosInfoCnf = (TAF_PS_SET_5G_QOS_INFO_CNF_STRU*)pEvtInfo;
-
-    /* 检查当前命令的操作类型 */
-    if ( AT_CMD_C5GQOS_SET != gastAtClientTab[ucIndex].CmdCurrentOpt )
-    {
-        return VOS_ERR;
-    }
-
-    /* 处理错误码 */
-    AT_PrcoPsEvtErrCode(ucIndex, pstSet5gQosInfoCnf->enCause);
-
-    return VOS_OK;
-}
-
-
-VOS_UINT32 AT_RcvTafPsEvtGet5gQosInfoCnf(
-    VOS_UINT8                           ucIndex,
-    VOS_VOID                           *pEvtInfo
-)
-{
-    VOS_UINT32                          ulResult = AT_FAILURE;
-    VOS_UINT16                          usLength = 0;
-    VOS_UINT32                          ulTmp = 0;
-
-    TAF_5G_QOS_EXT_STRU                 stCg5qos;
-    TAF_PS_GET_5G_QOS_INFO_CNF_STRU    *pstGet5gQosInfoCnf = VOS_NULL_PTR;
-
-    TAF_MEM_SET_S(&stCg5qos, sizeof(stCg5qos), 0x00, sizeof(TAF_5G_QOS_EXT_STRU));
-
-    pstGet5gQosInfoCnf = (TAF_PS_GET_5G_QOS_INFO_CNF_STRU*)pEvtInfo;
-
-    /* 检查当前命令的操作类型 */
-    if ( AT_CMD_C5GQOS_READ != gastAtClientTab[ucIndex].CmdCurrentOpt )
-    {
-        return VOS_ERR;
-    }
-
-    for(ulTmp = 0; ulTmp < pstGet5gQosInfoCnf->ulCidNum; ulTmp++)
-    {
-        if(0 != ulTmp)
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,"%s",gaucAtCrLf);
-        }
-
-        TAF_MEM_CPY_S(&stCg5qos, sizeof(stCg5qos), &pstGet5gQosInfoCnf->ast5gQosInfo[ulTmp], sizeof(TAF_5G_QOS_EXT_STRU));
-
-        /* +C5GQOS:  */
-        usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,"%s: ",g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-        /* <cid> */
-        usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,"%d",stCg5qos.ucCid);
-        /* <5QI> */
-        if(1 == stCg5qos.bitOp5QI)
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCg5qos.uc5QI);
-        }
-        else
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",");
-        }
-        /* <DL GFBR> */
-        if(1 == stCg5qos.bitOpDLGFBR)
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCg5qos.ulDLGFBR);
-        }
-        else
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",");
-        }
-        /* <UL GFBR> */
-        if(1 == stCg5qos.bitOpULGFBR)
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCg5qos.ulULGFBR);
-        }
-        else
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",");
-        }
-        /* <DL MFBR> */
-        if(1 == stCg5qos.bitOpDLMFBR)
-        {
-           usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCg5qos.ulDLMFBR);
-        }
-        else
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",");
-        }
-        /* <UL MFBR> */
-        if(1 == stCg5qos.bitOpULMFBR)
-        {
-           usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCg5qos.ulULMFBR);
-        }
-        else
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",");
-        }
-    }
-
-    ulResult                = AT_OK;
-    gstAtSendData.usBufLen  = usLength;
-
-    AT_STOP_TIMER_CMD_READY(ucIndex);
-    At_FormatResultData(ucIndex,ulResult);
-
-    return VOS_OK;
-}
-
-
-VOS_VOID AT_PrintDynamic5gQosInfo(
-    TAF_PS_GET_DYNAMIC_5G_QOS_INFO_CNF_STRU                *pstGetDynamic5gQosInfoCnf,
-    VOS_UINT8                                               ucIndex
-)
-{
-    TAF_PS_5G_DYNAMIC_QOS_EXT_STRU      st5gDynamicQos;
-    VOS_UINT16                          usLength;
-    VOS_UINT32                          i;
-
-    usLength = 0;
-    TAF_MEM_SET_S(&st5gDynamicQos, sizeof(st5gDynamicQos), 0x00, sizeof(TAF_PS_5G_DYNAMIC_QOS_EXT_STRU));
-
-    /* AT命令格式: [+C5GQOSRDP: <cid>,<5QI>[,<DL_GFBR>,<UL_GFBR>[,<DL_MFBR>,<UL_MFBR>[,<DL_SAMBR>,<UL_SAMBR>[,<Averaging_window>]]]]] */
-    for (i = 0; i < pstGetDynamic5gQosInfoCnf->ulCidNum; i++)
-    {
-        if(0 != i)
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,"%s",gaucAtCrLf);
-        }
-
-        TAF_MEM_CPY_S(&st5gDynamicQos, sizeof(st5gDynamicQos), &pstGetDynamic5gQosInfoCnf->ast5gQosInfo[i], sizeof(TAF_PS_5G_DYNAMIC_QOS_EXT_STRU));
-
-        /* +C5GQOSRDP:  */
-        usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,"%s: ",g_stParseContext[ucIndex].pstCmdElement->pszCmdName);
-
-        /* <cid> */
-        usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,"%d",st5gDynamicQos.ucCid);
-
-        /* <QCI> */
-        usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",st5gDynamicQos.uc5QI);
-
-        /* 如果各个参数如果存在就打印出来，目前按照这种方式打印出来 */
-        /* <DL GFBR> */
-        AT_ConvertULParaToString(st5gDynamicQos.bitOpDLGFBR, st5gDynamicQos.ulDLGFBR, &usLength);
-
-        /* <UL GFBR> */
-        AT_ConvertULParaToString(st5gDynamicQos.bitOpULGFBR, st5gDynamicQos.ulULGFBR, &usLength);
-
-        /* <DL MFBR> */
-        AT_ConvertULParaToString(st5gDynamicQos.bitOpDLMFBR, st5gDynamicQos.ulDLMFBR, &usLength);
-
-        /* <UL MFBR> */
-        AT_ConvertULParaToString(st5gDynamicQos.bitOpULMFBR, st5gDynamicQos.ulULMFBR, &usLength);
-
-        /* <Session ambr> */
-        if(VOS_TRUE == st5gDynamicQos.bitOpSAMBR)
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",st5gDynamicQos.stAmbr.ulDLSessionAmbr);
-
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",st5gDynamicQos.stAmbr.ulULSessionAmbr);
-        }
-        else
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",,");
-        }
-
-        /* <Average Window> */
-        if(VOS_TRUE == st5gDynamicQos.bitOpAveragWindow)
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",st5gDynamicQos.usAveragWindow);
-        }
-    }
-
-    gstAtSendData.usBufLen  = usLength;
-
-    return;
-}
-
-
-VOS_UINT32 AT_RcvTafPsEvtGetDynamic5gQosInfoCnf(
-    VOS_UINT8                           ucIndex,
-    VOS_VOID                           *pEvtInfo
-)
-{
-    TAF_PS_GET_DYNAMIC_5G_QOS_INFO_CNF_STRU                *pstGetDynamic5gQosInfoCnf = VOS_NULL_PTR;
-    VOS_UINT32                                              ulResult                  = AT_FAILURE;
-
-    pstGetDynamic5gQosInfoCnf = (TAF_PS_GET_DYNAMIC_5G_QOS_INFO_CNF_STRU*)pEvtInfo;
-
-    /* 检查当前命令的操作类型 */
-    if (AT_CMD_C5GQOSRDP_SET != gastAtClientTab[ucIndex].CmdCurrentOpt)
-    {
-        return VOS_ERR;
-    }
-
-    if (TAF_PS_CAUSE_SUCCESS == pstGetDynamic5gQosInfoCnf->enCause)
-    {
-        AT_PrintDynamic5gQosInfo(pstGetDynamic5gQosInfoCnf, ucIndex);
-        ulResult                = AT_OK;
-    }
-    else
-    {
-        ulResult                = AT_ERROR;
-        gstAtSendData.usBufLen  = 0;
-    }
-
-    AT_STOP_TIMER_CMD_READY(ucIndex);
-
-    At_FormatResultData(ucIndex,ulResult);
-
-    return VOS_OK;
-}
-
-#endif
 
 
 VOS_UINT32 AT_RcvTafPsEvtSetPrimPdpContextInfoCnf(
@@ -18556,7 +17568,6 @@ VOS_UINT32 AT_RcvTafPsEvtGetPrimPdpContextInfoCnf(
         {
             usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%s",gastAtStringTab[AT_STRING_IP].pucText);
         }
-#if (FEATURE_ON == FEATURE_IPV6)
         else if (TAF_PDP_IPV6 == stCgdcont.stPriPdpInfo.stPdpAddr.enPdpType)
         {
             usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR*)pgucAtSndCodeAddr, (VOS_CHAR*)pgucAtSndCodeAddr + usLength, ",%s", gastAtStringTab[AT_STRING_IPV6].pucText);
@@ -18565,7 +17576,6 @@ VOS_UINT32 AT_RcvTafPsEvtGetPrimPdpContextInfoCnf(
         {
             usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN, (VOS_CHAR*)pgucAtSndCodeAddr, (VOS_CHAR*)pgucAtSndCodeAddr + usLength, ",%s", gastAtStringTab[AT_STRING_IPV4V6].pucText);
         }
-#endif
         else
         {
             usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%s",gastAtStringTab[AT_STRING_PPP].pucText);
@@ -18602,25 +17612,6 @@ VOS_UINT32 AT_RcvTafPsEvtGetPrimPdpContextInfoCnf(
         usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCgdcont.stPriPdpInfo.enImCnSignalFlg);
         usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCgdcont.stPriPdpInfo.enNasSigPrioInd);
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-        /* the following five parameters omit: securePCO, Ipv4_mtu_discovery, Local_Addr_ind, Non-Ip_Mtu_discovery and Reliable data service */
-        usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,"%s", ",,,,,");
-
-        /* ssc mode */
-         usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCgdcont.stPriPdpInfo.enSscMode);
-        /* SNssai */
-
-        AT_ConvertSNssaiToString(&stCgdcont.stPriPdpInfo.stSNssai, &usLength);
-
-        /* Pref Access Type */
-        usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCgdcont.stPriPdpInfo.enPrefAccessType);
-        /* Reflect Qos Ind */
-        usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCgdcont.stPriPdpInfo.enRQosInd);
-        /* Ipv6 multi-homing */
-        usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCgdcont.stPriPdpInfo.enMh6Pdu);
-        /* Always on ind */
-        usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCgdcont.stPriPdpInfo.enAlwaysOnInd);
-#endif
     }
 
     ulResult                = AT_OK;
@@ -18910,9 +17901,6 @@ VOS_UINT32 AT_RcvTafPsEvtGetTftInfoCnf(
                     usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr, (VOS_CHAR*)pgucAtSndCodeAddr + usLength, ",");
                 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-                AT_ConvertULParaToString(pstCgtft->astPfInfo[ucTmp2].bitOpQri, pstCgtft->astPfInfo[ucTmp2].ucQri, &usLength);
-#endif
             }
 
         }
@@ -19816,38 +18804,6 @@ VOS_UINT32 AT_RcvTafPsEvtGetDynamicPrimPdpContextInfoCnf(
             /* <im-cn-signal-flag> */
             AT_ConvertULParaToString(stCgdcont.bitOpImCnSignalFlg, stCgdcont.enImCnSignalFlg, &usLength);
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-
-            /* <LIPA indication omit> */
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",");
-
-            /* <ipv4 mtu> */
-            AT_ConvertULParaToString(stCgdcont.bitOpIpv4Mtu, stCgdcont.usIpv4Mtu, &usLength);
-
-            /* the following six parameters omit: <wlan offload>, <local addr ind>, <Non-Ip mtu>, <Serving plmn rate control value>, <Reliable data service> and <Ps data off support> */
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",,,,,,");
-
-            /* <pdu session id> */
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCgdcont.ucPduSessionId);
-
-            /* <qfi> */
-            AT_ConvertULParaToString(stCgdcont.bitOpQfi, stCgdcont.ucQfi, &usLength);
-
-            /* <ssc mode> */
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCgdcont.enSscMode);
-
-            AT_ConvertSNssaiToString(&stCgdcont.stSNssai, &usLength);
-
-            /* <access type> */
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCgdcont.enAccessType);
-
-            /* <reflect qos timer value> */
-            AT_ConvertULParaToString(stCgdcont.bitOpRqTimer, stCgdcont.ulRqTimer, &usLength);
-
-            /* <AlwaysOnInd> */
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCgdcont.enAlwaysOnInd);
-
-#endif
         }
         ulResult                = AT_OK;
         gstAtSendData.usBufLen  = usLength;
@@ -19906,21 +18862,6 @@ VOS_UINT32 AT_RcvTafPsEvtGetDynamicSecPdpContextInfoCnf(
             usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCgdscont.ucPrimaryCid);
             /* <bearer_id> */
             usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCgdscont.ucBearerId);
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-            /* the following two parameters omit: im_cn_signalling_flag and wlan offload */
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",,");
-            /* pdu_session_id */
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCgdscont.ucPduSessionId);
-            /* qfi */
-            if (VOS_TRUE == stCgdscont.bitOpQfi)
-            {
-                usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",%d",stCgdscont.ucQfi);
-            }
-            else
-            {
-                usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",");
-            }
-#endif
         }
 
         ulResult                = AT_OK;
@@ -20069,10 +19010,6 @@ VOS_UINT32 AT_RcvTafPsEvtGetDynamicTftInfoCnf(
                         usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,(VOS_CHAR*)pgucAtSndCodeAddr,(VOS_CHAR*)pgucAtSndCodeAddr + usLength,",");
                     }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-                    /* <qri> */
-                    AT_ConvertULParaToString(pstCgtft->astTftInfo[ucIndex2].bitOpQri, pstCgtft->astTftInfo[ucIndex2].ucQri, &usLength);
-#endif
                 }
 
             }
@@ -20725,7 +19662,6 @@ VOS_UINT32 AT_RcvTafPsEvtGetDsFlowNvWriteCfgCnf(
     return VOS_OK;
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 AT_RcvTafPsEvtSetPktCdataInactivityTimeLenCnf(
     VOS_UINT8                           ucIndex,
@@ -20822,7 +19758,6 @@ VOS_UINT32 AT_RcvTafPsEvtCgmtuValueChgInd(
     return VOS_OK;
 }
 
-#endif
 
 VOS_UINT32 AT_RcvTafPsEvtSetPdpDnsInfoCnf(
     VOS_UINT8                           ucIndex,
@@ -21136,7 +20071,6 @@ VOS_BOOL AT_PH_IsPlmnValid(TAF_PLMN_ID_STRU *pstPlmnId)
     return VOS_TRUE;
 }
 
-#if (FEATURE_ON == FEATURE_IPV6)
 
 VOS_UINT32 AT_RcvTafPsEvtReportRaInfo(
     VOS_UINT8                           ucIndex,
@@ -21213,17 +20147,12 @@ VOS_UINT32 AT_RcvTafPsEvtReportRaInfo(
     if (AT_PS_WAN_TYPE_NDIS == pstCallEntity->enPsCallType)
     {
         /* 向NDIS模块发送IPV6 PDN信息 */
-#if(FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
-        AT_PS_SendNdisIPv6IfaceUpCfgInd(pstCallEntity, pstRaInfoNotifyInd);
-#else
         AT_PS_SendNdisIPv6PdnInfoCfgReq(enModemId, pstCallEntity, pstRaInfoNotifyInd);
-#endif
     }
 
     return VOS_OK;
 }
 
-#endif
 
 
 VOS_UINT32 AT_RcvTafPsEvtPdpDisconnectInd(
@@ -21460,7 +20389,6 @@ VOS_UINT32 At_RcvTafPsEvtSetDialModeCnf(
 
 
 
-#if(FEATURE_ON == FEATURE_LTE)
 
 VOS_UINT32 atReadLtecsCnfProc(VOS_UINT8   ucIndex,VOS_VOID    *pEvtInfo)
 {
@@ -21597,7 +20525,6 @@ VOS_UINT32 AT_RcvTafGetLteAttachInfoCnf(
 
     return VOS_OK;
 }
-#endif
 
 
 
@@ -21945,7 +20872,6 @@ LOCAL VOS_VOID AT_RcvMmaWcdmaCERssiChangeInd(
 }
 
 
-#if (FEATURE_ON == FEATURE_LTE)
 
 LOCAL VOS_VOID AT_RcvMmaLteCERssiChangeInd(
     TAF_UINT8                           ucIndex,
@@ -22013,117 +20939,7 @@ LOCAL VOS_VOID AT_RcvMmaLteCERssiChangeInd(
 
     return;
 }
-#endif
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-
-LOCAL VOS_VOID AT_RcvMmaNrCERssiChangeInd(
-    TAF_UINT8                           ucIndex,
-    TAF_MMA_RSSI_INFO_IND_STRU         *pstRssiInfoInd,
-    VOS_UINT8                           ucSystemAppConfig
-)
-{
-    VOS_UINT16                          usLength;
-    usLength = 0;
-
-    /* SA, use ^CERSSI to report */
-    if (VOS_FALSE == pstRssiInfoInd->ucIsNsaRptFlg)
-    {
-        if (SYSTEM_APP_ANDROID != ucSystemAppConfig)
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                               (VOS_CHAR *)pgucAtSndCodeAddr,
-                                               (VOS_CHAR *)pgucAtSndCodeAddr + usLength,
-                                               "%s%s%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d%s",
-                                               gaucAtCrLf,
-                                               gastAtStringTab[AT_STRING_CERSSI].pucText,
-                                               0,
-                                               0,
-                                               255,
-                                               0,
-                                               0,
-                                               0,
-                                               0,0x7f7f,0x7f7f,
-                                               0,99,99,99,99,99,99,99,99,
-                                               pstRssiInfoInd->stRssiInfo.aRssi[0].u.stNrCellSignInfo.s5GRsrp,
-                                               pstRssiInfoInd->stRssiInfo.aRssi[0].u.stNrCellSignInfo.s5GRsrq,
-                                               pstRssiInfoInd->stRssiInfo.aRssi[0].u.stNrCellSignInfo.l5GSinr,
-                                               gaucAtCrLf);
-        }
-        else
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                               (VOS_CHAR *)pgucAtSndCodeAddr,
-                                               (VOS_CHAR *)pgucAtSndCodeAddr + usLength,
-                                               "%s%s%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d%s",
-                                               gaucAtCrLf,
-                                               gastAtStringTab[AT_STRING_CERSSI].pucText,
-                                               0,
-                                               0,
-                                               255,
-                                               0,
-                                               0,
-                                               0,
-                                               0,0x7f7f,0x7f7f,
-                                               pstRssiInfoInd->stRssiInfo.aRssi[0].u.stNrCellSignInfo.s5GRsrp,
-                                               pstRssiInfoInd->stRssiInfo.aRssi[0].u.stNrCellSignInfo.s5GRsrq,
-                                               pstRssiInfoInd->stRssiInfo.aRssi[0].u.stNrCellSignInfo.l5GSinr,
-                                               gaucAtCrLf);
-        }
-        At_SendResultData(ucIndex, pgucAtSndCodeAddr, usLength);
-    }
-
-    /* NSA, use ^CSERSSI to report */
-    else
-    {
-        if (SYSTEM_APP_ANDROID != ucSystemAppConfig)
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                               (VOS_CHAR *)pgucAtSndCodeAddr,
-                                               (VOS_CHAR *)pgucAtSndCodeAddr + usLength,
-                                               "%s%s%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d%s",
-                                               gaucAtCrLf,
-                                               gastAtStringTab[AT_STRING_CSERSSI].pucText,
-                                               0,
-                                               0,
-                                               255,
-                                               0,
-                                               0,
-                                               0,
-                                               0,0x7f7f,0x7f7f,
-                                               0,99,99,99,99,99,99,99,99,
-                                               pstRssiInfoInd->stRssiInfo.aRssi[0].u.stNrCellSignInfo.s5GRsrp,
-                                               pstRssiInfoInd->stRssiInfo.aRssi[0].u.stNrCellSignInfo.s5GRsrq,
-                                               pstRssiInfoInd->stRssiInfo.aRssi[0].u.stNrCellSignInfo.l5GSinr,
-                                               gaucAtCrLf);
-        }
-        else
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                               (VOS_CHAR *)pgucAtSndCodeAddr,
-                                               (VOS_CHAR *)pgucAtSndCodeAddr + usLength,
-                                               "%s%s%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d%s",
-                                               gaucAtCrLf,
-                                               gastAtStringTab[AT_STRING_CSERSSI].pucText,
-                                               0,
-                                               0,
-                                               255,
-                                               0,
-                                               0,
-                                               0,
-                                               0,0x7f7f,0x7f7f,
-                                               pstRssiInfoInd->stRssiInfo.aRssi[0].u.stNrCellSignInfo.s5GRsrp,
-                                               pstRssiInfoInd->stRssiInfo.aRssi[0].u.stNrCellSignInfo.s5GRsrq,
-                                               pstRssiInfoInd->stRssiInfo.aRssi[0].u.stNrCellSignInfo.l5GSinr,
-                                               gaucAtCrLf);
-        }
-
-        At_SendResultData(ucIndex, pgucAtSndCodeAddr, usLength);
-    }
-
-    return;
-}
-#endif
 
 
 
@@ -22135,13 +20951,11 @@ VOS_VOID AT_RcvMmaRssiChangeInd(
     VOS_UINT16                          usLength;
     VOS_UINT32                          ulRptCmdRssi;
     VOS_UINT32                          ulRptCmdCerssi;
-#if (FEATURE_LTE == FEATURE_ON)
     VOS_UINT32                          ulRptCmdAnlevel;
     VOS_INT16                           sRsrp;
     VOS_INT16                           sRsrq;
     VOS_UINT8                           ucLevel;
     VOS_INT16                           sRssi;
-#endif
     MODEM_ID_ENUM_UINT16                enModemId;
     VOS_UINT32                          ulRslt;
     VOS_UINT8                          *pucSystemAppConfig;
@@ -22197,26 +21011,15 @@ VOS_VOID AT_RcvMmaRssiChangeInd(
             return;
         }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-        if (TAF_MMA_RAT_NR == pstRssiInfoInd->stRssiInfo.enRatType)
-        {
-            AT_RcvMmaNrCERssiChangeInd(ucIndex, pstRssiInfoInd, *pucSystemAppConfig);
-
-            return;
-        }
-#endif
 
         /* 上报LTE 的CERSSI */
-#if (FEATURE_LTE == FEATURE_ON)
         if (TAF_MMA_RAT_LTE == pstRssiInfoInd->stRssiInfo.enRatType)
         {
             AT_RcvMmaLteCERssiChangeInd(ucIndex, pstRssiInfoInd, *pucSystemAppConfig);
         }
-#endif
     }
 
     /*上报ANLEVEL */
-#if (FEATURE_LTE == FEATURE_ON)
 
     usLength = 0;
     if (VOS_TRUE == ulRptCmdAnlevel)
@@ -22243,7 +21046,6 @@ VOS_VOID AT_RcvMmaRssiChangeInd(
 
         At_SendResultData(ucIndex, pgucAtSndCodeAddr,usLength);
     }
-#endif
 
     return;
 }
@@ -22383,52 +21185,6 @@ VOS_VOID AT_BcdToAscii(
     return;
 }
 
-#if ((FEATURE_VSIM == FEATURE_ON) && (FEATURE_OFF == FEATURE_VSIM_ICC_SEC_CHANNEL))
-
-VOS_VOID  At_StkHvsmrIndPrint(
-    VOS_UINT8                           ucIndex,
-    SI_STK_EVENT_INFO_STRU             *pstEvent
-)
-{
-    VOS_UINT16                          usLength = 0;
-
-    /* 打印输入AT命令类型 */
-    usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                       (VOS_CHAR *)pgucAtSndCodeAddr,
-                                       (VOS_CHAR *)pgucAtSndCodeAddr + usLength,
-                                       "%s%s",
-                                       gaucAtCrLf,
-                                       "^HVSMR: ");
-
-    /* 打印输入主动命令类型长度和类型 */
-    usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                       (TAF_CHAR *)pgucAtSndCodeAddr,
-                                       (TAF_CHAR *)pgucAtSndCodeAddr + usLength,
-                                       "%d,",
-                                       (pstEvent->STKCmdStru.CmdStru.SmsPpDlDataInfo.ucLen*2));
-
-    if (VOS_NULL != pstEvent->STKCmdStru.CmdStru.SmsPpDlDataInfo.ucLen)
-    {
-        /* 将16进制数转换为ASCII码后输入主动命令内容 */
-        usLength += (TAF_UINT16)At_HexText2AsciiStringSimple(AT_CMD_MAX_LEN,
-                                                            (TAF_INT8 *)pgucAtSndCodeAddr,
-                                                            (TAF_UINT8 *)pgucAtSndCodeAddr + usLength,
-                                                            pstEvent->STKCmdStru.CmdStru.SmsPpDlDataInfo.ucLen,
-                                                            pstEvent->STKCmdStru.CmdStru.SmsPpDlDataInfo.aucData);
-    }
-
-    /* 打印回车换行 */
-    usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                       (TAF_CHAR *)pgucAtSndCodeAddr,
-                                       (TAF_CHAR *)pgucAtSndCodeAddr + usLength,
-                                        "%s",
-                                        gaucAtCrLf);
-
-    At_SendResultData(ucIndex, pgucAtSndCodeAddr, usLength);
-
-    return;
-}
-#endif
 
 
 VOS_VOID  At_StkCcinIndPrint(
@@ -23524,9 +22280,6 @@ PS_BOOL_ENUM_UINT8 AT_CheckCurrentOptType_SupsCmdSuccess(
         case AT_CMD_H_SET :
         case AT_CMD_CHUP_SET:
         case AT_CMD_REJCALL_SET:
-#if (FEATURE_ON == FEATURE_ECALL)
-        case AT_CMD_ECLSTOP_SET:
-#endif
             return PS_TRUE;
         case AT_CMD_A_SET:
         case AT_CMD_CHLD_SET:
@@ -23638,60 +22391,6 @@ VOS_VOID At_RcvTafCallSupsCmdCnf(
 }
 
 
-#if ((FEATURE_VSIM == FEATURE_ON) && (FEATURE_OFF == FEATURE_VSIM_ICC_SEC_CHANNEL))
-
-VOS_UINT32 AT_RcvDrvAgentHvpdhSetCnf(VOS_VOID *pMsg)
-{
-    VOS_UINT32                          ulRet;
-    VOS_UINT8                           ucIndex;
-    DRV_AGENT_HVPDH_CNF_STRU           *pstEvent;
-    DRV_AGENT_MSG_STRU                 *pstRcvMsg;
-
-    /* 初始化 */
-    pstRcvMsg              = (DRV_AGENT_MSG_STRU *)pMsg;
-    pstEvent               = (DRV_AGENT_HVPDH_CNF_STRU *)pstRcvMsg->aucContent;
-
-    /* 通过clientid获取index */
-    if (AT_FAILURE == At_ClientIdToUserId(pstEvent->stAtAppCtrl.usClientId, &ucIndex))
-    {
-        AT_WARN_LOG("AT_RcvDrvAgentHvpdhSetCnf: AT INDEX NOT FOUND!");
-        return VOS_ERR;
-    }
-
-    if (AT_IS_BROADCAST_CLIENT_INDEX(ucIndex))
-    {
-        AT_WARN_LOG("AT_RcvDrvAgentHvpdhSetCnf: AT_BROADCAST_INDEX.");
-        return VOS_ERR;
-    }
-
-    /* AT模块在等待HVPDH设置命令的结果事件上报 */
-    if (AT_CMD_HVPDH_SET != gastAtClientTab[ucIndex].CmdCurrentOpt)
-    {
-        AT_WARN_LOG("AT_RcvDrvAgentHvpdhSetCnf: WARNING:Not AT_CMD_HVPDH_SET!");
-        return VOS_ERR;
-    }
-
-    /* 使用AT_STOP_TIMER_CMD_READY恢复AT命令实体状态为READY状态 */
-    AT_STOP_TIMER_CMD_READY(ucIndex);
-
-    /* 输出查询结果 */
-    if (DRV_AGENT_HVPDH_NO_ERROR == pstEvent->enResult)
-    {
-        ulRet = AT_OK;
-    }
-    else
-    {
-        /* 查询失败返回ERROR字符串 */
-        ulRet = AT_ERROR;
-    }
-
-    gstAtSendData.usBufLen = 0;
-
-    /* 调用At_FormatResultData输出结果 */
-    At_FormatResultData(ucIndex, ulRet);
-    return VOS_OK;
-}
-#endif
 
 VOS_VOID AT_PhEOPlmnQueryCnfProc(TAF_UINT8 *pData)
 {
@@ -23841,9 +22540,7 @@ VOS_UINT32 At_IsCmdCurrentOptSendedOrigReq(AT_CMD_CURRENT_OPT_ENUM CmdCurrentOpt
         case AT_CMD_CECALL_SET:
         case AT_CMD_ECLSTART_SET:
         case AT_CMD_CACMIMS_SET:
- #if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
         case AT_CMD_CUSTOMDIAL_SET:
- #endif
              return VOS_TRUE;
 
         default:
@@ -23968,179 +22665,8 @@ PS_BOOL_ENUM_UINT8 At_CheckUartRingTeCallType(
 
 }
 
-#if (FEATURE_ON == FEATURE_ECALL)
-
-VOS_UINT32 At_ProcVcReportEcallStateEvent(
-    VOS_UINT8                           ucIndex,
-    APP_VC_EVENT_INFO_STRU             *pstVcEvtInfo
-)
-{
-    if ((APP_VC_ECALL_MSD_TRANSMITTING_FAIL        == pstVcEvtInfo->enEcallState)
-     || (APP_VC_ECALL_PSAP_MSD_REQUIRETRANSMITTING == pstVcEvtInfo->enEcallState))
-    {
-        gstAtSendData.usBufLen = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                    (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                    (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                    "%s^ECLSTAT: %d,%d%s",
-                                                    gaucAtCrLf,
-                                                    pstVcEvtInfo->enEcallState,
-                                                    pstVcEvtInfo->ulEcallDescription,
-                                                    gaucAtCrLf);
-    }
-    else
-    {
-        gstAtSendData.usBufLen = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                    (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                    (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                    "%s^ECLSTAT: %d%s",
-                                                    gaucAtCrLf,
-                                                    pstVcEvtInfo->enEcallState,
-                                                    gaucAtCrLf);
-    }
-
-    At_SendResultData(ucIndex, pgucAtSndCodeAddr, gstAtSendData.usBufLen);
-
-    return VOS_OK;
-}
 
 
-VOS_UINT32 At_ProcVcSetEcallCfgEvent(
-    VOS_UINT8                           ucIndex,
-    APP_VC_EVENT_INFO_STRU             *pstVcEvtInfo
-)
-{
-    VOS_UINT32                          ulRslt;
-
-    if (AT_IS_BROADCAST_CLIENT_INDEX(ucIndex))
-    {
-        AT_WARN_LOG("At_ProcVcSetMuteStatusEvent : AT_BROADCAST_INDEX.");
-        return VOS_ERR;
-    }
-
-    /* 当前AT是否在等待该命令返回 */
-    if (AT_CMD_ECLCFG_SET != gastAtClientTab[ucIndex].CmdCurrentOpt)
-    {
-        return VOS_ERR;
-    }
-
-    if (VOS_TRUE != pstVcEvtInfo->bSuccess)
-    {
-        ulRslt = AT_ERROR;
-    }
-    else
-    {
-        ulRslt = AT_OK;
-    }
-
-    AT_STOP_TIMER_CMD_READY(ucIndex);
-    At_FormatResultData(ucIndex, ulRslt);
-
-    return VOS_OK;
-}
-
-
-
-VOS_VOID At_MapEcallType(
-    MN_CALL_TYPE_ENUM_U8                enCallType,
-    AT_ECALL_TYPE_ENUM_U8              *penEcallType
-)
-{
-    switch (enCallType)
-        {
-            case MN_CALL_TYPE_TEST:
-                *penEcallType = AT_ECALL_TYPE_TEST;
-                break;
-            case MN_CALL_TYPE_RECFGURATION:
-                *penEcallType = AT_ECALL_TYPE_RECFGURATION;
-                break;
-            case MN_CALL_TYPE_MIEC:
-                *penEcallType = AT_ECALL_TYPE_MIEC;
-                break;
-            case MN_CALL_TYPE_AIEC:
-                *penEcallType = AT_ECALL_TYPE_AIEC;
-                break;
-            default:
-                *penEcallType = AT_ECALL_TYPE_BUTT;
-                break;
-        }
-    return;
-}
-
-VOS_UINT32 At_RcvTafCallQryEcallInfoCnf(MN_AT_IND_EVT_STRU *pEvtInfo)
-{
-    MN_CALL_EVT_QRY_ECALL_INFO_CNF_STRU                    *pstEcallInfo = VOS_NULL_PTR;
-    VOS_UINT8                                               ucIndex;
-    VOS_UINT32                                              ulRslt;
-    VOS_UINT32                                              i;
-    AT_ECALL_TYPE_ENUM_U8                                   enEcallType;
-
-    pstEcallInfo = (MN_CALL_EVT_QRY_ECALL_INFO_CNF_STRU *)&pEvtInfo->aucContent[sizeof(MN_CALL_EVENT_ENUM_U32)];
-
-    /* 通过clientid获取index */
-    if (AT_FAILURE == At_ClientIdToUserId(pstEcallInfo->usClientId, &ucIndex))
-    {
-        AT_WARN_LOG("At_RcvTafCallQryEcallInfoCnf:WARNING:AT INDEX NOT FOUND!");
-        return VOS_ERR;
-    }
-
-    if (AT_IS_BROADCAST_CLIENT_INDEX(ucIndex))
-    {
-        AT_WARN_LOG("At_ProcVcSetMuteStatusEvent : AT_BROADCAST_INDEX.");
-        return VOS_ERR;
-    }
-
-    /* 当前AT是否在等待该命令返回 */
-    if (AT_CMD_CECALL_QRY != gastAtClientTab[ucIndex].CmdCurrentOpt)
-    {
-        return VOS_ERR;
-    }
-
-    /* 初始化 */
-    enEcallType = AT_ECALL_TYPE_BUTT;
-
-    /* ECALL类型查询时，CALL会回复当前所有的CALL，
-       所以需要从中查找到第一个ECALL。
-    */
-    for (i = 0; i < pstEcallInfo->stEcallInfo.ucNumOfEcall; i++)
-    {
-        At_MapEcallType(pstEcallInfo->stEcallInfo.astEcallInfos[i].enEcallType,
-                        &enEcallType);
-
-        if (AT_ECALL_TYPE_BUTT != enEcallType)
-        {
-            break;
-        }
-    }
-
-    if (AT_ECALL_TYPE_BUTT == enEcallType)
-    {
-        /* 输出查询结果 */
-        gstAtSendData.usBufLen = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                    (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                    (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                    "+CECALL: ");
-    }
-    else
-    {
-        /* 输出查询结果 */
-        gstAtSendData.usBufLen = (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                        (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                        (VOS_CHAR *)pgucAtSndCodeAddr,
-                                                        "+CECALL: %d",
-                                                        enEcallType);
-    }
-
-    ulRslt = AT_OK;
-
-    AT_STOP_TIMER_CMD_READY(ucIndex);
-    At_FormatResultData(ucIndex, ulRslt);
-
-    return VOS_OK;
-}
-#endif
-
-
-#if (FEATURE_ON == FEATURE_IMS)
 
 VOS_UINT32 AT_RcvTafCcmCallModifyStatusInd(VOS_VOID *pMsg)
 {
@@ -24371,7 +22897,6 @@ VOS_VOID AT_RcvTafCallCcwaiSetCnf(
 
     return;
 }
-#endif
 
 
 VOS_UINT32 AT_RcvTafPsEvtSetImsPdpCfgCnf(
@@ -24395,7 +22920,6 @@ VOS_UINT32 AT_RcvTafPsEvtSetImsPdpCfgCnf(
     return VOS_OK;
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 AT_RcvTafPsEvtSet1xDormTimerCnf(
     VOS_UINT8                           ucIndex,
@@ -24452,7 +22976,6 @@ VOS_UINT32 AT_RcvTafPsEvtGet1xDormTimerCnf(
 
     return VOS_OK;
 }
-#endif
 
 
 

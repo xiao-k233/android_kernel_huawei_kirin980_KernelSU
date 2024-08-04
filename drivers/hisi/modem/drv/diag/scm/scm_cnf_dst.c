@@ -288,7 +288,7 @@ void scm_send_cnf_data_to_udi(u8 *pucVirData, u8 *pucPHYData, u32 ulDataLen)
 }
 
 
-int scm_cnf_dst_read_cb(unsigned int u32ChanID)
+void scm_cnf_dst_read_cb(void)
 {
     u32                          ulChType;
     SOCP_BUFFER_RW_STRU          stBuffer;
@@ -304,32 +304,32 @@ int scm_cnf_dst_read_cb(unsigned int u32ChanID)
     if (SOCP_CODER_DEST_CHAN != ulChType)
     {
         diag_error("Channel Type(0x%x) is Error\n",ulChType);
-        return ERR_MSP_INVALID_PARAMETER;
+        return;
     }
 
     if (BSP_OK != bsp_socp_get_read_buff(ulDstChID, &stBuffer))
     {
         diag_error("Get Read Buffer is Error\n");
-        return ERR_MSP_INVALID_PARAMETER;
+        return;
     }
 
      /* 开机log功能，IND通道上报函数为空，使log缓存在本地 */
     if(NULL == g_astSCMCnfCoderDstCfg.pfunc)
     {
         diag_error("cnf dst channel is null\n");
-        return ERR_MSP_SUCCESS;
+        return;
     }
 
     if((0 == (stBuffer.u32Size + stBuffer.u32RbSize))||(NULL == stBuffer.pBuffer))
     {
         bsp_socp_read_data_done(ulDstChID, stBuffer.u32Size + stBuffer.u32RbSize);  /* 清空数据 */
         diag_error("Get RD error\n");/* 记录Log */
-        return ERR_MSP_SUCCESS;
+        return;
     }
 
     if(0 == stBuffer.u32Size)
     {
-        return ERR_MSP_SUCCESS;
+        return;
     }
 
     /* 发送数据 */
@@ -341,7 +341,7 @@ int scm_cnf_dst_read_cb(unsigned int u32ChanID)
     {
         bsp_socp_read_data_done(ulDstChID, stBuffer.u32Size + stBuffer.u32RbSize);  /* 清空数据 */
         diag_error("stBuffer.pBuffer==NULL\n");
-        return ERR_MSP_MALLOC_FAILUE;
+        return;
     }
     ulTimerIn = bsp_get_slice_value();
     g_astSCMCnfCoderDstCfg.pfunc((u8*)ulVirtAddr, (u8*)stBuffer.pBuffer,(u32)stBuffer.u32Size);
@@ -352,7 +352,7 @@ int scm_cnf_dst_read_cb(unsigned int u32ChanID)
         diag_crit("g_astSCMCnfCoderDstCfg.pfunc Proc time 0x%x\n", (ulTimerOut - ulTimerIn));
     }
 
-    return ERR_MSP_SUCCESS;
+    return;
 }
 
 

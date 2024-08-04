@@ -152,10 +152,6 @@ extern VOS_UINT32 At_SciCfgQueryCnf(
     VOS_UINT16                         *pusLength
 );
 
-extern VOS_UINT32 At_SetBwtPara(
-    VOS_UINT8                           ucIndex
-);
-
 extern VOS_UINT32 At_ProcPihFndBndCnf(
     VOS_UINT8                           ucIndex,
     SI_PIH_EVENT_INFO_STRU             *pstEvent,
@@ -193,12 +189,6 @@ extern VOS_UINT32 At_ProcPihCchcSetCnf(
 );
 
 extern VOS_UINT32 At_ProcPihSciCfgSetCnf(
-    VOS_UINT8                           ucIndex,
-    SI_PIH_EVENT_INFO_STRU             *pstEvent,
-    VOS_UINT16                         *pusLength
-);
-
-extern VOS_UINT32 At_ProcPihBwtSetCnf(
     VOS_UINT8                           ucIndex,
     SI_PIH_EVENT_INFO_STRU             *pstEvent,
     VOS_UINT16                         *pusLength

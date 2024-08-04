@@ -100,7 +100,7 @@ u32 scm_ind_dst_channel_init(void);
 void scm_send_ind_data_to_udi(u8 *pucVirData, u8 *pucPHYData, u32 ulDataLen);
 void scm_reg_ind_coder_dst_send_fuc(void);
 void  scm_set_power_on_log(void);
-int scm_ind_dst_read_cb(unsigned int u32ChanID);
+void scm_ind_dst_read_cb(void);
 u32 scm_ind_get_dst_buff_size(void);
 
 

@@ -175,12 +175,7 @@ u32 nv_readEx(u32 modem_id, u32 itemid, u32 offset, u8 *pdata, u32 datalen)
 
     if(modem_id > item_info->modem_num)
     {
-#if (FEATURE_OFF == FEATURE_MULTI_MODEM)
-        nv_record("modemid err!mpdemid=%d.nvmodem=%d.\n", modem_id, item_info->modem_num);
-        return BSP_ERR_NV_INVALID_MDMID_ERR;
-#else
         modem_id = 1;
-#endif
     }
 
     rreq.itemid  = itemid;
@@ -449,13 +444,13 @@ u32 nv_write2file_handle(void)
  输出参数  : 无
  返 回 值  :
 *************************************************************************/
-int bsp_nvm_icc_task(void* parm)
+void bsp_nvm_icc_task(void* parm)
 {
     u32 ret = NV_ERROR;
     nv_cmd_req *msg;
 
     /* coverity[self_assign] */
-    parm = NULL;
+    parm = parm;
 
     /* coverity[no_escape] */
     while(1)
@@ -530,7 +525,6 @@ int bsp_nvm_icc_task(void* parm)
         g_nv_ctrl.task_proc_count++;
         g_nv_ctrl.opState = NV_IDLE_STATE;
     }
-    return NV_OK;
 }
 
 
@@ -555,16 +549,6 @@ u32 bsp_nvm_upgrade(void)
         nv_record("fastboot upgrade fail!\n");
         goto upgrade_fail_out;
     }
-#ifndef BSP_CONFIG_PHONE_TYPE
-    if(ddr_info->mem_file_type == NV_MEM_DEFAULT)
-    {
-        nv_printf("factory recover,need reload nv_rdwr.bin!\n");
-        ret = nv_img_reload();
-        if(ret){
-            nv_record("reload fail!ret=0x%x.\n",ret);
-        }
-    }
-#endif
     /*将最新数据写入各个分区*/
     ret = nv_data_writeback();
     if(ret)
@@ -828,7 +812,8 @@ s32 bsp_nvm_kernel_init(void)
     osl_sem_init(0,&g_nv_ctrl.task_sem);
     osl_sem_init(0,&g_nv_ctrl.suspend_sem);
     osl_sem_init(1,&g_nv_ctrl.rw_sem);
-    wakeup_source_init(&g_nv_ctrl.wake_lock,"nv_wakelock");
+    //osl_sem_init(0,&g_nv_ctrl.cc_sem);
+    wake_lock_init(&g_nv_ctrl.wake_lock,WAKE_LOCK_SUSPEND,"nv_wakelock");
     g_nv_ctrl.shared_addr = (nv_global_info_s *)NV_GLOBAL_INFO_ADDR;
 
     nv_record("Balong nv init  start!\n");
@@ -990,7 +975,6 @@ static void modem_nv_shutdown(struct platform_device *dev)
 /*lint -restore*/
 
 /*lint -save -e785*//*785表示对结构体初始化的不完全modem_nv_pm_ops和modem_nv_drv modem_nv_device*/
-#ifdef CONFIG_PM
 /*lint -save -e715*//*715表示入参dev未使用*/
 static s32 modem_nv_suspend(struct device *dev)
 {
@@ -1026,9 +1010,6 @@ static const struct dev_pm_ops modem_nv_pm_ops ={
 };
 
 #define MODEM_NV_PM_OPS (&modem_nv_pm_ops)
-#else
-#define MODEM_NV_PM_OPS  NULL
-#endif
 
 static struct platform_driver modem_nv_drv = {
     .shutdown = modem_nv_shutdown,
@@ -1094,13 +1075,6 @@ void  modem_nv_exit(void)
     platform_driver_unregister(&modem_nv_drv);
 }
 
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-device_initcall(nv_init_dev);
-#endif
-#if (FEATURE_OFF == FEATURE_DELAY_MODEM_INIT)
-module_init(modem_nv_init);
-module_exit(modem_nv_exit);
-#endif
 
 //EXPORT_SYMBOL(bsp_nvm_flush);
 //EXPORT_SYMBOL(bsp_nvm_backup);

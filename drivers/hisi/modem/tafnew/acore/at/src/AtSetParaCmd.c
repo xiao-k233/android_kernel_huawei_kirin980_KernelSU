@@ -78,12 +78,10 @@
 #include "TafStdlib.h"
 #include "mnmsgcbencdec.h"
 
-#if (FEATURE_ON==FEATURE_LTE)
 #include "msp_nvim.h"
 #include "at_common.h"
 #include "gen_msg.h"
 #include "at_lte_common.h"
-#endif
 
 #include "nv_stru_gucnas.h"
 #include "nv_stru_sys.h"
@@ -100,22 +98,14 @@
 
 #include "gunas_errno.h"
 
-#if (VOS_OS_VER == VOS_LINUX)
 #include <linux/kconfig.h>
-#ifdef CONFIG_HISI_BALONG_MODEM
 #include <linux/mtd/hisi_nve_interface.h>
-#if (FEATURE_ON == FEATURE_AGPS_GPIO)
 #include <linux/version.h>
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0))
 #include <huawei_platform/connectivity/huawei_gps.h>
 #else
 #include <linux/huawei/gps/huawei_gps.h>
 #endif /* #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0)) */
-#endif /* #if (FEATURE_ON == FEATURE_AGPS_GPIO) */
-#endif /* #ifdef CONFIG_HISI_BALONG_MODEM */
-#else
-#include "Linuxstub.h"
-#endif /* #if (VOS_OS_VER == VOS_LINUX) */
 
 #include "CssAtInterface.h"
 #include "AtCmdSimProc.h"
@@ -124,11 +114,7 @@
 #include "TafAppCall.h"
 #include "AtCmdMiscProc.h"
 #include "TafCcmApi.h"
-#if (FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
-#include "ads_dev_i.h"
-#else
 #include "AdsDeviceInterface.h"
-#endif
 
 /*lint -esym(516,free,malloc)*/
 
@@ -144,11 +130,7 @@ extern VOS_UINT32 CBTCPM_NotifyChangePort(AT_PHY_PORT_ENUM_UINT32 enPhyPort);
 /*****************************************************************************
    2 全局变量定义
 *****************************************************************************/
-#if(FEATURE_ON == FEATURE_UE_MODE_NR)
-extern AT_MT_INFO_STRU                         g_stMtInfoCtx;
-#else
 extern AT_DEVICE_CMD_CTRL_STRU                 g_stAtDevCmdCtrl;
-#endif
 AT_SET_PORT_PARA_MAP_STRU    g_astSetPortParaMap[AT_SETPORT_DEV_MAP_LEN]
                                 = {{"A1", AT_DEV_CDROM,        "CDROM"        },
                                    {"A2", AT_DEV_SD,           "SD"           },
@@ -156,23 +138,12 @@ AT_SET_PORT_PARA_MAP_STRU    g_astSetPortParaMap[AT_SETPORT_DEV_MAP_LEN]
                                    {"A",  AT_DEV_BLUE_TOOTH,   "BLUE TOOTH"   },
                                    {"B",  AT_DEV_FINGER_PRINT, "FINGER PRINT" },
                                    {"D",  AT_DEV_MMS,          "MMS"          },
-#if(FEATURE_ON == FEATURE_LTE)
                                    {"E",  AT_DEV_PC_VOICE,     "3G PC VOICE"  },
                                    {"1",  AT_DEV_MODEM,        "3G MODEM"     },
                                    {"2",  AT_DEV_PCUI,         "3G PCUI"      },
                                    {"3",  AT_DEV_DIAG,         "3G DIAG"      },
-#else
-                                   {"E",  AT_DEV_PC_VOICE,     "PC VOICE"     },
-                                   {"1",  AT_DEV_MODEM,        "MODEM"        },
-                                   {"2",  AT_DEV_PCUI,         "PCUI"         },
-                                   {"3",  AT_DEV_DIAG,         "DIAG"         },
-#endif
                                    {"4",  AT_DEV_PCSC,         "PCSC"         },
-#if(FEATURE_ON == FEATURE_LTE)
                                    {"5",  AT_DEV_GPS,          "3G GPS"       },
-#else
-                                   {"5",  AT_DEV_GPS,          "GPS"          },
-#endif
                                    {"6",  AT_DEV_GPS_CONTROL,  "GPS CONTROL"  },
                                    {"7",  AT_DEV_NDIS,         "3G NDIS"      },
                                    {"16", AT_DEV_NCM,          "NCM"          },
@@ -199,7 +170,6 @@ VOS_UINT32                              g_ulWifiFreq;
 VOS_UINT32                              g_ulWifiRate;
 VOS_UINT32                              g_ulWifiMode;
 VOS_INT32                               g_lWifiPower;
-#if(FEATURE_ON == FEATURE_LTE)
 VOS_UINT32                              g_ulWifiRF = 0xffffffffU;
 AT_TMODE_RAT_FLAG_STRU g_stTmodeRat = {0};
 VOS_UINT32 g_ulTmodeNum             = 0;
@@ -208,7 +178,6 @@ VOS_UINT32 g_ulLteOnly              = 0;
 VOS_UINT32 g_ulGuOnly               = 0;
 VOS_UINT32 g_ulLteIsSend2Dsp        = 0;
 
-#endif
 VOS_UINT                                g_ulUcastWifiRxPkts;
 VOS_UINT                                g_ulMcastWifiRxPkts;
 
@@ -235,28 +204,6 @@ TAF_WRITE_ACORE_NV_STRU                 g_stWriteAcoreNv = {0};
 
 AT_MTA_BODY_SAR_STATE_ENUM_UINT16       g_enAtBodySarState = AT_MTA_BODY_SAR_OFF;
 
-#if ( VOS_WIN32 == VOS_OS_VER )
-EXTERN AT_USIMM_FILE_NUM_TO_ID_STRU g_aenAtUsimFileNumToIdTab[];
-EXTERN VOS_UINT32 g_aenAtUsimFileNumToIdTabLen;
-
-EXTERN AT_USIMM_FILE_NUM_TO_ID_STRU g_aenAtSimFileNumToIdTab[];
-EXTERN VOS_UINT32 g_aenAtSimFileNumToIdTabLen;
-
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
-EXTERN AT_USIMM_FILE_NUM_TO_ID_STRU g_aenAtCsimFileNumToIdTab[];
-
-EXTERN VOS_UINT32 g_aenAtCsimFileNumToIdTabLen;
-#endif
-
-#endif
-#if ((FEATURE_ON == FEATURE_UE_MODE_CDMA)&&(FEATURE_ON == FEATURE_CHINA_TELECOM_VOICE_ENCRYPT_TEST_MODE)&&(FEATURE_ON == FEATURE_CHINA_TELECOM_VOICE_ENCRYPT))
-#define             ENCRYPT_VOICE_DATA_FILE_MAX_NUM      (5)
-EXTERN VOS_UINT8    gucCurrEncVoiceDataWriteFileNum;
-EXTERN VOS_UINT32   gulAtCurrEncVoiceDataCount;
-EXTERN VOS_UINT8    gucAtCurrEncVoiceTestFileNum;
-EXTERN TAF_CHAR    *g_pacCurrEncVoiceDataWriteFilePath[];
-EXTERN TAF_CHAR     gacAtCurrDocName[AT_TEST_ECC_FILE_NAME_MAX_LEN];
-#endif
 
 
 /*****************************************************************************
@@ -265,105 +212,13 @@ EXTERN TAF_CHAR     gacAtCurrDocName[AT_TEST_ECC_FILE_NAME_MAX_LEN];
 
 extern void       TTF_SetGcfTestFlag(VOS_UINT32 ulGctTestFlag);
 
-#if (VOS_WIN32 == VOS_OS_VER)
-/* 输出TAF的回放数据 */
-VOS_VOID NAS_MMA_SndNVData(VOS_VOID);
-VOS_VOID NAS_MSG_SndOutsideContextData_Part1(VOS_VOID);
-VOS_VOID NAS_MSG_SndOutsideContextData_Part2(VOS_VOID);
-VOS_VOID NAS_MSG_SndOutsideContextData_Part3(VOS_VOID);
 
-extern VOS_UINT32 NAS_SetLteRplmnId(TAF_PLMN_ID_STRU *pstPlmnId,
-                                                                      VOS_UINT32               ulLai,
-                                                                      VOS_UINT32 ulRac);
-
-
-VOS_VOID NAS_STUB_AT_ResetNplmn(VOS_VOID);
-VOS_VOID NAS_STUB_AT_SetNplmn(
-    VOS_UINT8                           ucNplmnNum,
-    TAF_PLMN_ID_STRU                   *pstNplmnList
-);
-extern VOS_VOID NAS_SetCsgCfg(
-    VOS_UINT32 ulIsSupportCsgFlag,
-    VOS_UINT32 ulEfadCsgDisplayIndicator,
-    VOS_UINT32 ulOnlyReportOperatorCsgList);
-
-extern VOS_UINT32 NAS_SetDamCfg(
-    VOS_UINT8  ucDamActiveFlg,
-     VOS_UINT8 ucEnableLteTrigPlmnSearch,
-     VOS_UINT8 ucAddDamPlmnInDisabledPlmnList,
-     VOS_UINT8 ucImsiPlmnNum,
-     TAF_PLMN_ID_STRU *pstImsiPlmnList,
-     VOS_UINT8 ucDamPlmnNum,
-     TAF_PLMN_ID_STRU *pstDamPlmnList);
-
-extern  VOS_UINT32 NAS_SetTinType(VOS_UINT8  ucTinType);
-extern VOS_UINT32 NAS_SetPsBearerIsrFlg(VOS_UINT8  ucNsapi,VOS_UINT8  ucPdpIsrFlg,VOS_UINT8 ucPdpStatus);
-
-extern VOS_UINT32 NAS_SetEonsPara(VOS_UINT8 ucNum, VOS_UINT8 *pucEnosPrioType, VOS_UINT8 ucRefreshAllFileRestartFlag);
-
-extern VOS_UINT32 NAS_SetDisableRatPlmn(VOS_UINT32  ulFlg);
-
-extern VOS_UINT32 NAS_SetHighPrioPlmnRefreshTriggerBGSearchCfg(VOS_UINT8 ulOnOff, VOS_UINT32 ulDelayLen);
-
-extern VOS_UINT32 NAS_SetPsRegContainDrx(VOS_UINT8 ucDrx);
-extern  VOS_UINT32 NAS_SetLteImsSupportFlag(VOS_UINT8 ucLteImsSupportFlg, VOS_UINT8 ucLteEmsSupportFlg);
-extern  VOS_UINT32 NAS_SetImsLteCapabilitySupportFlag(
-    VOS_UINT8                           ucVoiceCallOnImsSupportFlg,
-    VOS_UINT8                           ucVideoCallOnImsSupportFlg,
-    VOS_UINT8                           ucSmsOnImsSupportFlg
-);
-
-extern  VOS_UINT32 NAS_SetPreferDomain(VOS_UINT8 ucVoiceDomain, VOS_UINT8 ucSmsDomain, VOS_UINT8 ucUpdateMmlVoiceDomainFlag);
-
-
-extern VOS_UINT32 NAS_SetImsRoaming(VOS_UINT8 ucImsRoamingFlag);
-extern VOS_UINT32 NAS_SetRedialCfg(
-    VOS_UINT8                           ucCallRedialImsToCs,
-    VOS_UINT8                           ucSmsRedialImsToCs,
-    VOS_UINT8                           ucSsRedialImsToCs,
-    VOS_UINT8                           ucCallRedialCsToIms,
-    VOS_UINT8                           ucSmsRedialCsToIms,
-    VOS_UINT8                           ucSsRedialCsToIms
-);
-
-extern  VOS_UINT32 NAS_SetImsVoiceInterSysLauEnable(VOS_UINT8 ucLauFlag);
-extern  VOS_UINT32 NAS_SetImsVoiceMMEnableFlg(VOS_UINT8 ucMMFlag);
-
-
-extern VOS_UINT32 NAS_SetImsUssd(VOS_UINT8 ucImsUssdFlag);
-
-extern VOS_UINT32 NAS_SetWildCardPara(VOS_CHAR cWildcard);
-
-extern VOS_UINT32 NAS_SetCsUnAvailPlmnId(
-    VOS_UINT32                          ulFlg,
-    TAF_PLMN_ID_STRU                   *pstPlmnId
-);
-
-LOCAL VOS_UINT32 AT_IsSpecRatSupported(
-    TAF_MMA_RAT_TYPE_ENUM_UINT8         enRatMode,
-    TAF_MMA_MULTIMODE_RAT_CFG_STRU     *pstRatOrder
-);
-
-LOCAL VOS_UINT32 AT_IsModeConflictingDomain(
-    TAF_MMA_SYS_CFG_PARA_STRU          *pstSysCfgExSetPara
-);
-
-
-extern VOS_UINT32 NAS_SetForbRoamTa(VOS_UINT32 ulPara);
-#endif
-
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
-#if (2 <= MULTI_MODEM_NUMBER)
 LOCAL VOS_UINT32  At_QryCdmaModemSwitchCdmaCapCheck(
     VOS_UINT32                          ulModem0SupportCMode,
     VOS_UINT32                          ulModem1SupportCMode,
-#if (3 == MULTI_MODEM_NUMBER)
     VOS_UINT32                          ulModem2SupportCMode,
-#endif
     VOS_UINT32                         *pulAllModemNotSupportCMode
     );
-#endif
-#endif
 
 /*****************************************************************************
    4 函数实现
@@ -501,29 +356,6 @@ TAF_VOID At_SsPrint2Code(TAF_SS_CODE *pSsCode,TAF_UINT8 ucType)
     }
 }
 
-#if ( VOS_WIN32 == VOS_OS_VER )
-
-VOS_UINT32 AT_ReadValueFromNvim(
-    const NV_ID_ENUM_U16                enNVItemType,
-    VOS_VOID                           *pData,
-    VOS_UINT32                          usDataLen,
-    MODEM_ID_ENUM_UINT16                enModemId
-)
-{
-    VOS_UINT32                          ulRst;
-    ulRst = TAF_ACORE_NV_READ(enModemId, enNVItemType, pData, usDataLen);
-    switch ( ulRst)
-    {
-        case NV_OK :
-            return AT_OK;
-        case NV_ID_NOT_EXIST:
-        case NV_BUFFER_TOO_LONG :
-            return AT_CME_INCORRECT_PARAMETERS;
-        default:
-            return AT_ERROR ;
-    }
-}
-#endif
 
 TAF_UINT32 At_AsciiNum2HexString(TAF_UINT8 *pucSrc, TAF_UINT16 *pusSrcLen)
 {
@@ -1623,70 +1455,6 @@ TAF_UINT32 At_UpdateMsgRcvAct(
     return AT_OK;
 }
 
-#if (FEATURE_ON == FEATURE_RSTRIGGER_SMS)
-
-VOS_UINT32 AT_ReadActiveMessage(
-    MODEM_ID_ENUM_UINT16                enModemId,
-    MN_MSG_ACTIVE_MESSAGE_STRU         *pstActiveMessage
-)
-{
-    VOS_UINT32                          ulRet;
-    VOS_UINT8                          *pucActiveMessageInfo;
-    VOS_UINT8                          *pucEvaluate;
-
-    pucActiveMessageInfo = (VOS_UINT8 *)PS_MEM_ALLOC(WUEPS_PID_AT,
-                                                     MN_MSG_ACTIVE_MESSAGE_PARA_LEN);
-    if (VOS_NULL_PTR == pucActiveMessageInfo)
-    {
-        AT_WARN_LOG("AT_ReadActiveMessage : fail to alloc memory . ");
-        return MN_ERR_NOMEM;
-    }
-
-    ulRet = TAF_ACORE_NV_READ(enModemId,
-                      en_NV_Item_SMS_ActiveMessage_Para,
-                      pucActiveMessageInfo,
-                      MN_MSG_ACTIVE_MESSAGE_PARA_LEN);
-    if (NV_OK != ulRet)
-    {
-        AT_WARN_LOG("AT_ReadActiveMessage : fail to read NVIM . ");
-        /*lint -save -e516 */
-        PS_MEM_FREE(WUEPS_PID_AT, pucActiveMessageInfo);/*lint !e830*/
-        /*lint -restore */
-        return MN_ERR_CLASS_SMS_NVIM;
-    }
-
-    pucEvaluate                         = pucActiveMessageInfo;
-
-    pstActiveMessage->enActiveStatus    = *pucEvaluate;
-    pucEvaluate++;
-
-    pstActiveMessage->enMsgCoding       = *pucEvaluate;
-    pucEvaluate++;
-
-    pstActiveMessage->stUrl.ulLen       = *pucEvaluate;
-    pucEvaluate++;
-    pstActiveMessage->stUrl.ulLen      |= (VOS_UINT32)(*pucEvaluate) << 8;
-    pucEvaluate++;
-    pstActiveMessage->stUrl.ulLen      |= (VOS_UINT32)(*pucEvaluate) << 16;
-    pucEvaluate++;
-    pstActiveMessage->stUrl.ulLen      |= (VOS_UINT32)(*pucEvaluate) << 24;
-    pucEvaluate++;
-
-    if (pstActiveMessage->stUrl.ulLen > MN_MSG_ACTIVE_MESSAGE_MAX_URL_LEN)
-    {
-        AT_WARN_LOG("AT_ReadActiveMessage : fail to read NVIM . ");
-        pstActiveMessage->stUrl.ulLen = MN_MSG_ACTIVE_MESSAGE_MAX_URL_LEN;
-    }
-
-    TAF_MEM_CPY_S(pstActiveMessage->stUrl.aucUrl,
-               sizeof(pstActiveMessage->stUrl.aucUrl),
-               pucEvaluate,
-               (VOS_UINT16)pstActiveMessage->stUrl.ulLen);
-
-    PS_MEM_FREE(WUEPS_PID_AT, pucActiveMessageInfo);
-    return MN_ERR_NO_ERROR;
-}
-#endif
 
 
 VOS_UINT32 At_ProcAppReqUssdStr_Nontrans(
@@ -1859,21 +1627,6 @@ VOS_VOID AT_SetTftDirectionPara(
     return;
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-
-VOS_VOID AT_SetTftQriPara(
-    TAF_TFT_EXT_STRU                   *pstTftInfo
-)
-{
-    if ( 0 != gastAtParaList[12].usParaLen )
-    {
-        pstTftInfo->bitOpQri = 1;
-        pstTftInfo->ucQri    = (VOS_UINT8)gastAtParaList[12].ulParaValue;
-    }
-
-    return;
-}
-#endif
 
 
 VOS_VOID AT_SetTftFlowLablePara(
@@ -2073,88 +1826,6 @@ VOS_UINT32 At_ConvUssdStrInCmd(
     return AT_OK;
 }
 
-#if (FEATURE_ON == FEATURE_RSTRIGGER_SMS)
-
-TAF_UINT32 AT_SetRstriggerPara(
-    TAF_UINT8                           ucIndex
-)
-{
-    MN_MSG_ACTIVE_MESSAGE_STRU          stActiveMessage;
-    MN_MSG_ACTIVE_MESSAGE_STRU          stOrgActiveMessage;
-    TAF_UINT32                          ulRet;
-    MODEM_ID_ENUM_UINT16                enModemId;
-    VOS_UINT32                          ulRslt;
-
-    enModemId = MODEM_ID_0;
-
-    /* 参数检查 ：
-       个数为0返回AT_CME_INCORRECT_PARAMETERS
-       个数为2返回AT_TOO_MANY_PARA
-    */
-    if (gucAtParaIndex > 2)
-    {
-        return AT_TOO_MANY_PARA;
-    }
-
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    ulRslt = AT_GetModemIdFromClient(ucIndex, &enModemId);
-
-    if (VOS_OK != ulRslt)
-    {
-        AT_ERR_LOG("AT_SetRstriggerPara: Get modem id fail.");
-        return AT_ERROR;
-    }
-
-    ulRet = AT_ReadActiveMessage(enModemId, &stOrgActiveMessage);
-    if (MN_ERR_NO_ERROR != ulRet)
-    {
-        AT_LOG1("AT_SetRstriggerPara: fail to get active message information , cause is %d",
-                ulRet);
-        return AT_ERROR;
-    }
-
-    /*URL:用户没有设置URL,则保持NVIM中的URL不变;否则，用户设置的URL覆盖NVIM的数据*/
-    if (2 == gucAtParaIndex)
-    {
-        if (gastAtParaList[1].usParaLen > MN_MSG_ACTIVE_MESSAGE_MAX_URL_LEN)
-        {
-            stActiveMessage.stUrl.ulLen = MN_MSG_ACTIVE_MESSAGE_MAX_URL_LEN;
-        }
-        else
-        {
-            stActiveMessage.stUrl.ulLen = gastAtParaList[1].usParaLen;
-        }
-        TAF_MEM_CPY_S(stActiveMessage.stUrl.aucUrl,
-                   sizeof(stActiveMessage.stUrl.aucUrl),
-                   gastAtParaList[1].aucPara,
-                   (VOS_UINT16)stActiveMessage.stUrl.ulLen);
-
-        stActiveMessage.enMsgCoding    = MN_MSG_MSG_CODING_8_BIT;
-    }
-    else
-    {
-        TAF_MEM_CPY_S(&stActiveMessage.stUrl, sizeof(stActiveMessage.stUrl), &stOrgActiveMessage.stUrl, sizeof(stActiveMessage.stUrl));
-        stActiveMessage.enMsgCoding    = stOrgActiveMessage.enMsgCoding;
-    }
-
-    /*ACTIVE STATUS:*/
-    stActiveMessage.enActiveStatus = (MN_MSG_ACTIVE_MESSAGE_STATUS_ENUM_UINT8)gastAtParaList[0].ulParaValue;
-
-    /*调用AT_WriteActiveMessage写激活短信的激活状态和URL信息到NVIM；*/
-    ulRet = AT_WriteActiveMessage(enModemId, &stOrgActiveMessage, &stActiveMessage);
-    if (MN_ERR_NO_ERROR != ulRet)
-    {
-        return AT_ERROR;
-    }
-
-    return AT_OK;
-
-}
-#endif
 
 
 TAF_UINT32 At_SetCsmsPara(TAF_UINT8 ucIndex)
@@ -2253,7 +1924,6 @@ VOS_UINT32 At_GetSmsStorage(
         stMemParm.enMem1Store = MN_MSG_MEM_STORE_NONE;
         gastAtClientTab[ucIndex].AtSmsData.bWaitForUsimStorageStatus = VOS_FALSE;
     }
-#if (NAS_FEATURE_SMS_FLASH_SMSEXIST == FEATURE_ON)
     if ((MN_MSG_MEM_STORE_ME == enMemReadorDelete)
      || (MN_MSG_MEM_STORE_ME == enMemSendorWrite)
      || (MN_MSG_MEM_STORE_ME == enMemRcv))
@@ -2266,10 +1936,6 @@ VOS_UINT32 At_GetSmsStorage(
         stMemParm.enMem2Store = MN_MSG_MEM_STORE_NONE;
         gastAtClientTab[ucIndex].AtSmsData.bWaitForNvStorageStatus = VOS_FALSE;
     }
-#else
-    stMemParm.enMem2Store = MN_MSG_MEM_STORE_NONE;
-    gastAtClientTab[ucIndex].AtSmsData.bWaitForNvStorageStatus = VOS_FALSE;
-#endif
 
     if (MN_ERR_NO_ERROR != MN_MSG_GetStorageStatus(gastAtClientTab[ucIndex].usClientId,
                                                    gastAtClientTab[ucIndex].opId,
@@ -2327,14 +1993,10 @@ TAF_UINT32 At_SetCpmsPara(TAF_UINT8 ucIndex)
      || (MN_MSG_MEM_STORE_ME == pstSmsCtx->stCpmsInfo.enTmpMemSendorWrite)
      || (MN_MSG_MEM_STORE_ME == stRcvPath.enSmMemStore))
     {
-#if (NAS_FEATURE_SMS_FLASH_SMSEXIST != FEATURE_ON)
-        return AT_ERROR;
-#else
         if (MN_MSG_ME_STORAGE_ENABLE != pstSmsCtx->enMsgMeStorageStatus)
         {
             return AT_ERROR;
         }
-#endif
     }
 
     if (MN_ERR_NO_ERROR != MN_MSG_SetRcvMsgPath(gastAtClientTab[ucIndex].usClientId,
@@ -3373,13 +3035,6 @@ VOS_UINT32 At_SetCmStubPara(VOS_UINT8 ucIndex)
         return AT_OK;
     }
 
-#if ( VOS_WIN32 == VOS_OS_VER )
-    if (MN_MSG_STUB_TYPE_CLASS0_TAILOR == gastAtParaList[0].ulParaValue)
-    {
-        /* CLASS0类短信接收方式涉及A核和C核两部分，所以此处不能直接返回； */
-        g_enClass0Tailor = (VOS_UINT8)gastAtParaList[1].ulParaValue;
-    }
-#endif
 
     /* 需要C核处理的桩: 发送消息给C核 */
     stStubParam.enStubType = (MN_MSG_STUB_TYPE_ENUM_U32)gastAtParaList[0].ulParaValue;
@@ -3434,7 +3089,6 @@ TAF_UINT32 At_SetCmmsPara(
     gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_CMMS_SET;
     return AT_WAIT_ASYNC_RETURN;
 }
-#if ((FEATURE_ON == FEATURE_GCBS) || (FEATURE_ON == FEATURE_WCBS))
 
 VOS_UINT32 AT_ParseCbParm(
     VOS_UINT8                           *pucInPara,
@@ -3711,7 +3365,6 @@ TAF_UINT32 At_SetCscbPara(
     return AT_WAIT_ASYNC_RETURN;    /* 返回命令处理挂起状态 */
 }
 
-#endif
 
 
 TAF_UINT32 At_SetClipPara(TAF_UINT8 ucIndex)
@@ -4076,7 +3729,6 @@ VOS_UINT32 AT_SetCsdfPara(VOS_UINT8 ucIndex)
     return AT_OK;
 }
 
-#if(FEATURE_ON == FEATURE_LTE)
 
 VOS_UINT32 AT_SetCeregPara(VOS_UINT8 ucIndex)
 {
@@ -4135,65 +3787,7 @@ VOS_UINT32 AT_SetCeregPara(VOS_UINT8 ucIndex)
     return AT_WAIT_ASYNC_RETURN;
 }
 
-#endif
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-
-VOS_UINT32 AT_SetC5gregPara(VOS_UINT8 ucIndex)
-{
-    AT_MODEM_NET_CTX_STRU                  *pstNetCtx = VOS_NULL_PTR;
-
-    AT_MTA_UNSOLICITED_RPT_SET_REQ_STRU     stAtCmd;
-    VOS_UINT32                              ulResult;
-
-    pstNetCtx = AT_GetModemNetCtxAddrFromClientId(ucIndex);
-
-    TAF_MEM_SET_S(&stAtCmd, sizeof(stAtCmd), 0x00, sizeof(stAtCmd));
-
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数过多 */
-    if (gucAtParaIndex > 1)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数不为空 */
-    if (0 != gastAtParaList[0].usParaLen)
-    {
-        pstNetCtx->ucC5gregType  = (AT_C5GREG_TYPE_ENUM_UINT8)gastAtParaList[0].ulParaValue;
-        stAtCmd.u.ucC5gregRptFlg = (VOS_UINT8)gastAtParaList[0].ulParaValue;
-    }
-    else
-    {
-        pstNetCtx->ucC5gregType  = AT_C5GREG_RESULT_CODE_NOT_REPORT_TYPE;
-        stAtCmd.u.ucC5gregRptFlg = AT_C5GREG_RESULT_CODE_NOT_REPORT_TYPE;
-    }
-
-    stAtCmd.enReqType       = AT_MTA_SET_C5GREG_RPT_TYPE;
-
-    /* 给MTA发送+c5greg设置请求 */
-    ulResult = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   0,
-                                   ID_AT_MTA_UNSOLICITED_RPT_SET_REQ,
-                                   &stAtCmd,
-                                   sizeof(AT_MTA_UNSOLICITED_RPT_SET_REQ_STRU),
-                                   I0_UEPS_PID_MTA);
-
-    if (TAF_SUCCESS != ulResult)
-    {
-        return AT_ERROR;
-    }
-
-    gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_UNSOLICITED_RPT_SET;
-
-    return AT_WAIT_ASYNC_RETURN;
-}
-
-#endif
 
 
 VOS_UINT32 At_SetClccPara(VOS_UINT8 ucIndex)
@@ -5266,280 +4860,6 @@ VOS_UINT32 AT_CheckApnFormat(
     return VOS_OK;
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-
-LOCAL VOS_UINT32 AT_CheckSNssaiFormat(
-    VOS_UINT8                          *pucSNssai,
-    VOS_UINT16                          usSNssaiLen
-)
-{
-    VOS_UINT32                          i;
-    VOS_UINT8                           ucCharacter;
-
-    for ( i = 0 ; i < usSNssaiLen; i++ )
-    {
-        ucCharacter = AT_UPCASE(pucSNssai[i]);
-
-        /* 检查S-NSSAI字符有效性 */
-        if (!((('0' <= ucCharacter) && ('9' >= ucCharacter))
-             || (('A' <= ucCharacter) && ('F' >= ucCharacter))
-             || (';' == ucCharacter)
-             || ('.' == ucCharacter)))
-        {
-            AT_WARN_LOG("AT_CheckSNssaiFormat: WARNING: Invalid character in S-NSSAI.");
-            return VOS_ERR;
-        }
-    }
-
-    return VOS_OK;
-}
-
-
-LOCAL VOS_UINT32 AT_DecodeSNssaiPara(
-    VOS_UINT8                          *pucSNssai,
-    VOS_UINT16                          usSNssaiLen,
-    AT_S_NSSAI_PARSE_STRU              *pstSNssaiParse
-)
-{
-    VOS_UINT32                          i;
-    VOS_UINT32                          ucDigitCount;
-    VOS_UINT8                           ucCharacter;
-
-    ucDigitCount = 0;
-
-    for (i = 0 ; i < usSNssaiLen; i++)
-    {
-        ucCharacter = AT_UPCASE(pucSNssai[i]);
-
-        if (('0' <= ucCharacter) && ('9' >= ucCharacter))
-        {
-            /* 高位数值左移4bit */
-            pstSNssaiParse->aulDigite[pstSNssaiParse->ucDigitParaNum]   = (VOS_UINT32)(pstSNssaiParse->aulDigite[pstSNssaiParse->ucDigitParaNum]  << AT_OCTET_MOVE_FOUR_BITS);
-            pstSNssaiParse->aulDigite[pstSNssaiParse->ucDigitParaNum]  += (pucSNssai[i] - '0');
-
-            ucDigitCount ++;
-            if (ucDigitCount > AT_S_NSSAI_SD_MAX_DIGIT_NUM)
-            {
-                /* 每个参数的位数最多不超过6 */
-                return VOS_ERR;
-            }
-        }
-        else if (('A' <= ucCharacter) && ('F' >= ucCharacter))
-        {
-            /* 高位数值左移4bit */
-            pstSNssaiParse->aulDigite[pstSNssaiParse->ucDigitParaNum]   = (VOS_UINT32)(pstSNssaiParse->aulDigite[pstSNssaiParse->ucDigitParaNum]  << AT_OCTET_MOVE_FOUR_BITS);
-            pstSNssaiParse->aulDigite[pstSNssaiParse->ucDigitParaNum]  += ((ucCharacter - 'A') + 0x0A);
-
-            ucDigitCount ++;
-            if (ucDigitCount > AT_S_NSSAI_SD_MAX_DIGIT_NUM)
-            {
-                /* 每个参数的位数最多不超过6 */
-                return VOS_ERR;
-            }
-        }
-        else
-        {
-            if (0 == ucDigitCount)
-            {
-                /* 字符串如果以符号开头，或者字符串中出现连续的符号，则输入错误 */
-                return VOS_ERR;
-            }
-
-            if ((i + 1) == usSNssaiLen)
-            {
-                /* 如果最后1个字符是符号，说明少1个数字，需要返回错误 */
-                return VOS_ERR;
-            }
-
-            /* 数值字符计数清0 */
-            ucDigitCount      = 0;
-
-            /* 记录字符 */
-            pstSNssaiParse->aucPunctuation[pstSNssaiParse->ucPunctuationNum] = pucSNssai[i];
-
-            /* 准备记录下一个数字或者字符 */
-            pstSNssaiParse->ucDigitParaNum++;
-            pstSNssaiParse->ucPunctuationNum++;
-
-            if ((pstSNssaiParse->ucDigitParaNum > AT_S_NSSAI_MAX_DIGIT_NUM)
-             || (pstSNssaiParse->ucPunctuationNum > AT_S_NSSAI_MAX_PUNC_NUM))
-            {
-                return VOS_ERR;
-            }
-        }
-    }
-
-    /* 记录最后一个数字后，计数加1 */
-    pstSNssaiParse->ucDigitParaNum++;
-
-    return VOS_OK;
-}
-
-
-LOCAL VOS_UINT32 AT_CheckSNssaiPunctuationPara(
-    AT_S_NSSAI_PARSE_STRU              *pstSNssaiParse
-)
-{
-    /*  sst                                     only slice/service type (SST) is present
-     *  sst;mapped_sst                          SST and mapped configured SST are present
-     *  sst.sd                                  SST and slice differentiator (SD) are present
-     *  sst.sd;mapped_sst                       SST, SD and mapped configured SST are present
-     *  sst.sd;mapped_sst.mapped_sd             SST, SD, mapped configured SST and mapped configured SD are present*/
-
-    VOS_UINT8                           aucPuncMould[AT_S_NSSAI_MAX_PUNC_NUM + 1] = {'.', ';', '.', 0};
-    VOS_UINT8                           ucNum;
-
-    if (0 == pstSNssaiParse->ucPunctuationNum)
-    {
-        return VOS_OK;
-    }
-
-    ucNum = AT_MIN(pstSNssaiParse->ucPunctuationNum, AT_S_NSSAI_MAX_PUNC_NUM);
-
-    if ((0x01 == ucNum)
-     && (';' == pstSNssaiParse->aucPunctuation[0]))
-    {
-        /* 此情况是合法的 */
-        return VOS_OK;
-    }
-
-    if (0 != PS_MEM_CMP(aucPuncMould, pstSNssaiParse->aucPunctuation, ucNum))
-    {
-        return VOS_ERR;
-    }
-
-    return VOS_OK;
-}
-
-
-LOCAL VOS_UINT32 AT_CheckSNssaiDigitPara(
-    AT_S_NSSAI_PARSE_STRU              *pstSNssaiParse
-)
-{
-    /* 本函数主要检查SST和MAP SST的取值范围，SD在解析时做了检查 */
-
-    /* 检查第一个数值，应该为SST */
-    if (pstSNssaiParse->aulDigite[0] > 0xFF)
-    {
-        return VOS_ERR;
-    }
-
-    if (1 == pstSNssaiParse->ucPunctuationNum)
-    {
-        /* 如果为SST;MAP SST的格式，检查MAP SST的参数值 */
-        if (pstSNssaiParse->aucPunctuation[0] == ';' )
-        {
-            if (pstSNssaiParse->aulDigite[1] > 0xFF)
-            {
-                return VOS_ERR;
-            }
-        }
-    }
-
-    if ((2 == pstSNssaiParse->ucPunctuationNum) || (3 == pstSNssaiParse->ucPunctuationNum))
-    {
-        /* 如果为SST.SD;map_SST或者SST.map_SD;map_SST.map_SD的格式，检查MAP SST的参数值 */
-        if (pstSNssaiParse->aulDigite[2] > 0xFF)
-        {
-            return VOS_ERR;
-        }
-    }
-
-    return VOS_OK;
-}
-
-
-LOCAL VOS_UINT32 AT_DecodeSNssai(
-    VOS_UINT8                          *pucSNssai,
-    VOS_UINT16                          usSNssaiLen,
-    PS_S_NSSAI_STRU                    *pstSNssai
-)
-{
-    AT_S_NSSAI_PARSE_STRU               stSNssai;
-
-    /*  27007 rel15, 10.1.1章节
-     *  sst                                     only slice/service type (SST) is present
-     *  sst;mapped_sst                          SST and mapped configured SST are present
-     *  sst.sd                                  SST and slice differentiator (SD) are present
-     *  sst.sd;mapped_sst                       SST, SD and mapped configured SST are present
-     *  sst.sd;mapped_sst.mapped_sd             SST, SD, mapped configured SST and mapped configured SD are present
-    */
-
-    TAF_MEM_SET_S(&stSNssai, sizeof(stSNssai), 0, sizeof(AT_S_NSSAI_PARSE_STRU));
-
-    /* 检查S-NSSAI字符串中的字符格式是否正确  */
-    if (VOS_ERR == AT_CheckSNssaiFormat(pucSNssai, usSNssaiLen))
-    {
-        return VOS_ERR;
-    }
-
-    /* 解析S-NSSAI字符串 */
-    if (VOS_ERR == AT_DecodeSNssaiPara(pucSNssai, usSNssaiLen, &stSNssai))
-    {
-        return VOS_ERR;
-    }
-
-    /* 先检查分割符是否正确 */
-    if (VOS_ERR == AT_CheckSNssaiPunctuationPara(&stSNssai))
-    {
-        return VOS_ERR;
-    }
-
-    /* 再检查数值是否正确 */
-    if (VOS_ERR == AT_CheckSNssaiDigitPara(&stSNssai))
-    {
-        return VOS_ERR;
-    }
-
-    /* 赋值 */
-    if (1 == stSNssai.ucDigitParaNum)
-    {
-        /* SST */
-        pstSNssai->ucSst    = (VOS_UINT8)stSNssai.aulDigite[0];
-    }
-    else if(2 == stSNssai.ucDigitParaNum)
-    {
-        /* SST.SD或者SST;map_SST */
-        pstSNssai->ucSst    = (VOS_UINT8)stSNssai.aulDigite[0];
-
-        /* 如果解析成功，判断后续字符是"."还是";" */
-        if (stSNssai.aucPunctuation[0] == '.' )
-        {
-            pstSNssai->bitOpSd          = VOS_TRUE;
-            pstSNssai->ulSd             = stSNssai.aulDigite[1];
-        }
-        else
-        {
-            pstSNssai->bitOpMappedSst   = VOS_TRUE;
-            pstSNssai->ucMappedSst      = (VOS_UINT8)stSNssai.aulDigite[1];
-        }
-    }
-    else if (3 == stSNssai.ucDigitParaNum)
-    {
-        /* SST.SD;map_SST */
-        pstSNssai->ucSst                = (VOS_UINT8)stSNssai.aulDigite[0];
-        pstSNssai->bitOpSd              = VOS_TRUE;
-        pstSNssai->ulSd                 = stSNssai.aulDigite[1];
-        pstSNssai->bitOpMappedSst       = VOS_TRUE;
-        pstSNssai->ucMappedSst          = (VOS_UINT8)stSNssai.aulDigite[2];
-    }
-    else
-    {
-        /* SST.SD;map_SST.map_SD */
-        pstSNssai->ucSst                = (VOS_UINT8)stSNssai.aulDigite[0];
-        pstSNssai->bitOpSd              = VOS_TRUE;
-        pstSNssai->ulSd                 = stSNssai.aulDigite[1];
-        pstSNssai->bitOpMappedSst       = VOS_TRUE;
-        pstSNssai->ucMappedSst          = (VOS_UINT8)stSNssai.aulDigite[2];
-        pstSNssai->bitOpMappedSd        = VOS_TRUE;
-        pstSNssai->ulMappedSd           = stSNssai.aulDigite[3];
-    }
-
-    return VOS_OK;
-}
-
-
-#endif
 
 
 
@@ -5593,42 +4913,6 @@ VOS_VOID AT_ParseCgdcontPara(
         pstPdpCxtInfo->bitOpNasSigPrioInd = VOS_TRUE;
         pstPdpCxtInfo->enNasSigPrioInd    = (VOS_UINT8)gastAtParaList[10].ulParaValue;
     }
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-    /* 设置<SSC_mode> */
-    if ( 0 != gastAtParaList[16].usParaLen )
-    {
-        pstPdpCxtInfo->bitOpSscMode   = VOS_TRUE;
-        pstPdpCxtInfo->enSscMode      = (VOS_UINT8)gastAtParaList[16].ulParaValue;
-    }
-
-    /* 设置<Pref_access_type> */
-    if ( 0 != gastAtParaList[18].usParaLen )
-    {
-        pstPdpCxtInfo->bitOpPrefAccessType = VOS_TRUE;
-        pstPdpCxtInfo->enPrefAccessType    = (VOS_UINT8)gastAtParaList[18].ulParaValue;
-    }
-
-    /* 设置<RQos_ind> */
-    if ( 0 != gastAtParaList[19].usParaLen )
-    {
-        pstPdpCxtInfo->bitOpRQosInd       = VOS_TRUE;
-        pstPdpCxtInfo->enRQosInd          = (VOS_UINT8)gastAtParaList[19].ulParaValue;
-    }
-
-    /* 设置<MH6-PDU> */
-    if ( 0 != gastAtParaList[20].usParaLen )
-    {
-        pstPdpCxtInfo->bitOpMh6Pdu       = VOS_TRUE;
-        pstPdpCxtInfo->enMh6Pdu          = (VOS_UINT8)gastAtParaList[20].ulParaValue;
-    }
-
-    /* 设置<always on ind> */
-    if ( 0 != gastAtParaList[21].usParaLen )
-    {
-        pstPdpCxtInfo->bitOpAlwaysOnInd    = VOS_TRUE;
-        pstPdpCxtInfo->enAlwaysOnInd       = (VOS_UINT8)gastAtParaList[21].ulParaValue;
-    }
-#endif
 }
 
 
@@ -5651,14 +4935,10 @@ LOCAL AT_RRETURN_CODE_ENUM_UINT32 AT_ParseCgdcontIpType(
             if ( (TAF_PDP_IPV6   == pstPdpCxtInfo->enPdpType)
               || (TAF_PDP_IPV4V6 == pstPdpCxtInfo->enPdpType) )
             {
-#if (FEATURE_ON == FEATURE_IPV6)
                 if (AT_IPV6_CAPABILITY_IPV4_ONLY == AT_GetIpv6Capability())
                 {
                     return AT_CME_INCORRECT_PARAMETERS;
                 }
-#else
-                return AT_CME_INCORRECT_PARAMETERS;
-#endif
             }
         }
     }
@@ -5722,28 +5002,6 @@ LOCAL AT_RRETURN_CODE_ENUM_UINT32 AT_ParseCgdcontIpAddr(
     return AT_SUCCESS;
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-
-LOCAL AT_RRETURN_CODE_ENUM_UINT32 AT_ParseCgdcontSNssai(
-    TAF_PDP_PRIM_CONTEXT_EXT_STRU      *pstPdpCxtInfo
-)
-{
-    /* 解析S-NSSAI参数 */
-    if (0 != gastAtParaList[17].usParaLen)
-    {
-        if (VOS_OK != AT_DecodeSNssai(gastAtParaList[17].aucPara,
-                                      gastAtParaList[17].usParaLen,
-                                      &pstPdpCxtInfo->stSNssai))
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-
-        pstPdpCxtInfo->bitOpSNssai    = VOS_TRUE;
-    }
-
-    return AT_SUCCESS;
-}
-#endif
 
 
 
@@ -5792,10 +5050,6 @@ VOS_UINT32 AT_SetCgdcontPara(VOS_UINT8 ucIndex)
         /* 只处理IPV4的IP ADDR，IPV6不使用此AT命令设置的IP ADDR */
         enErrCode |= AT_ParseCgdcontIpAddr(&stPdpCxtInfo);
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-        /* 设置<S-NSSAI> */
-        enErrCode |= AT_ParseCgdcontSNssai(&stPdpCxtInfo);
-#endif
         /* 检查<IP TYEP><APN><PDP_addr><S-NSSAI>参数的正确性 */
         if (enErrCode != AT_SUCCESS)
         {
@@ -6092,11 +5346,7 @@ TAF_UINT32 AT_SetCgpaddrPara(TAF_UINT8 ucIndex)
         return AT_CME_INCORRECT_PARAMETERS;
     }
 
-#if (FEATURE_ON == FEATURE_LTE)
     ulIndex = AT_MAX_PARA_NUMBER;
-#else
-    ulIndex = TAF_MAX_CID;
-#endif
 
     /* 参数设置 */
     if ( 0 != gucAtParaIndex )
@@ -6155,11 +5405,7 @@ TAF_UINT32 AT_SetCgeqnegPara(TAF_UINT8 ucIndex)
         return AT_CME_INCORRECT_PARAMETERS;
     }
 
-#if (FEATURE_ON == FEATURE_LTE)
     ulIndex = AT_MAX_PARA_NUMBER;
-#else
-    ulIndex = TAF_MAX_CID;
-#endif
 
     /* 参数设置 */
     /* +CGEQNEG[=<cid>[,<cid>[,...]]] */
@@ -6702,7 +5948,6 @@ VOS_UINT32 AT_FillTftIpAddr(
     /* 如果输入为IPV6地址，地址加掩码会有31个'.' */
     /* 例如"32.8.0.2.0.2.0.1.0.2.0.1.0.3.21.111.255.255.255.255.255.255.255.255.255.255.255.255.255.255.255.255" */
     /* 前16个为IPV6地址，后16个为掩码 */
-#if (FEATURE_ON == FEATURE_IPV6)
     else if ((AT_IPV6_CAPABILITY_IPV4_ONLY != AT_GetIpv6Capability())
            && ((TAF_IPV6_ADDR_LEN * 2 - 1) == ulCount))
     {
@@ -6716,7 +5961,6 @@ VOS_UINT32 AT_FillTftIpAddr(
             return (AT_FillTftLocalIpv6Addr(pData, usLen, pstTftInfo));
         }
     }
-#endif
     else
     {
         return AT_FAILURE;
@@ -6828,10 +6072,6 @@ TAF_UINT32 AT_SetCgtftPara(TAF_UINT8 ucIndex)
                 }
             }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-            /* <qri> */
-            AT_SetTftQriPara(&stTftInfo);
-#endif
 
         }
 
@@ -6995,130 +6235,6 @@ TAF_UINT32 AT_SetCgautoPara(TAF_UINT8 ucIndex)
     /* 返回命令处理挂起状态 */
     return AT_WAIT_ASYNC_RETURN;
 }
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-
-VOS_UINT32 AT_SetC5gqosPara(VOS_UINT8 ucIndex)
-{
-    TAF_5G_QOS_EXT_STRU                 st5QosInfo;
-
-    TAF_MEM_SET_S(&st5QosInfo, sizeof(st5QosInfo), 0x00, sizeof(TAF_5G_QOS_EXT_STRU));
-
-    if ( 0 == gastAtParaList[0].usParaLen )
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if ( gucAtParaIndex > 6 )
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    st5QosInfo.ucCid = (VOS_UINT8)gastAtParaList[0].ulParaValue;
-
-    /* 如果参数只有<CID>, 无需检查其它参数 */
-    if ( 1 == gucAtParaIndex )
-    {
-        st5QosInfo.ucDefined             = VOS_FALSE;
-    }
-    else
-    {
-        st5QosInfo.ucDefined             = VOS_TRUE;
-        if ( 0 != gastAtParaList[1].usParaLen )
-        {
-            st5QosInfo.bitOp5QI         = 1;
-            st5QosInfo.uc5QI            = (VOS_UINT8)gastAtParaList[1].ulParaValue;
-        }
-
-        if ( 0 != gastAtParaList[2].usParaLen )
-        {
-            st5QosInfo.bitOpDLGFBR      = 1;
-            st5QosInfo.ulDLGFBR         = gastAtParaList[2].ulParaValue;
-        }
-
-        if (0 != gastAtParaList[3].usParaLen )
-        {
-            st5QosInfo.bitOpULGFBR      = 1;
-            st5QosInfo.ulULGFBR         = gastAtParaList[3].ulParaValue;
-        }
-
-        /* ULGFBR和DLGFBR需要同时设置才有效;不同时设置，认为无效。参考3gpp 27.007 */
-        if (1 == (st5QosInfo.bitOpDLGFBR ^ st5QosInfo.bitOpULGFBR))
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-
-        if (0 != gastAtParaList[4].usParaLen )
-        {
-            st5QosInfo.bitOpDLMFBR      = 1;
-            st5QosInfo.ulDLMFBR         = gastAtParaList[4].ulParaValue;
-        }
-
-        if (0 != gastAtParaList[5].usParaLen )
-        {
-            st5QosInfo.bitOpULMFBR      = 1;
-            st5QosInfo.ulULMFBR         = gastAtParaList[5].ulParaValue;
-        }
-
-        /* ULMFBR和DLMFBR需要同时设置才有效;不同时设置，认为无效。参考3gpp 27.007 */
-        if (1 == (st5QosInfo.bitOpDLMFBR ^ st5QosInfo.bitOpULMFBR))
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-    }
-
-    if ( VOS_OK != TAF_PS_Set5QosInfo(WUEPS_PID_AT,
-                                      AT_PS_BuildExClientId(gastAtClientTab[ucIndex].usClientId),
-                                      0,
-                                      &st5QosInfo) )
-    {
-        return AT_ERROR;
-    }
-
-    gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_C5GQOS_SET;
-
-    /* 返回命令处理挂起状态 */
-    return AT_WAIT_ASYNC_RETURN;
-}
-
-
-VOS_UINT32 AT_SetC5gqosRdpPara(
-    VOS_UINT8                           ucIndex
-)
-{
-    VOS_UINT8                           ucCid;
-
-    ucCid = 0;
-
-    /* 参数过多 */
-    if(gucAtParaIndex > 1)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if(0 != gastAtParaList[0].usParaLen)
-    {
-        ucCid = (VOS_UINT8)gastAtParaList[0].ulParaValue;
-    }
-    else
-    {
-        ucCid = 0xff;
-    }
-
-    if (VOS_OK != TAF_PS_GetDynamic5gQosInfo(WUEPS_PID_AT,
-                                             AT_PS_BuildExClientId(gastAtClientTab[ucIndex].usClientId),
-                                             0,
-                                             ucCid))
-    {
-        return AT_ERROR;
-    }
-
-    gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_C5GQOSRDP_SET;
-
-    /* 返回命令处理挂起状态 */
-    return AT_WAIT_ASYNC_RETURN;
-}
-
-#endif
 
 
 VOS_UINT32 atSetCgeqosPara(VOS_UINT8 ucIndex)
@@ -7345,7 +6461,6 @@ VOS_UINT32 atSetCgtftrdpPara(VOS_UINT8 ucIndex)
 
 VOS_UINT32 At_SetCsndPara(VOS_UINT8 ucIndex)
 {
-#if (FEATURE_OFF == FEATURE_DATA_SERVICE_NEW_PLATFORM)
     IMM_ZC_STRU                        *pstImmZc = VOS_NULL_PTR;
     VOS_UINT8                          *pucData = VOS_NULL_PTR;
     VOS_UINT8                           ucRabId;
@@ -7442,9 +6557,6 @@ VOS_UINT32 At_SetCsndPara(VOS_UINT8 ucIndex)
     }
 
     return AT_OK;
-#else
-    return AT_ERROR;
-#endif /* FEATURE_DATA_SERVICE_NEW_PLATFORM */
 }
 
 TAF_UINT32 At_SetCgdataPara(TAF_UINT8 ucIndex)
@@ -7647,7 +6759,7 @@ TAF_UINT32 At_SetCgcattPara(TAF_UINT8 ucIndex)
         }
     }
 }
-
+/* Added by s46746 for V7R1 phase II , 2011-10-18, begin */
 
 VOS_VOID At_SetCopsActPara(
     TAF_MMA_RAT_TYPE_ENUM_UINT8        *penPhRat,
@@ -7672,18 +6784,10 @@ VOS_VOID At_SetCopsActPara(
     {
         *penPhRat = TAF_MMA_RAT_WCDMA;
     }
-#if (FEATURE_ON == FEATURE_LTE)
     else if (AT_COPS_RAT_LTE == ulParaValue)
     {
         *penPhRat = TAF_MMA_RAT_LTE;
     }
-#endif
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-    else if (AT_COPS_RAT_NR == ulParaValue)
-    {
-        *penPhRat = TAF_MMA_RAT_NR;
-    }
-#endif
     else
     {
         *penPhRat = TAF_MMA_RAT_BUTT;
@@ -7691,6 +6795,7 @@ VOS_VOID At_SetCopsActPara(
 
     return;
 }
+/* Added by s46746 for V7R1 phase II , 2011-10-18, end */
 
 
 VOS_UINT32 AT_DigitString2Hex(
@@ -7759,7 +6864,6 @@ VOS_UINT32 AT_FormatNumericPlmnStr2PlmnId(
 }
 
 
-#if (FEATURE_ON == FEATURE_CSG)
 
 VOS_UINT32 AT_SetCsgIdSearchPara(VOS_UINT8 ucIndex)
 {
@@ -7841,7 +6945,6 @@ VOS_UINT32 AT_SetCsgIdSearchPara(VOS_UINT8 ucIndex)
     return AT_ERROR;
 
 }
-#endif
 
 
 LOCAL VOS_UINT32 AT_ProcCopsSetMode0(
@@ -8079,7 +7182,6 @@ VOS_UINT32 At_SetCopsPara(TAF_UINT8 ucIndex)
         pstNetCtx->ucCopsFormatType = (VOS_UINT8)gastAtParaList[1].ulParaValue;
     }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     if (VOS_TRUE == At_CheckCurrRatModeIsCL((VOS_UINT8)(gastAtClientTab[ucIndex].usClientId)))
     {
         if ((3 != gastAtParaList[0].ulParaValue)
@@ -8088,7 +7190,6 @@ VOS_UINT32 At_SetCopsPara(TAF_UINT8 ucIndex)
             return AT_CME_OPERATION_NOT_ALLOWED_IN_CL_MODE;
         }
     }
-#endif
 
 
     for (i = 0; i < sizeof(astUserReselProcTbl)/sizeof(astUserReselProcTbl[0]); i++ )
@@ -8234,13 +7335,6 @@ TAF_UINT32 At_SetCfunPara(TAF_UINT8 ucIndex)
     }
 
 /* 输出TAF的回放数据 */
-#if (VOS_WIN32 == VOS_OS_VER)
-    /* NAS_MMA_SndNVData(); */
-
-    NAS_MSG_SndOutsideContextData_Part1();
-    NAS_MSG_SndOutsideContextData_Part2();
-    NAS_MSG_SndOutsideContextData_Part3();
-#endif
 /* 输出TAF的回放数据 */
 
     TAF_MEM_SET_S(&stPhoneModePara, sizeof(stPhoneModePara), 0x00, sizeof(TAF_MMA_PHONE_MODE_PARA_STRU));
@@ -8278,9 +7372,9 @@ TAF_UINT32 At_SetCfunPara(TAF_UINT8 ucIndex)
 
 TAF_UINT32 At_SetCgmiPara(TAF_UINT8 ucIndex)
 {
-    VOS_UINT8                           aucMfrId[TAF_MAX_MFR_ID_STR_LEN + 1];
+    VOS_UINT8                           aucMfrId[TAF_MAX_MFR_ID_STR_LEN];
 
-    TAF_MEM_SET_S(aucMfrId, TAF_MAX_MFR_ID_STR_LEN + 1, 0x00, TAF_MAX_MFR_ID_STR_LEN + 1);
+    TAF_MEM_SET_S(aucMfrId, TAF_MAX_MFR_ID_STR_LEN, 0x00, TAF_MAX_MFR_ID_STR_LEN);
 
     /* 参数检查 */
     if(AT_CMD_OPT_SET_CMD_NO_PARA != g_stATParseCmd.ucCmdOptType)
@@ -8508,34 +7602,6 @@ VOS_UINT32 At_SetCbcPara(VOS_UINT8 ucIndex)
 
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 At_SetCpdwPara(VOS_UINT8 ucIndex)
-{
-    VOS_UINT32                           ulRst;
-
-    /* 参数检查 */
-    if(AT_CMD_OPT_SET_CMD_NO_PARA != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 通过给C CPU发ID_TAF_MMA_CPLS_SET_REQ消息通知MT下电 */
-    ulRst = TAF_MMA_MtPowerDownReq(WUEPS_PID_AT,
-                                   gastAtClientTab[ucIndex].usClientId,
-                                   0);
-
-    if(VOS_TRUE == ulRst)
-
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_MMA_MT_POWER_DOWN;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-
-    return AT_ERROR;
-
-}
-#endif
 
 TAF_UINT32 At_SetSnPara(TAF_UINT8 ucIndex)
 {
@@ -10470,99 +9536,6 @@ TAF_UINT32 At_SetCchpPara(TAF_UINT8 ucIndex)
 }
 
 
-TAF_UINT32 At_SetPrivateCchoPara(TAF_UINT8 ucIndex)
-{
-    SI_PIH_CCHO_COMMAND_STRU    stCchoCmd = {0};
-
-    /* 参数检查 */
-    if(g_stATParseCmd.ucCmdOptType != AT_CMD_OPT_SET_PARA_CMD)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数过多 */
-    if(gucAtParaIndex != 1)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 字符串长度不为2的整数倍 */
-    if((gastAtParaList[0].usParaLen % 2) != 0)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 将字符串转换为16进制数组 */
-    if(At_AsciiNum2HexString(gastAtParaList[0].aucPara, &gastAtParaList[0].usParaLen) == AT_FAILURE)
-    {
-        AT_ERR_LOG("At_SetPrivateCchoPara: At_AsciiNum2HexString fail.");
-
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    stCchoCmd.ulAIDLen   = gastAtParaList[0].usParaLen;
-    stCchoCmd.pucADFName = gastAtParaList[0].aucPara;
-
-    /* 执行命令操作 */
-    if(SI_PIH_PrivateCchoSetReq(gastAtClientTab[ucIndex].usClientId, 0, &stCchoCmd) == AT_SUCCESS)
-    {
-        /* 设置当前操作类型 */
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_CCHO_SET;
-
-        return AT_WAIT_ASYNC_RETURN;    /* 返回命令处理挂起状态 */
-    }
-
-    return AT_ERROR;
-}
-
-
-TAF_UINT32 At_SetPrivateCchpPara(TAF_UINT8 ucIndex)
-{
-    SI_PIH_CCHP_COMMAND_STRU    stCchpCmd = {0};
-
-    /* 参数检查 */
-    if (g_stATParseCmd.ucCmdOptType != AT_CMD_OPT_SET_PARA_CMD)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数过多 */
-    if (gucAtParaIndex > 2)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 字符串长度不为2的整数倍 */
-    if ((gastAtParaList[0].usParaLen % 2) != 0)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 将字符串转换为16进制数组 */
-    if (At_AsciiNum2HexString(gastAtParaList[0].aucPara, &gastAtParaList[0].usParaLen) == AT_FAILURE)
-    {
-        AT_ERR_LOG("At_SetPrivateCchpPara: At_AsciiNum2HexString fail.");
-
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    stCchpCmd.ulAIDLen   = gastAtParaList[0].usParaLen;
-    stCchpCmd.pucADFName = gastAtParaList[0].aucPara;
-    stCchpCmd.ucAPDUP2   = (VOS_UINT8)gastAtParaList[1].ulParaValue;
-
-    /* 执行命令操作 */
-    if(SI_PIH_PrivateCchpSetReq(gastAtClientTab[ucIndex].usClientId, 0, &stCchpCmd) == AT_SUCCESS)
-    {
-        /* 设置当前操作类型 */
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_CCHP_SET;
-
-        return AT_WAIT_ASYNC_RETURN;    /* 返回命令处理挂起状态 */
-    }
-
-    return AT_ERROR;
-}
-
-
 TAF_UINT32 At_SetCchcPara(TAF_UINT8 ucIndex)
 {
     /* 参数检查 */
@@ -10663,194 +9636,7 @@ TAF_UINT32 At_SetCardATRPara(TAF_UINT8 ucIndex)
     }
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
 
-VOS_UINT32 At_SetUsimStub(VOS_UINT8 ucIndex)
-{
-    TAF_MMA_USIM_STUB_SET_REQ_STRU                          stUsimStub;
-    VOS_UINT32                                              ulEf;
-    VOS_UINT32                                              ulTotalNum;
-    VOS_UINT32                                              ulEfId;
-    VOS_UINT32                                              ulEfLen;
-    VOS_UINT32                                              ulApptype;
-    VOS_UINT8                                               i;
-    VOS_UINT8                                               ucNum;
-#if (VOS_WIN32 != VOS_OS_VER)
-    MODEM_ID_ENUM_UINT16                                    enModemID;
-    TAF_NVIM_ENHANCED_OPER_NAME_SERVICE_CFG_STRU            stOperNameServiceCfg;
-    VOS_UINT32                                              ulRet;
-#endif
-
-    ucNum      = 0;
-    ulEf       = 0;
-    ulTotalNum = 0;
-    ulApptype  = 0;
-    ulEfId     = 0;
-    ulEfLen    = 0;
-    TAF_MEM_SET_S(&stUsimStub, sizeof(stUsimStub), 0x00, sizeof(stUsimStub));
-
-    /* 读取nv项，nv项关闭，返回失败 */
-
-#if (VOS_WIN32 != VOS_OS_VER)
-    TAF_MEM_SET_S(&stOperNameServiceCfg, sizeof(stOperNameServiceCfg), 0x00, sizeof(stOperNameServiceCfg));
-    enModemID  = MODEM_ID_0;
-
-    ulRet      = AT_GetModemIdFromClient(ucIndex, &enModemID);
-
-    if (VOS_OK != ulRet)
-    {
-        return AT_ERROR;
-    }
-
-    if(NV_OK != TAF_ACORE_NV_READ(enModemID, en_NV_Item_ENHANCED_OPERATOR_NAME_SRV_CFG, &stOperNameServiceCfg,
-                          sizeof(TAF_NVIM_ENHANCED_OPER_NAME_SERVICE_CFG_STRU)))
-    {
-        return AT_ERROR;
-    }
-
-    if (VOS_FALSE == stOperNameServiceCfg.ucReserved5)
-    {
-        return AT_ERROR;
-    }
-#endif
-
-    (VOS_VOID)At_String2Hex(gastAtParaList[0].aucPara, gastAtParaList[0].usParaLen, &ulEfId);
-    (VOS_VOID)At_String2Hex(gastAtParaList[1].aucPara, gastAtParaList[1].usParaLen, &ulApptype);
-    (VOS_VOID)At_String2Hex(gastAtParaList[2].aucPara, gastAtParaList[2].usParaLen, &ulTotalNum);
-    (VOS_VOID)At_String2Hex(gastAtParaList[3].aucPara, gastAtParaList[3].usParaLen, &ulEfLen);
-
-    stUsimStub.ucTotalNum = (VOS_UINT8)ulTotalNum;
-    stUsimStub.usEfId     = (VOS_UINT16)ulEfId;
-    stUsimStub.usEfLen    = (VOS_UINT16)ulEfLen;
-    stUsimStub.ulApptype  = (VOS_UINT8)ulApptype;
-
-    for (i=0; i < (gastAtParaList[4].usParaLen/2); i++)
-    {
-        (VOS_VOID)At_String2Hex(gastAtParaList[4].aucPara+ 2*i, 2, &ulEf);
-
-        if (ucNum >= TAF_MMA_MAX_EF_LEN)
-        {
-           return AT_ERROR;
-        }
-
-        TAF_MEM_CPY_S(&stUsimStub.aucEf[ucNum], 1, &ulEf, 1);
-        ucNum++;
-    }
-
-    TAF_SetUsimStub(gastAtClientTab[ucIndex].usClientId,
-                    gastAtClientTab[ucIndex].opId,
-                    &stUsimStub);
-
-    return AT_OK;
-}
-
-
-VOS_UINT32 At_SetRefreshStub(VOS_UINT8 ucIndex)
-{
-    TAF_MMA_REFRESH_STUB_SET_REQ_STRU                       stRefreshStub;
-    VOS_UINT8                                               i;
-    VOS_UINT32                                              ulTotalNum;
-    VOS_UINT32                                              ulRefreshFileType;
-    VOS_UINT32                                              ulReceivePid;
-    VOS_UINT32                                              ulFileId;
-#if (VOS_WIN32 != VOS_OS_VER)
-    TAF_NVIM_ENHANCED_OPER_NAME_SERVICE_CFG_STRU            stOperNameServiceCfg;
-    MODEM_ID_ENUM_UINT16                                    enModemID;
-    VOS_UINT32                                              ulRet;
-#endif
-
-    ulTotalNum        = 0;
-    ulRefreshFileType = 0;
-    ulReceivePid      = 0;
-    ulFileId          = 0;
-    TAF_MEM_SET_S(&stRefreshStub, sizeof(stRefreshStub), 0x00, sizeof(stRefreshStub));
-
-    /* 读取nv项，nv项关闭，返回失败 */
-#if (VOS_WIN32 != VOS_OS_VER)
-    TAF_MEM_SET_S(&stOperNameServiceCfg, sizeof(stOperNameServiceCfg), 0x00, sizeof(stOperNameServiceCfg));
-    enModemID  = MODEM_ID_0;
-
-    ulRet      = AT_GetModemIdFromClient(ucIndex, &enModemID);
-
-    if (VOS_OK != ulRet)
-    {
-        return AT_ERROR;
-    }
-
-    if(NV_OK != TAF_ACORE_NV_READ(enModemID, en_NV_Item_ENHANCED_OPERATOR_NAME_SRV_CFG, &stOperNameServiceCfg,
-                          sizeof(TAF_NVIM_ENHANCED_OPER_NAME_SERVICE_CFG_STRU)))
-    {
-        return AT_ERROR;
-    }
-
-    if (VOS_FALSE == stOperNameServiceCfg.ucReserved5)
-    {
-        return AT_ERROR;
-    }
-#endif
-
-    (VOS_VOID)At_String2Hex(gastAtParaList[0].aucPara, gastAtParaList[0].usParaLen, &ulReceivePid);
-    (VOS_VOID)At_String2Hex(gastAtParaList[1].aucPara, gastAtParaList[1].usParaLen, &ulRefreshFileType);
-    (VOS_VOID)At_String2Hex(gastAtParaList[2].aucPara, gastAtParaList[2].usParaLen, &ulTotalNum);
-
-    stRefreshStub.ulReceivePid      = ulReceivePid;
-    stRefreshStub.ucTotalNum        = (VOS_UINT8)ulTotalNum;
-    stRefreshStub.usRefreshFileType = (VOS_UINT8)ulRefreshFileType;
-
-    if (stRefreshStub.ucTotalNum > TAF_MMA_MAX_FILE_ID_NUM)
-    {
-        stRefreshStub.ucTotalNum = TAF_MMA_MAX_FILE_ID_NUM;
-    }
-
-    for (i = 0; i < stRefreshStub.ucTotalNum; i++)
-    {
-        (VOS_VOID)At_String2Hex(gastAtParaList[i+3].aucPara, gastAtParaList[i+3].usParaLen, &ulFileId);
-        stRefreshStub.ausEfId[i] = (VOS_UINT16)ulFileId;
-    }
-
-    TAF_SetRefreshStub(gastAtClientTab[ucIndex].usClientId,
-                    gastAtClientTab[ucIndex].opId,
-                    &stRefreshStub);
-
-    return AT_OK;
-}
-#endif
-
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 At_SetAutoReselStub(VOS_UINT8 ucIndex)
-{
-    TAF_MMA_AUTO_RESEL_STUB_SET_REQ_STRU                    stAutoReselStub;
-
-    TAF_MEM_SET_S(&stAutoReselStub, sizeof(stAutoReselStub), 0x00, sizeof(stAutoReselStub));
-
-    stAutoReselStub.ucActiveFlg = (VOS_UINT8)gastAtParaList[0].ulParaValue;
-
-    TAF_SetAutoReselStub(gastAtClientTab[ucIndex].usClientId,
-                    gastAtClientTab[ucIndex].opId,
-                    &stAutoReselStub);
-
-    return AT_OK;
-}
-#endif
-#if ( VOS_WIN32 == VOS_OS_VER )
-
-VOS_UINT32 At_SetDelayBgStub(VOS_UINT8 ucIndex)
-{
-    VOS_UINT32                                              ulDelayLen;
-    VOS_UINT32                                              ulOnOff;
-
-    ulDelayLen        = 0;
-    ulOnOff          = 0;
-
-    At_String2Hex(gastAtParaList[0].aucPara, gastAtParaList[0].usParaLen, &ulOnOff);
-    At_String2Hex(gastAtParaList[1].aucPara, gastAtParaList[1].usParaLen, &ulDelayLen);
-
-    NAS_SetHighPrioPlmnRefreshTriggerBGSearchCfg((VOS_UINT8)ulOnOff, ulDelayLen);
-
-    return AT_OK;
-}
-#endif
 
 
 
@@ -11982,6 +10768,7 @@ VOS_VOID AT_SetNumAttribute(
     TAF_UINT8                           *pucFwdToNum
     )
 {
+    /* Modified by s46746 for SS FDN&Call Control, 2013-05-28, begin */
     /* +表示国际号码，在号码类型中已经指示，不需要拷贝到消息中 */
     if ('+' == gastAtParaList[2].aucPara[0])
     {
@@ -11997,6 +10784,7 @@ VOS_VOID AT_SetNumAttribute(
             (TAF_CHAR*)gastAtParaList[2].aucPara,
             gastAtParaList[2].usParaLen);
     }
+    /* Modified by s46746 for SS FDN&Call Control, 2013-05-28, end */
 
     if( gastAtParaList[3].usParaLen )
     {
@@ -12212,129 +11000,6 @@ TAF_UINT32 At_SetCcfcPara(TAF_UINT8 ucIndex)
     return ulRet;
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-/*****************************************************************************
- Prototype      : At_SetCmlckPara
- Description    : +CLCK=<fac>,<action>[,<passwd>[,<data>]]
- Input          : ucIndex --- 用户索引
- Output         :
- Return Value   : AT_XXX  --- ATC返回码
- Calls          : ---
- Called By      : ---
-
- History        : ---
-  1.Date        : 2007-10-06
-    Author      : ---
-    Modification: Created function
-*****************************************************************************/
-TAF_UINT32 At_SetCmlckPara (TAF_UINT8 ucIndex)
-{
-    TAF_UINT32 ulresult;
-
-
-    /* 参数检查 */
-    if((0 == gastAtParaList[0].usParaLen) || (0 == gastAtParaList[1].usParaLen))
-
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数过多 */
-    if(gucAtParaIndex > 4)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* data长度大于15，直接返回参数错误 */
-    if (gastAtParaList[3].usParaLen > TAF_MAX_IMSI_LEN)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    switch(gastAtParaList[0].ulParaValue)
-    {
-        case AT_CMLCK_PS_TYPE:
-        {
-            TAF_ME_PERSONALISATION_DATA_STRU stMePersonalisationData;
-
-            if(TAF_PH_PINCODELENMAX < gastAtParaList[2].usParaLen)
-            {
-                return AT_CME_INCORRECT_PARAMETERS;
-            }
-
-            /* 初始化 */
-            TAF_MEM_SET_S(&stMePersonalisationData, sizeof(stMePersonalisationData), 0x00, sizeof(TAF_ME_PERSONALISATION_DATA_STRU));
-
-            /* 设置<passwd> */
-            if(0 != gastAtParaList[2].usParaLen)
-            {
-                TAF_MEM_CPY_S((TAF_CHAR*)stMePersonalisationData.aucOldPwd, sizeof(stMePersonalisationData.aucOldPwd), (VOS_CHAR*)gastAtParaList[2].aucPara,gastAtParaList[2].usParaLen);
-            }
-
-            /* 设置PinType */
-            stMePersonalisationData.MePersonalType = TAF_SIM_PERSONALISATION;
-
-            if(0 != gastAtParaList[3].usParaLen)
-            {
-                ulresult = At_AsciiNum2Num(stMePersonalisationData.unMePersonalisationSet.SimPersionalisationStr.aucSimPersonalisationStr,
-                                           gastAtParaList[3].aucPara,
-                                           gastAtParaList[3].usParaLen);
-                if (AT_SUCCESS != ulresult)
-                {
-                    return AT_CME_INCORRECT_PARAMETERS;
-                }
-                /*
-                At_AsciiNum2HexString(gastAtParaList[3].aucPara,&gastAtParaList[3].usParaLen);
-                PS_MEM_CPY((VOS_CHAR*)stMePersonalisationData.unMePersonalisationSet.aucSimPersonalisationStr,
-                          (VOS_CHAR*)gastAtParaList[3].aucPara,
-                          gastAtParaList[3].usParaLen);
-                */
-                stMePersonalisationData.unMePersonalisationSet.SimPersionalisationStr.DataLen= (VOS_UINT8)gastAtParaList[3].usParaLen;
-            }
-
-
-            /* 设置CmdType */
-            switch(gastAtParaList[1].ulParaValue)
-            {
-            case 0:
-                if (0 == gastAtParaList[3].usParaLen)
-                {
-                    return AT_CME_INCORRECT_PARAMETERS;
-                }
-                stMePersonalisationData.CmdType = TAF_ME_PERSONALISATION_SET;
-
-                break;
-
-            case 1:
-                stMePersonalisationData.CmdType = TAF_ME_PERSONALISATION_RETRIEVE;
-
-                break;
-
-            default:
-                return AT_CME_INCORRECT_PARAMETERS;
-            }
-
-            /* 执行命令操作 */
-            if(AT_SUCCESS == Taf_MePersonalisationHandle(gastAtClientTab[ucIndex].usClientId, 0,&stMePersonalisationData))
-            {
-                /* 设置当前操作类型 */
-                gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_CLCK_PIN_HANDLE;
-                return AT_WAIT_ASYNC_RETURN;    /* 返回命令处理挂起状态 */
-            }
-            else
-            {
-                return AT_ERROR;
-            }
-
-        }
-
-        default:
-            return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-
-}
-#endif
 
 VOS_UINT32 AT_CheckPinLength(
     VOS_UINT16                          usLen,
@@ -12423,7 +11088,6 @@ AT_MTA_PERS_CATEGORY_ENUM_UINT8 AT_GetSimlockUnlockCategoryFromClck(VOS_VOID)
 
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_SC)
 
 TAF_UINT32 AT_SetClckFacEqualPNPUPPPara(TAF_UINT8 ucIndex)
 {
@@ -12483,7 +11147,6 @@ TAF_UINT32 AT_SetClckFacEqualPNPUPPPara(TAF_UINT8 ucIndex)
     }
 
 }
-#endif
 
 
 
@@ -12662,14 +11325,12 @@ TAF_UINT32 At_SetClckPara(TAF_UINT8 ucIndex)
             }
         }
 
-#if (FEATURE_ON == FEATURE_PHONE_SC)
     case AT_CLCK_PN_TYPE:
     case AT_CLCK_PU_TYPE:
     case AT_CLCK_PP_TYPE:
         {
             return AT_SetClckFacEqualPNPUPPPara(ucIndex);
         }
-#endif
 
 
 
@@ -14256,43 +12917,6 @@ VOS_UINT32 At_SetAmpDPara(VOS_UINT8 ucIndex)
     return AT_OK;
 }
 
-#if (FEATURE_ON == FEATURE_AT_HSUART)
-
-VOS_UINT32 At_SetAmpSPara(VOS_UINT8 ucIndex)
-{
-    AT_UART_CTX_STRU                   *pstUartCtx = VOS_NULL_PTR;
-    AT_UART_DSR_MODE_ENUM_UINT8         enDsrMode;
-    AT_IO_LEVEL_ENUM_UINT8              enIoLevel;
-
-    pstUartCtx = AT_GetUartCtxAddr();
-
-    /* 只支持UART端口下发 */
-    if (VOS_TRUE != AT_CheckHsUartUser(ucIndex))
-    {
-        return AT_OK;
-    }
-
-    /* 参数检查 */
-    if (0 != gastAtParaList[0].usParaLen)
-    {
-        enDsrMode = (AT_UART_DSR_MODE_ENUM_UINT8)gastAtParaList[0].ulParaValue;
-    }
-    else
-    {
-        /* AT&S 等效于 AT&S0 */
-        enDsrMode = AT_UART_DEFAULT_DSR_MODE;
-    }
-
-    /* 设置DSR 管脚信号 */
-    enIoLevel = (AT_UART_DSR_MODE_ALWAYS_ON == enDsrMode) ? AT_IO_LEVEL_HIGH : AT_IO_LEVEL_LOW;
-    AT_CtrlDSR(ucIndex, enIoLevel);
-
-    /* 保存DSR Line Mode至上下文*/
-    pstUartCtx->stLineCtrl.enDsrMode = enDsrMode;
-
-    return AT_OK;
-}
-#endif
 
 
 VOS_UINT32 AT_SetLPara(VOS_UINT8 ucIndex)
@@ -14549,21 +13173,7 @@ VOS_VOID AT_SetDefaultRatPrioList(
 
     ucUserRatNum = 0;
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-    /* 当前命令是否支持NR */
-    if (VOS_TRUE == ucUserSptNrFlag)
-    {
-        /* 平台支持NR */
-        if (VOS_TRUE == AT_IsModemSupportRat(enModemId, TAF_MMA_RAT_NR))
-        {
-             pstSysCfgRatOrder->aenRatOrder[ucUserRatNum] = TAF_MMA_RAT_NR;
 
-             ucUserRatNum++;
-        }
-    }
-#endif
-
-#if(FEATURE_ON == FEATURE_LTE)
     /* 当前命令是否支持LTE */
     if (VOS_TRUE == ucUserSptLteFlag)
     {
@@ -14575,7 +13185,6 @@ VOS_VOID AT_SetDefaultRatPrioList(
              ucUserRatNum++;
         }
     }
-#endif
 
     /* 平台支持WCDMA */
     if (VOS_TRUE == AT_IsModemSupportRat(enModemId, TAF_MMA_RAT_WCDMA))
@@ -14642,7 +13251,6 @@ VOS_UINT32 AT_IsSupportGMode(
     return VOS_FALSE;
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 AT_IsSupport1XMode(
     TAF_MMA_MULTIMODE_RAT_CFG_STRU             *pstRatOrder
@@ -14678,7 +13286,6 @@ VOS_UINT32 AT_IsSupportHrpdMode(
 
     return VOS_FALSE;
 }
-#endif
 
 
 
@@ -14813,93 +13420,6 @@ VOS_UINT32 AT_ConvertCpamRatOrderPara(
     return AT_OK;
 
 }
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 At_SetCpamPara(VOS_UINT8 ucIndex)
-{
-    TAF_MMA_SYS_CFG_PARA_STRU           stSysCfgSetPara;
-
-    VOS_UINT32                          ulRst;
-    AT_MODEM_NET_CTX_STRU              *pstNetCtx = VOS_NULL_PTR;
-
-    TAF_MEM_SET_S(&stSysCfgSetPara, sizeof(stSysCfgSetPara), 0x00, sizeof(TAF_MMA_SYS_CFG_PARA_STRU));
-
-    pstNetCtx = AT_GetModemNetCtxAddrFromClientId(ucIndex);
-
-    ulRst = AT_OK;
-
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数过多 */
-    if (gucAtParaIndex > 2)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if ( 0 == gastAtParaList[0].usParaLen )
-    {
-        gastAtParaList[0].ulParaValue = MN_MMA_CPAM_RAT_TYPE_NOCHANGE;
-    }
-
-
-
-    if ( 0 == gastAtParaList[1].usParaLen )
-    {
-        gastAtParaList[1].ulParaValue = MN_MMA_CPAM_RAT_PRIO_NO_CHANGE;
-    }
-
-
-
-
-
-    ulRst = AT_ConvertCpamRatOrderPara(ucIndex,
-                                       (VOS_UINT8)gastAtParaList[0].ulParaValue,
-                                       (VOS_UINT8)gastAtParaList[1].ulParaValue,
-                                       &stSysCfgSetPara,
-                                       &stSysCfgSetPara.enUserPrio);
-
-    if (AT_OK != ulRst)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* stSysCfgSetPara其他参数赋值 */
-    if (AT_ROAM_FEATURE_ON == pstNetCtx->ucRoamFeature)
-    {
-        stSysCfgSetPara.enRoam = TAF_MMA_ROAM_UNCHANGE;
-    }
-    else
-    {
-        stSysCfgSetPara.enRoam = AT_ROAM_FEATURE_OFF_NOCHANGE;
-    }
-    stSysCfgSetPara.enSrvDomain         = TAF_MMA_SERVICE_DOMAIN_NOCHANGE;
-    stSysCfgSetPara.stGuBand.ulBandLow  = TAF_PH_BAND_NO_CHANGE;
-    stSysCfgSetPara.stGuBand.ulBandHigh = 0;
-    TAF_MEM_SET_S(&(stSysCfgSetPara.stLBand),
-                  sizeof(stSysCfgSetPara.stLBand),
-                  0x00,
-                  sizeof(TAF_USER_SET_LTE_PREF_BAND_INFO_STRU));
-    stSysCfgSetPara.stLBand.aulBandInfo[0] = TAF_PH_BAND_NO_CHANGE;
-
-
-    /* 执行命令操作 */
-    if (VOS_TRUE == TAF_MMA_SetSysCfgReq(WUEPS_PID_AT, gastAtClientTab[ucIndex].usClientId, 0, &stSysCfgSetPara))
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_CPAM_SET;
-
-        /* 返回命令处理挂起状态 */
-        return AT_WAIT_ASYNC_RETURN;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-
-}
-#endif
 
 
 TAF_UINT32 At_SetStsfPara(TAF_UINT8 ucIndex)
@@ -15180,19 +13700,15 @@ VOS_UINT32 At_SetVMSETPara(VOS_UINT8 ucIndex)
 
     ucVoiceMode = (VOS_UINT8)gastAtParaList[0].ulParaValue;
 
-#if (2 <= MULTI_MODEM_NUMBER)
     if (VOS_OK != APP_VC_SetVoiceMode(gastAtClientTab[ucIndex].usClientId, 0, ucVoiceMode, I1_WUEPS_PID_VC))
     {
         return AT_ERROR;
     }
 
-#if (3 == MULTI_MODEM_NUMBER)
     if (VOS_OK != APP_VC_SetVoiceMode(gastAtClientTab[ucIndex].usClientId, 0, ucVoiceMode, I2_WUEPS_PID_VC))
     {
         return AT_ERROR;
     }
-#endif
-#endif
 
     if (VOS_OK != APP_VC_SetVoiceMode(gastAtClientTab[ucIndex].usClientId, 0, ucVoiceMode, I0_WUEPS_PID_VC))
     {
@@ -15205,123 +13721,6 @@ VOS_UINT32 At_SetVMSETPara(VOS_UINT8 ucIndex)
     return AT_WAIT_ASYNC_RETURN;    /* 返回命令处理挂起状态 */
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-/*****************************************************************************
- Prototype      : At_SetTestPara
- Description    : +TEST=[<n>]
- Input          : ucIndex --- 用户索引
- Output         :
- Return Value   : AT_XXX  --- ATC返回码
- Calls          : ---
- Called By      : ---
-
- History        : ---
-  1.Date        : 2005-04-19
-    Author      : ---
-    Modification: Created function
-*****************************************************************************/
-TAF_UINT32 At_SetTestPara(TAF_UINT8 ucIndex)
-{
-    return AT_OK;
-}
-
-
-TAF_UINT32 At_SetCwasPara(TAF_UINT8 ucIndex)
-{
-    AT_MTA_WRR_AUTOTEST_QRY_PARA_STRU   stAtCmd;
-    VOS_UINT32                          ulRst;
-
-
-    /* 参数过多 */
-    if ((gucAtParaIndex > 4) || (gucAtParaIndex < 1))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-
-    /* 初始化 */
-    TAF_MEM_SET_S(&stAtCmd, sizeof(stAtCmd), 0x00, sizeof(AT_MTA_WRR_AUTOTEST_QRY_PARA_STRU));
-    stAtCmd.ucCmd = (TAF_UINT8)gastAtParaList[0].ulParaValue;
-
-    for ( stAtCmd.ucParaNum = 0;
-          stAtCmd.ucParaNum < (gucAtParaIndex-1);
-          stAtCmd.ucParaNum++)
-    {
-        stAtCmd.aulPara[stAtCmd.ucParaNum]
-            = gastAtParaList[stAtCmd.ucParaNum+1].ulParaValue;
-    }
-
-
-    /* 发送消息给C核处理 */
-    ulRst = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   0,
-                                   ID_AT_MTA_WRR_AUTOTEST_QRY_REQ,
-                                   &stAtCmd,
-                                   sizeof(AT_MTA_WRR_AUTOTEST_QRY_PARA_STRU),
-                                   I0_UEPS_PID_MTA);
-
-    if (AT_SUCCESS == ulRst)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_CWAS_QUERY;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-
-
-}
-
-
-TAF_UINT32 At_SetCGasPara(TAF_UINT8 ucIndex)
-{
-    GAS_AT_CMD_STRU                     stAtCmd;
-    VOS_UINT32                          ulRst;
-
-    /* 参数过多 */
-    if ((gucAtParaIndex > 11) || (gucAtParaIndex < 1))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /*参数长度等于0*/
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        return  AT_CME_INCORRECT_PARAMETERS;
-    }
-
-
-
-    TAF_MEM_SET_S(&stAtCmd, sizeof(GAS_AT_CMD_STRU), 0x00, sizeof(GAS_AT_CMD_STRU));
-
-    /* 获取命令参数 */
-    stAtCmd.ucCmd = (TAF_UINT8)gastAtParaList[0].ulParaValue;
-    for (stAtCmd.ucParaNum = 0; stAtCmd.ucParaNum < (gucAtParaIndex-1); stAtCmd.ucParaNum++)
-    {
-        stAtCmd.aulPara[stAtCmd.ucParaNum] = gastAtParaList[stAtCmd.ucParaNum+1].ulParaValue;
-    }
-
-     /* 发送消息给C核处理 */
-    ulRst = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   0,
-                                   ID_AT_MTA_GAS_AUTOTEST_QRY_REQ,
-                                   &stAtCmd,
-                                   sizeof(GAS_AT_CMD_STRU),
-                                   I0_UEPS_PID_MTA);
-
-    if (AT_SUCCESS == ulRst)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_CGAS_QUERY;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-
-}
-#endif
 
 VOS_UINT32 At_SetAppDialModePara(VOS_UINT8 ucIndex)
 {
@@ -15377,41 +13776,6 @@ VOS_UINT32 At_SetAppDialModePara(VOS_UINT8 ucIndex)
     return AT_OK;
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-TAF_UINT32   At_SetCmmPara(TAF_UINT8 ucIndex)
-{
-    MM_TEST_AT_CMD_STRU                    stAtCmd;
-
-    /* 参数过多 */
-    if( gucAtParaIndex > 2)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    TAF_MEM_SET_S(&stAtCmd, sizeof(stAtCmd), 0x00, sizeof(MM_TEST_AT_CMD_STRU));
-
-    stAtCmd.ucCmd = (TAF_UINT8)gastAtParaList[0].ulParaValue;
-    for (stAtCmd.ucParaNum = 0; stAtCmd.ucParaNum < (gucAtParaIndex-1); stAtCmd.ucParaNum++)
-    {
-        stAtCmd.aulPara[stAtCmd.ucParaNum]=gastAtParaList[stAtCmd.ucParaNum+1].ulParaValue;
-    }
-
-    if(VOS_TRUE == TAF_MMA_SetCmmReq(WUEPS_PID_AT,
-                                     gastAtClientTab[ucIndex].usClientId,
-                                     0,
-                                     &stAtCmd))
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_MM_TEST_CMD_SET;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-
-}
-#endif
 
 VOS_VOID AT_ShowCccRst(
     NAS_CC_STATE_INFO_STRU              *pstCcState,
@@ -15457,56 +13821,6 @@ VOS_VOID AT_ShowCccRst(
     *pusLength = usLength;
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32  AT_SetCccPara( TAF_UINT8 ucIndex )
-{
-    VOS_UINT8                           ucCallId;
-    VOS_UINT32                          ulRst;
-
-    if ((gucAtParaIndex > 2) || (0 == gucAtParaIndex))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if ( 0 == gastAtParaList[0].ulParaValue )
-    {
-        ucCallId = 0;   /* 0表示查询所有call Id */
-    }
-    else
-    {
-        /* gastAtParaList[1].ulParaValue取值无则填取默认值,获取CallId = 1的呼叫状态 */
-        if ( 0 == gastAtParaList[1].usParaLen )
-        {
-            ucCallId = 1;
-        }
-        else
-        {
-            ucCallId = (VOS_UINT8)gastAtParaList[1].ulParaValue;
-        }
-
-    }
-
-    /* 发送消息AT_CC_MSG_STATE_QRY_REQ给CC获取CC协议状态 */
-    ulRst = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   0,
-                                   AT_CC_MSG_STATE_QRY_REQ,
-                                   &ucCallId,
-                                   sizeof(VOS_UINT8),
-                                   I0_WUEPS_PID_CC);
-
-    if (VOS_OK == ulRst)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_CC_STATE_QUERY;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-
-}
-#endif
 
 
 TAF_UINT32   At_SetSPNPara(TAF_UINT8 ucIndex)
@@ -15662,12 +13976,10 @@ TAF_UINT32   At_SetCurcPara(TAF_UINT8 ucIndex)
     AT_MTA_CURC_SET_NOTIFY_STRU         stAtCmd;
     VOS_UINT32                          ulResult;
 
-#if  (FEATURE_ON == FEATURE_LTE)
     L4A_IND_CFG_STRU                    stL4AIndCfgReq;
     MODEM_ID_ENUM_UINT16                enModemId;
 
     enModemId  = MODEM_ID_0;
-#endif
 
     /* 参数检查 */
     if ( (gucAtParaIndex > 2)
@@ -15725,7 +14037,6 @@ TAF_UINT32   At_SetCurcPara(TAF_UINT8 ucIndex)
         return AT_ERROR;
     }
 
-#if  (FEATURE_ON == FEATURE_LTE)
     ulResult = AT_GetModemIdFromClient(ucIndex, &enModemId);
 
     if (VOS_OK != ulResult)
@@ -15749,38 +14060,8 @@ TAF_UINT32   At_SetCurcPara(TAF_UINT8 ucIndex)
     {
         return AT_OK;
     }
-#else
-    return AT_OK;
-#endif
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-TAF_UINT32   At_SetBOOTPara(TAF_UINT8 ucIndex)
-{
-
-    /* 参数过多 */
-    if( gucAtParaIndex > 2)
-    {
-        return AT_TOO_MANY_PARA;
-    }
-
-    /* 参数过少 */
-    if( gucAtParaIndex < 2)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 输入参数取值检查, para2必须为 0 */
-    if ( (gastAtParaList[1].usParaLen != 1) || (gastAtParaList[1].aucPara[0]!= '0') )
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 假命令，直接返回OK. */
-    return AT_OK;
-}
-#endif
 
 
 TAF_UINT32 At_SetCellInfoPara(TAF_UINT8 ucIndex)
@@ -15818,102 +14099,6 @@ TAF_UINT32 At_SetCellInfoPara(TAF_UINT8 ucIndex)
 
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-TAF_UINT32 At_DelWCellEntity(TAF_UINT8 ucIndex)
-{
-    VOS_UINT32                          ulRst;
-
-    /* 参数过多 */
-    if(AT_CMD_OPT_SET_CMD_NO_PARA != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    ulRst = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   0,
-                                   ID_AT_MTA_DEL_CELLENTITY_REQ,
-                                   VOS_NULL_PTR,
-                                   0,
-                                   I0_UEPS_PID_MTA);
-
-    if (TAF_SUCCESS == ulRst)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_DEL_CELLENTITY_SET;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-}
-
-
-
-TAF_UINT32  At_GetMeanRpt( TAF_UINT8 ucIndex )
-{
-    VOS_UINT32                          ulRst;
-
-    /* 参数过多 */
-    if(AT_CMD_OPT_SET_CMD_NO_PARA != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 发送消息ID_AT_MTA_WRR_MEANRPT_QRY_REQ给AT AGENT处理 */
-    ulRst = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   0,
-                                   ID_AT_MTA_WRR_MEANRPT_QRY_REQ,
-                                   VOS_NULL_PTR,
-                                   0,
-                                   I0_UEPS_PID_MTA);
-
-    if (TAF_SUCCESS == ulRst)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_MEANRPT_QUERY;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-}
-
-
-TAF_UINT32 At_SetRRCVersion(TAF_UINT8 ucIndex)
-{
-    VOS_UINT8                           ucRRCVersion;
-    VOS_UINT32                          ulRst;
-
-    /* 参数过多返回参数错误 */
-    if(gucAtParaIndex != 1)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    ucRRCVersion = (VOS_UINT8)gastAtParaList[0].ulParaValue;
-
-    /* 发送消息DRV_AGENT_RRC_VERSION_SET_REQ给AT代理处理 */
-
-    ulRst = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   0,
-                                   ID_AT_MTA_WRR_RRC_VERSION_SET_REQ,
-                                   &ucRRCVersion,
-                                   sizeof(VOS_UINT8),
-                                   I0_UEPS_PID_MTA);
-
-    if (TAF_SUCCESS == ulRst)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_RRC_VERSION_SET;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-
-}
-#endif
 
 TAF_UINT32 At_SetCSNR(TAF_UINT8 ucIndex)
 {
@@ -15926,54 +14111,6 @@ TAF_UINT32 At_SetCSNR(TAF_UINT8 ucIndex)
     return AT_OK;
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-TAF_UINT32 At_SetFreqLock(TAF_UINT8 ucIndex)
-{
-    MTA_AT_WRR_FREQLOCK_CTRL_STRU       stFreqLock;
-    VOS_UINT32                          ulRst;
-
-    /* 参数个数不正确则返回参数错误 */
-    if ( (gucAtParaIndex != 1) && (gucAtParaIndex != 2) )
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 如果第一个参数是锁频,但第二个参数频率值没有设置或
-       设置的值无效则返回错误*/
-    if ( (gastAtParaList[0].ulParaValue == 1)
-      && (gastAtParaList[1].usParaLen == 0) )
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-
-    /* 发送消息赋值 */
-    TAF_MEM_SET_S(&stFreqLock, sizeof(stFreqLock), 0x00, sizeof(MTA_AT_WRR_FREQLOCK_CTRL_STRU));
-    stFreqLock.ucFreqLockEnable = (VOS_UINT8)gastAtParaList[0].ulParaValue;
-    stFreqLock.usLockedFreq     = (VOS_UINT16)gastAtParaList[1].ulParaValue;
-
-    /* 发送消息 ID_AT_MTA_WRR_FREQLOCK_SET_REQ 给C核 AT 代理处理 */
-    ulRst = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   0,
-                                   ID_AT_MTA_WRR_FREQLOCK_SET_REQ,
-                                   &stFreqLock,
-                                   sizeof(MTA_AT_WRR_FREQLOCK_CTRL_STRU),
-                                   I0_UEPS_PID_MTA);
-
-    if (TAF_SUCCESS == ulRst)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_FREQLOCK_SET;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-
-}
-#endif
-#if (FEATURE_ON == FEATURE_PROBE_FREQLOCK)
 
 VOS_UINT32 AT_CheckM2MFreqLockPara(
     VOS_UINT8                           ucClientId
@@ -16208,7 +14345,6 @@ TAF_UINT32 At_SetM2MFreqLock(TAF_UINT8 ucIndex)
         return AT_ERROR;
     }
 }
-#endif/*FEATURE_ON == MBB_WPG_FREQLOCK*/
 
 
 
@@ -16548,12 +14684,10 @@ TAF_UINT32 At_SetStgrPara(TAF_UINT8 ucIndex)
     SI_STK_TERMINAL_RSP_STRU Rsponse;
     TAF_UINT32 Result = 0;
 
-#if ( VOS_WIN32 != VOS_OS_VER )
     if(TAF_FALSE == g_ulSTKFunctionFlag)
     {
         return AT_ERROR;
     }
-#endif
 
     if((gucAtParaIndex > 4)||(gucAtParaIndex < 3))          /* the para munber is too many or too few */
     {
@@ -16989,102 +15123,6 @@ VOS_UINT32  AT_PhyNumIsNull(
     return AT_OK;
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 AT_UpdateImei(
-    MODEM_ID_ENUM_UINT16                enModemId,
-    VOS_UINT8                           aucImei[],
-    VOS_UINT16                          usImeiLength
-)
-{
-    VOS_UINT8                           aucBcdNum[TAF_PH_IMEI_LEN];
-    VOS_UINT8                           ucCheckData;
-    VOS_UINT32                          i;
-
-    /* IMEI 长度检查: 用户输入的IMEI长度应为14位的IMEI和1位的CHECK NUM，共15位 */
-    if ((TAF_PH_IMEI_LEN - 1) != usImeiLength)
-    {
-        AT_NORM_LOG1("AT_UpdateImei: the length of imei is error ", (VOS_INT32)usImeiLength);
-        return AT_PHYNUM_LENGTH_ERR;
-    }
-
-    /* IMEI 号码检查: 确认<imei>为数字字符串, 并将ASCII码转换成BCD码 */
-    if (AT_SUCCESS != At_AsciiNum2Num(aucBcdNum, aucImei, usImeiLength))
-    {
-        AT_NORM_LOG("AT_UpdateImei: the number of imei is error.");
-        return AT_PHYNUM_NUMBER_ERR;
-    }
-    aucBcdNum[TAF_PH_IMEI_LEN - 1] = 0;
-
-    /* IMEI 校验检查: IMEI信息由IMEI(TAC8位,SNR6位)和校验位两部分组成
-       参考协议: 3GPP 23003 B.2 Computation of CD for an IMEI和B.3 Example of computation */
-    ucCheckData = 0;
-    for (i = 0; i < (TAF_IMEI_DATA_LENGTH - 1); i += 2)
-    {
-        ucCheckData += aucBcdNum[i]
-                       + ((aucBcdNum[i + 1UL] + aucBcdNum[i + 1UL]) / 10)
-                       + ((aucBcdNum[i + 1UL] + aucBcdNum[i + 1UL]) % 10);
-    }
-    ucCheckData = (10 - (ucCheckData % 10)) % 10;
-
-    if (ucCheckData != aucBcdNum[TAF_PH_IMEI_LEN - 2])
-    {
-        AT_NORM_LOG("AT_UpdateImei: the checkdata of imei is error.");
-        return AT_PHYNUM_NUMBER_ERR;
-    }
-
-    if (NV_OK != TAF_ACORE_NV_WRITE(enModemId, en_NV_Item_IMEI, aucBcdNum, TAF_PH_IMEI_LEN))
-    {
-         AT_WARN_LOG("AT_UpdateImei: Fail to write NV.");
-         return AT_ERROR;
-    }
-
-    return AT_OK;
-}
-
-
-TAF_UINT32 At_SetImeiPara(TAF_UINT8 ucIndex)
-{
-    VOS_BOOL                            bPhyNumIsNull;
-    VOS_UINT32                          ulRet;
-    MODEM_ID_ENUM_UINT16                enModemId;
-
-    enModemId = MODEM_ID_0;
-
-    /* 参数过多 */
-    if (gucAtParaIndex > 1)
-    {
-        AT_NORM_LOG1("At_SetImeiPara: the number of parameter is error ",
-                     (VOS_INT32)gucAtParaIndex);
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    ulRet = AT_GetModemIdFromClient(ucIndex, &enModemId);
-
-    if (VOS_OK != ulRet)
-    {
-        AT_ERR_LOG("At_SetImeiPara: Get modem id fail.");
-        return AT_ERROR;
-    }
-
-    /* 物理号不为空，数据保护未解锁，直接返回错误，错误码为1物理号不合法。 */
-    if (AT_OK != AT_PhyNumIsNull(enModemId, AT_PHYNUM_TYPE_IMEI, &bPhyNumIsNull))
-    {
-        return AT_ERROR;
-    }
-
-    if ((VOS_FALSE == bPhyNumIsNull) && (VOS_TRUE == g_bAtDataLocked))
-    {
-        AT_NORM_LOG("At_SetImeiPara: physical number is not null and data locked.");
-        return AT_PHYNUM_TYPE_ERR;
-    }
-
-    /* 更新数据到NV项en_NV_Item_IMEI并返回更新结果 */
-    ulRet = AT_UpdateImei(enModemId, gastAtParaList[0].aucPara, gastAtParaList[0].usParaLen);
-
-    return ulRet;
-}
-#endif
 
 TAF_UINT32 At_SetFPlmnPara(TAF_UINT8 ucIndex)
 {
@@ -17257,30 +15295,6 @@ TAF_UINT32 At_SetAutoAttach(TAF_UINT8 ucIndex)
     }
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 At_SetSystemInfo(TAF_UINT8 ucIndex)
-{
-    if (AT_CMD_OPT_SET_CMD_NO_PARA != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if(VOS_TRUE == TAF_MMA_QrySystemInfoReq(WUEPS_PID_AT,
-                                         gastAtClientTab[ucIndex].usClientId,
-                                         0,
-                                         VOS_FALSE))
-    {
-        /* 设置当前操作类型 */
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_SYSINFO_READ;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-}
-#endif
 
 
 
@@ -17361,17 +15375,10 @@ VOS_VOID At_ConvertSysCfgExRat(
     {
         switch ( pstSysCfgExRatOrder->aenRatOrder[i] )
         {
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-            case AT_SYSCFGEX_RAT_NR:
-                pstRatOrder->aenRatOrder[i] = TAF_MMA_RAT_NR;
-                break;
-#endif
 
-#if (FEATURE_ON == FEATURE_LTE)
             case AT_SYSCFGEX_RAT_LTE:
                 pstRatOrder->aenRatOrder[i] = TAF_MMA_RAT_LTE;
                 break;
-#endif
 
             case AT_SYSCFGEX_RAT_WCDMA:
                 pstRatOrder->aenRatOrder[i] = TAF_MMA_RAT_WCDMA;
@@ -17381,7 +15388,6 @@ VOS_VOID At_ConvertSysCfgExRat(
                 pstRatOrder->aenRatOrder[i] = TAF_MMA_RAT_GSM;
                 break;
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
             case AT_SYSCFGEX_RAT_1X:
                pstRatOrder->aenRatOrder[i] = TAF_MMA_RAT_1X;
                break;
@@ -17389,7 +15395,6 @@ VOS_VOID At_ConvertSysCfgExRat(
            case AT_SYSCFGEX_RAT_DO:
                pstRatOrder->aenRatOrder[i] = TAF_MMA_RAT_HRPD;
                break;
-#endif
 
             default:
                 AT_ERR_LOG("At_ConvertSysCfgExRat");
@@ -17610,13 +15615,8 @@ VOS_UINT32 At_CheckSysCfgExRatTypeValid(
         case AT_SYSCFGEX_RAT_LTE:
         case AT_SYSCFGEX_RAT_WCDMA:
         case AT_SYSCFGEX_RAT_GSM:
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
         case AT_SYSCFGEX_RAT_1X:
         case AT_SYSCFGEX_RAT_DO:
-#endif
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-        case AT_SYSCFGEX_RAT_NR:
-#endif
             return VOS_TRUE;
 
         default:
@@ -17748,12 +15748,6 @@ TAF_MMA_USER_SET_PRIO_RAT_ENUM_U8 AT_GetSysCfgPrioRat(
     }
 
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-    if (VOS_TRUE == AT_IsSpecRatSupported(TAF_MMA_RAT_NR, &pstSysCfgExSetPara->stMultiModeRatCfg))
-    {
-        return enUserPrio;
-    }
-#endif
     for (i = 0; i < AT_MIN(TAF_MMA_RAT_BUTT, pstSysCfgExSetPara->stMultiModeRatCfg.ucRatNum); i++ )
     {
         if (TAF_MMA_RAT_GSM == pstSysCfgExSetPara->stMultiModeRatCfg.aenRatOrder[i])
@@ -17786,12 +15780,6 @@ LOCAL VOS_UINT32 AT_IsModeConflictingDomain(
         {
             return VOS_TRUE;
         }
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-        if (VOS_TRUE == AT_IsSpecRatSupported(TAF_MMA_RAT_NR, &pstSysCfgExSetPara->stMultiModeRatCfg))
-        {
-            return VOS_TRUE;
-        }
-#endif
     }
     return VOS_FALSE;
 }
@@ -18266,7 +16254,6 @@ VOS_UINT32 AT_ConvertSysCfgRatOrderPara(
 
             break;
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
         case AT_SYSCFG_RAT_1X:
             /* 1X单模 */
             pstSysCfgRatOrder->ucRatNum  = 1;
@@ -18293,7 +16280,6 @@ VOS_UINT32 AT_ConvertSysCfgRatOrderPara(
             pstSysCfgRatOrder->aenRatOrder[2] = TAF_MMA_RAT_BUTT;
 
             break;
-#endif
 
         case AT_SYSCFG_RAT_NO_CHANGE:
             pstSysCfgRatOrder->ucRatNum             = 0;
@@ -18311,88 +16297,6 @@ VOS_UINT32 AT_ConvertSysCfgRatOrderPara(
 }
 
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 At_SetSysCfgPara(VOS_UINT8 ucIndex)
-{
-    TAF_MMA_SYS_CFG_PARA_STRU           stSysCfgPara;
-
-    VOS_UINT32                          ulRst;
-    AT_MODEM_NET_CTX_STRU              *pstNetCtx = VOS_NULL_PTR;
-
-    TAF_MEM_SET_S(&stSysCfgPara, sizeof(stSysCfgPara), 0x00, sizeof(TAF_MMA_SYS_CFG_PARA_STRU));
-
-    pstNetCtx = AT_GetModemNetCtxAddrFromClientId(ucIndex);
-
-    if ( 5 != gucAtParaIndex )
-    {                                                                           /* 参数过多 */
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if ((gastAtParaList[0].usParaLen == 0)
-     || (gastAtParaList[1].usParaLen == 0)
-     || (gastAtParaList[2].usParaLen == 0)
-     || (gastAtParaList[3].usParaLen == 0)
-     || (gastAtParaList[4].usParaLen == 0))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-
-
-
-    ulRst = AT_ConvertSysCfgRatOrderPara(ucIndex, (VOS_UINT8)gastAtParaList[0].ulParaValue,
-                                         (VOS_UINT8)gastAtParaList[1].ulParaValue,
-                                         &stSysCfgPara);
-
-    if (AT_OK != ulRst)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-
-
-    ulRst = AT_ConvertSysCfgExGuBandPara(gastAtParaList[2].aucPara,
-                                       gastAtParaList[2].usParaLen,
-                                       &stSysCfgPara.stGuBand);
-    if (AT_OK != ulRst)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 需要将L的频段设置为不改变 */
-    stSysCfgPara.enUserPrio         = (VOS_UINT8)gastAtParaList[1].ulParaValue;
-    TAF_MEM_SET_S(&(stSysCfgPara.stLBand),
-                  sizeof(stSysCfgPara.stLBand),
-                  0x00,
-                  sizeof(TAF_USER_SET_LTE_PREF_BAND_INFO_STRU));
-    stSysCfgPara.stLBand.aulBandInfo[0] = TAF_PH_BAND_NO_CHANGE;
-
-    AT_ReadRoamCfgInfoNvim(ucIndex);
-
-    if (((AT_ROAM_FEATURE_OFF == pstNetCtx->ucRoamFeature) && (gastAtParaList[3].ulParaValue > 2))
-     || ((AT_ROAM_FEATURE_ON == pstNetCtx->ucRoamFeature) && (gastAtParaList[3].ulParaValue > 3)))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-    stSysCfgPara.enRoam       = (VOS_UINT8) gastAtParaList[3].ulParaValue;
-    stSysCfgPara.enSrvDomain  = (VOS_UINT8) gastAtParaList[4].ulParaValue;
-
-
-
-
-    /* 执行命令操作 */
-    if (VOS_TRUE == TAF_MMA_SetSysCfgReq(WUEPS_PID_AT,gastAtClientTab[ucIndex].usClientId, 0, &stSysCfgPara))
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_SYSCFG_SET;
-        return AT_WAIT_ASYNC_RETURN;    /* 返回命令处理挂起状态 */
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-}
-#endif
 
 
 TAF_UINT32 At_CheckDataState(TAF_UINT8 ucDataMode)
@@ -18448,112 +16352,6 @@ TAF_UINT32 At_SetCcinPara(TAF_UINT8 ucIndex)
     return AT_OK;
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-TAF_UINT32 At_SetTrigPara (TAF_UINT8 ucIndex)
-{
-    TAF_UINT8                           i;
-    TAF_GPRS_DATA_STRU                  stGprsDataInfo;
-
-
-    TAF_MEM_SET_S(&stGprsDataInfo, sizeof(stGprsDataInfo), 0x00, sizeof(stGprsDataInfo));
-
-
-    if(AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数过多 */
-    if(5 != gucAtParaIndex)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-    for(i=0;i<5;i++)
-    {
-        if (0==gastAtParaList[i].usParaLen)
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-    }
-    stGprsDataInfo.ucMode = (TAF_UINT8)gastAtParaList[0].ulParaValue;
-    if ((stGprsDataInfo.ucMode!=0) && (stGprsDataInfo.ucMode!=1))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-    if((5 <= gastAtParaList[1].ulParaValue) && (gastAtParaList[1].ulParaValue <= 15))
-    {
-        stGprsDataInfo.ucNsapi = (TAF_UINT8)gastAtParaList[1].ulParaValue;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-
-    stGprsDataInfo.ulLength      = (TAF_UINT32)gastAtParaList[2].ulParaValue;
-    stGprsDataInfo.ucTimes       = (TAF_UINT8)gastAtParaList[3].ulParaValue;
-    stGprsDataInfo.ulMillisecond = (TAF_UINT32)gastAtParaList[4].ulParaValue;
-
-    /* 执行命令操作 */
-    if ( TAF_PS_TrigGprsData(WUEPS_PID_AT,
-                             AT_PS_BuildExClientId(gastAtClientTab[ucIndex].usClientId),
-                             gastAtClientTab[ucIndex].opId,
-                             &stGprsDataInfo) )
-    {
-        return AT_ERROR;
-    }
-
-    return AT_OK;
-}
-
-
-TAF_UINT32 At_SetGcfIndPara (TAF_UINT8 ucIndex)
-{
-    VOS_UINT8                           ucGctTestFlag;
-    VOS_UINT32                          ulRst;
-
-    ucGctTestFlag = 0;
-
-    if(AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数过多 */
-    if(1 != gucAtParaIndex)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    ucGctTestFlag = (VOS_UINT8)gastAtParaList[0].ulParaValue;
-    if ((ucGctTestFlag != 0) && (ucGctTestFlag != 1))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    ulRst = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   0,
-                                   DRV_AGENT_GCF_IND,
-                                   &ucGctTestFlag,
-                                   sizeof(VOS_UINT8),
-                                   I0_WUEPS_PID_DRV_AGENT);
-
-    if (TAF_SUCCESS == ulRst)
-    {
-        return AT_OK;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-
-}
-#endif
 
 
 VOS_UINT32 At_SetGcapPara(TAF_UINT8 ucIndex)
@@ -19066,12 +16864,10 @@ TAF_UINT32 At_SetModePara(TAF_UINT8 ucIndex)
 {
     AT_MTA_UNSOLICITED_RPT_SET_REQ_STRU     stAtCmd;
     VOS_UINT32                              ulResult;
- #if (FEATURE_ON==FEATURE_LTE)
     L4A_IND_CFG_STRU                        stL4AIndCfgReq;
     MODEM_ID_ENUM_UINT16                    enModemId;
 
     enModemId  = MODEM_ID_0;
-#endif
 
     /* AT命令参数合法性检查 */
     if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
@@ -19106,7 +16902,6 @@ TAF_UINT32 At_SetModePara(TAF_UINT8 ucIndex)
         return AT_ERROR;
     }
 
-#if  (FEATURE_ON == FEATURE_LTE)
     ulResult = AT_GetModemIdFromClient(ucIndex, &enModemId);
 
     if (VOS_OK != ulResult)
@@ -19124,7 +16919,6 @@ TAF_UINT32 At_SetModePara(TAF_UINT8 ucIndex)
         /* 通知L此次mode的设置 */
         AT_SetLIndCfgReq(ucIndex, &stL4AIndCfgReq);
     }
-#endif
 
     gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_UNSOLICITED_RPT_SET;
 
@@ -19368,11 +17162,7 @@ VOS_UINT32  AT_SetPhyNumPara(VOS_UINT8 ucIndex)
     /* 若当前用户设置的物理号为MAC，则修改MAC地址对应的NV项(新增数据卡MAC地址的NV项)中的数据 */
     if (AT_PHYNUM_TYPE_IMEI == enSetType)
     {
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-        ulRet = AT_UpdateImei(enModemId, gastAtParaList[1].aucPara, gastAtParaList[1].usParaLen);
-#else
         ulRet = AT_OK;
-#endif
 
     }
     else if (AT_PHYNUM_TYPE_SVN == enSetType)
@@ -20804,282 +18594,6 @@ TAF_UINT32 AT_SetDwinsPara(TAF_UINT8 ucIndex)
     }
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-TAF_UINT32 At_SetCommDebugPara(TAF_UINT8 ucIndex)
-{
-    SPY_TEMP_THRESHOLD_PARA_STRU        stTempPara;
-    TAF_AT_NVIM_COMMDEGBUG_CFG_STRU     stDebugFlag;
-    VOS_UINT16                          usFlag;
-    USIMM_ACTIVECARD_REQ_STRU                     *pstMsg = VOS_NULL_PTR;
-#if ( VOS_WIN32 == VOS_OS_VER )
-    VOS_UINT8                           aucFilelist[]={0x6f,0x43};
-#endif
-
-    stDebugFlag.ulCommDebugFlag = VOS_FALSE;
-
-    if(AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数过多 */
-    if(gucAtParaIndex > 1)
-    {
-        return AT_TOO_MANY_PARA;
-    }
-
-    /*全设为无效值*/
-    TAF_MEM_SET_S(&stTempPara, sizeof(stTempPara), 0xFF, sizeof(stTempPara));
-
-
-    if(0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    switch(gastAtParaList[0].ulParaValue)
-    {
-        case 0x00:
-            /*去激活所有Debug功能*/
-            if(NV_OK != TAF_ACORE_NV_READ(MODEM_ID_0, en_NV_Item_COMMDEGBUG_CFG, &(stDebugFlag.ulCommDebugFlag), sizeof(TAF_AT_NVIM_COMMDEGBUG_CFG_STRU)))
-            {
-                LogPrint("At_SetOamDebugPara:TAF_ACORE_NV_READ Debug Flag0 Fail\r\n");
-
-                return AT_CME_OPERATION_NOT_ALLOWED;
-            }
-
-            if(0x00 != stDebugFlag.ulCommDebugFlag)
-            {
-                stDebugFlag.ulCommDebugFlag = 0x00;
-
-                if(NV_OK != TAF_ACORE_NV_WRITE(MODEM_ID_0, en_NV_Item_COMMDEGBUG_CFG,&(stDebugFlag.ulCommDebugFlag),sizeof(TAF_AT_NVIM_COMMDEGBUG_CFG_STRU)))
-                {
-                    LogPrint("At_SetOamDebugPara:TAF_ACORE_NV_WRITE Debug Flag0 Fail\r\n");
-
-                    return AT_CME_OPERATION_NOT_ALLOWED;
-                }
-
-            }
-
-            break;
-        case 0x01:
-            /*使能DRX定位信息上报功能*/
-            if(NV_OK != TAF_ACORE_NV_READ(MODEM_ID_0, en_NV_Item_COMMDEGBUG_CFG, &(stDebugFlag.ulCommDebugFlag), sizeof(TAF_AT_NVIM_COMMDEGBUG_CFG_STRU)))
-            {
-                LogPrint("At_SetOamDebugPara:TAF_ACORE_NV_READ Debug Flag Fail\r\n");
-
-                return AT_CME_OPERATION_NOT_ALLOWED;
-            }
-
-            if(0x01 != (stDebugFlag.ulCommDebugFlag&0x01))
-            {
-                stDebugFlag.ulCommDebugFlag |= 0x01;
-
-                if(NV_OK != TAF_ACORE_NV_WRITE(MODEM_ID_0, en_NV_Item_COMMDEGBUG_CFG,&(stDebugFlag.ulCommDebugFlag),sizeof(TAF_AT_NVIM_COMMDEGBUG_CFG_STRU)))
-                {
-                    LogPrint("At_SetOamDebugPara:TAF_ACORE_NV_WRITE Debug Flag Fail\r\n");
-
-                    return AT_CME_OPERATION_NOT_ALLOWED;
-                }
-
-            }
-
-            break;
-        case 0x03:
-            /*使能USIMM初始化信息记录功能*/
-            if(NV_OK != TAF_ACORE_NV_READ(MODEM_ID_0, en_NV_Item_COMMDEGBUG_CFG, &(stDebugFlag.ulCommDebugFlag), sizeof(TAF_AT_NVIM_COMMDEGBUG_CFG_STRU)))
-            {
-                LogPrint("At_SetOamDebugPara:TAF_ACORE_NV_READ Debug Flag2 Fail\r\n");
-
-                return AT_CME_OPERATION_NOT_ALLOWED;
-            }
-
-            if(0x02 != (stDebugFlag.ulCommDebugFlag&0x02))
-            {
-                stDebugFlag.ulCommDebugFlag |= 0x02;
-
-                if(NV_OK != TAF_ACORE_NV_WRITE(MODEM_ID_0, en_NV_Item_COMMDEGBUG_CFG,&(stDebugFlag.ulCommDebugFlag),sizeof(TAF_AT_NVIM_COMMDEGBUG_CFG_STRU)))
-                {
-                    LogPrint("At_SetOamDebugPara:TAF_ACORE_NV_WRITE Debug Flag2 Fail\r\n");
-
-                    return AT_CME_OPERATION_NOT_ALLOWED;
-                }
-
-            }
-
-            break;
-
-        case 0x05:
-
-            usFlag = 1;
-
-            if(NV_OK != TAF_ACORE_NV_WRITE(MODEM_ID_0, en_NV_Item_Usim_Debug_Mode_Set, &usFlag, sizeof(VOS_UINT16)))
-            {
-                LogPrint("At_SetOamDebugPara:TAF_ACORE_NV_WRITE Usim Debug Flag Fail\r\n");
-
-                return AT_CME_OPERATION_NOT_ALLOWED;
-            }
-
-            break;
-
-        case 0x06:
-
-            usFlag = 0;
-
-            if(NV_OK != TAF_ACORE_NV_WRITE(MODEM_ID_0, en_NV_Item_Usim_Debug_Mode_Set, &usFlag, sizeof(VOS_UINT16)))
-            {
-                LogPrint("At_SetOamDebugPara:TAF_ACORE_NV_WRITE Usim Debug Flag Fail\r\n");
-
-                return AT_CME_OPERATION_NOT_ALLOWED;
-            }
-
-            break;
-
-        case 0x07:
-            pstMsg = (USIMM_ACTIVECARD_REQ_STRU *)VOS_AllocMsg(WUEPS_PID_AT, sizeof(USIMM_ACTIVECARD_REQ_STRU)-VOS_MSG_HEAD_LENGTH);
-
-            if(VOS_NULL_PTR == pstMsg)
-            {
-                LogPrint("USIMM_InitCardStart:AllocMsg Failed.");
-
-                return VOS_ERR;
-            }
-
-            pstMsg->stMsgHeader.ulReceiverPid      = WUEPS_PID_USIM;
-            pstMsg->stMsgHeader.enMsgName          = USIMM_ACTIVECARD_REQ;
-            if (VOS_OK != VOS_SendMsg(WUEPS_PID_AT, pstMsg))
-            {
-                LogPrint("USIMM_InitCardStart:sndmsg Failed.");
-            }
-            break;
-
-        default:
-            break;
-    }
-
-    return AT_OK;
-}
-
-
-TAF_UINT32 At_SetYjcxPara (TAF_UINT8 ucIndex)
-{
-    VOS_UINT32                          ulRst;
-
-    ulRst = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   0,
-                                   DRV_AGENT_YJCX_SET_REQ,
-                                   VOS_NULL_PTR,
-                                   0,
-                                   I0_WUEPS_PID_DRV_AGENT);
-
-    if(AT_SUCCESS == ulRst)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_YJCX_SET;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-}
-
-
-VOS_UINT32 At_SetPhyInitPara(VOS_UINT8 ucIndex)
-{
-    VOS_UINT32                          ulRst;
-    AT_MTA_PHY_INIT_REQ_STRU            stPhyInit;
-
-    /* 结构体重置 */
-    TAF_MEM_SET_S(&stPhyInit, sizeof(stPhyInit), 0x00, sizeof(AT_MTA_PHY_INIT_REQ_STRU));
-
-    /* 参数检查 */
-    if (AT_CMD_OPT_SET_CMD_NO_PARA != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数过多 */
-    if (gucAtParaIndex > 0)
-    {
-        return AT_TOO_MANY_PARA;
-    }
-
-    /* 向MTA发送消息通知物理层初始化 */
-    ulRst = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   At_GetOpId(),
-                                   ID_AT_MTA_PHY_INIT_REQ,
-                                   (VOS_VOID*)(&stPhyInit),
-                                   sizeof(stPhyInit),
-                                   I0_UEPS_PID_MTA);
-
-    if (TAF_SUCCESS == ulRst)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_PHYINIT_SET;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-
-}
-
-
-VOS_UINT32 AT_SetDockPara (VOS_UINT8 ucIndex)
-{
-    VOS_UINT8                           ucClientIndex;
-    VOS_UINT16                          usLength;
-
-    usLength = 0;
-
-    if (AT_APP_USER != gastAtClientTab[ucIndex].UserType )
-    {
-        return AT_FAILURE;
-    }
-
-    /* 参数检查 */
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_FAILURE;
-    }
-
-    /* 参数过多 */
-    if (gucAtParaIndex > 1)
-    {
-        return AT_FAILURE;
-    }
-
-    /* 参数为空 */
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_FAILURE;
-    }
-
-    TAF_MEM_SET_S(gastAtParaList[0].aucPara + gastAtParaList[0].usParaLen,
-               (VOS_SIZE_T)(AT_PARA_MAX_LEN - gastAtParaList[0].usParaLen),
-               0x00,
-               (VOS_SIZE_T)(AT_PARA_MAX_LEN - gastAtParaList[0].usParaLen));
-
-    for (ucClientIndex = 0 ; ucClientIndex < AT_MAX_CLIENT_NUM; ucClientIndex++)
-    {
-        if (AT_USBCOM_USER == gastAtClientTab[ucClientIndex].UserType)
-        {
-            usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                        (VOS_CHAR *)pgucAtSndCodeAddr,
-                                        (VOS_CHAR *)pgucAtSndCodeAddr + usLength,
-                                        "%s%s%s",
-                                        gaucAtCrLf,
-                                        gastAtParaList[0].aucPara,
-                                        gaucAtCrLf);
-            At_SendResultData(ucClientIndex, pgucAtSndCodeAddr, usLength);
-            break;
-        }
-    }
-
-    return AT_SUCCESS;
-}
-#endif
 
 
 TAF_UINT32 At_SetAt2OmPara(TAF_UINT8 ucIndex)
@@ -21206,17 +18720,10 @@ VOS_UINT32 At_SetCpolPara(VOS_UINT8 ucIndex)
     TAF_MEM_SET_S(&stPrefPlmn,sizeof(stPrefPlmn), 0x00,sizeof(stPrefPlmn));
 
     /* 参数过多 */
-#if(FEATURE_ON == FEATURE_LTE)
     if ( gucAtParaIndex > 7 )
     {
         return AT_CME_INCORRECT_PARAMETERS;
     }
-#else
-    if ( gucAtParaIndex > 6 )
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-#endif
 
     if ( (2 == gucAtParaIndex)
       && (0 == gastAtParaList[0].usParaLen)
@@ -21247,11 +18754,9 @@ VOS_UINT32 At_SetCpolPara(VOS_UINT8 ucIndex)
     stPrefPlmn.usUtrnLen                = gastAtParaList[5].usParaLen;
     stPrefPlmn.usUtrn                   = gastAtParaList[5].ulParaValue;
 
-#if(FEATURE_ON == FEATURE_LTE)
     /* LTE的接入技术以及长度 */
     stPrefPlmn.usEutrnLen                = gastAtParaList[6].usParaLen;
     stPrefPlmn.usEutrn                   = gastAtParaList[6].ulParaValue;
-#endif
 
     if (0 < stPrefPlmn.usFormatLen)
     {
@@ -21469,11 +18974,9 @@ VOS_UINT32 AT_SetDislogPara ( VOS_UINT8 ucIndex )
     VOS_UINT32                          ulRet;
     nv_pid_enable_type                  stPidEnableType;
 
-#if (FEATURE_ON==FEATURE_LTE)
     VOS_UINT32                          ulRetDiag;
     VOS_UINT32                          ulRet3GDiag;
     VOS_UINT32                          ulRetGps;
-#endif
 
 
     stPidEnableType.ulPidEnabled = VOS_FALSE;
@@ -21541,7 +19044,6 @@ VOS_UINT32 AT_SetDislogPara ( VOS_UINT8 ucIndex )
     /*  打开DIAG口*/
     if ( AT_DISLOG_DIAG_OPEN == gastAtParaList[0].ulParaValue )
     {
-#if (FEATURE_ON==FEATURE_LTE)
         ulRet3GDiag   = AT_OpenSpecificPort(AT_DEV_DIAG);
         ulRetDiag     = AT_OpenSpecificPort(AT_DEV_4G_DIAG);
         ulRetGps      = AT_OpenSpecificPort(AT_DEV_4G_GPS);
@@ -21554,16 +19056,12 @@ VOS_UINT32 AT_SetDislogPara ( VOS_UINT8 ucIndex )
         {
             ulRet = AT_ERROR;
         }
-#else
-        ulRet = AT_OpenDiagPort();
-#endif
         return ulRet;
     }
 
     /* 关闭DIAG口 */
     if ( AT_DISLOG_DIAG_CLOSE == gastAtParaList[0].ulParaValue )
     {
-#if (FEATURE_ON == FEATURE_LTE)
         ulRet3GDiag = AT_CloseSpecificPort(AT_DEV_DIAG);
         ulRetDiag   = AT_CloseSpecificPort(AT_DEV_4G_DIAG);
         ulRetGps    = AT_CloseSpecificPort(AT_DEV_4G_GPS);
@@ -21577,9 +19075,6 @@ VOS_UINT32 AT_SetDislogPara ( VOS_UINT8 ucIndex )
             ulRet = AT_ERROR;
         }
 
-#else
-        ulRet = AT_CloseDiagPort();
-#endif
         return ulRet;
     }
 
@@ -21587,7 +19082,6 @@ VOS_UINT32 AT_SetDislogPara ( VOS_UINT8 ucIndex )
     return AT_ERROR;
 
 }
-#if (FEATURE_ON == FEATURE_SECURITY_SHELL)
 
 VOS_UINT32 AT_SetSpwordPara(VOS_UINT8 ucIndex)
 {
@@ -21719,9 +19213,7 @@ VOS_UINT32 AT_SetShellPara ( VOS_UINT8 ucIndex )
 
     return AT_ERROR;
 }
-#endif
 
-#if (FEATURE_ON==FEATURE_LTE)
 
 
 
@@ -21768,9 +19260,7 @@ VOS_UINT32 AT_SetRsrpCfgPara ( VOS_UINT8 ucIndex )
 
     return AT_OK;
 }
-#endif
 
-#if (FEATURE_ON==FEATURE_LTE)
 
 
 
@@ -21818,8 +19308,6 @@ VOS_UINT32 AT_SetRscpCfgPara ( VOS_UINT8 ucIndex )
 
     return AT_OK;
 }
-#endif
-#if (FEATURE_ON==FEATURE_LTE)
 
 
 
@@ -21867,12 +19355,10 @@ VOS_UINT32 AT_SetEcioCfgPara ( VOS_UINT8 ucIndex )
 
     return AT_OK;
 }
-#endif
 
 
 
 
-#if (FEATURE_ON == FEATURE_DSDS)
 
 VOS_UINT32 At_SetPsProtectModePara(VOS_UINT8 ucIndex)
 {
@@ -21921,7 +19407,6 @@ VOS_UINT32 At_SetPsProtectModePara(VOS_UINT8 ucIndex)
     }
 
 }
-#endif
 
 
 
@@ -22014,74 +19499,6 @@ VOS_UINT32  AT_SetCsqlvlExtPara(VOS_UINT8 ucIndex)
 
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 AT_SetApbatlvlPara( VOS_UINT8 ucIndex )
-{
-    BATT_STATE_S                        stBatLvl;
-    VOS_UINT32                          ucChargeState;
-
-
-    if (BSP_MODULE_UNSUPPORT == mdrv_misc_support_check(BSP_MODULE_TYPE_CHARGE) )
-    {
-        return AT_ERROR;
-    }
-
-    /*Arguments found, return error.*/
-    if(AT_CMD_OPT_SET_CMD_NO_PARA != g_stATParseCmd.ucCmdOptType)
-    {
-        PS_PRINTF_WARNING("AT^APBATLVL arguments found, return error!!\n ");
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 调用接口获取充电情况 */
-    if ( VOS_OK != mdrv_misc_get_battery_state( &stBatLvl ) )
-    {
-        return AT_ERROR;
-    }
-
-    /* 区分充电和未充电状态 */
-    if ( (stBatLvl.charging_state == CHARGING_UP)
-      || (stBatLvl.charging_state == CHARGING_DOWN) )
-    {
-        ucChargeState = 1;
-    }
-    else if ( (stBatLvl.charging_state == NO_CHARGING_UP)
-           || (stBatLvl.charging_state == NO_CHARGING_DOWN) )
-    {
-        ucChargeState = 0;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-
-    /* 过滤电池电量错误值 */
-    if ( (stBatLvl.battery_level < BATT_LOW_POWER)
-       ||(stBatLvl.battery_level >= BATT_LEVEL_MAX))
-    {
-        return AT_ERROR;
-    }
-
-    gstAtSendData.usBufLen = (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-                                                    (TAF_CHAR*)pgucAtSndCodeAddr,
-                                                    (TAF_CHAR*)pgucAtSndCodeAddr,
-                                                    "%s:%d,%d",
-                                                    g_stParseContext[ucIndex].pstCmdElement->pszCmdName,
-                                                    ucChargeState,
-                                                    stBatLvl.battery_level);
-
-    return AT_OK;
-}
-
-
-VOS_UINT32 AT_SetOpenportPara( VOS_UINT8 ucIndex )
-{
-    /* 能在这里处理OPENPORT, 要么是已经有权限了再输入OPENPORT,直接返回OK
-       要么是没开启密码保护, 也直接返回OK */
-    return AT_OK;
-}
-#endif
 
 
 VOS_UINT32  At_CheckNdisIpv4AddrPara(
@@ -22300,7 +19717,6 @@ VOS_UINT32  At_SetDnsSnd(VOS_UINT8 ucIndex)
 }
 
 
-#if (FEATURE_ON == FEATURE_IPV6)
 
 VOS_UINT32 AT_CheckIpv6Capability(
     VOS_UINT8                           ucPdpType
@@ -22332,7 +19748,6 @@ VOS_UINT32 AT_CheckIpv6Capability(
 
     return VOS_OK;
 }
-#endif
 
 
 VOS_UINT32 AT_SetNdisdupPara (VOS_UINT8 ucIndex)
@@ -22782,11 +20197,7 @@ TAF_UINT32  At_SetTModePara(TAF_UINT8 ucIndex )
     TAF_MMA_PHONE_MODE_PARA_STRU        stPhoneModePara;
     VOS_UINT8                           ucUpdateFlag;
 
-    #if (FEATURE_OFF == FEATURE_UE_MODE_NR)
     pucCurrentTMode = &g_stAtDevCmdCtrl.ucCurrentTMode;
-    #else
-    pucCurrentTMode = &g_stMtInfoCtx.enCurrentTMode;
-    #endif
 
 
     TAF_MEM_SET_S(&stPhoneModePara, sizeof(stPhoneModePara), 0x00, sizeof(stPhoneModePara));
@@ -22821,11 +20232,7 @@ TAF_UINT32  At_SetTModePara(TAF_UINT8 ucIndex )
                 /* 设置当前操作类型 */
                 gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_SET_TMODE;
 
-                #if (FEATURE_OFF == FEATURE_UE_MODE_NR)
                 TAF_MEM_SET_S(&g_stAtDevCmdCtrl, sizeof(g_stAtDevCmdCtrl), 0x00, sizeof(g_stAtDevCmdCtrl));
-                #else
-                TAF_MEM_SET_S(&g_stMtInfoCtx, sizeof(g_stMtInfoCtx), 0x00, sizeof(g_stMtInfoCtx));
-                #endif
 
                 *pucCurrentTMode = AT_TMODE_NORMAL;
 
@@ -22929,11 +20336,7 @@ TAF_UINT32  At_SetTModePara(TAF_UINT8 ucIndex )
                /* 设置当前操作类型 */
                gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_SET_TMODE;
 
-                #if (FEATURE_OFF == FEATURE_UE_MODE_NR)
                 TAF_MEM_SET_S(&g_stAtDevCmdCtrl, sizeof(g_stAtDevCmdCtrl), 0x00, sizeof(g_stAtDevCmdCtrl));
-                #else
-                TAF_MEM_SET_S(&g_stMtInfoCtx, sizeof(g_stMtInfoCtx), 0x00, sizeof(g_stMtInfoCtx));
-                #endif
 
                 *pucCurrentTMode = AT_TMODE_OFFLINE;
 
@@ -22944,7 +20347,6 @@ TAF_UINT32  At_SetTModePara(TAF_UINT8 ucIndex )
                return AT_ERROR;
            }
 
-#if((FEATURE_ON == FEATURE_LTE) || (FEATURE_ON == FEATURE_UE_MODE_TDS))
         case AT_TMODE_F_NONESIGNAL:
         case AT_TMODE_SYN_NONESIGNAL:
         case AT_TMODE_SET_SLAVE:
@@ -22962,7 +20364,6 @@ TAF_UINT32  At_SetTModePara(TAF_UINT8 ucIndex )
             {
                 return AT_ERROR;
             }
-#endif
 
         default:
             break;
@@ -22974,50 +20375,6 @@ TAF_UINT32  At_SetTModePara(TAF_UINT8 ucIndex )
 
 
 
-#if ( FEATURE_ON == FEATURE_LTE )
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-VOS_UINT32 At_SetSfm(VOS_UINT8 ucIndex)
-{
-    OM_SW_VER_FLAG_STRU  stCustomVersion;
-
-    /* 参数检查 */
-    if(AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_ERROR;
-    }
-
-    /* 参数过多 */
-    if(gucAtParaIndex > 1)
-    {
-        return AT_ERROR;
-    }
-
-    if(0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_ERROR;
-    }
-
-    /* AT命令与NV中存储的信息相反 */
-    if(0 == gastAtParaList[0].ulParaValue)
-    {
-        stCustomVersion.ulNvSwVerFlag = 1;    /* 1 表示正式版本 */
-    }
-    else
-    {
-        stCustomVersion.ulNvSwVerFlag = 0;    /* 0 表示烧片版本 */
-    }
-
-    /* 判断是否为烧片版本 */
-    if ( VOS_OK != TAF_ACORE_NV_WRITE(MODEM_ID_0, en_NV_Item_SW_VERSION_FLAG, &stCustomVersion.ulNvSwVerFlag, sizeof(stCustomVersion.ulNvSwVerFlag)) )
-    {
-        return AT_ERROR;
-    }
-    else
-    {
-        return AT_OK;
-    }
-}
-#endif
 
 
 VOS_UINT32 AT_SetFrStatus(VOS_UINT8 ucIndex)
@@ -23081,7 +20438,6 @@ VOS_UINT32 AT_SetFrStatus(VOS_UINT8 ucIndex)
         return AT_ERROR;
     }
 }
-#endif
 
 
 
@@ -23330,66 +20686,6 @@ VOS_UINT32 At_WriteDpaCatToNV(VOS_UINT8 ucDpaRate)
     return VOS_OK;
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-
-VOS_UINT32   At_SetDpaCat(VOS_UINT8 ucIndex)
-{
-    /*0     支持速率为3.6M
-     *1     支持速率为7.2M
-     *2     支持速率为1.8M
-     *3     支持速率为14.4M
-     *4     支持速率为21M
-    */
-    VOS_UINT8                           ucDpaRate;
-
-    /* 参数检查 */
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_ERROR;
-    }
-
-    /* 参数不为1 */
-    if (gucAtParaIndex != 1)
-    {
-        return AT_ERROR;
-    }
-
-    /* 参数内容只能为1个 */
-    if (gastAtParaList[0].usParaLen != 1)
-    {
-        return AT_ERROR;
-    }
-
-    ucDpaRate = gastAtParaList[0].aucPara[0];
-    /* ucDpaRate取值范围为'0'~'4' */
-    if (('0' <=ucDpaRate) && ('4' >= ucDpaRate))
-    {
-        ucDpaRate = gastAtParaList[0].aucPara[0] - '0';
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-
-    if (VOS_TRUE == g_bAtDataLocked)
-    {
-        return  AT_ERROR;
-    }
-
-    /* 调用写NV接口函数: At_WriteDpaCatToNV,返回操作结果 */
-    if (VOS_OK == At_WriteDpaCatToNV(ucDpaRate))
-    {
-        return  AT_OK;
-    }
-    else
-    {
-        AT_WARN_LOG("At_SetDpaCat:WARNING:WAS_MNTN_SetDpaCat failed!");
-        return AT_ERROR;
-    }
-
-}
-#endif
 
 
 VOS_UINT32 AT_WriteRrcVerToNV(VOS_UINT8 ucSrcWcdmaRRC)
@@ -23560,7 +20856,6 @@ VOS_UINT32  At_SetDataLock(VOS_UINT8 ucIndex )
 
 }
 
-#if ( FEATURE_ON == FEATURE_LTE )
 /* 生产NV恢复 */
 VOS_UINT32  At_SetInfoRRS(VOS_UINT8 ucIndex )
 {
@@ -23594,7 +20889,6 @@ VOS_UINT32  At_SetInfoRRS(VOS_UINT8 ucIndex )
     }
 
 }
-#endif
 
 
 VOS_UINT32  At_SetInfoRBU(VOS_UINT8 ucIndex )
@@ -24942,574 +22236,6 @@ VOS_UINT32 AT_SetVertime ( VOS_UINT8 ucIndex )
     }
 }
 
-#if ( VOS_WIN32 == VOS_OS_VER )
-
-
-VOS_UINT32 AT_ResetNplmn ( VOS_UINT8 ucIndex )
-{
-    return AT_OK;
-}
-
-
-VOS_UINT32 AT_SetNplmn ( VOS_UINT8 ucIndex )
-{
-    return AT_OK;
-}
-
-
-VOS_UINT32 At_SetReadUsimStub(VOS_UINT8 ucIndex)
-{
-
-    return AT_OK;
-}
-
-
-VOS_UINT32 AT_SetNvimPara ( VOS_UINT8 ucIndex )
-{
-    NV_ID_ENUM_U16                      eNvimTempId;
-    VOS_UINT32                          ulTempLen;
-    VOS_UINT32                          ulRst;
-    VOS_UINT8*                          pNvTemp;
-    VOS_UINT16                          usLength;
-    MODEM_ID_ENUM_UINT16                enModemId;
-    VOS_UINT32                          ulRet;
-
-    enModemId = MODEM_ID_0;
-    ulTempLen = 0;
-
-    ulRet = AT_GetModemIdFromClient(ucIndex, &enModemId);
-    if (VOS_OK != ulRet)
-    {
-        AT_ERR_LOG("At_SetCgsnPara: Get modem id fail.");
-        return AT_ERROR;
-    }
-
-    /* 参数不正确*/
-    if (!(((0 == gastAtParaList[0].ulParaValue) && (2 == gucAtParaIndex))
-       || ((1 == gastAtParaList[0].ulParaValue) && (3 == gucAtParaIndex))))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /*第二个参数为NV项ID*/
-    eNvimTempId = (NV_ID_ENUM_U16)gastAtParaList[1].ulParaValue;
-
-    /*第一个参数为0表示读NV项值，为1表示写NV项*/
-    if (0 == gastAtParaList[0].ulParaValue)
-    {
-        (VOS_VOID)TAF_ACORE_NV_GET_LENGTH(eNvimTempId, &ulTempLen);
-        pNvTemp = (VOS_UINT8 *)PS_MEM_ALLOC(I0_WUEPS_PID_TAF, ulTempLen);
-
-        if (VOS_NULL_PTR == pNvTemp)
-        {
-            AT_ERR_LOG("AT_SetNvimPara:ERROR:ALLOC MEMORY FAIL.");
-            return AT_ERROR;
-        }
-        ulRst = AT_ReadValueFromNvim(eNvimTempId, pNvTemp, ulTempLen, enModemId);
-        if (AT_OK == ulRst )
-        {
-            usLength = 0;
-            usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR *)pgucAtSndCodeAddr,(TAF_CHAR *)pgucAtSndCodeAddr + usLength,"%s",gaucAtCrLf);
-            usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR *)pgucAtSndCodeAddr,(TAF_CHAR *)pgucAtSndCodeAddr + usLength,"^NVSTUB:");
-            usLength += (TAF_UINT16)At_HexString2AsciiNumPrint(AT_CMD_MAX_LEN,
-                                                                 (TAF_INT8 *)pgucAtSndCodeAddr,
-                                                                 pgucAtSndCodeAddr + usLength,
-                                                                 pNvTemp,
-                                                                 (VOS_UINT16)ulTempLen);
-
-            usLength += (TAF_UINT16)At_sprintf(AT_CMD_MAX_LEN,(TAF_CHAR *)pgucAtSndCodeAddr,(TAF_CHAR *)pgucAtSndCodeAddr + usLength,"%s",gaucAtCrLf);
-            At_SendResultData(ucIndex,pgucAtSndCodeAddr,usLength);
-            ulRst = AT_SUCCESS;
-        }
-
-        /* 增加内存释放 */
-        PS_MEM_FREE(I0_WUEPS_PID_TAF, pNvTemp);
-        return ulRst;
-    }
-    else
-    {
-        if(AT_FAILURE == At_AsciiNum2HexString(gastAtParaList[2].aucPara,
-                                              &gastAtParaList[2].usParaLen))
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-
-        if (NV_OK !=  TAF_ACORE_NV_WRITE_OLD(enModemId, eNvimTempId, gastAtParaList[2].aucPara, gastAtParaList[2].usParaLen))
-        {
-             AT_WARN_LOG("AT_SetNvimPara():WARNING:Invoke NVIM Write function falied");
-             return AT_ERROR;
-        }
-
-        return AT_OK;
-    }
-}
-
-
-VOS_UINT32 AT_SetPidReinitPara ( VOS_UINT8 ucIndex )
-{
-    return AT_OK;
-}
-
-
-VOS_UINT32 AT_CheckUSIMPara(VOS_VOID)
-{
-    /* 参数检查 */
-    if ((0 == gastAtParaList[0].usParaLen) || (0 == gastAtParaList[1].usParaLen))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数过多 */
-    if (gucAtParaIndex > 4)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (AT_FAILURE == At_AsciiNum2HexString(gastAtParaList[1].aucPara, &gastAtParaList[1].usParaLen))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    return AT_SUCCESS;
-}
-
-
-TAF_UINT32 AT_SetUSIMPara(TAF_UINT8 ucIndex)
-{
-    USIMM_STK_COMMAND_DETAILS_STRU      stCMDDetail;
-    VOS_UINT8                           ucRecordNum;
-    USIMM_RESET_INFO_STRU               stRstInfo;
-    USIMM_UPDATEFILE_REQ_STRU          *pstMsg          = VOS_NULL_PTR;
-    USIMM_STKREFRESH_REQ_STRU          *pstRefreshMsg   = VOS_NULL_PTR;
-    VOS_UINT32                          ulPathLength;
-    VOS_UINT32                          ulMsgLength;
-    VOS_CHAR                           *pucFilePathStr  = VOS_NULL_PTR;
-    USIMM_DEF_FILEID_ENUM_UINT32        enFileId;
-    VOS_UINT32                          i;
-    VOS_UINT8                           ucFoundFlag;
-    USIMM_CARDAPP_ENUM_UINT32           enAppType;
-    VOS_UINT16                          enModemId;
-    VOS_UINT32                          ulResult;
-
-    ulPathLength                        = 0;
-    ulMsgLength                         = 0;
-
-    ucRecordNum = 0;
-    enAppType   = USIMM_GUTL_APP;
-    enModemId  = MODEM_ID_0;
-    AT_GetModemIdFromClient(ucIndex, &enModemId);
-
-    ulResult = AT_CheckUSIMPara();
-    if (AT_SUCCESS != ulResult)
-    {
-        return ulResult;
-    }
-
-    if (3 == gucAtParaIndex)
-    {
-        ucRecordNum = gastAtParaList[2].ulParaValue;
-    }
-
-    if (4 == gucAtParaIndex)
-    {
-        ucRecordNum = gastAtParaList[2].ulParaValue;
-
-        enAppType = (USIMM_CARDAPP_ENUM_UINT32)gastAtParaList[3].ulParaValue;
-    }
-
-    /* 当读到AT&T & DCM的定制需求更新0x4F36和0x4F34文件时，要设置enAppType */
-    /* 文件Id转文件路径 */
-    ucFoundFlag = VOS_FALSE;
-
-    if (USIMM_GUTL_APP == enAppType)
-    {
-        for (i = 0; i < g_aenAtUsimFileNumToIdTabLen; i++)
-        {
-            if (gastAtParaList[0].ulParaValue == g_aenAtUsimFileNumToIdTab[i].ulFileNum)
-            {
-                enFileId    = g_aenAtUsimFileNumToIdTab[i].enFileId;
-
-                ucFoundFlag =  VOS_TRUE;
-                break;
-            }
-        }
-    }
-
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
-    if (USIMM_CDMA_APP == enAppType)
-    {
-        for (i = 0; i < g_aenAtCsimFileNumToIdTabLen; i++)
-        {
-            if (gastAtParaList[0].ulParaValue == g_aenAtCsimFileNumToIdTab[i].ulFileNum)
-            {
-                enFileId    = g_aenAtCsimFileNumToIdTab[i].enFileId;
-
-                ucFoundFlag =  VOS_TRUE;
-                break;
-            }
-        }
-    }
-#endif
-
-
-    if ( VOS_FALSE == ucFoundFlag )
-    {
-        return AT_ERROR;
-    }
-
-    if (VOS_OK != USIMM_ChangeDefFileToPath(enFileId, &pucFilePathStr))
-    {
-        return AT_ERROR;
-    }
-
-    /* 文件路径长度保护 */
-    ulPathLength = VOS_StrLen(pucFilePathStr);
-    if (0 == ulPathLength)
-    {
-        return AT_ERROR;
-    }
-
-    ulMsgLength = (sizeof(USIMM_UPDATEFILE_REQ_STRU) - VOS_MSG_HEAD_LENGTH)
-            + (gastAtParaList[1].usParaLen - 3 * sizeof(VOS_UINT8));
-
-    if (ulMsgLength < (sizeof(USIMM_UPDATEFILE_REQ_STRU) - VOS_MSG_HEAD_LENGTH))
-    {
-        ulMsgLength = sizeof(USIMM_UPDATEFILE_REQ_STRU) - VOS_MSG_HEAD_LENGTH;
-    }
-
-    pstMsg = (USIMM_UPDATEFILE_REQ_STRU *)PS_ALLOC_MSG(WUEPS_PID_AT, ulMsgLength);
-    if (VOS_NULL_PTR == pstMsg)
-    {
-        return AT_ERROR;
-    }
-
-    TAF_MEM_SET_S(pstMsg, ulMsgLength + VOS_MSG_HEAD_LENGTH, 0x00, ulMsgLength + VOS_MSG_HEAD_LENGTH);
-
-    pstMsg->stMsgHeader.ulSenderCpuId   = VOS_LOCAL_CPUID;
-    pstMsg->stMsgHeader.ulSenderPid     = WUEPS_PID_AT;
-    pstMsg->stMsgHeader.ulReceiverCpuId = VOS_LOCAL_CPUID;
-    pstMsg->stMsgHeader.ulReceiverPid   = WUEPS_PID_USIM;
-    if (enModemId == MODEM_ID_1)
-    {
-        pstMsg->stMsgHeader.ulReceiverPid   = I1_WUEPS_PID_USIM;
-    }
-
-    pstMsg->stMsgHeader.ulLength        = ulMsgLength;
-    pstMsg->stMsgHeader.enMsgName       = USIMM_UPDATEFILE_REQ;
-    pstMsg->stMsgHeader.enAppType       = enAppType;
-    pstMsg->stMsgHeader.ulSendPara      = 0;
-    pstMsg->stFilePath.ulPathLen        = ulPathLength;
-    TAF_MEM_CPY_S(pstMsg->stFilePath.acPath, sizeof(pstMsg->stFilePath.acPath), pucFilePathStr, pstMsg->stFilePath.ulPathLen + 1);
-    pstMsg->usDataLen                   = gastAtParaList[1].usParaLen;
-    pstMsg->ucRecordNum                 = ucRecordNum;
-    TAF_MEM_CPY_S(pstMsg->aucContent, gastAtParaList[1].usParaLen, gastAtParaList[1].aucPara, gastAtParaList[1].usParaLen);
-
-    /* 调用VOS发送原语 */
-    if (VOS_OK != PS_SEND_MSG(WUEPS_PID_AT, pstMsg))
-    {
-        return AT_ERROR;
-    }
-
-    if (0x6F07 == gastAtParaList[0].ulParaValue)
-    {
-       TAF_MEM_SET_S(&stCMDDetail, sizeof(stCMDDetail), 0x00, sizeof(USIMM_STK_COMMAND_DETAILS_STRU));
-
-        stCMDDetail.ucCommandQua    = USIMM_RESET;
-        stCMDDetail.ucCommandNum    = 1;
-        stCMDDetail.ucCommandType   = 1;
-
-        TAF_MEM_SET_S(&stRstInfo, sizeof(stRstInfo), 0x00, sizeof(stRstInfo));
-
-        /* 分配消息内存并初始化 */
-        ulMsgLength = sizeof(USIMM_STKREFRESH_REQ_STRU) - VOS_MSG_HEAD_LENGTH;
-        pstRefreshMsg = (USIMM_STKREFRESH_REQ_STRU *)PS_ALLOC_MSG(WUEPS_PID_AT, ulMsgLength);
-        if (VOS_NULL_PTR == pstRefreshMsg)
-        {
-            return AT_ERROR;
-        }
-
-        TAF_MEM_SET_S(pstRefreshMsg, sizeof(USIMM_STKREFRESH_REQ_STRU), 0x00, sizeof(USIMM_STKREFRESH_REQ_STRU));
-
-        /* 填写消息头 */
-        pstRefreshMsg->stMsgHeader.ulSenderCpuId   = VOS_LOCAL_CPUID;
-        pstRefreshMsg->stMsgHeader.ulSenderPid     = WUEPS_PID_AT;
-        pstRefreshMsg->stMsgHeader.ulReceiverCpuId = VOS_LOCAL_CPUID;
-        pstRefreshMsg->stMsgHeader.ulReceiverPid   = WUEPS_PID_USIM;
-        if (enModemId == MODEM_ID_1)
-        {
-            pstRefreshMsg->stMsgHeader.ulReceiverPid   = I1_WUEPS_PID_USIM;
-        }
-        pstRefreshMsg->stMsgHeader.ulLength        = ulMsgLength;
-
-        pstRefreshMsg->stMsgHeader.enMsgName       = USIMM_STKREFRESH_REQ;
-        pstRefreshMsg->stMsgHeader.ulSendPara      = 0;
-        pstRefreshMsg->stMsgHeader.enAppType       = USIMM_GUTL_APP;
-
-        /* 填写消息体 */
-        pstRefreshMsg->ulCommandNum                = stCMDDetail.ucCommandNum;
-        pstRefreshMsg->ulCommandType               = stCMDDetail.ucCommandType;
-        pstRefreshMsg->enRefreshType               = stCMDDetail.ucCommandQua;
-
-        /* 调用VOS发送原语 */
-        if (VOS_OK != PS_SEND_MSG(WUEPS_PID_AT, pstRefreshMsg))
-        {
-            return AT_ERROR;
-        }
-    }
-
-
-
-    return AT_OK;
-}
-
-TAF_UINT32 AT_SetSIMPara(TAF_UINT8 ucIndex)
-{
-    USIMM_STK_COMMAND_DETAILS_STRU      stCMDDetail;
-    VOS_UINT8                           ucRecordNum;
-    USIMM_RESET_INFO_STRU               stRstInfo;
-    USIMM_UPDATEFILE_REQ_STRU          *pstMsg          = VOS_NULL_PTR;
-    USIMM_STKREFRESH_REQ_STRU          *pstRefreshMsg   = VOS_NULL_PTR;
-    VOS_UINT32                          ulPathLength;
-    VOS_UINT32                          ulMsgLength;
-    VOS_CHAR                           *pucFilePathStr  = VOS_NULL_PTR;
-    USIMM_DEF_FILEID_ENUM_UINT32        enFileId;
-    VOS_UINT32                          i;
-    VOS_UINT8                           ucFoundFlag;
-
-    ulPathLength                        = 0;
-    ulMsgLength                         = 0;
-
-    ucRecordNum = 0;
-
-    /* 参数检查 */
-    if ((0 == gastAtParaList[0].usParaLen) || (0 == gastAtParaList[1].usParaLen))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数过多 */
-    if (gucAtParaIndex > 3)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (AT_FAILURE == At_AsciiNum2HexString(gastAtParaList[1].aucPara, &gastAtParaList[1].usParaLen))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (3 == gucAtParaIndex)
-    {
-        ucRecordNum = gastAtParaList[2].ulParaValue;
-    }
-
-    /* 当读到AT&T & DCM的定制需求更新0x4F36和0x4F34文件时，要设置enAppType */
-    /* 文件Id转文件路径 */
-    ucFoundFlag = VOS_FALSE;
-    for (i = 0; i < g_aenAtSimFileNumToIdTabLen; i++)
-    {
-        if (gastAtParaList[0].ulParaValue == g_aenAtSimFileNumToIdTab[i].ulFileNum)
-        {
-            enFileId    = g_aenAtSimFileNumToIdTab[i].enFileId;
-            ucFoundFlag =  VOS_TRUE;
-            break;
-        }
-    }
-
-    if ( VOS_FALSE == ucFoundFlag )
-    {
-        return AT_ERROR;
-    }
-
-    if (VOS_OK != USIMM_ChangeDefFileToPath(enFileId, &pucFilePathStr))
-    {
-        return AT_ERROR;
-    }
-
-    /* 文件路径长度保护 */
-    ulPathLength = VOS_StrLen(pucFilePathStr);
-    if (0 == ulPathLength)
-    {
-        return AT_ERROR;
-    }
-
-    ulMsgLength = (sizeof(USIMM_UPDATEFILE_REQ_STRU) - VOS_MSG_HEAD_LENGTH)
-            + (gastAtParaList[1].usParaLen - 3 * sizeof(VOS_UINT8));
-
-    if (ulMsgLength < (sizeof(USIMM_UPDATEFILE_REQ_STRU) - VOS_MSG_HEAD_LENGTH))
-    {
-        ulMsgLength = (sizeof(USIMM_UPDATEFILE_REQ_STRU) - VOS_MSG_HEAD_LENGTH);
-    }
-
-    pstMsg = (USIMM_UPDATEFILE_REQ_STRU *)PS_ALLOC_MSG(WUEPS_PID_AT, ulMsgLength);
-    if (VOS_NULL_PTR == pstMsg)
-    {
-        return AT_ERROR;
-    }
-
-    TAF_MEM_SET_S(pstMsg, ulMsgLength + VOS_MSG_HEAD_LENGTH, 0x00, ulMsgLength + VOS_MSG_HEAD_LENGTH);
-
-    pstMsg->stMsgHeader.ulSenderCpuId   = VOS_LOCAL_CPUID;
-    pstMsg->stMsgHeader.ulSenderPid     = WUEPS_PID_AT;
-    pstMsg->stMsgHeader.ulReceiverCpuId = VOS_LOCAL_CPUID;
-    pstMsg->stMsgHeader.ulReceiverPid   = WUEPS_PID_USIM;
-    pstMsg->stMsgHeader.ulLength        = ulMsgLength;
-    pstMsg->stMsgHeader.enMsgName       = USIMM_UPDATEFILE_REQ;
-    pstMsg->stMsgHeader.enAppType       = USIMM_GUTL_APP;
-    pstMsg->stMsgHeader.ulSendPara      = 0;
-    pstMsg->stFilePath.ulPathLen        = ulPathLength;
-    TAF_MEM_CPY_S(pstMsg->stFilePath.acPath, sizeof(pstMsg->stFilePath.acPath), pucFilePathStr, pstMsg->stFilePath.ulPathLen + 1);
-    pstMsg->usDataLen                   = gastAtParaList[1].usParaLen;
-    pstMsg->ucRecordNum                 = ucRecordNum;
-    TAF_MEM_CPY_S(pstMsg->aucContent, gastAtParaList[1].usParaLen, gastAtParaList[1].aucPara, gastAtParaList[1].usParaLen);
-
-    /* 调用VOS发送原语 */
-    if (VOS_OK != PS_SEND_MSG(WUEPS_PID_AT, pstMsg))
-    {
-        return AT_ERROR;
-    }
-
-    if (0x6F07 == gastAtParaList[0].ulParaValue)
-    {
-        TAF_MEM_SET_S(&stCMDDetail, sizeof(stCMDDetail), 0x00, sizeof(USIMM_STK_COMMAND_DETAILS_STRU));
-
-        stCMDDetail.ucCommandQua    = USIMM_RESET;
-        stCMDDetail.ucCommandNum    = 1;
-        stCMDDetail.ucCommandType   = 1;
-
-        TAF_MEM_SET_S(&stRstInfo, sizeof(stRstInfo), 0x00, sizeof(stRstInfo));
-
-        /* 分配消息内存并初始化 */
-        ulMsgLength = sizeof(USIMM_STKREFRESH_REQ_STRU) - VOS_MSG_HEAD_LENGTH;
-        pstRefreshMsg = (USIMM_STKREFRESH_REQ_STRU *)PS_ALLOC_MSG(WUEPS_PID_AT, ulMsgLength);
-        if (VOS_NULL_PTR == pstRefreshMsg)
-        {
-            return AT_ERROR;
-        }
-
-        TAF_MEM_SET_S(pstRefreshMsg, sizeof(USIMM_STKREFRESH_REQ_STRU), 0x00, sizeof(USIMM_STKREFRESH_REQ_STRU));
-
-        /* 填写消息头 */
-        pstRefreshMsg->stMsgHeader.ulSenderCpuId   = VOS_LOCAL_CPUID;
-        pstRefreshMsg->stMsgHeader.ulSenderPid     = WUEPS_PID_AT;
-        pstRefreshMsg->stMsgHeader.ulReceiverCpuId = VOS_LOCAL_CPUID;
-        pstRefreshMsg->stMsgHeader.ulReceiverPid   = WUEPS_PID_USIM;
-        pstRefreshMsg->stMsgHeader.ulLength        = ulMsgLength;
-
-        pstRefreshMsg->stMsgHeader.enMsgName       = USIMM_STKREFRESH_REQ;
-        pstRefreshMsg->stMsgHeader.ulSendPara      = 0;
-        pstRefreshMsg->stMsgHeader.enAppType       = USIMM_GUTL_APP;
-
-        /* 填写消息体 */
-        pstRefreshMsg->ulCommandNum                = stCMDDetail.ucCommandNum;
-        pstRefreshMsg->ulCommandType               = stCMDDetail.ucCommandType;
-        pstRefreshMsg->enRefreshType               = stCMDDetail.ucCommandQua;
-
-        /* 调用VOS发送原语 */
-        if (VOS_OK != PS_SEND_MSG(WUEPS_PID_AT, pstRefreshMsg))
-        {
-            return AT_ERROR;
-        }
-    }
-
-
-
-    return AT_OK;
-}
-
-
-/* AT_SetSTKParaStub无调用点，删除 */
-
-
-VOS_UINT32 AT_RefreshUSIMPara(VOS_UINT8 ucIndex)
-{
-    USIMM_STKREFRESH_IND_STRU          *pstMmcUsimRefreshMsg = VOS_NULL_PTR;
-    USIMM_STKREFRESH_IND_STRU          *pstMmaUsimRefreshMsg = VOS_NULL_PTR;
-    VOS_UINT32                          ulRslt;
-
-    /* 参数检查 */
-    if ((0 == gastAtParaList[0].usParaLen) || (0 == gastAtParaList[1].usParaLen))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数过多 */
-    if (gucAtParaIndex > 2)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (AT_FAILURE == At_AsciiNum2HexString(gastAtParaList[1].aucPara, &gastAtParaList[1].usParaLen))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 申请内存  */
-    pstMmcUsimRefreshMsg = (USIMM_STKREFRESH_IND_STRU *)PS_ALLOC_MSG(WUEPS_PID_AT,
-                                               sizeof(USIMM_STKREFRESH_IND_STRU) - VOS_MSG_HEAD_LENGTH);
-
-    if ( VOS_NULL_PTR == pstMmcUsimRefreshMsg )
-    {
-        /* 内存申请失败 */
-        AT_ERR_LOG("AT_RefreshUSIMPara:ERROR: Memory Alloc Error for pstMsg");
-        return VOS_ERR;
-    }
-
-    /* 模拟USIM给MMC模块发送消息 */
-    pstMmcUsimRefreshMsg->stIndHdr.enMsgName        = USIMM_STKREFRESH_IND;
-    pstMmcUsimRefreshMsg->astEfId[0].usFileId       = gastAtParaList[0].ulParaValue;
-    pstMmcUsimRefreshMsg->usEfNum                   = 1;
-    pstMmcUsimRefreshMsg->enRefreshType             = USIMM_REFRESH_FILE_LIST;
-
-    /* 填写相关参数 */
-    pstMmcUsimRefreshMsg->stIndHdr.ulSenderPid      = MAPS_PIH_PID;
-    pstMmcUsimRefreshMsg->stIndHdr.ulReceiverPid    = AT_GetDestPid(ucIndex, I0_WUEPS_PID_MMC);
-    pstMmcUsimRefreshMsg->stIndHdr.ulLength             = sizeof(USIMM_STKREFRESH_IND_STRU) - VOS_MSG_HEAD_LENGTH;
-
-    /* 调用VOS发送原语 */
-    ulRslt = PS_SEND_MSG(WUEPS_PID_AT, pstMmcUsimRefreshMsg);
-
-    if ( VOS_OK != ulRslt )
-    {
-        AT_ERR_LOG("AT_RefreshUSIMPara:ERROR:PS_SEND_MSG ");
-        return VOS_ERR;
-    }
-
-    /* 申请内存  */
-    pstMmaUsimRefreshMsg = (USIMM_STKREFRESH_IND_STRU *)PS_ALLOC_MSG(WUEPS_PID_AT,
-                                               sizeof(USIMM_STKREFRESH_IND_STRU) - VOS_MSG_HEAD_LENGTH);
-
-    if ( VOS_NULL_PTR == pstMmaUsimRefreshMsg )
-    {
-        /* 内存申请失败 */
-        AT_ERR_LOG("AT_RefreshUSIMPara:ERROR: Memory Alloc Error for pstMsg");
-        return VOS_ERR;
-    }
-
-    /* 模拟USIM给MMA模块发送消息 */
-    pstMmaUsimRefreshMsg->stIndHdr.enMsgName        = USIMM_STKREFRESH_IND;
-    pstMmaUsimRefreshMsg->astEfId[0].usFileId       = gastAtParaList[0].ulParaValue;
-    pstMmaUsimRefreshMsg->usEfNum                   = 1;
-    pstMmaUsimRefreshMsg->enRefreshType             = USIMM_REFRESH_FILE_LIST;
-
-    /* 填写相关参数 */
-    pstMmaUsimRefreshMsg->stIndHdr.ulSenderPid      = MAPS_PIH_PID;
-    pstMmaUsimRefreshMsg->stIndHdr.ulReceiverPid    = AT_GetDestPid(ucIndex, I0_WUEPS_PID_MMA);
-    pstMmaUsimRefreshMsg->stIndHdr.ulLength         = sizeof(USIMM_STKREFRESH_IND_STRU) - VOS_MSG_HEAD_LENGTH;
-
-
-    /* 调用VOS发送原语 */
-    ulRslt = PS_SEND_MSG(WUEPS_PID_AT, pstMmaUsimRefreshMsg);
-
-    if ( VOS_OK != ulRslt )
-    {
-        AT_ERR_LOG("AT_RefreshUSIMPara:ERROR:PS_SEND_MSG ");
-        return VOS_ERR;
-    }
-
-    return AT_OK;
-}
-#endif
 
 
 /* begin V7R1 PhaseI Modify */
@@ -25537,38 +22263,6 @@ VOS_UINT32 At_SetSystemInfoEx(TAF_UINT8 ucIndex)
 }
 /* end V7R1 PhaseI Modify */
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 AT_SetGodloadPara( VOS_UINT8 ucIndex )
-{
-    VOS_UINT32                          ulRet;
-
-    /* 参数检查 */
-    if (0 != gucAtParaIndex)
-    {
-        AT_WARN_LOG("AT_SetGodloadPara: too many parameters.");
-        return AT_ERROR;
-    }
-
-    /* 发消息到C核指示使单板进入下载模式 */
-    ulRet = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   gastAtClientTab[ucIndex].opId,
-                                   DRV_AGENT_GODLOAD_SET_REQ,
-                                   VOS_NULL_PTR,
-                                   0,
-                                   I0_WUEPS_PID_DRV_AGENT);
-    if (TAF_SUCCESS != ulRet)
-    {
-        AT_WARN_LOG("AT_SetApbatlvlPara: AT_FillAndSndAppReqMsg fail.");
-        return AT_ERROR;
-    }
-
-    /* 设置AT模块实体的状态为等待异步返回 */
-    gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_GODLOAD_SET;
-    return AT_WAIT_ASYNC_RETURN;
-
-}
-#endif
 
 VOS_UINT32 At_SetResetPara( VOS_UINT8 ucIndex  )
 {
@@ -25747,22 +22441,18 @@ VOS_UINT32 AT_SetWiFiEnablePara(VOS_UINT8 ucIndex)
     }
     else
     {
-#if(FEATURE_ON == FEATURE_LTE)
 
         VOS_TaskDelay(5500);    /* 按底软要求需要5.5s秒延迟 */
 
-#endif
 
         if ( VOS_OK != WIFI_POWER_SHUTDOWN())
         {
             return AT_ERROR;
         }
 
-#if(FEATURE_ON == FEATURE_LTE)
 
         VOS_TaskDelay(1000);    /* 按底软要求需要1秒延迟 */
 
-#endif
 
 
         /*测试模式打开WIFI*/
@@ -25927,11 +22617,6 @@ VOS_UINT32 AT_SetWiFiRatePara(VOS_UINT8 ucIndex)
     VOS_CHAR                            acCmd[200]={0};
     VOS_UINT32                          ulWifiRate;
 
-#if(FEATURE_ON == FEATURE_LTE)
-#else
-    VOS_UINT32                          ulNRate;
-    VOS_UINT32                          ulRslt;
-#endif
     /* 参数过多*/
     if (gucAtParaIndex > 1)
     {
@@ -25949,36 +22634,15 @@ VOS_UINT32 AT_SetWiFiRatePara(VOS_UINT8 ucIndex)
 
     if (AT_WIFI_SUPPORT_MODE_N == g_ulWifiMode)         /*11 n*/
     {
-#if(FEATURE_ON == FEATURE_LTE)
         VOS_sprintf_s(acCmd, sizeof(acCmd), "wl nrate -m %d", 7);
-#else
-        ulRslt = AT_TransferWifiRate(gastAtParaList[0].ulParaValue, &ulNRate);
-
-        if (VOS_OK == ulRslt)
-        {
-            VOS_sprintf_s(acCmd, sizeof(acCmd), "wl nrate -m %d", ulNRate);
-        }
-        else
-        {
-            return AT_ERROR;
-        }
-#endif
     }
     else if (AT_WIFI_SUPPORT_MODE_G == g_ulWifiMode )    /*11 g*/
     {
-#if(FEATURE_ON == FEATURE_LTE)
         VOS_sprintf_s(acCmd, sizeof(acCmd), "wl bg_rate %d", ulWifiRate);
-#else
-        VOS_sprintf_s(acCmd, sizeof(acCmd), "wl rate %d", ulWifiRate);
-#endif
     }
     else if(AT_WIFI_SUPPORT_MODE_B == g_ulWifiMode)    /*11 b*/
     {
-#if(FEATURE_ON == FEATURE_LTE)
         VOS_sprintf_s(acCmd, sizeof(acCmd), "wl bg_rate %d", ulWifiRate);
-#else
-        VOS_sprintf_s(acCmd, sizeof(acCmd), "wl rate %d", ulWifiRate);
-#endif
     }
     else
     {
@@ -26038,9 +22702,7 @@ VOS_UINT32 AT_SetWiFiPowerPara(VOS_UINT8 ucIndex)
 
 VOS_UINT32 AT_SetWiFiTxPara(VOS_UINT8 ucIndex)
 {
-#if(FEATURE_ON == FEATURE_LTE)
     VOS_CHAR                            acCmd[200]={0};
-#endif
 
     if (BSP_MODULE_UNSUPPORT == mdrv_misc_support_check(BSP_MODULE_TYPE_WIFI) )
     {
@@ -26053,7 +22715,6 @@ VOS_UINT32 AT_SetWiFiTxPara(VOS_UINT8 ucIndex)
     {
         return  AT_TOO_MANY_PARA;
     }
-#if(FEATURE_ON == FEATURE_LTE)
     if(g_ulWifiMode == AT_WIFI_SUPPORT_MODE_CW)
     {
         if (AT_WIFI_TX_OFF == gastAtParaList[0].ulParaValue)
@@ -26088,7 +22749,6 @@ VOS_UINT32 AT_SetWiFiTxPara(VOS_UINT8 ucIndex)
     }
     else
     {
-#endif
     /* 参数为零关闭发射机，参数为1打开发射机 */
     if (AT_WIFI_TX_OFF == gastAtParaList[0].ulParaValue)
     {
@@ -26111,13 +22771,9 @@ VOS_UINT32 AT_SetWiFiTxPara(VOS_UINT8 ucIndex)
 
         WIFI_TEST_CMD("wl pkteng_start 00:11:22:33:44:55 tx 100 1500 0");
 
-#if(FEATURE_ON == FEATURE_LTE)
         WIFI_TEST_CMD("wl phy_forcecal 1");
-#endif
     }
-#if(FEATURE_ON == FEATURE_LTE)
     }
-#endif
     return AT_OK;
 }
 
@@ -26687,7 +23343,6 @@ VOS_VOID AT_PrintWifiPowerInfo(
 
 VOS_UINT32 AT_SetWifiInfoPara(VOS_UINT8 ucIndex)
 {
-#if (FEATURE_ON == FEATURE_LTE)
     VOS_UINT16                          usLen;
     const VOS_CHAR * cString = "1,2,3,4,5,6,7,8,9,10,11,12,13";
 
@@ -26740,51 +23395,6 @@ VOS_UINT32 AT_SetWifiInfoPara(VOS_UINT8 ucIndex)
     gstAtSendData.usBufLen = usLen;
 
     return AT_OK;
-#else
-
-    AT_WIFI_INFO_STRU                   stWifiInfo = {0};
-
-    if (BSP_MODULE_UNSUPPORT == mdrv_misc_support_check(BSP_MODULE_TYPE_WIFI) )
-    {
-        return AT_ERROR;
-    }
-
-    /* 初始化 */
-    gstAtSendData.usBufLen              = 0;
-
-    /* 参数过多 */
-    if (gucAtParaIndex > 1)
-    {
-        return AT_ERROR;
-    }
-
-    /*参数长度过长*/
-    if (1 != gastAtParaList[0].usParaLen)
-    {
-        return  AT_ERROR;
-    }
-
-    /*读取WIFI INFO对应的NV项*/
-    if (VOS_OK != TAF_ACORE_NV_READ(MODEM_ID_0, en_NV_Item_WIFI_INFO, &stWifiInfo, sizeof(AT_WIFI_INFO_STRU)))
-    {
-        AT_WARN_LOG("AT_SetWifiInfoPara:READ NV ERROR!");
-        return AT_ERROR;
-    }
-
-    /* 查询支持的信道号或期望功率 */
-    if (0 == gastAtParaList[0].ulParaValue)
-    {
-        /* 输出各制式支持的信道号 */
-        AT_PrintWifiChannelInfo(&stWifiInfo, ucIndex);
-    }
-    else
-    {
-        /* 输出各制式的期望功率 */
-        AT_PrintWifiPowerInfo(&stWifiInfo, ucIndex);
-    }
-
-    return AT_OK;
-#endif
 }
 
 
@@ -27031,36 +23641,6 @@ VOS_UINT32 AT_SetWebPwdPara(VOS_UINT8 ucIndex)
     return AT_OK;
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32  AT_SetSdloadPara(VOS_UINT8 ucIndex)
-{
-
-#if (FEATURE_ON == FEATURE_LTE)
-    return AT_SetLteSdloadPara(ucIndex);
-#else
-    VOS_UINT32                          ulRet;
-
-    /* 1. 发消息到C核指示使单板进入下载模式 */
-    ulRet = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   gastAtClientTab[ucIndex].opId,
-                                   DRV_AGENT_SDLOAD_SET_REQ,
-                                   VOS_NULL_PTR,
-                                   0,
-                                   I0_WUEPS_PID_DRV_AGENT);
-    if (TAF_SUCCESS != ulRet)
-    {
-        AT_WARN_LOG("AT_SetSdloadPara: MN_FillAndSndAppReqMsg fail.");
-        return AT_ERROR;
-    }
-
-    /* 2. 设置AT模块实体的状态为等待异步返回 */
-    gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_SDLOAD_SET;
-    return AT_WAIT_ASYNC_RETURN;
-
-#endif
-}
-#endif
 
 
 VOS_UINT32 AT_SetProdNamePara(VOS_UINT8 ucIndex)
@@ -27277,9 +23857,7 @@ VOS_UINT32 AT_SetFastDormPara(VOS_UINT8 ucIndex)
     stFastDormPara.enFastDormOperationType = gastAtParaList[0].ulParaValue;
     stFastDormPara.ulTimeLen = gastAtParaList[1].ulParaValue;
 
-#if (FEATURE_ON == FEATURE_LTE)
     AT_SetLFastDormPara(ucIndex);
-#endif
 
     /* 在AT融合版本上，新增的接口为直接发消息，因此这里直接发送消息给RABM */
     ulRslt = AT_SndSetFastDorm(gastAtClientTab[ucIndex].usClientId,
@@ -27294,736 +23872,7 @@ VOS_UINT32 AT_SetFastDormPara(VOS_UINT8 ucIndex)
     return AT_ERROR;
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
 
-VOS_UINT32 AT_SetMemInfoPara(VOS_UINT8 ucIndex)
-{
-    VOS_UINT32                          ulRet;
-
-    /* 参数检查 */
-    if( (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-     || (gucAtParaIndex > 1) )
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 发消息到C核获取 MEMINFO 信息, gastAtParaList[0].ulParaValue 中为查询的类型 */
-    ulRet = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                   gastAtClientTab[ucIndex].opId,
-                                   DRV_AGENT_MEMINFO_QRY_REQ,
-                                   &(gastAtParaList[0].ulParaValue),
-                                   sizeof(gastAtParaList[0].ulParaValue),
-                                   I0_WUEPS_PID_DRV_AGENT);
-    if (TAF_SUCCESS != ulRet)
-    {
-        AT_WARN_LOG("AT_QryMemInfoPara: AT_FillAndSndAppReqMsg fail.");
-        return AT_ERROR;
-    }
-
-    /* 设置AT模块实体的状态为等待异步返回 */
-    gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_MEMINFO_READ;
-    return AT_WAIT_ASYNC_RETURN;
-
-}
-#endif
-
-#if (VOS_WIN32 == VOS_OS_VER)
-
-VOS_UINT32  AT_SetRplmnStub( VOS_UINT8 ucIndex )
-{
-    TAF_PLMN_ID_STRU                    stPlmnId;
-    VOS_UINT32                          ulLai;
-    VOS_UINT32                          ulRac;
-
-
-    /* 参数不正确,
-    0:表示需要设置L的RPLMN
-    1:表示需要设置GU的RPLMN
-    */
-    if ( (0 != gastAtParaList[0].ulParaValue)
-      && (1 != gastAtParaList[0].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 需要设置PLMN ID的值 */
-    if ( (5 != gastAtParaList[1].usParaLen)
-       && (6 != gastAtParaList[1].usParaLen) )
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* Mcc */
-    if(AT_FAILURE == At_String2Hex(gastAtParaList[1].aucPara,3,&stPlmnId.Mcc))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-    /* Mnc */
-    if(AT_FAILURE == At_String2Hex(&gastAtParaList[1].aucPara[3],gastAtParaList[1].usParaLen-3,&stPlmnId.Mnc))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-    stPlmnId.Mcc |= 0xFFFFF000U;
-    stPlmnId.Mnc |= (0xFFFFFFFFU << ((gastAtParaList[1].usParaLen-3)*4));
-
-    /* lai */
-    ulLai = 0x0001;
-    if (4 == gastAtParaList[2].usParaLen)
-    {
-        if(AT_FAILURE == At_String2Hex(gastAtParaList[2].aucPara, 4, &ulLai))
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-    }
-
-    /*rac  */
-    ulRac = 0x01;
-    if (2 == gastAtParaList[3].usParaLen)
-    {
-        if(AT_FAILURE == At_String2Hex(gastAtParaList[3].aucPara, 2, &ulRac))
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-    }
-
-    /* 需要设置L的RPLMN */
-    if ( 0 == gastAtParaList[0].ulParaValue )
-    {
-        NAS_SetLteRplmnId(&stPlmnId, ulLai,ulRac);
-    }
-    else
-    {
-    }
-
-    return AT_OK;
-}
-
-
-VOS_UINT32  AT_SetCsgStub( VOS_UINT8 ucIndex )
-{
-    /* 第一个参数为设置UE是否支持CSG功能，0:不支持csg功能；1:支持csg功能 */
-    if(AT_FAILURE == At_String2Hex(gastAtParaList[0].aucPara,gastAtParaList[0].usParaLen,&gastAtParaList[0].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if ( (0 != gastAtParaList[0].ulParaValue)
-      && (1 != gastAtParaList[0].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 第二个参数设置EFAD文件中csg display indicator的值，0:都上报；1:只上报operator csg list中csg id */
-    if(AT_FAILURE == At_String2Hex(gastAtParaList[1].aucPara,gastAtParaList[1].usParaLen,&gastAtParaList[1].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if ( (0 != gastAtParaList[1].ulParaValue)
-      && (1 != gastAtParaList[1].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 第3个参数csg list搜网是否仅上报operator csg list中的网络，0:都上报；1:只上报operator csg list中csg id */
-    if(AT_FAILURE == At_String2Hex(gastAtParaList[2].aucPara,gastAtParaList[2].usParaLen,&gastAtParaList[2].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if ( (0 != gastAtParaList[2].ulParaValue)
-      && (1 != gastAtParaList[2].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    NAS_SetCsgCfg(gastAtParaList[0].ulParaValue,gastAtParaList[1].ulParaValue,gastAtParaList[2].ulParaValue);
-
-    return AT_OK;
-}
-
-
-
-VOS_UINT32  AT_SetDamParaStub( VOS_UINT8 ucIndex )
-{
-    TAF_PLMN_ID_STRU                    stImsiPlmnList[16];
-    VOS_UINT8                           ucImsiPlmnNum;
-    TAF_PLMN_ID_STRU                    stDamPlmnList[16];
-    VOS_UINT8                           ucDamPlmnNum;
-    VOS_UINT8                           ucEnableLteTrigPlmnSearchFlag;
-    VOS_UINT8                           ucAddDamPlmnInDisabledPlmnList;
-    VOS_UINT8                           i;
-    VOS_UINT8                           ucParaIndex;
-    VOS_UINT32                          ulMcc;
-    VOS_UINT32                          ulMnc;
-    VOS_UINT8                           ucDamActiveFlg;
-
-    TAF_MEM_SET_S(&stImsiPlmnList, sizeof(stImsiPlmnList), 0x00, sizeof(stImsiPlmnList));
-    TAF_MEM_SET_S(&stDamPlmnList, sizeof(stDamPlmnList), 0x00, sizeof(stDamPlmnList));
-
-    /* 第一个参数为enable lte是否需要搜网，0为不需要；1为需要；
-       第二个参数为DAM网络disable lte后是否加入禁止接入技术网络列表中，0为不需要；1为需要；
-       第三个参数为imsi plmn list个数，如果个数为2，第四个参数和第五个参数为 imsi plmn id。
-       第六个参数为DAM plmn list 个数，如果个数为2，第七个参数和第8个参数为dam plmn id*/
-
-    /* 获取ucDamActiveFlg */
-    if (AT_FAILURE == At_String2Hex(gastAtParaList[0].aucPara,gastAtParaList[0].usParaLen,&gastAtParaList[0].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if ( (0 != gastAtParaList[0].ulParaValue)
-      && (1 != gastAtParaList[0].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    ucDamActiveFlg = gastAtParaList[0].ulParaValue;
-
-
-    /* 获取ucEnableLteTrigPlmnSearchFlag */
-    if (AT_FAILURE == At_String2Hex(gastAtParaList[1].aucPara,gastAtParaList[1].usParaLen,&gastAtParaList[1].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if ( (0 != gastAtParaList[1].ulParaValue)
-      && (1 != gastAtParaList[1].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    ucEnableLteTrigPlmnSearchFlag = gastAtParaList[1].ulParaValue;
-
-
-    /* 获取ucAddDamPlmnInDisabledPlmnList */
-    if(AT_FAILURE == At_String2Hex(gastAtParaList[2].aucPara,gastAtParaList[2].usParaLen,&gastAtParaList[2].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if ( (0 != gastAtParaList[2].ulParaValue)
-      && (1 != gastAtParaList[2].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    ucAddDamPlmnInDisabledPlmnList = gastAtParaList[2].ulParaValue;
-
-
-    /* 获取ucImsiPlmnNum */
-    if(AT_FAILURE == At_String2Hex(gastAtParaList[3].aucPara,gastAtParaList[3].usParaLen,&gastAtParaList[3].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (gastAtParaList[3].ulParaValue > 16)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    ucImsiPlmnNum = gastAtParaList[3].ulParaValue;
-    for (i = 1; i <= ucImsiPlmnNum; i++)
-    {
-        /* Mcc */
-        if(AT_FAILURE == At_String2Hex(gastAtParaList[3+i].aucPara,3,&ulMcc))
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-
-        stImsiPlmnList[i-1].Mcc = ulMcc;
-
-        /* Mnc */
-        if(AT_FAILURE == At_String2Hex(&gastAtParaList[3+i].aucPara[3],gastAtParaList[3+i].usParaLen-3,&ulMnc))
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-
-        stImsiPlmnList[i-1].Mnc = ulMnc;
-
-        stImsiPlmnList[i-1].Mcc |= 0xFFFFF000U;
-        stImsiPlmnList[i-1].Mnc |= (0xFFFFFFFFU << ((gastAtParaList[3+i].usParaLen-3)*4));
-    }
-
-    /* ucDamPlmnNum */
-    ucParaIndex = 3+ucImsiPlmnNum+1;
-    if(AT_FAILURE == At_String2Hex(gastAtParaList[ucParaIndex].aucPara,gastAtParaList[ucParaIndex].usParaLen,&gastAtParaList[ucParaIndex].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    ucDamPlmnNum = gastAtParaList[ucParaIndex].ulParaValue;
-
-    for (i = 1; i <= ucDamPlmnNum; i++)
-    {
-        /* Mcc */
-        if(AT_FAILURE == At_String2Hex(gastAtParaList[ucParaIndex+i].aucPara,3,&stDamPlmnList[i-1].Mcc))
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-
-        /* Mnc */
-        if(AT_FAILURE == At_String2Hex(&gastAtParaList[ucParaIndex+i].aucPara[3],gastAtParaList[ucParaIndex+i].usParaLen-3,&stDamPlmnList[i-1].Mnc))
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-
-        stDamPlmnList[i-1].Mcc |= 0xFFFFF000U;
-        stDamPlmnList[i-1].Mnc |= (0xFFFFFFFFU << ((gastAtParaList[ucParaIndex+i].usParaLen-3)*4));
-    }
-
-    NAS_SetDamCfg(ucDamActiveFlg,ucEnableLteTrigPlmnSearchFlag, ucAddDamPlmnInDisabledPlmnList,
-        ucImsiPlmnNum, stImsiPlmnList, ucDamPlmnNum, stDamPlmnList);
-    return AT_OK;
-}
-
-
-
-VOS_UINT32  AT_SetEonsParaStub( VOS_UINT8 ucIndex )
-{
-    VOS_UINT8                           ucNum;
-    VOS_UINT8                           aucEonsPrioType[4];
-    VOS_UINT8                           ucRefreshAllFileRestartFlag;
-
-    TAF_MEM_SET_S(&aucEonsPrioType, sizeof(aucEonsPrioType), 0x00, sizeof(aucEonsPrioType));
-
-    ucNum              = (VOS_UINT8)gastAtParaList[0].ulParaValue;
-    aucEonsPrioType[0] = (VOS_UINT8)gastAtParaList[1].ulParaValue;
-    aucEonsPrioType[1] = (VOS_UINT8)gastAtParaList[2].ulParaValue;
-    aucEonsPrioType[2] = (VOS_UINT8)gastAtParaList[3].ulParaValue;
-    aucEonsPrioType[3] = (VOS_UINT8)gastAtParaList[4].ulParaValue;
-    ucRefreshAllFileRestartFlag = (VOS_UINT8)gastAtParaList[5].ulParaValue;
-
-    NAS_SetEonsPara(ucNum, aucEonsPrioType,ucRefreshAllFileRestartFlag);
-
-    return AT_OK;
-}
-
-
-VOS_UINT32  AT_SetWildCardParaStub( VOS_UINT8 ucIndex )
-{
-    NAS_SetWildCardPara(gastAtParaList[0].aucPara[0]);
-
-    return AT_OK;
-}
-
-
-
-VOS_UINT32 AT_SetCsUnAvailPlmnStub( VOS_UINT8 ucIndex )
-{
-    TAF_PLMN_ID_STRU                    stPlmnId;
-
-
-    /* 参数不正确,
-    0:表示需要删除CS不可用网络
-    1:表示需要新增CS不可用网络
-    */
-    if ( (0 != gastAtParaList[0].ulParaValue)
-      && (1 != gastAtParaList[0].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (0 != gastAtParaList[0].ulParaValue)
-    {
-        /* 需要设置PLMN ID的值 */
-        if ( (5 != gastAtParaList[1].usParaLen)
-           && (6 != gastAtParaList[1].usParaLen) )
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-
-        /* Mcc */
-        if(AT_FAILURE == At_String2Hex(gastAtParaList[1].aucPara,3,&stPlmnId.Mcc))
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-        /* Mnc */
-        if(AT_FAILURE == At_String2Hex(&gastAtParaList[1].aucPara[3],gastAtParaList[1].usParaLen-3,&stPlmnId.Mnc))
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-        stPlmnId.Mcc |= 0xFFFFF000U;
-        stPlmnId.Mnc |= (0xFFFFFFFFU << ((gastAtParaList[1].usParaLen-3)*4));
-    }
-
-    /* 需要设置L的CS不可用网络 */
-    if (VOS_OK == NAS_SetCsUnAvailPlmnId(gastAtParaList[0].ulParaValue, &stPlmnId))
-    {
-        return AT_OK;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-}
-
-
-VOS_UINT32 AT_SetDisableRatPlmnStub( VOS_UINT8 ucIndex )
-{
-    /* 参数不正确,
-    0:表示需要删除禁止接入技术网络列表
-    */
-    if (0 != gastAtParaList[0].ulParaValue)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (VOS_OK == NAS_SetDisableRatPlmn(gastAtParaList[0].ulParaValue))
-    {
-        return AT_OK;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-}
-
-
-VOS_UINT32 AT_SetForbRoamTaStub( VOS_UINT8 ucIndex )
-{
-    /* 参数不正确,
-    0:表示需要删除禁止漫游TA
-    1:表示需要新增禁止漫游TA
-    */
-    if ( (0 != gastAtParaList[0].ulParaValue)
-      && (1 != gastAtParaList[0].ulParaValue))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 需要设置L的禁止漫游TA */
-    if (VOS_OK == NAS_SetForbRoamTa(gastAtParaList[0].ulParaValue))
-    {
-        return AT_OK;
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-}
-
-
-VOS_UINT32  AT_SetTinTypeStub( VOS_UINT8 ucIndex )
-{
-    if (gucAtParaIndex > 1)
-    {
-        return  AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 设置TIN类型 */
-    NAS_SetTinType(gastAtParaList[0].ulParaValue);
-
-    return AT_OK;
-}
-
-
-
-VOS_UINT32  AT_SetPsRegisterContainDrxStub( VOS_UINT8 ucIndex )
-{
-    if (gucAtParaIndex > 1)
-    {
-        return  AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    NAS_SetPsRegContainDrx(gastAtParaList[0].ulParaValue);
-
-    return AT_OK;
-}
-
-
-VOS_UINT32  AT_SetPsBearIsrFlgStub( VOS_UINT8 ucIndex )
-{
-    if (gucAtParaIndex > 3)
-    {
-        return  AT_CME_INCORRECT_PARAMETERS;
-    }
-
-#if (FEATURE_ON == FEATURE_LTE)
-
-    /* 设置usapi 对应的pdp是在ISR激活前激活的还是在ISR激活后激活的 */
-    NAS_SetPsBearerIsrFlg(gastAtParaList[0].ulParaValue,
-                          gastAtParaList[1].ulParaValue,
-                          gastAtParaList[2].ulParaValue);
-#endif
-
-    return AT_OK;
-}
-
-
-VOS_UINT32 AT_SetImsRatStub(VOS_UINT8 ucIndex)
-{
-    VOS_UINT8                                               ucLteImsSupportFlg;
-    VOS_UINT8                                               ucLteEmsSupportFlg;
-
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (gucAtParaIndex > 2)
-    {
-        return AT_TOO_MANY_PARA;
-    }
-
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 第一个参数 LTE IMS是否支持 */
-    ucLteImsSupportFlg       = gastAtParaList[0].ulParaValue;
-
-    /* 第二个参数 LTE EMS是否支持 */
-    ucLteEmsSupportFlg    = gastAtParaList[1].ulParaValue;
-
-    NAS_SetLteImsSupportFlag(ucLteImsSupportFlg, ucLteEmsSupportFlg);
-
-    return AT_OK;
-
-}
-
-
-
-VOS_UINT32 AT_SetImsCapabilityStub(VOS_UINT8 ucIndex)
-{
-    VOS_UINT8                                               ucVoiceCallOnImsSupportFlg;
-    VOS_UINT8                                               ucVideoCallOnImsSupportFlg;
-    VOS_UINT8                                               ucSmsOnImsSupportFlg;
-
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (gucAtParaIndex > 3)
-    {
-        return AT_TOO_MANY_PARA;
-    }
-
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 第一个参数表示voice call是否支持 0:不支持;1:支持 */
-    ucVoiceCallOnImsSupportFlg      = gastAtParaList[0].ulParaValue;
-
-    /* 第二个参数表示video call是否支持 0:不支持;1:支持 */
-    ucVideoCallOnImsSupportFlg      = gastAtParaList[1].ulParaValue;
-
-    /* 第三个参数表示sms是否支持 0:不支持;1:支持 */
-    ucSmsOnImsSupportFlg            = gastAtParaList[2].ulParaValue;
-
-    NAS_SetImsLteCapabilitySupportFlag(ucVoiceCallOnImsSupportFlg, ucVideoCallOnImsSupportFlg, ucSmsOnImsSupportFlg);
-
-    return AT_OK;
-
-}
-
-
-VOS_UINT32 AT_SetDomainStub(VOS_UINT8 ucIndex)
-{
-    VOS_UINT8                                               ucVoiceDomain;
-    VOS_UINT8                                               ucSmsDomain;
-    VOS_UINT32                                              ulUpdateMmlVoiceDomainFlag;
-
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (gucAtParaIndex > 3)
-    {
-        return AT_TOO_MANY_PARA;
-    }
-
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 第一个参数 voice domain时，0:CS ONLY; 1:IMS PS ONLY; 2:CS PREFERRED; 3:IMS PS PREFERRED */
-    ucVoiceDomain   = gastAtParaList[0].ulParaValue;
-
-    /* 第二个参数 sms domain时，  0:NOT USE SMS OVER IP;    1:PREFERR TO USE SMS OVER IP */
-    ucSmsDomain    = gastAtParaList[1].ulParaValue;
-
-    ulUpdateMmlVoiceDomainFlag = gastAtParaList[2].ulParaValue;
-
-    NAS_SetPreferDomain(ucVoiceDomain, ucSmsDomain, ulUpdateMmlVoiceDomainFlag);
-
-
-    return AT_OK;
-
-}
-
-
-
-VOS_UINT32 AT_SetCmdImsRoamingStub(VOS_UINT8 ucIndex)
-{
-    VOS_UINT8                           ucImsRoamingFlag;
-
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (gucAtParaIndex > 1)
-    {
-        return AT_TOO_MANY_PARA;
-    }
-
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 获取漫游支持参数 */
-    ucImsRoamingFlag   = gastAtParaList[0].ulParaValue;
-
-    NAS_SetImsRoaming(ucImsRoamingFlag);
-
-    return AT_OK;
-}
-
-
-VOS_UINT32 AT_SetCmdRedailStub(VOS_UINT8 ucIndex)
-{
-    VOS_UINT8                           ucCallRedialImsToCs;
-    VOS_UINT8                           ucSmsRedialImsToCs;
-    VOS_UINT8                           ucSsRedialImsToCs;
-    VOS_UINT8                           ucCallRedialCsToIms;
-    VOS_UINT8                           ucSmsRedialCsToIms;
-    VOS_UINT8                           ucSsRedialCsToIms;
-
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (gucAtParaIndex > 7)
-    {
-        return AT_TOO_MANY_PARA;
-    }
-
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* IMS到CS呼叫换域重拨配置 */
-    ucCallRedialImsToCs = gastAtParaList[0].ulParaValue;
-
-    /* IMS到CS短信换域重拨配置 */
-    ucSmsRedialImsToCs  = gastAtParaList[1].ulParaValue;
-
-    /* IMS到CS补充换域重拨配置 */
-    ucSsRedialImsToCs   = gastAtParaList[2].ulParaValue;
-
-    /* CS到IMS呼叫换域重拨配置 */
-    ucCallRedialCsToIms = gastAtParaList[3].ulParaValue;
-
-    /* CS到IMS短信换域重拨配置 */
-    ucSmsRedialCsToIms  = gastAtParaList[4].ulParaValue;
-
-    /* CS到IMS补充换域重拨配置 */
-    ucSsRedialCsToIms   = gastAtParaList[5].ulParaValue;
-
-    NAS_SetRedialCfg(ucCallRedialImsToCs, ucSmsRedialImsToCs, ucSsRedialImsToCs,
-                     ucCallRedialCsToIms, ucSmsRedialCsToIms, ucSsRedialCsToIms);
-
-    return AT_OK;
-}
-
-
-
-VOS_UINT32 AT_SetImsVoiceInterSysLauEnableStub(VOS_UINT8 ucIndex)
-{
-    VOS_UINT8                           ucForceLauFlag;
-
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (gucAtParaIndex > 1)
-    {
-        return AT_TOO_MANY_PARA;
-    }
-
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 获取漫游支持参数 */
-    ucForceLauFlag   = gastAtParaList[0].ulParaValue;
-
-    NAS_SetImsVoiceInterSysLauEnable(ucForceLauFlag);
-
-    return AT_OK;
-}
-
-
-VOS_UINT32 AT_SetImsVoiceMMEnableStub(VOS_UINT8 ucIndex)
-{
-    VOS_UINT8                           ucImsVoiceMMEnableFlag;
-
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (gucAtParaIndex > 1)
-    {
-        return AT_TOO_MANY_PARA;
-    }
-
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 获取漫游支持参数 */
-    ucImsVoiceMMEnableFlag   = gastAtParaList[0].ulParaValue;
-
-    NAS_SetImsVoiceMMEnableFlg(ucImsVoiceMMEnableFlag);
-
-    return AT_OK;
-}
-
-
-
-
-VOS_UINT32 AT_SetCmdImsUssdStub(VOS_UINT8 ucIndex)
-{
-    VOS_UINT8                           ucImsUssdFlag;
-
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (gucAtParaIndex > 1)
-    {
-        return AT_TOO_MANY_PARA;
-    }
-
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 获取漫游支持参数 */
-    ucImsUssdFlag   = gastAtParaList[0].ulParaValue;
-
-    NAS_SetImsUssd(ucImsUssdFlag);
-
-    return AT_OK;
-}
-
-#endif
 
 
 VOS_UINT32 AT_SetDnsQueryPara(VOS_UINT8 ucIndex)
@@ -28115,7 +23964,6 @@ VOS_UINT32 AT_SetMemStatusPara(VOS_UINT8 ucIndex)
     return AT_WAIT_ASYNC_RETURN;
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 AT_SetCdmaMemStatusPara(VOS_UINT8 ucIndex)
 {
@@ -28164,7 +24012,6 @@ VOS_UINT32 AT_SetCdmaMemStatusPara(VOS_UINT8 ucIndex)
     return AT_WAIT_ASYNC_RETURN;
 
 }
-#endif
 
 
 
@@ -28192,10 +24039,8 @@ VOS_UINT32 AT_SetApRptPortSelectTwoPara(void)
 
     ulClientCfgTabLen = AT_GET_CLIENT_CFG_TAB_LEN();
     /*  FEATURE_VCOM_EXT宏关闭的时候，ulClientCfgTabLen 总长度为2，不需要减 */
-#if (FEATURE_ON == FEATURE_VCOM_EXT)
         /* 两个参数的时候，需要总长度需要减去一个参数所代表的长度32，另外加上预留了6个端口，所以是26*/
     ulClientCfgTabLen = ulClientCfgTabLen - 26;
-#endif
 
     for (i = 0; i < ulClientCfgTabLen; i++)
     {
@@ -29210,9 +25055,6 @@ VOS_UINT32 AT_ProcAuthPubkeyExData(
     {
         /* 当前不是收到第一条AT命令，需要拼接码流 */
         usTotalLen = (VOS_UINT16)ulParaLen + pstAuthPubKeyCtx->usParaLen;
-        if (usTotalLen < ulParaLen) {
-            return AT_ERROR;
-        }
         /*lint -save -e516 */
         pTempData = (VOS_UINT8*)PS_MEM_ALLOC(WUEPS_PID_AT, usTotalLen);
         /*lint -restore */
@@ -29662,68 +25504,6 @@ VOS_UINT32 AT_SetPhonePhynumPara(VOS_UINT8 ucIndex)
 }
 
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 AT_SetApSimStPara(VOS_UINT8 ucIndex)
-{
-    VOS_UINT32                              ulResult;
-    DRV_AGENT_AP_SIMST_SET_REQ_STRU         stApSimStSetReq;
-
-    /* 局部变量初始化 */
-    TAF_MEM_SET_S(&stApSimStSetReq, sizeof(stApSimStSetReq), 0x00, sizeof(DRV_AGENT_AP_SIMST_SET_REQ_STRU));
-
-    /* 通道检查 */
-    if (VOS_FALSE == AT_IsApPort(ucIndex))
-    {
-        return AT_ERROR;
-    }
-
-    /* 参数检查 */
-    if ( AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType )
-    {
-        return AT_ERROR;
-    }
-
-     /* 参数过多 */
-    if (gucAtParaIndex > 1)
-    {
-        return AT_ERROR;
-    }
-
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_ERROR;
-    }
-
-    /* 参数设置为1时，目前不支持，直接返回OK */
-    if (1 == gastAtParaList[0].ulParaValue)
-    {
-        stApSimStSetReq.ulUsimState = DRV_AGENT_USIM_OPERATE_ACT;
-    }
-    else
-    {
-        stApSimStSetReq.ulUsimState = DRV_AGENT_USIM_OPERATE_DEACT;
-    }
-
-    ulResult = AT_FillAndSndAppReqMsg(gastAtClientTab[ucIndex].usClientId,
-                                      gastAtClientTab[ucIndex].opId,
-                                      DRV_AGENT_AP_SIMST_SET_REQ,
-                                      &stApSimStSetReq,
-                                      sizeof(DRV_AGENT_AP_SIMST_SET_REQ_STRU),
-                                      I0_WUEPS_PID_DRV_AGENT);
-    if (TAF_SUCCESS != ulResult)
-    {
-        AT_WARN_LOG("AT_SetApSimStPara: AT_FillAndSndAppReqMsg fail.");
-        return AT_ERROR;
-    }
-
-    /* 设置AT模块实体的状态为等待异步返回 */
-    gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_APSIMST_SET;
-
-    return AT_WAIT_ASYNC_RETURN;
-
-}
-#endif
 
 
 VOS_VOID AT_ConvertMncToNasType(
@@ -30023,8 +25803,6 @@ VOS_UINT32 AT_SetXcposrRptPara(VOS_UINT8 ucIndex)
     return AT_WAIT_ASYNC_RETURN;
 }
 
-#if (FEATURE_ON == FEATURE_AGPS)
-#if (FEATURE_ON == FEATURE_AGPS_GPIO)
 
 gps_rat_mode_enum AT_SysModeToGpsRatMode(
     TAF_SYS_MODE_ENUM_UINT8             enSysMode
@@ -30040,13 +25818,11 @@ gps_rat_mode_enum AT_SysModeToGpsRatMode(
             enRatMode = gps_rat_mode_gsm;
             break;
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
         case TAF_PH_INFO_CDMA_1X_RAT:
         case TAF_PH_INFO_HRPD_RAT:
         case TAF_PH_INFO_HYBRID_RAT:
             enRatMode = gps_rat_mode_cdma;
             break;
-#endif
 
         case TAF_PH_INFO_WCDMA_RAT:
             enRatMode = gps_rat_mode_wcdma;
@@ -30084,12 +25860,10 @@ gps_rat_mode_enum AT_MtaAtRatModeToGpsRatMode(
             enRatMode = gps_rat_mode_gsm;
             break;
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
         case MTA_AT_RAT_MODE_CDMA_1X:
         case MTA_AT_RAT_MODE_HRPD:
             enRatMode = gps_rat_mode_cdma;
             break;
-#endif
 
         case MTA_AT_RAT_MODE_WCDMA:
             enRatMode = gps_rat_mode_wcdma;
@@ -30110,7 +25884,6 @@ gps_rat_mode_enum AT_MtaAtRatModeToGpsRatMode(
 
     return enRatMode;
 }
-#endif/* #if (FEATURE_ON == FEATURE_AGPS_GPIO) */
 
 
 VOS_INT AT_SetCgpsClock(
@@ -30119,7 +25892,6 @@ VOS_INT AT_SetCgpsClock(
     MTA_AT_RAT_MODE_ENUM_UINT8          enSysMode
 )
 {
-#if (FEATURE_ON == FEATURE_AGPS_GPIO)
     gps_modem_id_enum                   enGpsModemId;
     gps_rat_mode_enum                   enRatMode;
 
@@ -30145,10 +25917,6 @@ VOS_INT AT_SetCgpsClock(
     enRatMode = AT_MtaAtRatModeToGpsRatMode(enSysMode);
 
     return set_gps_ref_clk_enable((bool)bEnableFlg, enGpsModemId, enRatMode);
-#else
-    AT_ERR_LOG("AT_SetCgpsClock: MBB not support ^CGPSCLOCK!");
-    return VOS_ERR;
-#endif
 }
 
 
@@ -30158,7 +25926,6 @@ VOS_INT AT_CfgGpsRefClk(
     TAF_SYS_MODE_ENUM_UINT8             enSysMode
 )
 {
-#if (FEATURE_ON == FEATURE_AGPS_GPIO)
     gps_modem_id_enum                   enGpsModemId;
     gps_rat_mode_enum                   enRatMode;
 
@@ -30184,10 +25951,6 @@ VOS_INT AT_CfgGpsRefClk(
     enRatMode = AT_SysModeToGpsRatMode(enSysMode);
 
     return set_gps_ref_clk_enable((bool)bEnableFlg, enGpsModemId, enRatMode);
-#else
-    AT_ERR_LOG("AT_CfgGpsRefClk: MBB not support ^CGPSCLOCK!");
-    return VOS_ERR;
-#endif
 }
 
 
@@ -30284,12 +26047,10 @@ VOS_UINT32 AT_SetCgpsClockForHisi1102(
     return AT_WAIT_ASYNC_RETURN;
 }
 
-#endif/* #if (FEATURE_ON == FEATURE_AGPS) */
 
 
 VOS_UINT32 AT_SetCgpsClockPara(VOS_UINT8 ucIndex)
 {
-#if (FEATURE_ON == FEATURE_AGPS)
     VOS_UINT32                          ulRet;
     MODEM_ID_ENUM_UINT16                enModemId;
     TAF_NV_GPS_CHIP_TYPE_ENUM_UINT8     enGpsChipType;
@@ -30347,10 +26108,6 @@ VOS_UINT32 AT_SetCgpsClockPara(VOS_UINT8 ucIndex)
         }
     }
     return ulRet;
-#else
-    AT_ERR_LOG("AT_SetCgpsClockPara: AGPS feature not support!");
-    return AT_ERROR;
-#endif
 }
 
 
@@ -30545,8 +26302,6 @@ VOS_UINT32 AT_SetLogCpsPara(VOS_UINT8 ucIndex)
 
 VOS_UINT32 AT_SetLogNvePara(VOS_UINT8 ucIndex)
 {
-#if (VOS_OS_VER == VOS_LINUX)
-#ifdef BSP_CONFIG_HI3650
     VOS_INT32                           uResult;
     struct hisi_nve_info_user           stLogCfg={0,0,{0,},0,{0,}};
 
@@ -30587,11 +26342,7 @@ VOS_UINT32 AT_SetLogNvePara(VOS_UINT8 ucIndex)
     {
         return AT_ERROR;
     }
-#endif
     return AT_OK;
-#else
-    return AT_OK;
-#endif
 }
 
 
@@ -30699,7 +26450,6 @@ VOS_UINT32 AT_SetCmutPara(VOS_UINT8 ucIndex)
     return AT_WAIT_ASYNC_RETURN;
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_SC)
 
 VOS_UINT32  AT_SetSimlockUnlockPara( VOS_UINT8 ucIndex )
 {
@@ -30756,7 +26506,6 @@ VOS_UINT32  AT_SetSimlockUnlockPara( VOS_UINT8 ucIndex )
     gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_SIMLOCKUNLOCK_SET;
     return AT_WAIT_ASYNC_RETURN;
 }
-#endif
 
 
 VOS_UINT32 AT_FillApdsPara(
@@ -30970,43 +26719,6 @@ VOS_UINT32 AT_SetClprPara(VOS_UINT8 ucIndex)
 }
 
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 AT_SetCLteRoamAllowPara(VOS_UINT8 ucIndex)
-{
-    NAS_MMC_NVIM_LTE_INTERNATIONAL_ROAM_CFG_STRU  stNvimLteRoamAllowedFlg;
-
-    /* 参数检查 */
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_ERROR;
-    }
-
-    /* 参数过多 */
-    if (1 != gucAtParaIndex)
-    {
-        return AT_ERROR;
-    }
-
-    stNvimLteRoamAllowedFlg.ucLteRoamAllowedFlg = (VOS_UINT8)gastAtParaList[0].ulParaValue;
-    stNvimLteRoamAllowedFlg.aucReserve[0]       = 0x00;
-
-    /* 写NV:en_NV_Item_Lte_Internation_Roam_Config,
-       该NV的结构为 NAS_MMC_NVIM_LTE_INTERNATIONAL_ROAM_CFG_STRU, 只写第1个字节 */
-    if (NV_OK != TAF_ACORE_NV_WRITE(MODEM_ID_0, en_NV_Item_Lte_Internation_Roam_Config,
-                          &(stNvimLteRoamAllowedFlg),
-                          sizeof(VOS_UINT16)))
-    {
-        AT_ERR_LOG("AT_SetCLteRoamAllowPara:Write NV fail");
-        return AT_ERROR;
-    }
-    else
-    {
-        return AT_OK;
-    }
-
-}
-#endif
 
 
 VOS_UINT32 At_SetWlthresholdcfgPara(VOS_UINT8 ucIndex)
@@ -31038,10 +26750,8 @@ VOS_UINT32 At_SetWlthresholdcfgPara(VOS_UINT8 ucIndex)
                                       sizeof(stReselOffsetCfgNtf),
                                       I0_UEPS_PID_MTA);
 
-#if  (FEATURE_ON == FEATURE_LTE)
     /*L使用参数*/
     At_SetLWThresholdCfgPara(ucIndex);
-#endif
 
     if (TAF_SUCCESS != ulResult)
     {
@@ -31304,11 +27014,7 @@ VOS_UINT32 AT_FillBodySarWcdmaPara(
 {
     VOS_UINT8                           ucLoop1;
     MTA_WCDMA_BAND_ENUM_UINT16          enLoop2;
-    VOS_UINT32                          ulLoop3;
-
-    pstBodySarWcdmaPara->ucParaNum = (VOS_UINT8)TAF_MIN(pstBodySarWcdmaPara->ucParaNum,
-        AT_BODYSARWCDMA_MAX_PARA_GROUP_NUM);
-    pstBodySarPara->usWBandNum = (VOS_UINT16)TAF_MIN(pstBodySarPara->usWBandNum, MTA_BODY_SAR_WBAND_MAX_NUM);
+    VOS_UINT8                           ucLoop3;
 
     /* 遍历命令所有的参数 */
     for (ucLoop1 = 0; ucLoop1 < pstBodySarWcdmaPara->ucParaNum; ucLoop1++)
@@ -31321,15 +27027,15 @@ VOS_UINT32 AT_FillBodySarWcdmaPara(
                 continue;
             }
 
-            for (ulLoop3 = 0; ulLoop3 < pstBodySarPara->usWBandNum; ulLoop3++)
+            for (ucLoop3 = 0; ucLoop3 < pstBodySarPara->usWBandNum; ucLoop3++)
             {
-                if (enLoop2 == pstBodySarPara->astWBandPara[ulLoop3].enBand)
+                if (enLoop2 == pstBodySarPara->astWBandPara[ucLoop3].enBand)
                 {
                     break;
                 }
             }
 
-            if (ulLoop3 == pstBodySarPara->usWBandNum)
+            if (ucLoop3 == pstBodySarPara->usWBandNum)
             {
                 /* 若超出W Band最大支持个数，则回复失败 */
                 if (MTA_BODY_SAR_WBAND_MAX_NUM <= pstBodySarPara->usWBandNum)
@@ -31341,8 +27047,8 @@ VOS_UINT32 AT_FillBodySarWcdmaPara(
                 pstBodySarPara->usWBandNum++;
             }
 
-            pstBodySarPara->astWBandPara[ulLoop3].enBand = enLoop2;
-            pstBodySarPara->astWBandPara[ulLoop3].sPower = pstBodySarWcdmaPara->asPower[ucLoop1];
+            pstBodySarPara->astWBandPara[ucLoop3].enBand = enLoop2;
+            pstBodySarPara->astWBandPara[ucLoop3].sPower = pstBodySarWcdmaPara->asPower[ucLoop1];
         }
     }
 
@@ -31912,49 +27618,6 @@ VOS_UINT32 AT_SetNCellMonitorPara(VOS_UINT8 ucIndex)
 }
 
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 At_SetSimInsertPara(VOS_UINT8 ucIndex)
-{
-    TAF_SIM_INSERT_STATE_ENUM_UINT32    enSimInsertState;
-    VOS_UINT32                          ulResult;
-
-    /* 参数检查 */
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数过多 */
-    if (1 != gucAtParaIndex)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    if (gastAtParaList[0].ulParaValue > 1)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    enSimInsertState = (TAF_SIM_INSERT_STATE_ENUM_UINT32)gastAtParaList[0].ulParaValue;
-
-
-    ulResult = TAF_MMA_SimInsertReq(WUEPS_PID_AT,
-                                    gastAtClientTab[ucIndex].usClientId,
-                                    gastAtClientTab[ucIndex].opId,
-                                    enSimInsertState);
-    if (VOS_TRUE == ulResult)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_SIMINSERT_SET;
-        return AT_WAIT_ASYNC_RETURN;    /* 返回命令处理挂起状态 */
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-
-}
-#endif
 
 
 VOS_UINT32 At_SetModemLoopPara(VOS_UINT8 ucIndex)
@@ -32189,7 +27852,6 @@ VOS_UINT32 At_SetHandleDect(VOS_UINT8 ucIndex)
     }
 }
 
-#if (FEATURE_ON == FEATURE_IMS)
 
 TAF_UINT32 AT_SetCiregPara(TAF_UINT8 ucIndex)
 {
@@ -32871,7 +28533,6 @@ VOS_UINT32 AT_SetRoamImsServicePara(VOS_UINT8 ucIndex)
     }
 }
 
-#endif
 
 
 VOS_UINT32 AT_SetEOPlmnParaCheck(VOS_VOID)
@@ -33027,365 +28688,6 @@ VOS_UINT32 AT_SetEcidPara(VOS_UINT8 ucIndex)
     return AT_WAIT_ASYNC_RETURN;
 }
 
-#if (FEATURE_ON == FEATURE_AT_HSUART)
-
-VOS_VOID AT_UpdateUartCfgNV(VOS_VOID)
-{
-    AT_UART_CTX_STRU                   *pstUartCtx = VOS_NULL_PTR;
-    TAF_NV_UART_CFG_STRU                stUartNvCfg;
-
-    /* 初始化 */
-    TAF_MEM_SET_S(&stUartNvCfg, sizeof(stUartNvCfg), 0x00, sizeof(TAF_NV_UART_CFG_STRU));
-
-    if (NV_OK != TAF_ACORE_NV_READ(MODEM_ID_0, en_NV_Item_UART_CFG,
-                           &stUartNvCfg,
-                           sizeof(TAF_NV_UART_CFG_STRU)))
-    {
-        AT_ERR_LOG("AT_UpdateUartCfgNV: Read NV fail!");
-        AT_HSUART_DBG_NV_READ_ERR(1);
-        return;
-    }
-
-    /* 获取UART参数 */
-    pstUartCtx                   = AT_GetUartCtxAddr();
-    stUartNvCfg.ulBaudRate       = pstUartCtx->stPhyConfig.enBaudRate;
-    stUartNvCfg.stFrame.ucFormat = pstUartCtx->stPhyConfig.stFrame.enFormat;
-    stUartNvCfg.stFrame.ucParity = pstUartCtx->stPhyConfig.stFrame.enParity;
-
-    /* 更新UART参数NV */
-    if (NV_OK != TAF_ACORE_NV_WRITE(MODEM_ID_0, en_NV_Item_UART_CFG,
-                            &stUartNvCfg,
-                            sizeof(TAF_NV_UART_CFG_STRU)))
-    {
-        AT_ERR_LOG("AT_UpdateUartCfgNV: Write NV fail!");
-        AT_HSUART_DBG_NV_WRITE_ERR(1);
-    }
-
-    return ;
-}
-
-
-VOS_UINT32 AT_SetIprPara(VOS_UINT8 ucIndex)
-{
-    AT_UART_PHY_CFG_STRU               *pstPhyCfg = VOS_NULL_PTR;
-    AT_UART_BAUDRATE_ENUM_UINT32        enBaudRate;
-
-    pstPhyCfg = AT_GetUartPhyCfgInfo();
-
-    /* 只支持UART端口下发 */
-    if (VOS_TRUE != AT_CheckHsUartUser(ucIndex))
-    {
-        return AT_OK;
-    }
-
-    /* 参数检查 */
-    if (gucAtParaIndex > 1)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数为空, 使用等效值115200 */
-    if (AT_CMD_OPT_SET_CMD_NO_PARA == g_stATParseCmd.ucCmdOptType)
-    {
-        enBaudRate = AT_UART_DEFAULT_BAUDRATE;
-    }
-    else
-    {
-        if (0 == gastAtParaList[0].usParaLen)
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-
-        enBaudRate = gastAtParaList[0].ulParaValue;
-    }
-
-    /* 波特率有效性检查 */
-    if (VOS_TRUE != AT_HSUART_IsBaudRateValid(enBaudRate))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 更新波特率参数 */
-    pstPhyCfg->enBaudRate = enBaudRate;
-
-    /* 刷新UART配置NV */
-    AT_UpdateUartCfgNV();
-
-    /* 先上报OK */
-    At_FormatResultData(ucIndex, AT_OK);
-
-    /* 配置波特率参数 */
-    AT_HSUART_ConfigBaudRate(ucIndex, enBaudRate);
-
-    return AT_SUCCESS;
-}
-
-
-VOS_UINT32 AT_SetIcfPara(VOS_UINT8 ucIndex)
-{
-    AT_UART_PHY_CFG_STRU               *pstPhyCfg = VOS_NULL_PTR;
-    AT_UART_FORMAT_ENUM_UINT8           enFormat;
-    AT_UART_PARITY_ENUM_UINT8           enParity;
-
-    pstPhyCfg = AT_GetUartPhyCfgInfo();
-
-    /* 只支持UART端口下发 */
-    if (VOS_TRUE != AT_CheckHsUartUser(ucIndex))
-    {
-        return AT_OK;
-    }
-
-    /* 参数检查 */
-    if (gucAtParaIndex > 2)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数有效性检查 */
-    /* 参数为空，使用等效值(3,3),即:8个数据位1个停止位无校验位 */
-    if (AT_CMD_OPT_SET_CMD_NO_PARA == g_stATParseCmd.ucCmdOptType)
-    {
-        enFormat = AT_UART_DEFAULT_FORMAT;
-        enParity = AT_UART_DEFAULT_PARITY;
-    }
-    else
-    {
-        /* AT_CMD_OPT_SET_PARA_CMD */
-        /* AT+ICF= */
-        if (0 == gucAtParaIndex)
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-
-        /* AT+ICF=, */
-        if (0 == gastAtParaList[0].usParaLen)
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-
-        enFormat = (VOS_UINT8)gastAtParaList[0].ulParaValue;
-
-        if (gucAtParaIndex > 1)
-        {
-            if (0 != gastAtParaList[1].usParaLen)
-            {
-                /* AT+ICF=<format>,<parity> */
-                enParity = (VOS_UINT8)gastAtParaList[1].ulParaValue;
-            }
-            else
-            {
-                /* AT+ICF=<format>, */
-                return AT_CME_INCORRECT_PARAMETERS;
-            }
-        }
-        else
-        {
-            /* AT+ICF=<format> */
-            enParity = AT_UART_DEFAULT_PARITY;
-        }
-    }
-
-    /* 检查帧格式参数有效性 */
-    if (VOS_FALSE == AT_HSUART_ValidateCharFrameParam(enFormat, enParity))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 更新帧格式参数 */
-    pstPhyCfg->stFrame.enFormat = enFormat;
-    pstPhyCfg->stFrame.enParity = enParity;
-
-    /* 刷新UART配置NV */
-    AT_UpdateUartCfgNV();
-
-    /* 先上报OK */
-    At_FormatResultData(ucIndex, AT_OK);
-
-    /* 配置帧格式参数 */
-    AT_HSUART_ConfigCharFrame(ucIndex, enFormat, enParity);
-
-    return AT_SUCCESS;
-}
-
-
-VOS_UINT32 AT_SetIfcPara(VOS_UINT8 ucIndex)
-{
-    AT_UART_FLOW_CTRL_STRU             *pstUartFlowCtrl = VOS_NULL_PTR;
-    AT_UART_FC_DCE_BY_DTE_ENUM_UINT8    enFcDceByDte;
-    AT_UART_FC_DTE_BY_DCE_ENUM_UINT8    enFcDteByDce;
-    VOS_UINT32                          ulRtsFlag;
-    VOS_UINT32                          ulCtsFlag;
-
-    pstUartFlowCtrl = AT_GetUartFlowCtrlInfo();
-
-    /* 只支持UART端口下发 */
-    if (VOS_TRUE != AT_CheckHsUartUser(ucIndex))
-    {
-        return AT_OK;
-    }
-
-    /* 命令参数个数检查 */
-    if (gucAtParaIndex > 2)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* AT+IFC等效于AT+IFC=0,0
-     * 注: 该处理为产品线要求, IUT-T-V.250中规定AT+IFC等效于AT+IFC=2,2
-     */
-    if (AT_CMD_OPT_SET_CMD_NO_PARA == g_stATParseCmd.ucCmdOptType)
-    {
-        enFcDceByDte = AT_UART_DEFAULT_FC_DCE_BY_DTE;
-        enFcDteByDce = AT_UART_DEFAULT_FC_DTE_BY_DCE;
-    }
-    else
-    {
-        /* AT+IFC= */
-        if (0 == gucAtParaIndex)
-        {
-            /* AT+IFC= */
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-
-        /* AT+IFC=, */
-        if (0 == gastAtParaList[0].usParaLen)
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-
-        if (gucAtParaIndex > 1)
-        {
-            if (0 != gastAtParaList[1].usParaLen)
-            {
-                /* AT+IFC=<DCE_by_DTE>,<DTE_by_DCE> */
-                enFcDteByDce = (VOS_UINT8)gastAtParaList[1].ulParaValue;
-            }
-            else
-            {
-                /* AT+IFC=<DCE_by_DTE>, */
-                return AT_CME_INCORRECT_PARAMETERS;
-            }
-        }
-        else
-        {
-            /* AT+IFC=<DCE_by_DTE> */
-            enFcDteByDce = AT_UART_DEFAULT_FC_DTE_BY_DCE;
-        }
-
-        enFcDceByDte = (VOS_UINT8)gastAtParaList[0].ulParaValue;
-    }
-
-    /* 检查流控参数有效性 */
-    if (VOS_FALSE == AT_HSUART_ValidateFlowCtrlParam(enFcDceByDte, enFcDteByDce))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 更新流控参数 */
-    pstUartFlowCtrl->enDceByDte = enFcDceByDte;
-    pstUartFlowCtrl->enDteByDce = enFcDteByDce;
-
-    /* 转换硬件流控参数 */
-    ulRtsFlag  = (AT_UART_FC_DCE_BY_DTE_RTS == enFcDceByDte) ?
-                 VOS_TRUE : VOS_FALSE;
-
-    ulCtsFlag  = (AT_UART_FC_DTE_BY_DCE_CTS == enFcDteByDce) ?
-                 VOS_TRUE : VOS_FALSE;
-
-    /* 配置硬件流控参数 */
-    AT_HSUART_ConfigFlowCtrl(ucIndex, ulRtsFlag, ulCtsFlag);
-
-    return AT_OK;
-}
-
-
-VOS_UINT32 AT_SetOPara(VOS_UINT8 ucIndex)
-{
-    VOS_UINT32                          ulRslt;
-    AT_DATA_MODE_TYPE                   ucDataMode;
-
-    /* 获取当前数据模式 */
-    ucDataMode = gastAtClientTab[ucIndex].DataMode;
-
-    /* 如果当前通道模式为ONLINE-COMMAND模式, 直接恢复当前数据模式 */
-    if (AT_ONLINE_CMD_MODE == gastAtClientTab[ucIndex].Mode)
-    {
-        At_SetMode(ucIndex, AT_DATA_MODE, ucDataMode);
-        ulRslt = AT_CONNECT;
-    }
-    else
-    {
-        ulRslt = AT_NO_CARRIER;
-    }
-
-    return ulRslt;
-}
-
-
-VOS_UINT32 AT_SetSwitchUart(VOS_UINT8 ucIndex)
-{
-    VOS_UINT32                          ulmode;
-
-    if(AT_CLIENT_ID_HSUART != ucIndex)
-    {
-        PS_PRINTF_WARNING("<AT_SetSwitchUart> 1\n");
-        return AT_ERROR;
-    }
-
-    /* 判断CK是否校验通过 */
-    if (VOS_TRUE != g_stSpWordCtx.ucShellPwdCheckFlag)
-    {
-        PS_PRINTF_WARNING("<AT_SetSwitchUart> 2\n");
-        AT_WARN_LOG("AT_SetSwitchUart:WARNING: datalock check faild!");
-        return AT_ERROR;
-    }
-
-     /* 参数检查 */
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        PS_PRINTF_WARNING("<AT_SetSwitchUart> 3\n");
-        return AT_ERROR;
-    }
-
-    /* 参数过多 */
-    if (gucAtParaIndex > 1)
-    {
-        PS_PRINTF_WARNING("<AT_SetSwitchUart> 4\n");
-        return AT_ERROR;
-    }
-
-    /* 切换到 A shell*/
-    if (AT_UART_MODE_ASHELL == gastAtParaList[0].ulParaValue)
-    {
-        PS_PRINTF_WARNING("<AT_SetSwitchUart> 5\n");
-        ulmode = UART_A_SHELL;
-    }
-    else if(AT_UART_MODE_CSHELL == gastAtParaList[0].ulParaValue)
-    {
-        PS_PRINTF_WARNING("<AT_SetSwitchUart> 6\n");
-        ulmode = UART_C_SHELL;
-    }
-    else
-    {
-        PS_PRINTF_WARNING("<AT_SetSwitchUart> 7\n");
-        AT_WARN_LOG("AT_SetSwitchUart: unknown value!");
-        return AT_ERROR;
-    }
-
-    if (VOS_OK != mdrv_udi_ioctl(g_alAtUdiHandle[ucIndex], UART_IOCTL_SET_AC_SHELL, &ulmode))
-    {
-        PS_PRINTF_WARNING("<AT_SetSwitchUart> 8\n");
-        AT_WARN_LOG("AT_SetSwitchUart:DRV_UDI_IOCTL faild!");
-        return AT_ERROR;
-    }
-
-    AT_INFO_LOG("AT_SetSwitchUart: success and leave!!");
-    PS_PRINTF_INFO("<AT_SetSwitchUart> success and leave!!\n");
-
-    return AT_OK;
-
-}
-#endif
 
 
 
@@ -33394,7 +28696,6 @@ VOS_UINT32 AT_SetRATCombinePara(VOS_UINT8 ucIndex)
     return AT_CME_OPERATION_NOT_ALLOWED;
 }
 
-#if (FEATURE_ON == FEATURE_IMS)
 
 VOS_UINT32 AT_SetCallModifyInitPara(VOS_UINT8 ucIndex)
 {
@@ -33971,49 +29272,8 @@ VOS_UINT32 AT_SetCallEncryptPara(VOS_UINT8 ucIndex)
     return AT_WAIT_ASYNC_RETURN;
 }
 
-#endif
 
-#if (FEATURE_ON == FEATURE_HUAWEI_VP)
 
-VOS_UINT32 AT_SetVoicePreferPara(VOS_UINT8 ucIndex)
-{
-    VOS_UINT32      ulVoicePreferAct;
-    VOS_UINT32      ulRslt;
-
-    /* 参数检查 */
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_ERROR;
-    }
-
-    /* 参数过多 */
-    if (gucAtParaIndex > 1)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 第一个参数为空 */
-    if (0 == gastAtParaList[0].usParaLen)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    ulVoicePreferAct = gastAtParaList[0].ulParaValue;
-
-    ulRslt = AT_SndSetVoicePrefer(gastAtClientTab[ucIndex].usClientId,
-                               gastAtClientTab[ucIndex].opId,
-                               ulVoicePreferAct);
-    if (VOS_OK == ulRslt)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_VOICEPREFER_SET;
-        return AT_WAIT_ASYNC_RETURN;
-    }
-
-    return AT_ERROR;
-}
-#endif
-
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 AT_SetCrmPara(VOS_UINT8 ucIndex)
 {
@@ -34022,7 +29282,6 @@ VOS_UINT32 AT_SetCrmPara(VOS_UINT8 ucIndex)
     {
         return AT_CME_INCORRECT_PARAMETERS;
     }
-#if (FEATURE_ON == FEATURE_PPP)
 
     if (TAF_PS_CDATA_DIAL_MODE_RELAY == gastAtParaList[0].ulParaValue)
     {
@@ -34032,7 +29291,6 @@ VOS_UINT32 AT_SetCrmPara(VOS_UINT8 ucIndex)
     {
         PPP_SetRawDataByPassMode(VOS_FALSE);
     }
-#endif
 
     if ( VOS_OK == TAF_PS_SetCdataDialModeInfo(WUEPS_PID_AT,
                                                AT_PS_BuildExClientId(gastAtClientTab[ucIndex].usClientId),
@@ -34224,74 +29482,6 @@ VOS_UINT32 AT_CheckCFreqLockEnablePara(VOS_VOID)
     return VOS_TRUE;
 }
 
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 AT_SetCFreqLockPara(VOS_UINT8 ucIndex)
-{
-    TAF_MMA_CFREQ_LOCK_SET_PARA_STRU    stCFreqLockPara;
-    VOS_UINT32                          ulRst;
-
-    /*参数有效性检查*/
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 如果第一个参数是开启锁频,但参数个数不为9，或第一个参数是解除锁频，但参数个数不为1，都不合法 */
-    if ((  (gastAtParaList[0].ulParaValue == 1)
-         && (gucAtParaIndex != AT_CFREQLOCK_PARA_NUM_MAX))
-      || ( (gastAtParaList[0].ulParaValue == 0)
-         && (gucAtParaIndex != AT_CFREQLOCK_PARA_NUM_MIN)))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 如果第一个参数是锁频，则1X/EVDO的锁频参数需同时设置，并需判断<cdma_pn>和<evdo_pn>的有效范围 */
-    if (gastAtParaList[0].ulParaValue == 1)
-    {
-        if(VOS_FALSE == AT_CheckCFreqLockEnablePara())
-        {
-             return AT_CME_INCORRECT_PARAMETERS;
-        }
-    }
-
-    /* 发送消息赋值 */
-    TAF_MEM_SET_S(&stCFreqLockPara, sizeof(stCFreqLockPara), 0x00, sizeof(TAF_MMA_CFREQ_LOCK_SET_PARA_STRU));
-
-    if (1 == (VOS_UINT8)gastAtParaList[0].ulParaValue)
-    {
-        stCFreqLockPara.enFreqLockMode  = TAF_MMA_CFREQ_LOCK_MODE_ON;
-        stCFreqLockPara.usSid           = (VOS_UINT16)gastAtParaList[1].ulParaValue;
-        stCFreqLockPara.usNid           = (VOS_UINT16)gastAtParaList[2].ulParaValue;
-        stCFreqLockPara.usCdmaBandClass = (VOS_UINT16)gastAtParaList[3].ulParaValue;
-        stCFreqLockPara.usCdmaFreq      = (VOS_UINT16)gastAtParaList[4].ulParaValue;
-        stCFreqLockPara.usCdmaPn        = (VOS_UINT16)gastAtParaList[5].ulParaValue;
-        stCFreqLockPara.usEvdoBandClass = (VOS_UINT16)gastAtParaList[6].ulParaValue;
-        stCFreqLockPara.usEvdoFreq      = (VOS_UINT16)gastAtParaList[7].ulParaValue;
-        stCFreqLockPara.usEvdoPn        = (VOS_UINT16)gastAtParaList[8].ulParaValue;
-    }
-    else
-    {
-        stCFreqLockPara.enFreqLockMode = TAF_MMA_CFREQ_LOCK_MODE_OFF;
-    }
-
-    /* 发送TAF_MMA_CFREQ_LOCK_SET_REQ消息 */
-    ulRst = TAF_MMA_ProcCFreqLockSetReq(WUEPS_PID_AT,
-                                        gastAtClientTab[ucIndex].usClientId,
-                                        gastAtClientTab[ucIndex].opId,
-                                        &stCFreqLockPara);
-    if (VOS_TRUE == ulRst)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_CFREQLOCK_SET;
-
-        /* 返回命令处理挂起状态 */
-        return AT_WAIT_ASYNC_RETURN;
-    }
-
-    return AT_ERROR;
-
-}
-#endif
 
 VOS_UINT32 AT_SetCdmaCsqPara(VOS_UINT8 ucIndex)
 {
@@ -34331,7 +29521,6 @@ VOS_UINT32 AT_SetCdmaCsqPara(VOS_UINT8 ucIndex)
     return AT_ERROR;
 
 }
-#endif
 
 
 
@@ -34376,7 +29565,6 @@ VOS_UINT32 AT_SetTTYModePara(VOS_UINT8 ucIndex)
     return AT_WAIT_ASYNC_RETURN;
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 At_SetCustomDial(VOS_UINT8 ucIndex)
 {
@@ -34702,8 +29890,6 @@ VOS_UINT32 AT_SwitchCdmaMode(
 
 VOS_UINT32 At_SetCdmaModemSwitch(VOS_UINT8 ucIndex)
 {
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
-#if (2 <= MULTI_MODEM_NUMBER)
     PLATAFORM_RAT_CAPABILITY_STRU       stModem0PlatRat;
     PLATAFORM_RAT_CAPABILITY_STRU       stModem1PlatRat;
     PLATAFORM_RAT_CAPABILITY_STRU       stModem2PlatRat;
@@ -34766,7 +29952,6 @@ VOS_UINT32 At_SetCdmaModemSwitch(VOS_UINT8 ucIndex)
     stModem1PlatRat.usRatNum = AT_MIN(stModem1PlatRat.usRatNum, PLATFORM_MAX_RAT_NUM);
 
 
-#if (3 == MULTI_MODEM_NUMBER)
     if (NV_OK != TAF_ACORE_NV_READ(MODEM_ID_2, en_NV_Item_Platform_RAT_CAP, &stModem2PlatRat,
                            sizeof(PLATAFORM_RAT_CAPABILITY_STRU)))
     {
@@ -34779,17 +29964,7 @@ VOS_UINT32 At_SetCdmaModemSwitch(VOS_UINT8 ucIndex)
     /* 先打印便于分析，后边界保护 */
     stModem2PlatRat.usRatNum = AT_MIN(stModem2PlatRat.usRatNum, PLATFORM_MAX_RAT_NUM);
 
-#endif
 
-#if (2 == MULTI_MODEM_NUMBER)
-    /* 双modem时，设置为2的时候返回错误 */
-    if (2 == ulModemId)
-    {
-        AT_ERR_LOG1("At_SetCdmaModemSwitch: ulModemId id Error! ulModemId: ", ulModemId);
-
-        return AT_ERROR;
-    }
-#endif
 
     /* CDMA支持切换需满足以下条件:
        1、CDMA能力只能在一个MODEM;
@@ -34828,23 +30003,14 @@ VOS_UINT32 At_SetCdmaModemSwitch(VOS_UINT8 ucIndex)
         return AT_WAIT_ASYNC_RETURN;
     }
 
-#else
-    return AT_OK;
-#endif
-#else
-    return AT_OK;
-#endif
 
 }
 
-#if (2 <= MULTI_MODEM_NUMBER)
 
 LOCAL VOS_UINT32  At_QryCdmaModemSwitchCdmaCapCheck(
     VOS_UINT32                          ulModem0SupportCMode,
     VOS_UINT32                          ulModem1SupportCMode,
-#if (3 == MULTI_MODEM_NUMBER)
     VOS_UINT32                          ulModem2SupportCMode,
-#endif
     VOS_UINT32                         *pulAllModemNotSupportCMode
 )
 {
@@ -34859,7 +30025,6 @@ LOCAL VOS_UINT32  At_QryCdmaModemSwitchCdmaCapCheck(
         ulCheckRlt = AT_ERROR;
     }
 
-#if (3 == MULTI_MODEM_NUMBER)
     /* 如果modem0和modem2同时满足支持，则认为设置失败 */
     if ( (VOS_TRUE == ulModem0SupportCMode)
       && (VOS_TRUE == ulModem2SupportCMode) )
@@ -34873,15 +30038,10 @@ LOCAL VOS_UINT32  At_QryCdmaModemSwitchCdmaCapCheck(
     {
         ulCheckRlt = AT_ERROR;
     }
-#endif
 
     if ( (VOS_FALSE == ulModem0SupportCMode)
       && (VOS_FALSE == ulModem1SupportCMode)
-#if (3 == MULTI_MODEM_NUMBER)
       && (VOS_FALSE == ulModem2SupportCMode) )
-#else
-                                             )
-#endif
     {
         ulCheckRlt                = AT_ERROR;
        *pulAllModemNotSupportCMode = VOS_TRUE;
@@ -34889,12 +30049,9 @@ LOCAL VOS_UINT32  At_QryCdmaModemSwitchCdmaCapCheck(
 
     return ulCheckRlt;
 }
-#endif
 
 VOS_UINT32 At_QryCdmaModemSwitch(VOS_UINT8 ucIndex)
 {
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
-#if (2 <= MULTI_MODEM_NUMBER)
     PLATAFORM_RAT_CAPABILITY_STRU       stModem0PlatRat;
     PLATAFORM_RAT_CAPABILITY_STRU       stModem1PlatRat;
     VOS_UINT32                          ulModem0Support1XFlg;
@@ -34905,12 +30062,10 @@ VOS_UINT32 At_QryCdmaModemSwitch(VOS_UINT8 ucIndex)
     VOS_UINT32                          ulModem1SupportCMode;
     VOS_UINT32                          ulCheckRlt;
     VOS_UINT32                          ulAllModemNotSupportCMode;
-#if (3 == MULTI_MODEM_NUMBER)
     PLATAFORM_RAT_CAPABILITY_STRU       stModem2PlatRat;
     VOS_UINT32                          ulModem2Support1XFlg;
     VOS_UINT32                          ulModem2SupportHrpdFlg;
     VOS_UINT32                          ulModem2SupportCMode;
-#endif
     VOS_UINT16                          usLength;
 
     TAF_MEM_SET_S(&stModem0PlatRat, sizeof(stModem0PlatRat), 0x00, sizeof(stModem0PlatRat));
@@ -34918,9 +30073,7 @@ VOS_UINT32 At_QryCdmaModemSwitch(VOS_UINT8 ucIndex)
     ulCheckRlt                = AT_SUCCESS;
     ulAllModemNotSupportCMode = VOS_FALSE;
 
-#if (3 == MULTI_MODEM_NUMBER)
     TAF_MEM_SET_S(&stModem2PlatRat, sizeof(stModem2PlatRat), 0x00, sizeof(stModem2PlatRat));
-#endif
     /*  查询读取nv，修改为从使用区读取，不从工作区读取 */
     if (NV_OK != TAF_ACORE_NV_READ(MODEM_ID_0, en_NV_Item_Platform_RAT_CAP, &stModem0PlatRat,
                               sizeof(PLATAFORM_RAT_CAPABILITY_STRU)))
@@ -34944,33 +30097,25 @@ VOS_UINT32 At_QryCdmaModemSwitch(VOS_UINT8 ucIndex)
         AT_ReadPlatFormPrint(MODEM_ID_1, stModem1PlatRat);
     }
 
-#if (3 == MULTI_MODEM_NUMBER)
     if (NV_OK != TAF_ACORE_NV_READ(MODEM_ID_2, en_NV_Item_Platform_RAT_CAP, &stModem2PlatRat,
                            sizeof(PLATAFORM_RAT_CAPABILITY_STRU)))
     {
         return AT_ERROR;
     }
-#endif
 
     ulModem0Support1XFlg   = AT_IsPlatformSupport1XMode(&stModem0PlatRat);
     ulModem0SupportHrpdFlg = AT_IsPlatformSupportHrpdMode(&stModem0PlatRat);
     ulModem1Support1XFlg   = AT_IsPlatformSupport1XMode(&stModem1PlatRat);
     ulModem1SupportHrpdFlg = AT_IsPlatformSupportHrpdMode(&stModem1PlatRat);
-#if (3 == MULTI_MODEM_NUMBER)
     ulModem2Support1XFlg   = AT_IsPlatformSupport1XMode(&stModem2PlatRat);
     ulModem2SupportHrpdFlg = AT_IsPlatformSupportHrpdMode(&stModem2PlatRat);
-#endif
     ulModem0SupportCMode = (ulModem0Support1XFlg || ulModem0SupportHrpdFlg);
     ulModem1SupportCMode = (ulModem1Support1XFlg || ulModem1SupportHrpdFlg);
-#if (3 == MULTI_MODEM_NUMBER)
     ulModem2SupportCMode = (ulModem2Support1XFlg || ulModem2SupportHrpdFlg);
-#endif
 
     ulCheckRlt = At_QryCdmaModemSwitchCdmaCapCheck(ulModem0SupportCMode,
                                                 ulModem1SupportCMode,
-#if (3 == MULTI_MODEM_NUMBER)
                                                 ulModem2SupportCMode,
-#endif
                                                 &ulAllModemNotSupportCMode);
 
 
@@ -35020,7 +30165,6 @@ VOS_UINT32 At_QryCdmaModemSwitch(VOS_UINT8 ucIndex)
         return AT_OK;
     }
 
-#if (3 == MULTI_MODEM_NUMBER)
     /* 1X,DO在Modem2 */
     if (VOS_TRUE == ulModem2SupportCMode)
     {
@@ -35034,10 +30178,7 @@ VOS_UINT32 At_QryCdmaModemSwitch(VOS_UINT8 ucIndex)
 
         return AT_OK;
     }
-#endif
 
-#endif
-#endif
 
     return AT_OK;
 }
@@ -35071,7 +30212,6 @@ VOS_UINT32 AT_SetCtaPara(VOS_UINT8 ucIndex)
     /* 返回命令处理挂起状态 */
     return AT_WAIT_ASYNC_RETURN;
 }
-#endif
 
 
 VOS_UINT32 At_SetFemCtrl(VOS_UINT8 ucIndex)
@@ -35192,57 +30332,6 @@ VOS_UINT32 AT_SetQuitCallBack( VOS_UINT8 ucIndex  )
 }
 
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 AT_Set1xChanPara(VOS_UINT8 ucIndex)
-{
-    TAF_MMA_CFREQ_LOCK_SET_PARA_STRU    stCFreqLockPara;
-    VOS_UINT32                          ulRst;
-
-    /*参数有效性检查*/
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数合法性判断 */
-    if ((1 != gucAtParaIndex)
-      ||(0 == gastAtParaList[0].usParaLen))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 发送消息赋值 */
-    TAF_MEM_SET_S(&stCFreqLockPara, sizeof(stCFreqLockPara), 0x00, sizeof(TAF_MMA_CFREQ_LOCK_SET_PARA_STRU));
-
-    /* 复用锁频接口，除channel外，其他填0或者通配符 */
-    stCFreqLockPara.enFreqLockMode  = TAF_MMA_CFREQ_LOCK_MODE_ON;
-    stCFreqLockPara.usSid           = 0x0000;
-    stCFreqLockPara.usNid           = 0xFFFF;
-    stCFreqLockPara.usCdmaBandClass = 0x0000;
-    stCFreqLockPara.usCdmaFreq      = (VOS_UINT16)gastAtParaList[0].ulParaValue;
-    stCFreqLockPara.usCdmaPn        = 0xFFFF;
-    stCFreqLockPara.usEvdoBandClass = 0x0000;
-    stCFreqLockPara.usEvdoFreq      = 0x0000;
-    stCFreqLockPara.usEvdoPn        = 0xFFFF;
-
-    /* 发送TAF_MMA_CFREQ_LOCK_SET_REQ消息 */
-    ulRst = TAF_MMA_Proc1xChanSetReq(WUEPS_PID_AT,
-                                     gastAtClientTab[ucIndex].usClientId,
-                                     gastAtClientTab[ucIndex].opId,
-                                    &stCFreqLockPara);
-    if (VOS_TRUE == ulRst)
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_1XCHAN_SET;
-
-        /* 返回命令处理挂起状态 */
-        return AT_WAIT_ASYNC_RETURN;
-    }
-
-    return AT_ERROR;
-}
-#endif
 
 
 VOS_UINT32 AT_SetCSidEnable(VOS_UINT8 ucIndex )
@@ -35316,403 +30405,6 @@ VOS_UINT32 AT_ConvertCSidListMcc(
 
     return AT_SUCCESS;
 }
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-
-VOS_UINT32 AT_SetCSidList( VOS_UINT8 ucIndex   )
-{
-    TAF_MMA_OPER_LOCK_WHITE_SID_STRU    stWhiteSidList;
-    VOS_UINT8                           ucListNum;
-    VOS_UINT32                          ulRslt;
-    VOS_UINT32                          i;
-
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_ERROR;
-    }
-
-    /* 入参检查 */
-    if (1 != gastAtParaList[0].usParaLen)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /*参数个数为3N+1 */
-    if (0 != (gucAtParaIndex - 1)%3)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /*参数过多 AT命令最大参数个数为16个 即5组白名单*/
-    if (AT_MAX_PARA_NUMBER < gucAtParaIndex)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    TAF_MEM_SET_S(&stWhiteSidList, sizeof(stWhiteSidList), 0x00, sizeof(stWhiteSidList));
-
-    if (0 != gastAtParaList[0].ulParaValue)
-    {
-        stWhiteSidList.ucEnable = VOS_TRUE;
-    }
-    else
-    {
-        stWhiteSidList.ucEnable = VOS_FALSE;
-    }
-
-    stWhiteSidList.usWhiteSysNum = (gucAtParaIndex - 1)/3;
-    i = 0;
-    for ( ucListNum = 1; ucListNum < gucAtParaIndex; ucListNum += 3)
-    {
-        /* startSid value must less then endSid value */
-        if (gastAtParaList[ucListNum].ulParaValue > gastAtParaList[ucListNum + 1].ulParaValue)
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-        stWhiteSidList.astSysInfo[i].usStartSid = (VOS_UINT16)gastAtParaList[ucListNum].ulParaValue;
-        stWhiteSidList.astSysInfo[i].usEndSid = (VOS_UINT16)gastAtParaList[ucListNum + 1].ulParaValue;
-
-        /* 转换 mcc */
-        ulRslt = AT_ConvertCSidListMcc(gastAtParaList[ucListNum + 2].aucPara,
-                                       gastAtParaList[ucListNum + 2].usParaLen,
-                                      &stWhiteSidList.astSysInfo[i].ulMcc);
-
-        i++;
-
-        if (i >= TAF_MMA_MAX_WHITE_LOCK_SID_NUM)
-        {
-            break;
-        }
-
-        if (AT_SUCCESS != ulRslt)
-        {
-            return AT_CME_INCORRECT_PARAMETERS;
-        }
-    }
-
-
-    /* 执行命令操作 */
-    if (VOS_TRUE == TAF_MMA_SetCSidList (WUEPS_PID_AT,
-                                         gastAtClientTab[ucIndex].usClientId,
-                                         0,
-                                         &stWhiteSidList))
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_CSIDLIST_SET;
-        return AT_WAIT_ASYNC_RETURN;    /* 返回命令处理挂起状态 */
-    }
-    else
-    {
-        return AT_ERROR;
-    }
-}
-#endif
-#if (FEATURE_ON == FEATURE_CHINA_TELECOM_VOICE_ENCRYPT)
-
-VOS_UINT32 AT_SetEncryptCall(VOS_UINT8 ucIndex)
-{
-
-    TAF_ECC_CALL_BCD_NUM_STRU           stDialNumber;
-    VOS_UINT8                           aucCallNum[AT_CMD_ECCALL_MAX_NUM_LENGTH + 1];
-    VOS_UINT32                          ulStartIndex;
-#if (FEATURE_ON == FEATURE_CHINA_TELECOM_VOICE_ENCRYPT_TEST_MODE)
-    TAF_CHAR                           *pFile;
-    TAF_CHAR                            acNewDocName[AT_TEST_ECC_FILE_NAME_MAX_LEN];
-    VOS_INT32                           lLength;
-
-    TAF_MEM_SET_S(acNewDocName, (VOS_SIZE_T)sizeof(acNewDocName), 0x00, (VOS_SIZE_T)sizeof(acNewDocName));
-
-    lLength = 0;
-#endif
-
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数个数为2 */
-    if (2 != gucAtParaIndex)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 入参长度检查 */
-    if ((1 != gastAtParaList[0].usParaLen)||(0 == gastAtParaList[1].usParaLen))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 初始化 */
-    TAF_MEM_SET_S(&stDialNumber, (VOS_UINT32)sizeof(stDialNumber), 0x00, (VOS_UINT32)sizeof(TAF_ECC_CALL_BCD_NUM_STRU));
-    TAF_MEM_SET_S(aucCallNum, (VOS_UINT32)sizeof(aucCallNum), 0x00, AT_CMD_ECCALL_MAX_NUM_LENGTH + 1);
-
-    /* 如果呼叫号码大于11位，则仅取最后的11位 */
-    ulStartIndex = 0;
-    if (AT_CMD_ECCALL_MAX_NUM_LENGTH < gastAtParaList[1].usParaLen)
-    {
-        ulStartIndex = gastAtParaList[1].usParaLen - AT_CMD_ECCALL_MAX_NUM_LENGTH;
-    }
-    TAF_MEM_CPY_S(aucCallNum, (VOS_UINT32)sizeof(aucCallNum), &gastAtParaList[1].aucPara[ulStartIndex], AT_CMD_ECCALL_MAX_NUM_LENGTH);
-
-    /* 检查并转换电话号码 */
-    if (MN_ERR_NO_ERROR != AT_AsciiNumberToBcd ((VOS_CHAR *)aucCallNum,
-                                                 stDialNumber.aucBcdNum,
-                                                &stDialNumber.ucNumLen))
-    {
-        return AT_ERROR;
-    }
-
-    /* 执行命令操作 */
-    if (VOS_OK == TAF_XCALL_SendEncryptCall(WUEPS_PID_AT,
-                                            gastAtClientTab[ucIndex].usClientId,
-                                            0,
-                                            gastAtParaList[0].ulParaValue,
-                                           &stDialNumber))
-    {
-#if (FEATURE_ON == FEATURE_CHINA_TELECOM_VOICE_ENCRYPT_TEST_MODE)
-
-        /* 密话测试模式写文件path下标 */
-        gucCurrEncVoiceDataWriteFileNum++;
-
-        /* 最大写密话数据文件数为5,超过的话循环写文件1，同时需要删掉文件中的内容 */
-        if (ENCRYPT_VOICE_DATA_FILE_MAX_NUM < gucCurrEncVoiceDataWriteFileNum)
-        {
-            gucCurrEncVoiceDataWriteFileNum = 1;
-        }
-        gulAtCurrEncVoiceDataCount = 0;
-
-        gucAtCurrEncVoiceTestFileNum++;
-
-        TAF_MEM_SET_S(gacAtCurrDocName, (VOS_SIZE_T)sizeof(gacAtCurrDocName), 0x00, (VOS_SIZE_T)sizeof(gacAtCurrDocName));
-
-        lLength = VOS_sprintf_s(acNewDocName, (VOS_SIZE_T)sizeof(acNewDocName), "/data/hisi_logs/modem_log/ECC_TEST/Encrypted_call_execute_time%d.txt", gucAtCurrEncVoiceTestFileNum);
-
-        if (lLength <= 0)
-        {
-            AT_WARN_LOG("AT_SetEncryptCall(): VOS_sprintf_s len <= 0");
-
-            return AT_ERROR;
-        }
-
-        /* 清除待写入文件中的内容 */
-        pFile = mdrv_file_open(g_pacCurrEncVoiceDataWriteFilePath[gucCurrEncVoiceDataWriteFileNum], "w");
-        if(VOS_NULL_PTR != pFile)
-        {
-            AT_WARN_LOG("AT_SetEncryptCall: file is not exist!!!\n");
-
-            mdrv_file_close(pFile);
-        }
-
-        pFile = mdrv_file_open(acNewDocName, "w");
-        if (VOS_NULL_PTR != pFile)
-        {
-            AT_WARN_LOG("AT_SetEncryptCall: file is not exist!!!\n");
-
-            mdrv_file_close(pFile);
-        }
-#endif
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_ECCALL_SET;
-        return AT_WAIT_ASYNC_RETURN;    /* 返回命令处理挂起状态 */
-    }
-    return AT_ERROR;
-
-}
-
-
-VOS_UINT32 AT_SetEncryptCallRemoteCtrl(
-    VOS_UINT8                           ucIndex
-)
-{
-
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数个数为2 */
-    if (2 != gucAtParaIndex)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 入参长度检查 */
-    if ((1 != gastAtParaList[0].usParaLen)||(1 != gastAtParaList[1].usParaLen))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 执行命令操作 */
-    if (VOS_OK ==  TAF_XCALL_SendEccCtrl(WUEPS_PID_AT,
-                                         gastAtClientTab[ucIndex].usClientId,
-                                         0,
-                                         gastAtParaList[0].ulParaValue,
-                                         gastAtParaList[1].ulParaValue))
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_ECCTRL_SET;
-        return AT_WAIT_ASYNC_RETURN;    /* 返回命令处理挂起状态 */
-    }
-    return AT_ERROR;
-
-
-}
-
-
-VOS_UINT32 AT_SetEncryptCallCap( VOS_UINT8 ucIndex )
-{
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数个数为2 */
-    if (2 != gucAtParaIndex)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 入参长度检查 */
-    if ((1 != gastAtParaList[0].usParaLen)||(1 != gastAtParaList[1].usParaLen))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 用户不允许enalbe密话业务能力，只允许disable密话能力 */
-    if (TAF_CALL_APP_ECC_SRV_CAP_ENABLE == gastAtParaList[0].ulParaValue)
-    {
-        return AT_CME_OPERATION_NOT_ALLOWED;
-    }
-
-    /* 执行命令操作 */
-    if (VOS_OK == TAF_XCALL_SetEccCap(WUEPS_PID_AT,
-                                      gastAtClientTab[ucIndex].usClientId,
-                                      0,
-                                      gastAtParaList[0].ulParaValue,
-                                      gastAtParaList[1].ulParaValue))
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_ECCAP_SET;
-        return AT_WAIT_ASYNC_RETURN;    /* 返回命令处理挂起状态 */
-    }
-    return AT_ERROR;
-
-}
-#if (FEATURE_ON == FEATURE_CHINA_TELECOM_VOICE_ENCRYPT_TEST_MODE)
-
-VOS_UINT32 AT_SetEncryptCallKmc( VOS_UINT8 ucIndex )
-{
-    /*lint -e838 */
-    MN_CALL_APP_EC_KMC_DATA_STRU       *pstEccKmcData = VOS_NULL_PTR;
-
-
-
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数个数为2 */
-    if (2 != gucAtParaIndex)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-
-    /* 入参长度检查 */
-    if ((AT_CMD_ECKMC_MAX_KMC_LENGTH < gastAtParaList[1].usParaLen)
-     || (0 == gastAtParaList[1].usParaLen)
-     || (0 == gastAtParaList[0].usParaLen))
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    pstEccKmcData = (MN_CALL_APP_EC_KMC_DATA_STRU *)PS_MEM_ALLOC(WUEPS_PID_AT, (VOS_UINT32)sizeof(MN_CALL_APP_EC_KMC_DATA_STRU));
-    /*lint +e838 */
-    if (VOS_NULL_PTR == pstEccKmcData)
-    {
-        return AT_ERROR;
-    }
-
-    /* 参数初始化 */
-    TAF_MEM_SET_S(pstEccKmcData, (VOS_UINT32)sizeof(MN_CALL_APP_EC_KMC_DATA_STRU), 0x00, (VOS_UINT32)sizeof(MN_CALL_APP_EC_KMC_DATA_STRU));
-
-    pstEccKmcData->ucEccKmcVer = (VOS_UINT8)gastAtParaList[0].ulParaValue;
-
-    if (0 == gastAtParaList[1].usParaLen%2)
-    {
-        pstEccKmcData->usEccKmcLength = gastAtParaList[1].usParaLen/2;
-    }
-    else
-    {
-        pstEccKmcData->usEccKmcLength = gastAtParaList[1].usParaLen/2 + 1;
-    }
-
-    /*lint -e516 */
-    /*  把kmc data转换为hex保存 */
-    if (AT_FAILURE == At_AsciiString2HexSimple(pstEccKmcData->aucEccKmcData,
-                                               gastAtParaList[1].aucPara,
-                                               gastAtParaList[1].usParaLen))
-    {
-        PS_MEM_FREE(WUEPS_PID_AT, pstEccKmcData);
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 执行命令操作 */
-    if (VOS_OK ==  TAF_XCALL_SetEncryptCallKmc (WUEPS_PID_AT,
-                                                gastAtClientTab[ucIndex].usClientId,
-                                                0,
-                                                pstEccKmcData))
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_ECKMC_SET;
-
-        PS_MEM_FREE(WUEPS_PID_AT, pstEccKmcData);
-
-        return AT_WAIT_ASYNC_RETURN;    /* 返回命令处理挂起状态 */
-    }
-
-    PS_MEM_FREE(WUEPS_PID_AT, pstEccKmcData);
-    /*lint +e516 */
-    return AT_ERROR;
-
-
-
-}
-
-VOS_UINT32 AT_SetEccTestMode( VOS_UINT8 ucIndex )
-{
-    if (AT_CMD_OPT_SET_PARA_CMD != g_stATParseCmd.ucCmdOptType)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    /* 参数个数为1 */
-    if (1 != gucAtParaIndex)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-
-    /* 入参长度检查 */
-    if (1 != gastAtParaList[0].usParaLen)
-    {
-        return AT_CME_INCORRECT_PARAMETERS;
-    }
-
-    gucAtCurrEncVoiceTestFileNum = 0;
-
-    /* 执行命令操作 */
-    if (VOS_OK ==  TAF_XCALL_SetEccTestMode ( WUEPS_PID_AT,
-                                              gastAtClientTab[ucIndex].usClientId,
-                                              0,
-                                              gastAtParaList[0].ulParaValue))
-    {
-        gastAtClientTab[ucIndex].CmdCurrentOpt = AT_CMD_ECCTEST_SET;
-        return AT_WAIT_ASYNC_RETURN;    /* 返回命令处理挂起状态 */
-    }
-
-    return AT_ERROR;
-
-}
-
-
-#endif
-#endif
 
 VOS_UINT32 AT_SetClocinfoEnable(VOS_UINT8 ucIndex )
 {
@@ -35908,7 +30600,6 @@ VOS_UINT32 AT_SetNoCardMode(VOS_UINT8 ucIndex )
 }
 
 
-#endif
 
 
 VOS_UINT32 AT_CheckMccFreqPara(VOS_VOID)
@@ -36564,7 +31255,7 @@ VOS_UINT32 AT_ParseEhplmnStringList(
     TAF_PLMN_ID_STRU                    stPlmnId;
     VOS_UINT16                          usIndex;
     VOS_UINT16                          usSubStrLen;
-    VOS_UINT8        aucEhplmnStr[TAF_MMA_MAX_EHPLMN_STR + 1] = {0};
+    VOS_UINT8                           aucEhplmnStr[TAF_MMA_MAX_EHPLMN_STR] = {0};
     VOS_UINT8                          *pucSubStr  = VOS_NULL_PTR;
     VOS_UINT8                           aucDilms[] = ",";
     VOS_UINT32                          ulLen;
@@ -36866,7 +31557,6 @@ VOS_UINT32 AT_ExchangeModemInfo(
     return AT_WAIT_ASYNC_RETURN;
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 AT_SetCdmaDormantTimer(VOS_UINT8 ucIndex)
 {
@@ -36895,7 +31585,6 @@ VOS_UINT32 AT_SetCdmaDormantTimer(VOS_UINT8 ucIndex)
     /* 返回命令处理挂起状态 */
     return AT_WAIT_ASYNC_RETURN;
 }
-#endif
 
 VOS_UINT32 AT_SetUECenterPara(VOS_UINT8 ucIndex)
 {
@@ -36942,7 +31631,6 @@ VOS_UINT32 AT_SetUECenterPara(VOS_UINT8 ucIndex)
     }
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 AT_SetHdrCsqPara(VOS_UINT8 ucIndex)
 {
@@ -36984,7 +31672,6 @@ VOS_UINT32 AT_SetHdrCsqPara(VOS_UINT8 ucIndex)
 
     return AT_ERROR;
 }
-#endif
 
 VOS_UINT32 At_SetSensorPara(VOS_UINT8       ucIndex)
 {

@@ -60,9 +60,8 @@ extern "C" {
 /*****************************************************************************
   1 Include Headfile
 *****************************************************************************/
-#include <linux/device.h>
-#include <linux/pm_wakeup.h>
 #include <product_config.h>
+#include <linux/wakelock.h>
 #include <mdrv.h>
 #include <osl_types.h>
 #include "msp_service.h"
@@ -112,7 +111,7 @@ typedef struct
 {
     SOCP_CODER_SRC_ENUM_U32         ulIndChannelID;    /* 编码源通道ID，固定配置 */
     SOCP_CODER_SRC_ENUM_U32         ulCnfChannelID;    /* 编码源通道ID，固定配置 */
-    struct wakeup_source            stWakelock;
+    struct wake_lock                stWakelock;
 }DIAG_SRV_CTRL;
 
 /*****************************************************************************

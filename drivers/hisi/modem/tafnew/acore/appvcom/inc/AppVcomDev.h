@@ -80,7 +80,7 @@
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <asm/bitops.h>
-#include <linux/pm_wakeup.h>
+#include <linux/wakelock.h>
 #else
 #include "Linuxstub.h"
 #endif
@@ -518,7 +518,7 @@ typedef struct
     size_t                              current_len;                            /* fifo有效数据长度 */
     VOS_UINT32                          ulReadWakeUpFlg;
     VOS_UINT32                          ulIsDeviceOpen ;
-    struct wakeup_source                stRdWakeLock;
+    struct wake_lock                    stRdWakeLock;
     VOS_CHAR                            acWakeLockName[APP_VCOM_RD_WAKE_LOCK_NAME_LEN];
     struct mutex                        stMutex;                                /* 线程互斥锁 */
 }APP_VCOM_DEV_ENTITY_STRU;

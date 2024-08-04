@@ -87,7 +87,7 @@ typedef VOS_UINT32 (*DIAG_MESSAGE_FUNC)(DIAG_FRAME_INFO_STRU *pData);
 /*****************************************************************************
   7 Fuction Extern
 *****************************************************************************/
-VOS_UINT32 DIAG_MsgReport (VOS_VOID *pstMessage, VOS_VOID *pstData, VOS_UINT32 ulLen);
+VOS_UINT32 DIAG_MsgReport (MSP_DIAG_CNF_INFO_STRU *pstDiagInfo, VOS_VOID *pstData, VOS_UINT32 ulLen);
 VOS_UINT32 DIAG_MsgProcReg (DIAG_MESSAGE_TYPE_U32 ulMsgType, DIAG_MESSAGE_FUNC pMsgfn);
 
 

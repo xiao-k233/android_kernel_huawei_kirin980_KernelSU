@@ -54,7 +54,7 @@
 #include <linux/suspend.h>
 #include <linux/string.h>
 #include <linux/platform_device.h>
-#include <linux/uaccess.h>
+#include <asm/uaccess.h>
 #include <bsp_slice.h>
 #include <bsp_pm.h>
 #include <bsp_dump.h>
@@ -184,12 +184,12 @@ void pm_om_debug_show(void)
 
 u32 pm_om_feature_on(void)
 {
-    struct pm_om_ctrl *ctrl = pm_om_ctrl_get();
-    struct pm_om_platform *linux_plat = NULL;
-    if (NULL == ctrl || NULL == ctrl->platform)
-    {
-        return 1;
-    }
+	struct pm_om_ctrl *ctrl = pm_om_ctrl_get();
+	struct pm_om_platform *linux_plat;
+	if (NULL == ctrl || NULL == ctrl->platform)
+	{
+		return 1;
+	}
 
 	linux_plat = (struct pm_om_platform *)ctrl->platform;
 	ctrl->log.init_flag = PM_OM_INIT_MAGIC;
@@ -217,18 +217,18 @@ s32 pm_wakeup_ccore(enum debug_wake_type type)
 }
 void debug_pm_wake_lock(void)
 {
-    __pm_stay_awake(&g_pmom_debug.wakelock_debug);
+    wake_lock(&g_pmom_debug.wakelock_debug);
 } /*lint !e454*/
 
 void debug_pm_wake_unlock(void)
 {
-    __pm_relax(&g_pmom_debug.wakelock_debug); /*lint !e455*/
+    wake_unlock(&g_pmom_debug.wakelock_debug); /*lint !e455*/
 }
 
 static s32 pm_wakeup_icc_msg(u32 id , u32 len, void* context)
 {/*lint --e{715} suppress context not referenced*/
-    u32 ret = 0;
-    struct debug_pm_s read_data = {0};
+	u32 ret;
+	struct debug_pm_s read_data;
 
 	/* 不可以通过icc发送非法长度的消息过来(包括长度为0) */
 	if(len != (u32)sizeof(read_data))
@@ -265,7 +265,7 @@ static inline void print_dpm_device_info(void)
     count += snprintf_s(print_buf,(size_t)print_buf_size,(size_t)(print_buf_size-1),"[C SR]dpm (fail_cnt, max suspend, resume):");
 
     while(*device_info->device_name != 0){
-        if( ((uintptr_t)device_info + sizeof(struct dpm_device_info)) >= ((uintptr_t)g_pmom_debug.cdrx_dump_addr+CDRX_DUMP_DPM_INFOS_END)){
+        if( ((unsigned long)device_info + sizeof(struct dpm_device_info)) >= ((unsigned long)g_pmom_debug.cdrx_dump_addr+CDRX_DUMP_DPM_INFOS_END)){
             return;
         }
         if(strlen(device_info->device_name)>dpm_debug_char_num){
@@ -291,10 +291,6 @@ static inline void print_ccpu_wakeup_irq_info(void)
 	struct pm_wakeup_irq_info *wakeirq_debug_addr;
 	wakeirq_debug_addr = (struct pm_wakeup_irq_info *)(g_pmom_debug.cdrx_dump_corepm_addr +WAKEUP_IRQ_DEBUG );/*lint !e826 suppress pointer-to-pointer conversion */
 	ret = (u32)readl(g_pmom_debug.cdrx_dump_corepm_addr + WAKEUP_INT_NUM);
-	if (ret > CCPU_WAKEUP_IRQ_NUM_MAX) {
-		printk(KERN_ERR"WAKEUP_INT_NUM %u is too large!\n", ret);
-		return;
-	}
 	cnt += snprintf_s((char*)print_buf,(size_t)print_buf_size,(size_t)(print_buf_size-1),"[C SR]pm wake cnt:");/*lint !e737 suppress promotion from int to unsigned int */
 	for(i=0;i<ret;i++)
 	{
@@ -429,7 +425,7 @@ void pm_wakeup_init(void)
 {
 	char* dump_base = NULL;
 
-    wakeup_source_init(&g_pmom_debug.wakelock_debug, "cp_pm_wakeup");
+	wake_lock_init(&g_pmom_debug.wakelock_debug, WAKE_LOCK_SUSPEND, "cp_pm_wakeup");
 
 	/* 即使注册icc失败(有错误打印),只影响调测,不影响功能 */
 	(void)bsp_icc_event_register(ICC_CHN_IFC << 16 | IFC_RECV_FUNC_WAKEUP, \
@@ -533,15 +529,13 @@ static ssize_t pm_stat_info_get(struct device *dev, struct device_attribute *att
 
 static ssize_t pm_stat_info_on_set(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {/*lint --e{715} suppress 'dev' & 'attr' not referenced*/
-    char* endp = NULL;
-    struct pm_om_ctrl *ctrl = g_pmom_debug.ctrl;
-    struct pm_om_platform *linux_plat = (struct pm_om_platform *)ctrl->platform;
-    int i;
-    char p[200];
-    char *pointer = NULL;
-    char *tempp = NULL;
-    ssize_t mod_id;
-    int ret;
+	char* endp;
+	struct pm_om_ctrl *ctrl = g_pmom_debug.ctrl;
+	struct pm_om_platform *linux_plat = (struct pm_om_platform *)ctrl->platform;
+	int i;
+	char p[200];
+	char *pointer,*tempp;
+	ssize_t mod_id;
 
 	if (count >= sizeof(p) || buf == NULL)
 	{
@@ -549,17 +543,9 @@ static ssize_t pm_stat_info_on_set(struct device *dev, struct device_attribute *
 		return -EINVAL;
 	}
 
-    ret = memset_s(p, sizeof(p), 0, sizeof(p));
-    if(ret)
-    {
-        pmom_pr_err("p memset ret = %d\n", ret);
-    }
-    ret = memcpy_s(p, sizeof(p), buf, count);
-    if(ret)
-    {
-        pmom_pr_err("p memcpy ret = %d\n", ret);
-    }
-    pointer = p;
+	memset_s(p, sizeof(p), 0, sizeof(p));
+	memcpy_s(p, sizeof(p), buf, count);
+	pointer = p;
 
 	for(i = 0; i < 64 && ((tempp = strsep(&pointer, " ")) != NULL); i++ )
 	{
@@ -570,7 +556,7 @@ static ssize_t pm_stat_info_on_set(struct device *dev, struct device_attribute *
 		mod_id = simple_strtol(tempp, &endp, 10);
 		if (tempp == endp)
 		{
-			pmom_pr_err("input includes Non-number parameters.\n");
+			pmom_pr_err("input includes Non-number parameters. endp=%s\n", endp);
 			return -EINVAL;
 		}
 		if((mod_id > (ssize_t)PM_MOD_BEGIN && mod_id < (ssize_t)PM_MOD_END)||(mod_id == (ssize_t)PM_OM_MDRV))
@@ -592,14 +578,12 @@ static ssize_t pm_stat_info_on_set(struct device *dev, struct device_attribute *
 
 static ssize_t pm_stat_info_off_set(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {/*lint --e{715} suppress 'dev' & 'attr' not referenced*/
-    char* endp = NULL;
-    struct pm_om_ctrl *ctrl = g_pmom_debug.ctrl;
-    int i;
-    char p[200];
-    char *pointer = NULL;
-    char *tempp = NULL;
-    ssize_t mod_id;
-    int ret;
+	char* endp;
+	struct pm_om_ctrl *ctrl = g_pmom_debug.ctrl;
+	int i;
+	char p[200];
+	char *pointer,*tempp;
+	ssize_t mod_id;
 
 	if (count >= sizeof(p) || buf == NULL)
 	{
@@ -607,17 +591,9 @@ static ssize_t pm_stat_info_off_set(struct device *dev, struct device_attribute 
 		return -EINVAL;
 	}
 
-    ret = memset_s(p, sizeof(p), 0, sizeof(p));
-    if(ret)
-    {
-        pmom_pr_err("p memset ret = %d\n", ret);
-    }
-    ret = memcpy_s(p, sizeof(p), buf, count);
-    if(ret)
-    {
-        pmom_pr_err("p memcpy ret = %d\n", ret);
-    }
-    pointer = p;
+	memset_s(p, sizeof(p), 0, sizeof(p));
+	memcpy_s(p, sizeof(p), buf, count);
+	pointer = p;
 
 	for(i = 0; i < 64 && ((tempp = strsep(&pointer, " ")) != NULL); i++ )
 	{
@@ -628,7 +604,7 @@ static ssize_t pm_stat_info_off_set(struct device *dev, struct device_attribute 
 		mod_id = simple_strtol(tempp, &endp, 10);
 		if (tempp == endp)
 		{
-			pmom_pr_err("input includes Non-number parameters.\n");
+			pmom_pr_err("input includes Non-number parameters. endp=%s\n", endp);
 			return -EINVAL;
 		}
 		if((mod_id > (ssize_t)PM_MOD_BEGIN && mod_id < (ssize_t)PM_MOD_END)||(mod_id == (ssize_t)PM_OM_MDRV))
@@ -766,11 +742,7 @@ int pm_om_debug_init(void)
 			pm_om_spin_unlock(&ctrl->log.lock, flags);
 		}
 	}
-    ret = memset_s((void *)&g_pmom_debug, sizeof(g_pmom_debug), 0, sizeof(g_pmom_debug));
-    if(ret)
-    {
-        pmom_pr_err("g_pmom_debug memset ret = %d\n", ret);
-    }
+	memset_s((void *)&g_pmom_debug, sizeof(g_pmom_debug), 0, sizeof(g_pmom_debug));
 	g_pmom_debug.stat.waket_prev    = bsp_get_slice_value();
 	g_pmom_debug.stat.waket_min     = 0xffffffff;
 	g_pmom_debug.stat.logt_print_sw = ctrl->log.smem->nv_cfg.reserved;
@@ -794,13 +766,7 @@ struct pm_info_usr_data usr_data2 = {PM_OM_TCXO, PM_OM_MAGIC_TCXO, test_data2, T
 
 int pm_info_cb_common(struct pm_info_usr_data *usr_data, u32 test_value)
 {/*lint --e{713,747} suppress memset warning*/
-	int ret;
-	ret = memset_s(usr_data->buf, usr_data->buf_len, test_value, usr_data->buf_len);
-	if(ret)
-	{
-		pmom_pr_err("usr_data->buf memset ret = %d\n", ret);
-		return ret;
-	}
+	(void)pmom_safe_memset(usr_data->buf, usr_data->buf_len, test_value, usr_data->buf_len);
 	return bsp_pm_log(usr_data->mod_id, usr_data->buf_len, usr_data->buf);
 }
 

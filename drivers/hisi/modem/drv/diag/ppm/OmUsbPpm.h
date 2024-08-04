@@ -98,16 +98,16 @@ void   PPM_UsbCfgPortClose(void);
 
 void   PPM_UsbCfgStatusCB(ACM_EVT_E enPortState);
 
-void   PPM_UsbCfgWriteDataCB(char* pucVirData, char* pucPhyData, int lLen);
+void   PPM_UsbCfgWriteDataCB(u8* pucVirData, u8* pucPhyData, s32 lLen);
 
-void  PPM_UsbCfgReadDataCB(void);
+s32  PPM_UsbCfgReadDataCB(void);
 
 void   PPM_UsbCfgPortOpen(void);
 
 void   PPM_UsbIndStatusCB(ACM_EVT_E enPortState);
 
 #ifdef BSP_CONFIG_PHONE_TYPE
-void PPM_UsbIndWriteDataCB(char* pucVirData, char* pucPhyData, int lLen);
+void PPM_UsbIndWriteDataCB(u8* pucVirData, u8* pucPhyData, s32 lLen);
 #else
 void   PPM_UsbIndWriteDataCB(ACM_WRITE_INFO *AcmWriteInfo);
 #endif

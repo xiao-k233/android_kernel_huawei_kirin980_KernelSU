@@ -61,7 +61,6 @@
 *****************************************************************************/
 #define    THIS_FILE_ID                 PS_FILE_ID_AT_CMD_IMS_PROC_C
 
-#if (FEATURE_ON == FEATURE_IMS)
 
 /*****************************************************************************
   2 全局变量定义
@@ -141,8 +140,6 @@ const AT_IMSA_MSG_PRO_FUNC_STRU g_astAtImsaMsgTab[]=
     {ID_IMSA_AT_RTT_ERROR_IND,              AT_RcvImsaRttErrorInd},
     {ID_IMSA_AT_TRANSPORT_TYPE_SET_CNF,     AT_RcvImsaSipPortSetCnf},
     {ID_IMSA_AT_TRANSPORT_TYPE_QRY_CNF,     AT_RcvImsaSipPortQryCnf},
-    {ID_IMSA_AT_EMC_PDN_ACTIVATE_CNF,       AT_RcvImsaEmcPdnActivateCnf},
-    {ID_IMSA_AT_EMC_PDN_DEACTIVATE_CNF,     AT_RcvImsaEmcPdnDeactivateCnf},
 };
 
 
@@ -1002,142 +999,6 @@ VOS_UINT32 AT_RcvImsaEmcPdnDeactivateInd(VOS_VOID *pMsg)
 }
 
 
-VOS_UINT32 AT_RcvImsaEmcPdnActivateCnf(VOS_VOID *pMsg)
-{
-    IMSA_AT_EMC_PDN_ACTIVATE_CNF_STRU  *pstPdnActivateCnf = VOS_NULL_PTR;
-    AT_IMS_EMC_RDP_STRU                *pstImsEmcRdp = VOS_NULL_PTR;
-    VOS_UINT8                           ucIndex = 0;
-
-    pstPdnActivateCnf = (IMSA_AT_EMC_PDN_ACTIVATE_CNF_STRU *)pMsg;
-
-    /* 转换ClientId */
-    if (At_ClientIdToUserId(pstPdnActivateCnf->usClientId, &ucIndex) == AT_FAILURE) {
-        AT_WARN_LOG("AT_RcvImsaEmcPdnActivateCnf: ClientId is invalid.");
-        return VOS_ERR;
-    }
-
-    /* 建立失败，直接回复结果 */
-    if (pstPdnActivateCnf->ulResult == VOS_ERR) {
-        AT_WARN_LOG("AT_RcvImsaEmcPdnActivateCnf: EmcPdn Active fail.");
-        AT_ReportImsEmcStatResult(ucIndex, AT_PDP_STATUS_DEACT);
-        return VOS_OK;
-    }
-
-    /* 获取IMS EMC RDP */
-    pstImsEmcRdp = AT_GetImsEmcRdpByClientId(ucIndex);
-    if (pstImsEmcRdp == VOS_NULL_PTR) {
-        AT_WARN_LOG("AT_RcvImsaEmcPdnActivateInd: ImsEmcRdp not found.");
-        return VOS_ERR;
-    }
-
-    /* 清除IMS EMC信息 */
-    TAF_MEM_SET_S(pstImsEmcRdp, sizeof(AT_IMS_EMC_RDP_STRU), 0x00, sizeof(AT_IMS_EMC_RDP_STRU));
-
-    /* 更新IPv4 PDN信息 */
-    if ((pstPdnActivateCnf->stPdpAddr.enPdpType == TAF_PDP_IPV4) ||
-        (pstPdnActivateCnf->stPdpAddr.enPdpType == TAF_PDP_IPV4V6)) {
-        pstImsEmcRdp->bitOpIPv4PdnInfo = VOS_TRUE;
-
-        TAF_MEM_CPY_S(pstImsEmcRdp->stIPv4PdnInfo.aucIpAddr,
-                      sizeof(pstImsEmcRdp->stIPv4PdnInfo.aucIpAddr),
-                      pstPdnActivateCnf->stPdpAddr.aucIpv4Addr,
-                      sizeof(pstPdnActivateCnf->stPdpAddr.aucIpv4Addr));
-
-        if (pstPdnActivateCnf->stIpv4Dns.bitOpPrimDnsAddr == VOS_TRUE) {
-            TAF_MEM_CPY_S(pstImsEmcRdp->stIPv4PdnInfo.aucDnsPrimAddr,
-                          sizeof(pstImsEmcRdp->stIPv4PdnInfo.aucDnsPrimAddr),
-                          pstPdnActivateCnf->stIpv4Dns.aucPrimDnsAddr,
-                          sizeof(pstPdnActivateCnf->stIpv4Dns.aucPrimDnsAddr));
-        }
-
-        if (pstPdnActivateCnf->stIpv4Dns.bitOpSecDnsAddr == VOS_TRUE) {
-            TAF_MEM_CPY_S(pstImsEmcRdp->stIPv4PdnInfo.aucDnsSecAddr,
-                          sizeof(pstImsEmcRdp->stIPv4PdnInfo.aucDnsSecAddr),
-                          pstPdnActivateCnf->stIpv4Dns.aucSecDnsAddr,
-                          sizeof(pstPdnActivateCnf->stIpv4Dns.aucSecDnsAddr));
-        }
-
-        pstImsEmcRdp->stIPv4PdnInfo.usMtu = pstPdnActivateCnf->usMtu;
-    }
-
-    /* 更新IPv6 PDN信息 */
-    if ((pstPdnActivateCnf->stPdpAddr.enPdpType == TAF_PDP_IPV6) ||
-        (pstPdnActivateCnf->stPdpAddr.enPdpType == TAF_PDP_IPV4V6)) {
-        pstImsEmcRdp->bitOpIPv6PdnInfo = VOS_TRUE;
-
-        TAF_MEM_CPY_S(pstImsEmcRdp->stIPv6PdnInfo.aucIpAddr,
-                      sizeof(pstImsEmcRdp->stIPv6PdnInfo.aucIpAddr),
-                      pstPdnActivateCnf->stPdpAddr.aucIpv6Addr,
-                      sizeof(pstPdnActivateCnf->stPdpAddr.aucIpv6Addr));
-
-        if (pstPdnActivateCnf->stIpv6Dns.bitOpPrimDnsAddr == VOS_TRUE) {
-            TAF_MEM_CPY_S(pstImsEmcRdp->stIPv6PdnInfo.aucDnsPrimAddr,
-                          sizeof(pstImsEmcRdp->stIPv6PdnInfo.aucDnsPrimAddr),
-                          pstPdnActivateCnf->stIpv6Dns.aucPrimDnsAddr,
-                          sizeof(pstPdnActivateCnf->stIpv6Dns.aucPrimDnsAddr));
-        }
-
-        if (pstPdnActivateCnf->stIpv6Dns.bitOpSecDnsAddr == VOS_TRUE) {
-            TAF_MEM_CPY_S(pstImsEmcRdp->stIPv6PdnInfo.aucDnsSecAddr,
-                          sizeof(pstImsEmcRdp->stIPv6PdnInfo.aucDnsSecAddr),
-                          pstPdnActivateCnf->stIpv6Dns.aucSecDnsAddr,
-                          sizeof(pstPdnActivateCnf->stIpv6Dns.aucSecDnsAddr));
-        }
-
-        pstImsEmcRdp->stIPv6PdnInfo.usMtu = pstPdnActivateCnf->usMtu;
-    }
-
-    /* 上报连接状态 */
-    AT_ReportImsEmcStatResult(ucIndex, AT_PDP_STATUS_ACT);
-
-    return VOS_OK;
-}
-
-
-VOS_UINT32 AT_RcvImsaEmcPdnDeactivateCnf(VOS_VOID *pMsg)
-{
-    IMSA_AT_EMC_PDN_DEACTIVATE_CNF_STRU    *pstPdnDeactivateCnf = VOS_NULL_PTR;
-    AT_IMS_EMC_RDP_STRU                    *pstImsEmcRdp = VOS_NULL_PTR;
-    VOS_UINT8                               ucIndex = 0;
-
-    pstPdnDeactivateCnf = (IMSA_AT_EMC_PDN_DEACTIVATE_CNF_STRU *)pMsg;
-
-    /* 检查ClientId */
-    if (At_ClientIdToUserId(pstPdnDeactivateCnf->usClientId, &ucIndex) == AT_FAILURE) {
-        AT_WARN_LOG("AT_RcvImsaEmcPdnDeactivateCnf: ClientId is invalid.");
-        return VOS_ERR;
-    }
-
-    if (pstPdnDeactivateCnf->ulResult == VOS_OK) {
-        /* 上报状态 */
-        AT_ReportImsEmcStatResult(ucIndex, AT_PDP_STATUS_DEACT);
-
-        /* 获取IMS EMC上下文 */
-        pstImsEmcRdp = AT_GetImsEmcRdpByClientId(ucIndex);
-        if (pstImsEmcRdp == VOS_NULL_PTR) {
-            AT_WARN_LOG("AT_RcvImsaEmcPdnDeactivateCnf: ImsEmcRdp not found.");
-            return VOS_ERR;
-        }
-
-        /* 检查IMS EMC状态 */
-        if ((pstImsEmcRdp->bitOpIPv4PdnInfo != VOS_TRUE) &&
-            (pstImsEmcRdp->bitOpIPv6PdnInfo != VOS_TRUE))
-        {
-            AT_WARN_LOG("AT_RcvImsaEmcPdnDeactivateCnf: IMS EMC PDN not active.");
-            return VOS_ERR;
-        }
-
-        /* 清除IMS EMC信息 */
-        TAF_MEM_SET_S(pstImsEmcRdp, sizeof(AT_IMS_EMC_RDP_STRU), 0x00, sizeof(AT_IMS_EMC_RDP_STRU));
-     } else {
-        /* 没有释放成功，给上报hold */
-        AT_ReportImsEmcStatResult(ucIndex, AT_PDP_STATUS_HOLD);
-     }
-
-    return VOS_OK;
-}
-
-
 VOS_UINT32 AT_RcvImsaMtStateInd(VOS_VOID * pMsg)
 {
     /* 定义局部变量 */
@@ -1209,14 +1070,21 @@ VOS_UINT32 AT_RcvImsaImsRegDomainQryCnf(VOS_VOID *pMsg)
     /* 复位状态 */
     AT_STOP_TIMER_CMD_READY(ucIndex);
 
-    /* 无效值修改为255后，删除返回值是否合法判断 */
-    gstAtSendData.usBufLen += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
-        (VOS_CHAR *)pgucAtSndCodeAddr,
-        (VOS_CHAR *)pgucAtSndCodeAddr,
-        "%s: %d",
-        g_stParseContext[ucIndex].pstCmdElement->pszCmdName,
-        pstImsRegDomainCnf->enImsRegDomain);
-    ulResult = AT_OK;
+    /* 判断返回值是否合法 */
+    if (IMSA_AT_IMS_REG_DOMAIN_TYPE_BUTT <= (pstImsRegDomainCnf->enImsRegDomain))
+    {
+        ulResult = AT_ERROR;
+    }
+    else
+    {
+       gstAtSendData.usBufLen += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
+                                                       (VOS_CHAR *)pgucAtSndCodeAddr,
+                                                       (VOS_CHAR *)pgucAtSndCodeAddr,
+                                                       "%s: %d",
+                                                       g_stParseContext[ucIndex].pstCmdElement->pszCmdName,
+                                                       pstImsRegDomainCnf->enImsRegDomain);
+        ulResult= AT_OK;
+    }
 
     At_FormatResultData(ucIndex, ulResult);
 
@@ -6309,7 +6177,6 @@ VOS_UINT32  At_QrySipTransPort(VOS_UINT8 ucIndex)
 }
 
 
-#endif
 
 
 VOS_UINT32 At_SetEflociInfoPara(VOS_UINT8 ucIndex)
@@ -6799,7 +6666,6 @@ VOS_UINT32 AT_RcvImsaImsIpCapQryCnf(
 }
 
 
-#if(FEATURE_LTE == FEATURE_ON)
 
 LOCAL VOS_UINT32 AT_CheckCacdcPara(VOS_VOID)
 {
@@ -7016,7 +6882,6 @@ VOS_UINT32 AT_SetErrcCapQryPara(VOS_UINT8 ucIndex)
 
     return AT_ERROR;
 }
-#endif
 
 
 

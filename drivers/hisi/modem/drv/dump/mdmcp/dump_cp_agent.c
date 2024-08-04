@@ -96,7 +96,7 @@
 * 修改记录  : 2016年1月4日17:05:33       creat
 *
 *****************************************************************************/
-void dump_cp_agent_handle(u32 param)
+void dump_cp_agent_handle(s32 param)
 {
     dump_exception_info_s exception_info_s = {0, DUMP_REASON_NORMAL};
 

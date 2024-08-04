@@ -628,13 +628,13 @@ typedef struct
 /* 设置接口*/
 typedef struct
 {
-    /* 是否添加控制信息待定 TODO: ... */
+    /* 是否添加控制信息待定 TODO: ... (陈文峰/00149739/2010-05-07)*/
     SYM_TMODE_ENUM   enTmodeMode;
 } SYM_SET_TMODE_REQ_STRU;
 
 typedef struct
 {
-    /* 是否添加控制信息待定 TODO: ... */
+    /* 是否添加控制信息待定 TODO: ... (陈文峰/00149739/2010-05-07)*/
     SYM_TMODE_ENUM   enTmodeMode;      /* 返回模式*/
     SYM_TMODE_STA_ENUM  enSymTmodeSta; /* 返回状态*/
 

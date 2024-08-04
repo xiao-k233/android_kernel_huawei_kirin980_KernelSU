@@ -62,7 +62,6 @@
 #define THIS_FILE_ID                PS_FILE_ID_MNMSG_CB_ENCDEC_C
 
 
-#if ((FEATURE_ON == FEATURE_GCBS) || (FEATURE_ON == FEATURE_WCBS))
 /*****************************************************************************
   2 ∫Í∂®“Â
 *****************************************************************************/
@@ -580,7 +579,6 @@ VOS_UINT32  MN_MSG_DecodeCbmPage(
 
 
 
-#endif
 
 
 

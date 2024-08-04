@@ -46,6 +46,37 @@
  *
  */
 
+/*****************************************************************************/
+/*                                                                           */
+/*                Copyright 1999 - 2003, Huawei Tech. Co., Ltd.              */
+/*                           ALL RIGHTS RESERVED                             */
+/*                                                                           */
+/* FileName: vos_main.c                                                      */
+/*                                                                           */
+/* Author: Yang Xiangqian                                                    */
+/*                                                                           */
+/* Version: 1.0                                                              */
+/*                                                                           */
+/* Date: 2006-10                                                             */
+/*                                                                           */
+/* Description: implement root function                                      */
+/*                                                                           */
+/* Others:                                                                   */
+/*                                                                           */
+/* History:                                                                  */
+/* 1. Date:                                                                  */
+/*    Author:                                                                */
+/*    Modification: Create this file                                         */
+/*                                                                           */
+/* 2. Date: 2006-10                                                          */
+/*    Author: Xu Cheng                                                       */
+/*    Modification: Standardize code                                         */
+/*                                                                           */
+/* 3. Date: 2007-03-10                                                       */
+/*    Author: Xu Cheng                                                       */
+/*    Modification: A32D07254                                                */
+/*                                                                           */
+/*****************************************************************************/
 
 #include "v_typdef.h"
 #include "v_root.h"
@@ -63,9 +94,6 @@
 #include "pam_tag.h"
 
 /* LINUX 不支持 */
-#if (VOS_VXWORKS== VOS_OS_VER)
-#include "stdio.h"
-#endif
 
 
 
@@ -105,43 +133,11 @@ VOS_UINT32 *g_pulOsaLogTmp    = VOS_NULL_PTR;
 
 VOS_VOID V_LogInit(VOS_VOID)
 {
-#if (VOS_RTOSCK == VOS_OS_VER)
-    VOS_UINT32                          ulRecordAddr;
-
-    /* 初始化定位信息 */
-    ulRecordAddr = (VOS_UINT32)VOS_EXCH_MEM_MALLOC;
-
-    if (VOS_NULL_PTR == ulRecordAddr)
-    {
-        return;
-    }
-
-    /* COMM在PID初始化流程会用到部分内容，使用最后的16个UINT32作为记录 */
-    g_pulOsaLogTmp  = (VOS_UINT32 *)(ulRecordAddr+(VOS_DUMP_MEM_TOTAL_SIZE-16*sizeof(VOS_UINT32)));
-
-    if ( VOS_NULL_PTR == VOS_MemSet_s((VOS_VOID *)g_pulOsaLogTmp, 16*sizeof(VOS_UINT32), 0x5A, 16*sizeof(VOS_UINT32)) )
-    {
-        mdrv_om_system_error(VOS_REBOOT_MEMSET_MEM, 0, (VOS_INT)((THIS_FILE_ID << 16) | __LINE__), 0, 0);
-    }
-#endif
     return;
 }
 
 VOS_VOID V_LogRecord(VOS_UINT32 ulIndex, VOS_UINT32 ulValue)
 {
-#if (VOS_RTOSCK == VOS_OS_VER)
-    if (VOS_NULL_PTR == g_pulOsaLogTmp)
-    {
-        return;
-    }
-
-    if (ulIndex >= 16)
-    {
-        return;
-    }
-
-    g_pulOsaLogTmp[ulIndex] = ulValue;
-#endif
     return;
 }
 
@@ -156,9 +152,6 @@ MODULE_EXPORTED VOS_VOID root( VOS_VOID)
 {
     mdrv_err("<root> VOS_Startup Begin !\n");
 
-#if (VOS_WIN32 == VOS_OS_VER)
-    VOS_SplInit();
-#endif
 
     /* 2016.03.14:底软接口修改，先调用register函数申请内存，后面使用get field函数获取内存地址 */
     (VOS_VOID)mdrv_om_register_field(DUMP_SAVE_MOD_OSA_MEM, "OAM", VOS_NULL_PTR, VOS_NULL_PTR, VOS_DUMP_MEM_ALL_SIZE, 0);
@@ -352,13 +345,6 @@ VOS_UINT32 VOS_Startup( enum VOS_STARTUP_PHASE ph )
 
             /* stop protect timer */
 
- #if ((OSA_CPU_CCPU == VOS_OSA_CPU) || (OSA_CPU_NRCPU == VOS_OSA_CPU))
-            /* OSA初始化完成，需要调用DRV函数通知DRV OSA启动完成 */
-            if ( VOS_OK != mdrv_sysboot_ok() )
-            {
-                ulStartUpFailStage |= 0x0008;
-            }
-#endif
             break;
 
         default:
@@ -384,7 +370,6 @@ VOS_UINT32 VOS_Startup( enum VOS_STARTUP_PHASE ph )
     }
 }
 
-#if (VOS_LINUX == VOS_OS_VER)
 
 /*****************************************************************************
  Function   : VOS_ModuleInit
@@ -397,45 +382,16 @@ extern VOS_INT APP_VCOM_Init(VOS_VOID);
 
 VOS_INT VOS_ModuleInit(VOS_VOID)
 {
-#if (FEATURE_OFF == FEATURE_DELAY_MODEM_INIT)
-    APP_VCOM_Init();
-#endif
 
     root();
 
     return 0;
 }
 
-#if (FEATURE_OFF == FEATURE_DELAY_MODEM_INIT)
-/*****************************************************************************
- Function   : VOS_ModuleExit
- Description:
- Input      :
- Output     :
- Return     :
- *****************************************************************************/
-static VOS_VOID VOS_ModuleExit(VOS_VOID)
-{
-    return;
-}
-#endif
 
 /*when flash less on, VOS_ModuleInit should be called by bsp drv.*/
-#if (FEATURE_OFF == FEATURE_DELAY_MODEM_INIT)
-module_init(VOS_ModuleInit);
-
-module_exit(VOS_ModuleExit);
 
 
-MODULE_AUTHOR("x51137");
-
-MODULE_DESCRIPTION("Hisilicon OSA");
-
-MODULE_LICENSE("GPL");
-#endif
-
-
-#endif
 
 
 

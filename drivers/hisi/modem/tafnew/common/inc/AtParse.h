@@ -100,9 +100,6 @@ extern "C" {
                          ulTmp );\
         *pusLength += (TAF_UINT16)ulTmp;\
     }
-
-#define    AT_CMD_PARA_INDEX_ONE                 (1)
-#define    AT_CMD_PARA_LEN_ONE                   (1)
 /*******************************************************************************
  结构名    : AT_DATE_STRU
  协议表格  :
@@ -929,7 +926,7 @@ typedef VOS_UINT32 (*PFN_AT_FW_IND_PROC)(VOS_VOID *pMsgBlock);
 #define DPDT_TEST_CMD_PATA_STRING       "(0-4),(0-65535)"
 #else
 #define FCHAN_CMD_PARA_STRING           "(0-9),(0-65535),(0-4294967295),(0-20),(0-4)"
-#define FWAVE_CMD_PARA_STRING           "(0-8),(0-65535)"
+#define FWAVE_CMD_PARA_STRING           "(0-8),(0-65535)" 
 #define FPA_CMD_PARA_STRING             "(0-3)"
 #define FTXON_CMD_PARA_STRING           "(0,1)"
 #define TSELRF_CMD_PARA_STRING          "(1-18),(0,1),(1-3),(1-8)"

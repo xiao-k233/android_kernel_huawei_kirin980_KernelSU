@@ -254,18 +254,11 @@ OM_VCOM_DEBUG_INFO *PPM_VComGetIndInfo(void)
 
 void PPM_VComCfgPortInit(void)
 {
-#if (FEATURE_ON == FEATURE_LOGCAT_SINGLE_CHANNEL)
-    /* 配置数据走VCOM28，会有数据下发 */
-    DMS_RegOmChanDataReadCB(PPM_VCOM_CHAN_CTRL, PPM_VComCfgReadData);
-    /*CTRL口事件回调*/
-    DMS_RegOmChanEventCB(PPM_VCOM_CHAN_CTRL, PPM_VComEvtCB);
-#else
     struct diag_vcom_cb_ops_s ops;
 
     ops.event_cb = PPM_VComEvtCB;
     ops.data_rx_cb = PPM_VComCfgReadData;
     diag_vcom_register_ops(PPM_VCOM_CHAN_CTRL, &ops);
-#endif
 
     CPM_PhySendReg(CPM_VCOM_CFG_PORT, PPM_VComCfgSendData);
 
@@ -276,18 +269,11 @@ void PPM_VComCfgPortInit(void)
 
 void PPM_VComIndPortInit(void)
 {
-#if (FEATURE_ON == FEATURE_LOGCAT_SINGLE_CHANNEL)
-    /* 可维可测数据数据上报走VCOM31，不会有数据下发 */
-    DMS_RegOmChanDataReadCB(PPM_VCOM_CHAN_DATA, NULL);
-    /*DATA口事件回调*/
-    DMS_RegOmChanEventCB(PPM_VCOM_CHAN_DATA, PPM_VComEvtCB);
-#else
     struct diag_vcom_cb_ops_s ops;
 
     ops.event_cb = PPM_VComEvtCB;
     ops.data_rx_cb = NULL;
     diag_vcom_register_ops(PPM_VCOM_CHAN_DATA, &ops);
-#endif
 
     CPM_PhySendReg(CPM_VCOM_IND_PORT, PPM_VComIndSendData);
 

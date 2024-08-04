@@ -46,22 +46,7 @@
  *
  */
 
-/******************************************************************************
 
-                  版权所有 (C), 2001-2016, 华为技术有限公司
-
- ******************************************************************************
-  文 件 名   : errlog_cfg.c
-  版 本 号   : 初稿
-  生成日期   : 2016年2月19日
-  最近修改   :
-  功能描述   : Errlog关联列表模块
-  函数列表   :
-  修改历史   :
-  1.日    期   : 2016年2月19日
-    修改内容   : Errlo关联列表新增
-
-******************************************************************************/
 /*****************************************************************************
   1 头文件包含
 *****************************************************************************/
@@ -74,7 +59,6 @@
   2 全局变量声明
 *****************************************************************************/
 
-#if (FEATURE_ON == FEATURE_PTM)
 /* Warning：代码自动生成区域，不能手工改动 begin */
 
 /* TODO: g_aulModemErrRept hash_value:9162b1a1466dae7828cca9aea8608a81 */
@@ -106,7 +90,6 @@ int g_aulModem0ErrRept[][3]=
     {FAULT_ID_AP_GET_PHY_COUNT_DATA_REQ, TLPHY_PID_RTTAGENT, 8},
 
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     /* 注册失败 Item:20 */
     {FAULT_ID_1X_REG_FAIL, I0_WUEPS_PID_MMA, NAS_ERR_LOG_ALM_1X_COMMON_INFO},
     {FAULT_ID_1X_REG_FAIL, I0_WUEPS_PID_MMA, NAS_ERR_LOG_ALM_1X_CODEC_FAIL},
@@ -417,15 +400,11 @@ int g_aulModem0ErrRept[][3]=
     {FAULT_ID_1X_MT_CALL_FAIL, CPROC_PID_1X_CM, CPROC_1X_ERR_LOG_TCH_ABNORMAL},
     {FAULT_ID_1X_MT_CALL_FAIL, CPROC_PID_1X_CM, CPROC_1X_ERR_LOG_PAGING_RESULT},
 
-    /* Added for LOCK optimization, 2018-3-20 begin */
     {FAULT_ID_LOCK_COUNT, I0_WUEPS_PID_TAF, NAS_ERR_LOG_ALM_CNAS_LOCK_UNLOCK_COUNT},
     {FAULT_ID_LOCK_COUNT, I0_WUEPS_PID_TAF, NAS_ERR_LOG_ALM_CNAS_UNLOCK_MTMO_COUNT},
-    /* Added for LOCK optimization, 2018-3-20 end */
-#endif
 
 };
 
-#if (FEATURE_ON == FEATURE_MULTI_MODEM)
 int g_aulModem1ErrRept[][3]=
 {
     /* GU ErrLog 上报相关 Item:10 */
@@ -441,7 +420,6 @@ int g_aulModem1ErrRept[][3]=
     {FAULT_ID_GU_ERR_LOG_REPT, I1_DSP_PID_APM, 0},
 
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     /* 注册失败 Item:20 */
     {FAULT_ID_1X_REG_FAIL, I1_WUEPS_PID_MMA, NAS_ERR_LOG_ALM_1X_COMMON_INFO},
     {FAULT_ID_1X_REG_FAIL, I1_WUEPS_PID_MMA, NAS_ERR_LOG_ALM_1X_CODEC_FAIL},
@@ -752,15 +730,11 @@ int g_aulModem1ErrRept[][3]=
     {FAULT_ID_1X_MT_CALL_FAIL, CPROC_PID_1X_CM, CPROC_1X_ERR_LOG_TCH_ABNORMAL},
     {FAULT_ID_1X_MT_CALL_FAIL, CPROC_PID_1X_CM, CPROC_1X_ERR_LOG_PAGING_RESULT},
 
-    /* Added for LOCK optimization, 2018-3-20 begin */
     {FAULT_ID_LOCK_COUNT, I1_WUEPS_PID_TAF, NAS_ERR_LOG_ALM_CNAS_LOCK_UNLOCK_COUNT},
     {FAULT_ID_LOCK_COUNT, I1_WUEPS_PID_TAF, NAS_ERR_LOG_ALM_CNAS_UNLOCK_MTMO_COUNT},
-    /* Added for LOCK optimization, 2018-3-20 end */
-#endif
 
 };
 
-#if(3 == MULTI_MODEM_NUMBER)
 int g_aulModem2ErrRept[][3]=
 {
     /* GU ErrLog 上报相关 Item:9 */
@@ -775,7 +749,6 @@ int g_aulModem2ErrRept[][3]=
     {FAULT_ID_GU_ERR_LOG_REPT, I2_DSP_PID_APM, 0},
 
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     /* 注册失败 Item:20 */
     {FAULT_ID_1X_REG_FAIL, I2_WUEPS_PID_MMA, NAS_ERR_LOG_ALM_1X_COMMON_INFO},
     {FAULT_ID_1X_REG_FAIL, I2_WUEPS_PID_MMA, NAS_ERR_LOG_ALM_1X_CODEC_FAIL},
@@ -1086,66 +1059,40 @@ int g_aulModem2ErrRept[][3]=
     {FAULT_ID_1X_MT_CALL_FAIL, CPROC_PID_1X_CM, CPROC_1X_ERR_LOG_TCH_ABNORMAL},
     {FAULT_ID_1X_MT_CALL_FAIL, CPROC_PID_1X_CM, CPROC_1X_ERR_LOG_PAGING_RESULT},
 
-    /* Added for LOCK optimization, 2018-3-20 begin */
     {FAULT_ID_LOCK_COUNT, I1_WUEPS_PID_TAF, NAS_ERR_LOG_ALM_CNAS_LOCK_UNLOCK_COUNT},
     {FAULT_ID_LOCK_COUNT, I1_WUEPS_PID_TAF, NAS_ERR_LOG_ALM_CNAS_UNLOCK_MTMO_COUNT},
-    /* Added for LOCK optimization, 2018-3-20 end */
-#endif
 
 };
-#endif
-#endif
 /* TODO: python search flag end */
 /* Warning：代码自动生成区域，不能手工改动 end */
-#endif
 
 /*****************************************************************************
   3 函数申明
 *****************************************************************************/
 
-/*****************************************************************************
- 函 数 名  : ErrLog_GetErrReptAddrAndSize
- 功能描述  : 获取Errlog全局变量地址
- 输入参数  : ulModemId 主modem/副modem的id
 
- 输出参数  : pulErrLogAddr
-             pulsize
-
- 返 回 值  : 0：success  其他：fail
- 调用函数  :
- 被调函数  :
-
- 修改历史      :
-  1.日    期   : 2016年02月19日
-    修改内容   :  ERR LOG FAULT ID关联项目新增
-*****************************************************************************/
 VOS_INT32 ErrLog_GetErrReptAddrAndSize(
     VOS_UINT32                           ulModemId,
     VOS_UINT_PTR                        *pulErrLogAddr,
     VOS_UINT32                          *pulsize
 )
 {
-#if (FEATURE_ON == FEATURE_PTM)
     if (MODEM_ID_0 == ulModemId)
     {
         *pulErrLogAddr = (VOS_UINT_PTR)g_aulModem0ErrRept;
         *pulsize = sizeof(g_aulModem0ErrRept);
     }
-#if ( FEATURE_ON == FEATURE_MULTI_MODEM )
     else if (MODEM_ID_1 == ulModemId)
     {
         *pulErrLogAddr = (VOS_UINT_PTR)g_aulModem1ErrRept;
         *pulsize = sizeof(g_aulModem1ErrRept);
 
     }
-#if (3 == MULTI_MODEM_NUMBER)
     else if (MODEM_ID_2 == ulModemId)
     {
         *pulErrLogAddr = (VOS_UINT_PTR)g_aulModem2ErrRept;
         *pulsize = sizeof(g_aulModem2ErrRept);
     }
-#endif
-#endif
     else
     {
         return VOS_ERR;
@@ -1153,30 +1100,10 @@ VOS_INT32 ErrLog_GetErrReptAddrAndSize(
 
     return VOS_OK;
 
-#else
-    return VOS_ERR;
-
-#endif
 
 }
 
-/*****************************************************************************
- 函 数 名  : ErrLog_GetPidAndAlarmId
- 功能描述  : ulFaultId关联的pid/alarm_id查询接口
- 输入参数  : ulModemId 主modem/副modem的id
-             ulFaultId fault id
 
- 输出参数  : paustAlarmArray fault id相关联的pid alarm_id数组，内存空间由diag_om提供，最大长度2048，支持一个faultid关联256个alarm_id；
-             pulAlarmNum     fault id相关联的pid alarm_id数组成员个数，最大256；
-
- 返 回 值  : 0：success  其他：fail
- 调用函数  :
- 被调函数  :
-
- 修改历史      :
-  1.日    期   : 2016年02月19日
-    修改内容   : ERR LOG FAULT ID关联项目新增
-*****************************************************************************/
 VOS_INT32 ErrLog_GetPidAndAlarmId(
     VOS_UINT32                          ulModemId,
     VOS_UINT32                          ulFaultId,
@@ -1222,21 +1149,7 @@ VOS_INT32 ErrLog_GetPidAndAlarmId(
     return VOS_OK;
 }
 
-/*****************************************************************************
- 函 数 名  : ErrLog_IsContainPID
- 功能描述  : 检查PID是否已经存在
- 输入参数  : PID数组已及大小
 
- 输出参数  : 是否存在
-
- 返 回 值  : VOS_TRUE：存在  其他：VOS_FALSE
- 调用函数  :
- 被调函数  :
-
- 修改历史      :
-  1.日    期   : 2016年02月19日
-    修改内容   : ERR LOG FAULT ID关联项目新增
-*****************************************************************************/
 VOS_BOOL ErrLog_IsContainPID(
     VOS_UINT32                         *PaulPidArray,
     VOS_UINT32                          ulPidArrayLen,
@@ -1256,22 +1169,7 @@ VOS_BOOL ErrLog_IsContainPID(
     return VOS_FALSE;
 }
 
-/*****************************************************************************
- 函 数 名  : ErrLog_GetErrlogPid
- 功能描述  : 提供errlog相关的pid列表，用于errlog开关控制给各pid发送消息
- 输入参数  : ulModemId 主modem/副modem的id
 
- 输出参数  : PaulPidArray   errlog相关联的pid数组，内存空间由diag_om提供，最大长度1024，支持256个pid；
-             pulPidNum      errlog相关联的pid数组成员个数，最大256；
-
- 返 回 值  : 0：success  其他：fail
- 调用函数  :
- 被调函数  :
-
- 修改历史      :
-  1.日    期   : 2016年02月19日
-    修改内容   :  ERR LOG FAULT ID关联项目新增
-*****************************************************************************/
 VOS_INT32 ErrLog_GetErrlogPid(
     VOS_UINT32                          ulModemId,
     VOS_UINT32                         *PaulPidArray,

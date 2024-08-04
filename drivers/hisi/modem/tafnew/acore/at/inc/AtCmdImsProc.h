@@ -156,10 +156,6 @@ VOS_UINT32 AT_RcvImsaCcwaiSetCnf(VOS_VOID * pMsg);
 VOS_UINT32 AT_RcvImsaEmcPdnActivateInd(VOS_VOID *pMsg);
 VOS_UINT32 AT_RcvImsaEmcPdnDeactivateInd(VOS_VOID *pMsg);
 
-VOS_UINT32 AT_RcvImsaEmcPdnActivateCnf(VOS_VOID *pMsg);
-VOS_UINT32 AT_RcvImsaEmcPdnDeactivateCnf(VOS_VOID *pMsg);
-
-
 VOS_UINT32 AT_RcvImsaMtStateInd(VOS_VOID * pMsg);
 
 VOS_UINT32 AT_RcvImsaImsCtrlMsg(VOS_VOID *pMsg);

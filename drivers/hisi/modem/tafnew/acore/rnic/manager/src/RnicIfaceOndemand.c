@@ -56,7 +56,7 @@
 #include "RnicMntn.h"
 #include "RnicMsgProc.h"
 #include "rnic_ondemand_i.h"
-#include <linux/pm_wakeup.h>
+#include <linux/wakelock.h>
 
 
 
@@ -150,7 +150,7 @@ VOS_UINT32 RNIC_IFACE_OndemandDisconnTimeoutProc(RNIC_DEV_ID_ENUM_UINT8 enRmNetI
         if (VOS_OK == RNIC_IFACE_OndemandSendDialEvent(DEVICE_ID_WAN, RNIC_DAIL_EVENT_DOWN))
         {
             /* 上报断开拨号事件后投票不进入睡眠，在断开拨号成功时解除 */
-            __pm_wakeup_event(&g_stRnicCtx.stOnDemandDisconnWakeLock, 5000);
+            wake_lock_timeout(&g_stRnicCtx.stOnDemandDisconnWakeLock, (long)msecs_to_jiffies(5000));
             RNIC_DBG_SEND_APP_DIALDOWN_SUCC_NUM(1);
             RNIC_NORMAL_LOG(ACPU_PID_RNIC, "RNIC_IFACE_OndemandDisconnTimeoutProc: Send RNIC_DAIL_EVENT_DOWN Msg succ.");
         }

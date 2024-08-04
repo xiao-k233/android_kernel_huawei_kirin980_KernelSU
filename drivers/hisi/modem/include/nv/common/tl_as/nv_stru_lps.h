@@ -1,50 +1,13 @@
-/*
- * Copyright (C) Huawei Technologies Co., Ltd. 2012-2019. All rights reserved.
- * foss@huawei.com
- *
- * If distributed as part of the Linux kernel, the following license terms
- * apply:
- *
- * * This program is free software; you can redistribute it and/or modify
- * * it under the terms of the GNU General Public License version 2 and
- * * only version 2 as published by the Free Software Foundation.
- * *
- * * This program is distributed in the hope that it will be useful,
- * * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * * GNU General Public License for more details.
- * *
- * * You should have received a copy of the GNU General Public License
- * * along with this program; if not, write to the Free Software
- * * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
- *
- * Otherwise, the following license terms apply:
- *
- * * Redistribution and use in source and binary forms, with or without
- * * modification, are permitted provided that the following conditions
- * * are met:
- * * 1) Redistributions of source code must retain the above copyright
- * *    notice, this list of conditions and the following disclaimer.
- * * 2) Redistributions in binary form must reproduce the above copyright
- * *    notice, this list of conditions and the following disclaimer in the
- * *    documentation and/or other materials provided with the distribution.
- * * 3) Neither the name of Huawei nor the names of its contributors may
- * *    be used to endorse or promote products derived from this software
- * *    without specific prior written permission.
- *
- * * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- */
+/******************************************************************************
+
+    Copyright(C)2008,Hisilicon Co. LTD.
+
+ ******************************************************************************
+  File Name       : PsNvInterface.h
+  Description     : PsNvInterface.h header file
+  History           :
+     1.Name+ID      yyyy-mm-dd  Draft Enact
+******************************************************************************/
 
 #ifndef __NV_STRU_LPS_H__
 #define __NV_STRU_LPS_H__
@@ -74,12 +37,12 @@ extern "C" {
 *****************************************************************************/
 #define MAX_GLOBAL_PRANT_NUM   5
 
-/* dcom-resel-cfg */
+/* gaojishan-dcom-resel-cfg */
 #define LPS_NV_JP_DCOM_CON_TO_IDLE_BIT        ( 0x08000000 )
-/* dcom-resel-cfg */
+/* gaojishan-dcom-resel-cfg */
 #define LPS_NV_JP_DCOM_REL_OFFSET_BIT        ( 0x10000000 )
 #define LPS_NV_JP_DCOM_REL_OFFSET_DEBUG_BIT  ( 0x20000000 )
-/* fast-dorm-cfg */
+/* gaojishan-fast-dorm-cfg */
 #define LPS_NV_JP_DCOM_FAST_DORM_BIT  ( 0x40000000 )
 
 /*****************************************************************************
@@ -315,40 +278,7 @@ typedef struct
     ****************************************************************************/
     LPS_NV_LONG_BIT_STRU                 stPsFunFlag02;
 
-    /************************stPsFunFlag03各个BIT含义***************************
-     bitFlag01:  终端开发SCC特性; 缺省值:0; 0:关;1:开;
-     bitFlag02:  终端开发ADRX特性;缺省值:0; 0:关;1:开;
-     bitFlag03:
-     bitFlag04:
-     bitFlag05:
-     bitFlag06:  异系统到L,TAU带ACTIVE FLAG定制开关;确省值:0; 0:关; 1:开
-     bitFlag07:  软银定制不允许MFBI情况下的band定制外频点的连接态测量开关;缺省值0;0:允许测量;1:不允许测量
-     bitFlag08:  MDT/RLF以及连接态立即MDT场景上报假的位置信息，以使GCF用例可以通过，默认为0.0:功能关闭 1:功能打开
-     bitFlag09:  CMAS消息接收成功之后是否置接收成功标志位开关；缺省值0；0:置位，1:不置位。
-     bitFlag10:  GU2L的重选和CCO，如果搜到L小区后能量较好，重选失败，给L回复一个较小的受限时间10ms
-     bitFlag11:
-     bitFlag12:
-     bitFlag13:
-     bitFlag14:
-     bitFlag15:
-     bitFlag16:
-     bitFlag17:
-     bitFlag18:
-     bitFlag19:
-     bitFlag20:
-     bitFlag21:
-     bitFlag22:
-     bitFlag23:
-     bitFlag24:
-     bitFlag25:
-     bitFlag26:
-     bitFlag27:
-     bitFlag28:
-     bitFlag29:
-     bitFlag30:
-     bitFlag31:
-     bitFlag32:
-    ****************************************************************************/
+    
     LPS_NV_LONG_BIT_STRU                 stPsFunFlag03;
 
    /************************stPsFunFlag04各个BIT含义***************************

@@ -394,7 +394,6 @@ enum AT_PDP_STATUS_ENUM
 {
     AT_PDP_STATUS_DEACT                    = 0,
     AT_PDP_STATUS_ACT                      = 1,
-    AT_PDP_STATUS_HOLD                     = 2,
     AT_PDP_STATUS_BUTT
 };
 typedef VOS_UINT32 AT_PDP_STATUS_ENUM_UINT32;

@@ -98,7 +98,7 @@ extern "C"
 
 
 typedef int (*bsp_hds_func)(unsigned char *pstReq);
-typedef unsigned int (*hds_cnf_func)(void *hds_cnf, void *data, unsigned int len);
+typedef int (*hds_cnf_func)(void *hds_cnf, void *data, unsigned int len);
 typedef int (*hac_hds_cnf_func)(void *data, unsigned int len);
 
 int mdrv_hds_printlog_conn(void);

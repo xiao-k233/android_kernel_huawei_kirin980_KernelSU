@@ -72,9 +72,6 @@
 
 DMS_STATIC_BUF_STRU                     stDmsStaticBufInfo ;
 
-#if (VOS_WIN32== VOS_OS_VER)
-VOS_UINT8                               aucStaticBuf[DMS_LOG_STATIC_ONE_BUF_SIZE*DMS_LOG_STATIC_BUF_NUM + 32] = {0};
-#endif
 VOS_UINT8                              *g_aucStaticBuf = NULL;
 
 
@@ -148,7 +145,6 @@ VOS_VOID Dms_StaticBufInit(VOS_VOID)
     VOS_UINT32 i = 0;
     VOS_UINT8 * pTemp = NULL;
 
-#if (VOS_LINUX== VOS_OS_VER)
     VOS_UINT32 ulBufSize;
 
     ulBufSize = (DMS_LOG_STATIC_ONE_BUF_SIZE*DMS_LOG_STATIC_BUF_NUM + 32);
@@ -158,11 +154,7 @@ VOS_VOID Dms_StaticBufInit(VOS_VOID)
     {
         return ;
     }
-#endif
 
-#if (VOS_WIN32== VOS_OS_VER)
-    g_aucStaticBuf = aucStaticBuf;
-#endif
 
     /*取32字节对齐的地址*/
     pTemp = g_aucStaticBuf + (32 - ((VOS_ULONG )g_aucStaticBuf%32));
@@ -189,11 +181,7 @@ VOS_UINT8* Dms_GetStaticBuf(VOS_UINT32 ulLen)
     if(ulLen >DMS_LOG_STATIC_ONE_BUF_SIZE )
     {
 
-#if (VOS_LINUX== VOS_OS_VER)
         buf = kmalloc(ulLen, GFP_KERNEL|__GFP_DMA);
-#else
-        buf = VOS_NULL;
-#endif
         return (VOS_UINT8* )buf;
     }
 
@@ -208,11 +196,7 @@ VOS_UINT8* Dms_GetStaticBuf(VOS_UINT32 ulLen)
     }
 
     /*极限场景下 如果静态buf用完，申请动态内存使用*/
-#if (VOS_LINUX== VOS_OS_VER)
     buf = kmalloc(ulLen, GFP_KERNEL|__GFP_DMA);
-#else
-    buf = VOS_NULL;
-#endif
 
     return (VOS_UINT8* )buf;
 
@@ -258,9 +242,7 @@ VOS_VOID Dms_FreeStaticBuf( VOS_UINT8 * buf)
     /*动态buf释放*/
     if(i == DMS_LOG_STATIC_BUF_NUM)
     {
-#if (VOS_LINUX== VOS_OS_VER)
         kfree(buf );
-#endif
     }
 
 

@@ -74,7 +74,6 @@
 #include "diag_service.h"
 #include "OmCpPcdevPpm.h"
 
-#if (!defined(DRV_BUILD_SEPARATE)) && defined(CONFIG_DIAG_SYSTEM)
 
 void mdrv_diag_PTR(DIAG_PTR_ID_ENUM enType, unsigned int paraMark, unsigned int para0, unsigned int para1)
 {
@@ -275,7 +274,7 @@ unsigned int mdrv_diag_report_reset_msg(DRV_DIAG_TRANS_IND_STRU *pstData)
 *****************************************************************************/
 unsigned int bsp_diag_report_drv_log(unsigned int level, char* fmt, va_list arg)
 {
-    return diag_report_drv_log(level, fmt);
+    return diag_report_drv_log(level, fmt, arg);
 }
 
 void mdrv_diag_ServiceProcReg(DRV_DIAG_SERVICE_FUNC pServiceFn)
@@ -296,194 +295,6 @@ unsigned int mdrv_diag_get_usb_type(void)
     return diag_get_usb_type();
 }
 
-#else
-void mdrv_diag_PTR(DIAG_PTR_ID_ENUM enType, unsigned int paraMark, unsigned int para0, unsigned int para1)
-{
-    return;
-}
-void mdrv_PPM_RegDisconnectCb(PPM_DisconnectTLPortFuc cb)
-{
-    return;
-}
-unsigned int mdrv_GetThrputInfo(DIAG_THRPUT_ID_ENUM type)
-{
-    return 0;
-}
-
-void mdrv_scm_reg_ind_coder_dst_send_fuc(void)
-{
-    return;
-}
-unsigned int mdrv_PPM_LogPortSwitch(unsigned int  ulPhyPort, unsigned int ulEffect)
-{
-    return 0;
-}
-unsigned int mdrv_PPM_QueryLogPort(unsigned int  *pulLogPort)
-{
-    return 0;
-}
-unsigned int mdrv_CPM_ComSend(CPM_LOGIC_PORT_ENUM_UINT32 enLogicPort, unsigned char *pucVirData, unsigned char *pucPHYData, unsigned int ulLen)
-{
-    return 0;
-}
-void mdrv_CPM_LogicRcvReg(CPM_LOGIC_PORT_ENUM_UINT32 enLogicPort, CPM_RCV_FUNC pRcvFunc)
-{
-    return;
-}
-unsigned int mdrv_SCM_RegDecoderDestProc(SOCP_DECODER_DST_ENUM_U32 enChanlID, SCM_DECODERDESTFUCN func)
-{
-    return 0;
-}
-void mdrv_diag_reset_dst_mntn_info(void)
-{
-    return;
-}
-
-unsigned int mdrv_diag_shared_mem_write(unsigned int eType, unsigned int len, char *pData)
-{
-    return 0;
-}
-
-unsigned int mdrv_diag_shared_mem_read(unsigned int eType)
-{
-    return 0;
-}
-unsigned int mdrv_diag_debug_file_header(void *pFile)
-{
-    return 0;
-}
-void mdrv_diag_debug_file_tail(void *pFile, char *FilePath)
-{
-    return;
-}
-
-/*****************************************************************************
- 函 数 名     : mdrv_diag_report_log
- 功能描述  :
- 输入参数  :
-*****************************************************************************/
-unsigned int mdrv_diag_report_log(unsigned int ulModuleId, unsigned int ulPid, unsigned int level, char *cFileName, unsigned int ulLineNum, char* pszFmt, va_list arg)
-{
-    return 0;
-}
-
-/*****************************************************************************
- 函 数 名     : mdrv_diag_report_trans
- 功能描述  : 结构化数据上报接口(替换原来的DIAG_ReportCommand)
- 输入参数  : DRV_DIAG_TRANS_IND_STRU->ulModule( 31-24:modemid,23-16:modeid )
-             DRV_DIAG_TRANS_IND_STRU->ulMsgId(透传命令ID)
-             DRV_DIAG_TRANS_IND_STRU->ulLength(透传信息的长度)
-             DRV_DIAG_TRANS_IND_STRU->pData(透传信息)
-*****************************************************************************/
-unsigned int mdrv_diag_report_trans(DRV_DIAG_TRANS_IND_STRU *pstData)
-{
-    return 0;
-}
-/*****************************************************************************
- 函 数 名  : DIAG_EventReport
- 功能描述  : 事件上报接口
- 输入参数  : DRV_DIAG_EVENT_IND_STRU->ulModule( 31-24:modemid,23-16:modeid,15-12:level,11-0:pid )
-             DRV_DIAG_EVENT_IND_STRU->ulEventId(event ID)
-             DRV_DIAG_EVENT_IND_STRU->ulLength(event的长度)
-             DRV_DIAG_EVENT_IND_STRU->pData(event信息)
-*****************************************************************************/
-unsigned int mdrv_diag_report_event(DRV_DIAG_EVENT_IND_STRU *pstData)
-{
-    return 0;
-}
-unsigned int mdrv_diag_report_air(DRV_DIAG_AIR_IND_STRU *pstData)
-{
-    return 0;
-}
-/*****************************************************************************
- 函 数 名     : DIAG_TraceReport
- 功能描述  : 层间消息上报接口
- 输入参数  : pMsg(标准的VOS消息体，源模块、目的模块信息从消息体中获取)
-*****************************************************************************/
-unsigned int mdrv_diag_report_trace(void *pstData, unsigned int modemid)
-{
-    return 0;
-}
-/*****************************************************************************
- 函 数 名     : mdrv_diag_reset
- 功能描述  : 复位diag相关内容
- 输入参数  : void
-*****************************************************************************/
-void mdrv_diag_report_reset(void)
-{
-    return;
-}
-/*****************************************************************************
- 函 数 名     : mdrv_diag_reset_mntn_info
- 功能描述  : 复位diag维测统计信息
- 输入参数  : void
-*****************************************************************************/
-void mdrv_diag_reset_mntn_info(DIAGLOG_MNTN_ENUM  type)
-{
-    return;
-}
-/*****************************************************************************
- 函 数 名     : mdrv_diag_get_mntn_info
- 功能描述  : 获取维测统计信息
- 输入参数  : void
-*****************************************************************************/
-void* mdrv_diag_get_mntn_info(DIAGLOG_MNTN_ENUM  type)
-{
-    return NULL;
-}
-/*****************************************************************************
- 函 数 名     : mdrv_diag_report_msg_trans
- 功能描述  : 获取维测统计信息
- 输入参数  : void
-*****************************************************************************/
-unsigned int mdrv_diag_report_msg_trans(DRV_DIAG_TRANS_IND_STRU *pstData, unsigned int ulcmdid)
-{
-    return 0;
-}
-/*****************************************************************************
- 函 数 名     : mdrv_diag_report_msg_trans
- 功能描述  : 获取维测统计信息
- 输入参数  : void
-*****************************************************************************/
-unsigned int mdrv_diag_report_cnf(DRV_DIAG_CNF_INFO_STRU *pstData, void *pData, unsigned int ulLen)
-{
-    return 0;
-}
-/*****************************************************************************
- 函 数 名  : bsp_diag_report_drv_log
- 功能描述  : 上报字符串信息
- 输入参数  : void
-*****************************************************************************/
-unsigned int bsp_diag_report_drv_log(unsigned int level, char* fmt, va_list arg)
-{
-    return 0;
-}
-
-void mdrv_diag_ServiceProcReg(DRV_DIAG_SERVICE_FUNC pServiceFn)
-{
-    return;
-}
-
-void mdrv_PPM_QueryUsbInfo(void *PpmUsbInfoStru, unsigned int len)
-{
-    return;
-}
-void mdrv_PPM_ClearUsbTimeInfo(void)
-{
-    return;
-}
-
-void mdrv_ppm_pcdev_ready(void)
-{
-    return;
-}
-
-unsigned int mdrv_diag_get_usb_type(void)
-{
-    return 0;
-}
-
-#endif
 
 
 

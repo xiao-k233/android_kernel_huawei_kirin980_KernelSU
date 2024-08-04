@@ -19,7 +19,6 @@ u32 bbpom_apscreg[]={0xac,0xb4,0xb8,0x168,0x16c,0x1b8,0x208,0x240,0x30c,0x324,0x
 
 void balong_bbp_get_om_info(int print_enable)
 {
-#ifdef BBP_PCTRL_OM_BASE_ADDR
     u32 i;
     u32 value;
     void *pctrl_addr;
@@ -62,7 +61,6 @@ void balong_bbp_get_om_info(int print_enable)
     iounmap(pctrl_addr);
 
     bsp_err("balong_bbp_dump_hook out...\n");
-#endif
 }
 
 void balong_bbp_dump_hook(void)
@@ -84,7 +82,4 @@ int __init balong_bbp_acore_init(void)
     return 0;
 }
 
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-module_init(balong_bbp_acore_init);/*lint -e528*/
-#endif
 

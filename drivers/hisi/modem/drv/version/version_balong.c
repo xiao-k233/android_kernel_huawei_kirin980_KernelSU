@@ -356,11 +356,6 @@ int bsp_version_debug(void)
 
     return VER_OK;
 }
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-/*lint -restore*/
-/*注意:需在nv模块初始化之后*/
-module_init(bsp_version_acore_init);
-#endif
 EXPORT_SYMBOL_GPL(huawei_product_info);
 EXPORT_SYMBOL_GPL(bsp_version_acore_init);
 EXPORT_SYMBOL_GPL(bsp_version_get_hardware);

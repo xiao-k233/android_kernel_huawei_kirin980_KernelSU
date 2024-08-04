@@ -414,6 +414,7 @@ struct icc_dynamic_para
 #define SHM_ADDR_SHA_SEC_ICC                       (char *) ((unsigned long)SHM_BASE_ADDR + SHM_OFFSET_SHA_SEC_ICC)
 #define SRAM_ADDR_ICC                              (char *) ((unsigned long)SRAM_BASE_ADDR + SRAM_OFFSET_ICC)
 
+typedef s32 (*read_cb_func)(u32 channel_id , u32 len, void* context); /*lint !e761 */
 typedef s32 (*write_cb_func)(u32 channel_id , void* context);
 typedef void (*notify)(void);
 

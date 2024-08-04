@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Huawei Technologies Co., Ltd. 2012-2019. All rights reserved.
+ * Copyright (C) Huawei Technologies Co., Ltd. 2012-2015. All rights reserved.
  * foss@huawei.com
  *
  * If distributed as part of the Linux kernel, the following license terms
@@ -113,6 +113,7 @@ extern "C" {
 #define IP_MAX_PREFIX_NUM_IN_RA         ND_IP_MAX_PREFIX_NUM_IN_RA
 
 
+/*huibo DHCPV6 maro begin*/
 #define IP_IPV6_OP_TRUE                   (1)
 #define IP_IPV6_DHCP6_TYPE                (55)
 #define IP_IPV6_DHCP6_PC_PORT             (546)
@@ -133,6 +134,7 @@ extern "C" {
 #define IP_IPV6_DHCP_OPT_CLIENT_ID_LEN      (10 + 4)
 #define IP_IPV6_DHCP_DUID_LL_OPT_LEN        (10)
 
+/*huibo DHCPV6 maro end*/
 
 #define IP_IPV6_BASIC_HEAD_NEXT_HEAD_OFFSET                 (6)
 #define IP_IPV6_BASIC_HEAD_PAYLOAD_OFFSET                   (4)
@@ -180,13 +182,11 @@ extern "C" {
 
 
 
-
 #define IP_MEM_CPY_S(pDestBuffer, ulDestSize, pSrcBuffer, ulCount) VOS_MemCpy_s( pDestBuffer, (VOS_UINT32)(ulDestSize),  pSrcBuffer, (VOS_UINT32)(ulCount))
 
 #define IP_MEM_SET_S(pDestBuffer, ulDestSize, ucData, ulCount) VOS_MemSet_s( pDestBuffer, (VOS_UINT32)(ulDestSize), (VOS_CHAR)(ucData), (VOS_UINT32)(ulCount) )
 
 #define IP_MEM_MOVE_S(pDestBuffer, ulDestSize, pucSrcBuffer, ulCount) VOS_MemMove_s( pDestBuffer, (VOS_UINT32)(ulDestSize), pucSrcBuffer, (VOS_UINT32)(ulCount) )
-
 
 
 
@@ -300,7 +300,6 @@ extern "C" {
                     (pstMsg)->ulSenderPid = ulSendPid;\
                     (pstMsg)->ulReceiverCpuId = VOS_LOCAL_CPUID;\
                     (pstMsg)->ulReceiverPid = ulReceivePid;
-
 
 
 #ifndef IP_RELEASE
@@ -480,7 +479,6 @@ enum IP_EXTENSION_HEADER_TYPE_ENUM
    IP_EXTENSION_HEADER_TYPE_BUTT
 };
 typedef VOS_UINT32 IP_EXTENSION_HEADER_TYPE_ENUM_UINT32;
-
 
 
 /*****************************************************************************
@@ -812,6 +810,7 @@ extern IP_ERR_ENUM_UINT32 IP_BuildIcmpv6Checksum
     VOS_UINT8                          *pucIpMsg,
     VOS_UINT32                          ulTypeOffset
 );
+/*Moved by huibo end*/
 extern VOS_UINT32 ND_CheckEpsIdValid(VOS_UINT8 ucExEpsId);
 extern IP_ERR_ENUM_UINT32 IP_GetIpv6UpLayerProtocol
 (

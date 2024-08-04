@@ -100,7 +100,4 @@ __init int diag_init(void)
 }
 
 
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-module_init(diag_init);
-#endif
 

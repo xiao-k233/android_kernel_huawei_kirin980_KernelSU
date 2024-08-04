@@ -52,7 +52,6 @@
 #include <bsp_sec_call.h>
 #include <bsp_print.h>
 
-#ifdef CONFIG_TZDRIVER
 #include <teek_client_api.h>
 #include <teek_client_id.h>
 
@@ -194,11 +193,4 @@ int bsp_sec_call(FUNC_CMD_ID func_cmd, unsigned int param)
 
 EXPORT_SYMBOL(bsp_sec_call);
 
-#else
-int bsp_sec_call(FUNC_CMD_ID func_cmd, unsigned int param)
-{
-    bsp_err("bsp_sec_call is stub\n");
-    return BSP_OK;
-}
-#endif
 

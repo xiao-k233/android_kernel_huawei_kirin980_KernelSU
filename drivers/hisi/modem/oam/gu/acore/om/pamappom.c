@@ -227,11 +227,6 @@ VOS_VOID PAMOM_QuereyPidInfoMsgProc(MsgBlock* pMsg)
     {
         pstCnfMsg = (PAM_VOS_QUEREY_PID_INFO_CNF_STRU *)pMsg;
 
-        if (pstCnfMsg->ulLength < ((sizeof(PAM_VOS_QUEREY_PID_INFO_CNF_STRU) - VOS_MSG_HEAD_LENGTH - sizeof(pstCnfMsg->aucValue)) + pstCnfMsg->usLen))
-        {
-            return;
-        }
-
         VOS_SetPidInfo((VOS_VOID *)(pstCnfMsg->aucValue), pstCnfMsg->usLen);
     }
     else
@@ -365,9 +360,7 @@ VOS_UINT32 PAM_OM_AcpuAtToPihMsgFilter(
         case SI_PIH_CRSM_SET_REQ:
         case SI_PIH_CRLA_SET_REQ:
         case SI_PIH_CGLA_SET_REQ:
-#if (FEATURE_ON == FEATURE_PHONE_SC)
         case SI_PIH_SILENT_PININFO_SET_REQ:
-#endif
         case SI_PIH_GACCESS_REQ:
         case SI_PIH_ISDB_ACCESS_REQ:
         case SI_PIH_PRIVATECGLA_SET_REQ:
@@ -458,11 +451,6 @@ VOS_VOID * PAM_OM_LayerMsgFilter(
     struct MsgCB                       *pMsg
 )
 {
-    if (pMsg == VOS_NULL_PTR)
-    {
-        return VOS_NULL_PTR;
-    }
-
     if (VOS_TRUE == PAM_OM_AcpuLayerMsgFilterOptProc(pMsg))
     {
         return VOS_NULL_PTR;
@@ -480,16 +468,12 @@ VOS_VOID PAM_OM_LayerMsgReplaceCBReg(VOS_VOID)
     PS_OM_LayerMsgReplaceCBReg(I0_MAPS_PB_PID, PAM_OM_LayerMsgFilter);
     PS_OM_LayerMsgReplaceCBReg(I0_MAPS_STK_PID, PAM_OM_LayerMsgFilter);
 
-#if (FEATURE_MULTI_MODEM == FEATURE_ON)
     PS_OM_LayerMsgReplaceCBReg(I1_MAPS_PIH_PID, PAM_OM_LayerMsgFilter);
     PS_OM_LayerMsgReplaceCBReg(I1_MAPS_PB_PID, PAM_OM_LayerMsgFilter);
     PS_OM_LayerMsgReplaceCBReg(I1_MAPS_STK_PID, PAM_OM_LayerMsgFilter);
-#if (3 == MULTI_MODEM_NUMBER)
     PS_OM_LayerMsgReplaceCBReg(I2_MAPS_PIH_PID, PAM_OM_LayerMsgFilter);
     PS_OM_LayerMsgReplaceCBReg(I2_MAPS_PB_PID, PAM_OM_LayerMsgFilter);
     PS_OM_LayerMsgReplaceCBReg(I2_MAPS_STK_PID, PAM_OM_LayerMsgFilter);
-#endif
-#endif
 
 }
 
@@ -498,11 +482,6 @@ VOS_VOID PAM_OM_LayerMsgReplaceCBReg(VOS_VOID)
  VOS_VOID PAMOM_AcpuCcpuPamMsgProc(MsgBlock* pMsg)
  {
     VOS_UINT16                          usPrimId;
-
-    if (pMsg->ulLength < sizeof(usPrimId))
-    {
-        return;
-    }
 
     usPrimId = *(VOS_UINT16 *)(pMsg->aucValue);
 
@@ -525,12 +504,7 @@ VOS_VOID PAM_OM_LayerMsgReplaceCBReg(VOS_VOID)
 
 VOS_VOID PAMOM_AppMsgProc(MsgBlock* pMsg)
 {
-    if (pMsg == VOS_NULL_PTR)
-    {
-        return;
-    }
-
-    if (pMsg->ulSenderPid == VOS_PID_TIMER)
+    if (VOS_PID_TIMER == pMsg->ulSenderPid)
     {
         PAMOM_AcpuTimerMsgProc(pMsg);
     }
@@ -612,9 +586,8 @@ VOS_UINT32 PAMOM_APP_FID_Init(enum VOS_INIT_PHASE_DEFINE ip)
     return VOS_OK;
 }
 
-#if (VOS_WIN32 != VOS_OS_VER)
 
-VOS_VOID OM_OSAEvent(VOS_TIMER_OM_EVENT_STRU *pData, VOS_UINT32 ulLength)
+VOS_VOID OM_OSAEvent(VOS_VOID *pData, VOS_UINT32 ulLength)
 {
     DIAG_EVENT_IND_STRU                 stEventInd;
 
@@ -624,13 +597,10 @@ VOS_VOID OM_OSAEvent(VOS_TIMER_OM_EVENT_STRU *pData, VOS_UINT32 ulLength)
     stEventInd.ulLength = ulLength;
     stEventInd.pData    = pData;
 
-    pData->ulHTimerAddress = 0;
-
     (VOS_VOID)DIAG_EventReport(&stEventInd);
 
     return;
 }
-#endif
 
 
 /* AT<->AT的屏蔽处理，移到GuNasLogFilter.c */

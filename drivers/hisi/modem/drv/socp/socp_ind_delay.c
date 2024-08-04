@@ -51,9 +51,7 @@
 
 #include "socp_balong.h"
 
-#ifdef CONFIG_DEFLATE
 #include "deflate.h"
-#endif
 
 #include <linux/vmalloc.h>
 #include <linux/device.h>
@@ -198,13 +196,10 @@ void socp_get_cmdline_param(void)
     (void)socp_get_logbuffer_sizeparse();
     (void)socp_get_logbuffer_timeparse();
     (void)socp_get_logbuffer_addrparse();
-#if (FEATURE_SOCP_MEM_RESERVED == FEATURE_ON)
     (void)socp_get_logbuffer_logcfg();
-#endif
     return ;
 
 }
-#if (FEATURE_SOCP_MEM_RESERVED == FEATURE_ON)
 /*****************************************************************************
 * 函 数 名  : socp_get_logbuffer_logcfg
 *
@@ -309,7 +304,6 @@ static struct platform_driver socp_mem_driver = {
     .probe = socp_memalloc_probe,
 };
 /*lint -restore +e785 +e64*/
-#endif
 
 void *socp_logbuffer_memremap(unsigned long phys_addr, size_t size)
 {
@@ -493,11 +487,7 @@ s32 socp_logbuffer_dmalloc(struct device_node* dev)
         socp_crit("of_property_read_u32_array get size 0x%x!\n", aulDstChan[SOCP_DST_CHAN_CFG_SIZE]);
         size = aulDstChan[SOCP_DST_CHAN_CFG_SIZE];
     }
-#ifdef CONFIG_ARM64
     pucBuf =(u8 *) dma_alloc_coherent(&modem_socp_pdev->dev, (size_t)size, &ulAddress, GFP_KERNEL);
-#else
-    pucBuf =(u8 *) dma_alloc_coherent(NULL, size, &ulAddress, GFP_KERNEL);
-#endif
 
     if(BSP_NULL == pucBuf)
     {
@@ -513,13 +503,11 @@ s32 socp_logbuffer_dmalloc(struct device_node* dev)
     g_stEncDstBufLogConfig.BufferSize       = size;
     g_stEncDstBufLogConfig.logOnFlag        = SOCP_DST_CHAN_DTS;
 
-#ifdef CONFIG_DEFLATE
     g_stDeflateDstBufLogConfig.ulPhyBufferAddr  = (unsigned long)ulAddress;
     g_stDeflateDstBufLogConfig.pVirBuffer       = pucBuf;
     g_stDeflateDstBufLogConfig.ulCurTimeout     = 10; /* 使用默认值 */
     g_stDeflateDstBufLogConfig.BufferSize       = size;
     g_stDeflateDstBufLogConfig.logOnFlag        = SOCP_DST_CHAN_DTS;
-#endif
     return BSP_OK;
 }
 
@@ -550,21 +538,17 @@ s32 bsp_socp_logbuffer_init(struct device_node* dev)
             g_stEncDstBufLogConfig.BufferSize       = g_stSocpMemReserve.ulBufferSize;
             g_stEncDstBufLogConfig.overTime         = g_stSocpMemReserve.ulTimeout;
             g_stEncDstBufLogConfig.logOnFlag        = SOCP_DST_CHAN_DELAY;
-#ifdef CONFIG_DEFLATE
             g_stDeflateDstBufLogConfig.pVirBuffer       = g_stSocpMemReserve.pVirBuffer;
             g_stDeflateDstBufLogConfig.ulPhyBufferAddr  = g_stSocpMemReserve.ulPhyBufferAddr;
             g_stDeflateDstBufLogConfig.BufferSize       = g_stSocpMemReserve.ulBufferSize;
             g_stDeflateDstBufLogConfig.overTime         = g_stSocpMemReserve.ulTimeout;
             g_stDeflateDstBufLogConfig.logOnFlag        = SOCP_DST_CHAN_DELAY;
-#endif
         }
         /*step1.2: if kernel reserved buffer is invalid, disable ind delay, use 1M malloc buffer */
         else
         {
             g_stEncDstBufLogConfig.logOnFlag        = SOCP_DST_CHAN_NOT_CFG;
-#ifdef  CONFIG_DEFLATE
             g_stDeflateDstBufLogConfig.logOnFlag        = SOCP_DST_CHAN_NOT_CFG;
-#endif
 
         }
     }
@@ -579,22 +563,18 @@ s32 bsp_socp_logbuffer_init(struct device_node* dev)
             g_stEncDstBufLogConfig.BufferSize       = g_stSocpEarlyCfg.ulBufferSize;
             g_stEncDstBufLogConfig.overTime         = g_stSocpEarlyCfg.ulTimeout;
             g_stEncDstBufLogConfig.logOnFlag        = SOCP_DST_CHAN_DELAY;
- #ifdef CONFIG_DEFLATE
             g_stDeflateDstBufLogConfig.pVirBuffer       = g_stSocpEarlyCfg.pVirBuffer;
             g_stDeflateDstBufLogConfig.ulPhyBufferAddr  = g_stSocpEarlyCfg.ulPhyBufferAddr;
             g_stDeflateDstBufLogConfig.BufferSize       = g_stSocpEarlyCfg.ulBufferSize;
             g_stDeflateDstBufLogConfig.overTime         = g_stSocpEarlyCfg.ulTimeout;
             g_stDeflateDstBufLogConfig.logOnFlag        = SOCP_DST_CHAN_DELAY;
 
- #endif
         }
         /*step2.2: if fastboot reserved memory is invalid, use 1M malloc buffer, disable ind delay*/
         else
         {
              g_stEncDstBufLogConfig.logOnFlag=SOCP_DST_CHAN_NOT_CFG;
- #ifdef CONFIG_DEFLATE
              g_stDeflateDstBufLogConfig.logOnFlag=SOCP_DST_CHAN_NOT_CFG;
- #endif
         }
     }
 
@@ -883,7 +863,6 @@ s32 bsp_socp_get_cps_ind_mode(u32 *CpsIndMode)
 *****************************************************************************/
 s32 bsp_socp_set_cps_ind_mode(DEFLATE_IND_COMPRESSS_ENUM eMode)
 {
-#ifdef CONFIG_DEFLATE
     u32 ulDeflateState;
     if(0 == g_deflate_nv_ctrl.deflate_enable)
     {
@@ -932,9 +911,6 @@ s32 bsp_socp_set_cps_ind_mode(DEFLATE_IND_COMPRESSS_ENUM eMode)
     }
 
     return BSP_OK;
-#else
-    return BSP_ERROR;
-#endif
 
 }
 /*****************************************************************************
@@ -966,14 +942,12 @@ s32 bsp_socp_ind_delay_init(void)
     bsp_socp_get_mem_reserve_stru(&g_stSocpMemReserve);
     /*获取的内存虚拟物理转换*/
     (void)socp_logbuffer_mmap();
-#if (FEATURE_SOCP_MEM_RESERVED == FEATURE_ON)
 	ret = platform_driver_register(&socp_mem_driver); /*lint !e64*/
     if(ret)
     {
         socp_error("platform driver register failed!\n");
         return BSP_ERROR;
     }
-#endif
 
     ret = bsp_socp_logbuffer_init(dev);
     if(ret)
@@ -1043,7 +1017,6 @@ s32  bsp_deflate_get_compress_mode(u32 *CpsIndMode)
 *****************************************************************************/
 s32 bsp_deflate_set_ind_mode(SOCP_IND_MODE_ENUM eMode)
 {
-#ifdef CONFIG_DEFLATE
     u32 ret;
     switch (eMode)
     {
@@ -1130,7 +1103,6 @@ s32 bsp_deflate_set_ind_mode(SOCP_IND_MODE_ENUM eMode)
             return  BSP_ERROR;
         }
     }
-#endif
     return BSP_OK ;
  }
 

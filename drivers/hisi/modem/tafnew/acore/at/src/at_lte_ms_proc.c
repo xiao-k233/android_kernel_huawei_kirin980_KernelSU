@@ -52,9 +52,7 @@
 /*lint --e{7,64,537,545,322,718,746,958,734,830,587,713,516}*/
 #include "gen_msg.h"
 
-#if(FEATURE_ON == FEATURE_LTE)
 #include "nv_stru_lps.h"
-#endif
 
 /*lint -e767 Ô­Òò:Log´òÓ¡*/
 #define    THIS_FILE_ID        MSP_FILE_ID_AT_LTE_MS_PROC_C
@@ -80,6 +78,7 @@ extern VOS_UINT32 AT_NVWRGetParaInfo( AT_PARSE_PARA_TYPE_STRU * pstPara, VOS_UIN
 //
 // ¦Ì¡Â¨®?¨°a?¨®: TODO: ...
 // ¦Ì¡Â¨®??¨´¨¤y: TODO: ...
+// ¡Á¡Â    ??: ¨®¨²???1?/00193980 [2013-02-24]
 // *****************************************************************************
 VOS_UINT32 atSetNVRDLenPara(VOS_UINT8 ucClientId)
 {

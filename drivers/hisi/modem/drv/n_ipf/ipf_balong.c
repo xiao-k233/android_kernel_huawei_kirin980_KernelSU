@@ -288,53 +288,12 @@ static int ipf_ctx_init(void)
     
     g_ipf_ctx.dl_info.pstIpfPhyRDQ  = virt_to_phys(g_ipf_ctx.dl_info.pstIpfRDQ);
 */
-#ifndef CONFIG_PSAM
-    g_ipf_ctx.dl_info.pstIpfADQ0    = dmam_alloc_coherent(
-                g_ipf_ctx.dev,
-                sizeof(ipf_dad_u),
-                &g_ipf_ctx.dl_info.pstIpfPhyADQ0,
-                GFP_KERNEL);
-    if(!g_ipf_ctx.dl_info.pstIpfADQ0)
-    {
-        bsp_err("ADQ0 no mem!\n");
-        goto ERROR2;
-    }
-                
-    g_ipf_ctx.dl_info.pstIpfADQ1    = dmam_alloc_coherent(
-                g_ipf_ctx.dev,
-                sizeof(ipf_dad_u),
-                &g_ipf_ctx.dl_info.pstIpfPhyADQ1,
-                GFP_KERNEL);
-    if(!g_ipf_ctx.dl_info.pstIpfADQ1)
-    {
-        bsp_err("ADQ1 no mem!\n");
-        goto ERROR3;
-    }
-
-    g_ipf_ctx.last_ad0 = g_ipf_ctx.dl_info.pstIpfADQ0;
-    g_ipf_ctx.last_ad1 = g_ipf_ctx.dl_info.pstIpfADQ1;
-    g_ipf_ctx.last_bd = g_ipf_ctx.ul_info.pstIpfBDQ;
-    g_ipf_ctx.last_rd = g_ipf_ctx.dl_info.pstIpfRDQ;
-
-#endif
     g_ipf_ctx.dl_info.pstIpfCDQ     = &sm->dcd;
     g_ipf_ctx.dl_info.u32IpfCdRptr = &sm->dcd_rptr;
     *(g_ipf_ctx.dl_info.u32IpfCdRptr) = 0;
 
     return 0;
 
-#ifndef CONFIG_PSAM
-ERROR3:
-    dmam_free_coherent(g_ipf_ctx.dev, 
-			sizeof(ipf_dad_u),
-			g_ipf_ctx.ul_info.pstIpfADQ0,
-			g_ipf_ctx.ul_info.pstIpfPhyADQ0);
-ERROR2:
-    dmam_free_coherent(g_ipf_ctx.dev, 
-				sizeof(ipf_drd_u),
-				g_ipf_ctx.dl_info.pstIpfRDQ,
-				g_ipf_ctx.dl_info.pstIpfPhyRDQ);
-#endif
 ERROR1:
     dmam_free_coherent(g_ipf_ctx.dev, 
 				sizeof(ipf_ubd_u),
@@ -380,10 +339,7 @@ int ipf_init(void)
     }
 
 	/*acore use first block,ccore use scnd block*/
-	if(memset_s(sm->debug, sizeof(sm->debug), 0, sizeof(struct ipf_debug)))
-	{
-		bsp_err("memset_s failed\n");
-	}
+	memset_s(sm->debug, sizeof(sm->debug), 0, sizeof(struct ipf_debug));
 	g_ipf_ctx.status = (struct ipf_debug*)&sm->debug[0] ;
 
 	g_ipf_ctx.desc = ipf_get_desc_handler(g_ipf_ctx.ipf_version);
@@ -391,10 +347,8 @@ int ipf_init(void)
     g_ipf_ctx.modem_status = IPF_FORRESET_CONTROL_ALLOW;
 	g_ipf_ctx.ccore_rst_idle = 0;
 
-#ifdef CONFIG_PSAM
 	g_ipf_ctx.psam_para.desc_hd = g_ipf_ctx.desc;
 	g_ipf_ctx.psam_pm = bsp_psam_set_ipf_para(&g_ipf_ctx.psam_para);
-#endif
 
 	bsp_err("ipf init success\n");
 
@@ -456,9 +410,7 @@ void mdrv_ipf_reinit_dlreg(void)
 {	
 	g_ipf_ctx.desc->config();
 	
-#ifdef CONFIG_PSAM
 	psam_reinit_regs();
-#endif
 
     g_ipf_ctx.status->init_ok = IPF_ACORE_INIT_SUCCESS;
     bsp_err("ipf dl register reinit success\n");
@@ -466,20 +418,9 @@ void mdrv_ipf_reinit_dlreg(void)
     return;
 
 }
-#ifndef CONFIG_PSAM
-int bsp_ipf_get_used_dlad(IPF_AD_TYPE_E eAdType, unsigned int * pu32AdNum, IPF_AD_DESC_S * pstAdDesc)
-{
-	return IPF_SUCCESS;
-
-}
-#endif
 int mdrv_ipf_get_used_dlad(IPF_AD_TYPE_E eAdType, unsigned int * pu32AdNum, IPF_AD_DESC_S * pstAdDesc)
 {	
-#ifdef CONFIG_PSAM
 	return bsp_psam_get_used_dlad(eAdType, pu32AdNum, pstAdDesc);
-#else
-	return bsp_ipf_get_used_dlad(eAdType, pu32AdNum, pstAdDesc);
-#endif
 }
 
 void bsp_ipf_set_control_flag_for_ccore_reset(IPF_FORRESET_CONTROL_E eResetFlag)
@@ -550,11 +491,8 @@ int bsp_ipf_reset_ccore_cb(DRV_RESET_CB_MOMENT_E eparam, int userdata)
         g_ipf_ctx.ccore_rst_idle = 0;
         g_ipf_ctx.status->cp_flag = sm->init.status.modem;
         g_ipf_ctx.status->rst_ts = bsp_get_slice_value();
-        if(memcpy_s(g_ipf_ctx.backup.debug, sizeof(g_ipf_ctx.backup.debug),
-                &sm->debug[0] ,sizeof(struct ipf_debug)*2))
-        {
-            bsp_err("memcpy_s failed\n");
-        }
+        memcpy_s(g_ipf_ctx.backup.debug, sizeof(g_ipf_ctx.backup.debug),
+                &sm->debug[0] ,sizeof(struct ipf_debug)*2);
         g_ipf_ctx.backup.flag = sm->init.status.modem;
 
         psam_get_dlad_num(&tmp0, &tmp1);
@@ -577,40 +515,6 @@ int bsp_ipf_reset_ccore_cb(DRV_RESET_CB_MOMENT_E eparam, int userdata)
 }
 
 
-#ifndef CONFIG_PSAM
-int ipf_config_dl_ad(unsigned int u32AdType, unsigned int  u32AdNum, IPF_AD_DESC_S * pstAdDesc)
-{
-	unsigned int u32ADQwptr = 0;
-	struct tagIPF_AD_DESC_S * pstADDesc = pstAdDesc;
-	IPF_DL_S* dl_ad = &g_ipf_ctx.dl_info;
-	unsigned int i;
-
-	g_ipf_ctx.status->cfg_ad_times++;
-	if(NULL == pstAdDesc || u32AdType >= IPF_AD_MAX)
-	{
-		bsp_err("%s para invalid\n", __func__);
-		g_ipf_ctx.status->invalid_para++;
-		return BSP_ERR_IPF_INVALID_PARA;
-	}
-
-	/* 检查模块是否初始化 */
-	if(g_ipf_ctx.status && (IPF_ACORE_INIT_SUCCESS != g_ipf_ctx.status->init_ok))
-	{
-		g_ipf_ctx.status->mdrv_called_not_init++;
-		bsp_err("%s ipf not init\n", __func__);
-		return BSP_ERR_IPF_NOT_INIT;
-	}
-
-	if(u32AdNum >= IPF_DLAD0_DESC_SIZE)
-	{
-		bsp_err("%s too much short ad num\n", __func__);
-		g_ipf_ctx.status->invalid_para++;
-		return BSP_ERR_IPF_INVALID_PARA;
-	}
-
-	return g_ipf_ctx.desc->ad_s2h(u32AdType, u32AdNum, pstAdDesc);
-}
-#endif
 int ipf_register_wakeup_dlcb(BSP_IPF_WakeupDlCb pFnWakeupDl)
 {
     /* 参数检查 */
@@ -635,20 +539,6 @@ int ipf_register_ul_bd_empty(ipf_bd_empty bd_handle)
     g_ipf_ctx.ul_info.handle_bd_empty = bd_handle;
 	return 0;
 }
-#ifndef CONFIG_PSAM
-int ipf_register_adq_empty_dlcb(BSP_IPF_AdqEmptyDlCb pAdqEmptyDl)
-{
-    /* 参数检查 */
-    if(NULL == pAdqEmptyDl)
-    {
-    	g_ipf_ctx.status->invalid_para++;
-    	bsp_err("%s invalid para\n", __func__);
-        return IPF_ERROR;
-    }
-    g_ipf_ctx.dl_info.pAdqEmptyDlCb = pAdqEmptyDl;
-    return IPF_SUCCESS;
-}
-#endif
 
 unsigned int mdrv_ipf_get_ulbd_num(void)
 {
@@ -744,11 +634,7 @@ int mdrv_ipf_config_ulbd(unsigned int u32Num, IPF_CONFIG_ULPARAM_S* pstUlPara)
 }
 int mdrv_ipf_config_dlad(IPF_AD_TYPE_E eAdType, unsigned int u32AdNum, IPF_AD_DESC_S * pstAdDesc)
 {
-#ifdef CONFIG_PSAM
 	return psam_config_dlad(eAdType, u32AdNum, pstAdDesc);
-#else
-	return ipf_config_dl_ad(eAdType, u32AdNum, pstAdDesc);
-#endif
 }
 
 int mdrv_ipf_register_ops(struct mdrv_ipf_ops *ops)
@@ -757,13 +643,8 @@ int mdrv_ipf_register_ops(struct mdrv_ipf_ops *ops)
 	{
 		if(ipf_register_wakeup_dlcb(ops->rx_complete_cb)!= IPF_SUCCESS)
 			return IPF_ERROR;
-#ifdef CONFIG_PSAM
 		if(psam_register_adq_empty_dlcb((adq_emtpy_cb_t)ops->adq_empty_cb)!= IPF_SUCCESS)
 			return IPF_ERROR;
-#else
-		if(ipf_register_adq_empty_dlcb((BSP_IPF_AdqEmptyDlCb)ops->adq_empty_cb)!= IPF_SUCCESS)
-			return IPF_ERROR;
-#endif
 	} else {
 		bsp_err("%s para invalid\n", __func__);
 		g_ipf_ctx.status->invalid_para++;
@@ -785,11 +666,7 @@ int mdrv_ipf_get_dlad_num (unsigned int* pu32AD0Num, unsigned int* pu32AD1Num)
 		return -EINVAL;
 	}
 
-#ifdef CONFIG_PSAM
 	return psam_get_dlad_num(pu32AD0Num, pu32AD1Num);
-#else
-	return ipf_get_dl_ad_num(pu32AD0Num, pu32AD1Num);
-#endif
 }
 
 unsigned int mdrv_ipf_get_dlrd_num(void)
@@ -851,13 +728,10 @@ static int ipf_probe(struct platform_device *pdev)
 	if (!regs)
 		return -ENXIO;
 
-    if(memset_s(&g_ipf_ctx, sizeof(g_ipf_ctx), 0, sizeof(ipf_ctx_t)))
-    {
-        bsp_err("memset_s failed\n");
-    }
-    g_ipf_ctx.irq = platform_get_irq(pdev, 0);
-    if (unlikely(g_ipf_ctx.irq == 0))
-        return -ENXIO;
+    memset_s(&g_ipf_ctx, sizeof(g_ipf_ctx), 0, sizeof(ipf_ctx_t));
+	g_ipf_ctx.irq = platform_get_irq(pdev, 0);
+	if (unlikely(g_ipf_ctx.irq == 0))
+		return -ENXIO;
 
 	g_ipf_ctx.regs = devm_ioremap_resource(&pdev->dev, regs);
 	if (IS_ERR(g_ipf_ctx.regs))
@@ -889,14 +763,8 @@ static int ipf_probe(struct platform_device *pdev)
     }
 	g_ipf_ctx.limit_addr = (IPF_LIMIT_ADDR_S *)sm->trans_limit;
     g_ipf_ctx.memblock_show = (unsigned long *)sm->memlock;
-    if(memset_s((void*)sm->trans_limit, sizeof(sm->trans_limit), 0x0, IPF_TRANS_LIMIT_SIZE))
-    {
-        bsp_err("memset_s failed\n");
-    }
-    if(memset_s((void*)sm->memlock, sizeof(sm->memlock), 0x0, IPF_ADDR_MEMBLOCK_SIZE))
-    {
-        bsp_err("memset_s failed\n");
-    }
+	memset_s((void*)sm->trans_limit, sizeof(sm->trans_limit), 0x0, IPF_TRANS_LIMIT_SIZE);
+    memset_s((void*)sm->memlock, sizeof(sm->memlock), 0x0, IPF_ADDR_MEMBLOCK_SIZE);
 
 	if(ipf_get_limit_addr()){
 		g_ipf_ctx.not_get_space++;
@@ -937,9 +805,6 @@ __init int ipf_pltfm_driver_init(void)
 {
     return platform_driver_register(&ipf_pltfm_driver);
 }
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-module_init(ipf_pltfm_driver_init);
-#endif
 EXPORT_SYMBOL(bsp_ipf_reset_ccore_cb);
 EXPORT_SYMBOL(g_ipf_ctx);
 EXPORT_SYMBOL(mdrv_ipf_config_dlad);

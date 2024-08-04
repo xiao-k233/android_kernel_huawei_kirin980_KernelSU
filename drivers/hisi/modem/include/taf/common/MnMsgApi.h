@@ -778,13 +778,13 @@ typedef struct
  ASN.1描述 :
  结构说明  : 短信TPDU结构, 包括TPDU长度(单位: 字节)和TPDU码流
 *******************************************************************************/
-/*lint -e958 -e959 原因:64bit*/
+/*lint -e958 -e959 修改人:l60609;原因:64bit*/
 typedef struct
 {
     VOS_UINT32                          ulLen;
     VOS_UINT8                          *pucTpdu;
 }MN_MSG_TPDU_STRU;
-/*lint +e958 +e959 原因:64bit*/
+/*lint +e958 +e959 修改人:l60609;原因:64bit*/
 
 typedef struct
 {
@@ -1463,15 +1463,6 @@ typedef struct
 
 /*Content of Command TPDU*/
 #define  MN_MSG_MAX_COMMAND_DATA_LEN                        146
-#define  MN_MSG_MAX_STARPT_DATA_LEN                         143
-#define  MN_MSG_DELIVER_TPDU_MANDATORY_IE_LEN               13
-#define  MN_MSG_DELIVER_RPTACK_TPDU_MANDATORY_IE_LEN        2
-#define  MN_MSG_DELIVER_RPTERR_TPDU_MANDATORY_IE_LEN        3
-#define  MN_MSG_SUBMIT_TPDU_MANDATORY_IE_LEN                7
-#define  MN_MSG_SUBMIT_RPTERR_TPDU_MANDATORY_IE_LEN         10
-#define  MN_MSG_SUBMIT_RPTACK_TPDU_MANDATORY_IE_LEN         9
-#define  MN_MSG_STATUS_REPORT_TPDU_MANDATORY_IE_LEN         19
-#define  MN_MSG_COMMAND_TPDU_MANDATORY_IE_LEN               8
 typedef struct
 {
     VOS_BOOL                            bUserDataHeaderInd;                     /*TP-UDHI*/

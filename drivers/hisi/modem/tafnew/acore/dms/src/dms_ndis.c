@@ -278,9 +278,7 @@ VOS_VOID DMS_NcmWrtCB (char* pDoneBuff, int status)
     {
         if(pDoneBuff != NULL)
         {
-#if (VOS_LINUX== VOS_OS_VER)
             kfree(pDoneBuff);
-#endif
         }
     }
 

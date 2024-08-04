@@ -46,6 +46,22 @@
  *
  */
 
+/*****************************************************************************/
+/*                                                                           */
+/*                Copyright 1999 - 2003, Huawei Tech. Co., Ltd.              */
+/*                           ALL RIGHTS RESERVED                             */
+/*                                                                           */
+/* FileName: ../TARGET/config/v_MemCfg.inc                                   */
+/*                                                                           */
+/* Author:                                                                   */
+/*                                                                           */
+/* Version:  1.0                                                             */
+/*                                                                           */
+/* Date:                                                                     */
+/*                                                                           */
+/* Description: create this file                                             */
+/*                                                                           */
+/*****************************************************************************/
 
 #ifdef __cplusplus
 #if __cplusplus

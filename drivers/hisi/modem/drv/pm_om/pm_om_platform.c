@@ -92,10 +92,7 @@ int pm_om_platform_init(void)
 	char *dev_name = "pmom";/*lint !e578: (Warning -- Declaration of symbol 'dev_name' hides symbol */
 	struct pm_om_ctrl *ctrl  = pm_om_ctrl_get();
 
-	ret = memset_s((void *)&g_pmom_platform, sizeof(g_pmom_platform), 0, sizeof(g_pmom_platform));
-	{
-		pmom_pr_err("g_pmom_platform memset ret = %d\n", ret);
-	}
+	memset_s((void *)&g_pmom_platform, sizeof(g_pmom_platform), 0, sizeof(g_pmom_platform));
 	g_pmom_platform.log_info.dev_name  = dev_name;
 	g_pmom_platform.log_info.mem       = &(ctrl->log.smem->mem_info);
 	g_pmom_platform.log_info.ring_buf  = ctrl->log.rb.buf;

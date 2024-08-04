@@ -54,8 +54,7 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-#include <linux/device.h>
-#include <linux/pm_wakeup.h>
+#include <linux/wakelock.h>
 #include <linux/printk.h>
 #include <linux/suspend.h>
 #include <linux/workqueue.h>
@@ -175,7 +174,7 @@ struct reset_cb_info
     char name[DRV_RESET_MODULE_NAME_LEN + 1];
     u32 priolevel;
     pdrv_reset_cbfun cbfun;
-    int userdata;
+    s32 userdata;
 };
 
 struct reset_cb_list
@@ -203,7 +202,7 @@ struct modem_reset_ctrl
 	struct work_struct  work_reset;
 	struct work_struct  work_power_off;
 	struct work_struct  work_power_on;
-	struct wakeup_source wake_lock;
+	struct wake_lock wake_lock;
 	struct notifier_block pm_notify;
 	struct completion suspend_completion;
 	IPC_INT_LEV_E ipc_send_irq_wakeup_ccore;
@@ -219,7 +218,6 @@ struct modem_reset_ctrl
 	u32 state;
 	u32 modem_lrreboot_state;
 	u32 modem_nrreboot_state;
-    u32 reset_state;
 };
 
 /*

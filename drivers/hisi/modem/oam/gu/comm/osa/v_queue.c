@@ -46,6 +46,33 @@
  *
  */
 
+/*****************************************************************************/
+/*                                                                           */
+/*                Copyright 1999 - 2003, Huawei Tech. Co., Ltd.              */
+/*                           ALL RIGHTS RESERVED                             */
+/*                                                                           */
+/* FileName: v_queue.c                                                       */
+/*                                                                           */
+/* Author: Yang Xiangqian                                                    */
+/*                                                                           */
+/* Version: 1.0                                                              */
+/*                                                                           */
+/* Date: 2006-10                                                             */
+/*                                                                           */
+/* Description: implement queue                                              */
+/*                                                                           */
+/* Others:                                                                   */
+/*                                                                           */
+/* History:                                                                  */
+/* 1. Date:                                                                  */
+/*    Author:                                                                */
+/*    Modification: Create this file                                         */
+/*                                                                           */
+/* 2. Date: 2006-10                                                          */
+/*    Author: Xu Cheng                                                       */
+/*    Modification: Standardize code                                         */
+/*                                                                           */
+/*****************************************************************************/
 
 #include "vos_config.h"
 #include "v_typdef.h"
@@ -61,10 +88,6 @@
 #include "pam_tag.h"
 
 /* LINUX 不支持 */
-#if (VOS_VXWORKS== VOS_OS_VER)
-#include "stdio.h"
-#include "stdlib.h"
-#endif
 
 
 
@@ -110,9 +133,6 @@ typedef struct
     /* which should be del when only one FID exists */
     VOS_UINT32          QNum;/* number of Q */
     VOS_Q_STRU          Q[VOS_MAX_PID_PRI];
-#if (VOS_DEBUG == VOS_DOPRA_VER)
-    VOS_UINT32          ulQueueFullTag;/* queue is full or not */
-#endif
 } VOS_QUEUE_CONTROL_BLOCK;
 
 typedef struct
@@ -176,9 +196,6 @@ VOS_VOID VOS_QueueCtrlBlkInit(VOS_VOID)
     {
         vos_QueueCtrlBlcok[i].Flag     = VOS_QUEUE_CTRL_BLK_IDLE;
         vos_QueueCtrlBlcok[i].Qid      = i;
-#if (VOS_DEBUG == VOS_DOPRA_VER)
-        vos_QueueCtrlBlcok[i].ulQueueFullTag = VOS_FALSE;
-#endif
     }
 
     VOS_SpinLockInit(&g_stVosQueueSpinLock);
@@ -221,9 +238,6 @@ VOS_UINT32 VOS_QueueCtrlBlkGet(VOS_VOID)
             Max_use_queue_number = i;
         }
 
-#if (VOS_DEBUG == VOS_DOPRA_VER)
-        vos_QueueCtrlBlcok[i].ulQueueFullTag = VOS_FALSE;
-#endif
 
         return i;
     }
@@ -510,18 +524,7 @@ VOS_UINT32 VOS_FixedQueueWrite( VOS_UINT32 ulQueueID, VOS_VOID * pBufferAddr,
     VOS_UINT32                  ulReturn;
     VOS_MSG_BLOCK_BAK           stMsgBlcokBak;
     VOS_MSG_BLOCK_BAK          *pstTemp;
-#if (VOS_RTOSCK == VOS_OS_VER)
-    VOS_UINT32                  ulInterruptFlag = VOS_FALSE;
 
-    ulInterruptFlag = VOS_CheckInterrupt();
-#endif
-
-#if (VOS_RTOSCK == VOS_OS_VER)
-    if (VOS_FALSE == ulInterruptFlag)
-    {
-        (VOS_VOID)VOS_TaskLock();
-    }
-#endif
 
     /* Add for VOS_ExecuteAwakeFun for BOSTON SMP, end */
     /* Copy Msg Parameters to local stub */
@@ -540,12 +543,6 @@ VOS_UINT32 VOS_FixedQueueWrite( VOS_UINT32 ulQueueID, VOS_VOID * pBufferAddr,
 
     if (VOS_ERR == ulReturn )
     {
-#if (VOS_RTOSCK == VOS_OS_VER)
-        if (VOS_FALSE == ulInterruptFlag)
-        {
-            (VOS_VOID)VOS_TaskUnlock();
-        }
-#endif
         mdrv_err("<VOS_FixedQueueWrite> Queue ID %d is full.\n",(int)ulQueueID);
 
         return VOS_ERR;
@@ -555,12 +552,6 @@ VOS_UINT32 VOS_FixedQueueWrite( VOS_UINT32 ulQueueID, VOS_VOID * pBufferAddr,
 
         if ( VOS_OK != VOS_SmV( vos_QueueCtrlBlcok[ulQueueID].Sem_ID) )
         {
-#if (VOS_RTOSCK == VOS_OS_VER)
-            if (VOS_FALSE == ulInterruptFlag)
-            {
-                (VOS_VOID)VOS_TaskUnlock();
-            }
-#endif
             mdrv_err("<VOS_FixedQueueWrite> VOS_SmV Fail.\n");
 
             return VOS_ERR;
@@ -569,12 +560,6 @@ VOS_UINT32 VOS_FixedQueueWrite( VOS_UINT32 ulQueueID, VOS_VOID * pBufferAddr,
         {
             VOS_ExecuteAwakeFun((MsgBlock*)&stMsgBlcokBak);
 
-#if (VOS_RTOSCK == VOS_OS_VER)
-            if (VOS_FALSE == ulInterruptFlag)
-            {
-                (VOS_VOID)VOS_TaskUnlock();
-            }
-#endif
         }
     }
 
@@ -834,24 +819,10 @@ MODULE_EXPORTED VOS_VOID VOS_show_queue_info(VOS_VOID)
 VOS_VOID VOS_QueuePrintFull( VOS_UINT32 ulQueue, VOS_CHAR *pcBuf, VOS_UINT32 ulLen)
 {
     VOS_UINT32   ulCount = 0;
-#if (VOS_DEBUG == VOS_DOPRA_VER)
-    VOS_UINT32                  *pulContent;
-#endif
     VOS_UINT32                  ulNumber;
     MSG_CB                      *pMsg;
     VOS_DUMP_QUEUE_CONTENT_STRU *pstDump;
 
-#if (VOS_DEBUG == VOS_DOPRA_VER)
-    if ( VOS_TRUE == vos_QueueCtrlBlcok[ulQueue].ulQueueFullTag )
-    {
-        pulContent = (VOS_UINT32 *)pcBuf;
-        *pulContent = 0x55aa5a5a;/* special value*/
-
-        return;
-    }
-
-    vos_QueueCtrlBlcok[ulQueue].ulQueueFullTag = VOS_TRUE;
-#endif
 
     pMsg = (MSG_CB *)VOS_OutMsg(ulQueue);
 
@@ -906,72 +877,6 @@ MODULE_EXPORTED VOS_UINT32 VOS_CheckTaskQueue(VOS_UINT32 ulPid,VOS_UINT32 ulEntr
 
 }
 
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-/*****************************************************************************
- Function   : VOS_DelQueueInfo
- Description: delete message from a queue
- Input      : ulQueueID    -- Queue ID to read
-              ulTimeOut    -- Time-out interval,  in milliseconds.
-                              0 means infiniteer
- Output     : None
- Return     :
- *****************************************************************************/
-VOS_VOID VOS_DelQueueInfo( VOS_UINT32 ulQueueID, VOS_UINT32 ulTimeOutInMillSec)
-{
-    int                                     i;
-    VOS_UINT32                              ulLockLevel;
-    VOS_UINT_PTR                            TempValue;
-    VOS_UINT32                              iThePid;
-    MSG_CB                                 *pMsg;
-
-    VOS_QUEUE_CONTROL_BLOCK *pQueueCtrlBlk = &vos_QueueCtrlBlcok[ulQueueID];
-
-    /* 北研添加的只在C核使用所以不用替换为自旋锁 */
-    VOS_SpinLockIntLock(&g_stVosQueueSpinLock, ulLockLevel);
-
-    /* which should be del when only one FID exists */
-    for ( i=(VOS_INT)(pQueueCtrlBlk->QNum - 1); i>=0; i-- )
-    {
-        while (0 != pQueueCtrlBlk->Q[i].QEntries)
-        {
-            if( VOS_OK != VOS_SmP( pQueueCtrlBlk->Sem_ID, ulTimeOutInMillSec ) )
-            {
-                VOS_SpinUnlockIntUnlock(&g_stVosQueueSpinLock, ulLockLevel);
-
-                return;
-            }
-
-            TempValue = *(pQueueCtrlBlk->Q[i].QOut++);
-            pQueueCtrlBlk->Q[i].QEntries--;
-            if ( pQueueCtrlBlk->Q[i].QOut
-                == pQueueCtrlBlk->Q[i].QEnd )
-            {
-                pQueueCtrlBlk->Q[i].QOut
-                    = pQueueCtrlBlk->Q[i].QStart;
-            }
-
-            pMsg = (MSG_CB*)(TempValue + VOS_MSG_BLK_HEAD_LEN);
-            iThePid = pMsg->ulReceiverPid;
-            (VOS_VOID)VOS_FreeMsg( iThePid, pMsg );
-        }
-    }
-
-    VOS_SpinUnlockIntUnlock(&g_stVosQueueSpinLock, ulLockLevel);
-}
-
-
-/*****************************************************************************
- Function   : VOS_ClearQueueInfoByFid
- Description:
- Input      : ulFid
- Output     : None
- Return     :
- *****************************************************************************/
-MODULE_EXPORTED VOS_VOID VOS_ClearQueueInfoByFid(VOS_UINT32 ulFid)
-{
-    VOS_DelQueueInfo(VOS_GetQueueIDFromFid(ulFid), VOS_FID_MAX_MSG_LENGTH);
-}
-#endif
 
 
 

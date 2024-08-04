@@ -88,7 +88,7 @@ int bsp_show_ip_addr(void)
 
     for(i = 0; i < BSP_IP_TYPE_BUTTOM; i++)
     {
-        hwadp_printf("ip_addr[%d] = 0x%X\n", i, mdrv_misc_get_ip_baseaddr((BSP_IP_TYPE_E)i));
+        hwadp_printf("ip_addr[%d] = 0x%pK\n", i, mdrv_misc_get_ip_baseaddr((BSP_IP_TYPE_E)i));
     }
 	return 0;
 }
@@ -143,20 +143,14 @@ struct show_mem_info global_ddr_infos[]={
     {"DDR_TLPHY_IMAGE_ADDR", NXDSP_MDDR_FAMA(DDR_TLPHY_IMAGE_ADDR), DDR_TLPHY_IMAGE_SIZE},
     {"DDR_MCORE_ADDR      ", MDDR_FAMA(DDR_MCORE_ADDR      ), DDR_MCORE_SIZE      },
     {"DDR_MCORE_DTS_ADDR  ", MDDR_FAMA(DDR_MCORE_DTS_ADDR  ), DDR_MCORE_DTS_SIZE  },
-#ifdef DDR_CBBE_IMAGE_ADDR
     {"DDR_CBBE_IMAGE_ADDR ", MDDR_FAMA(DDR_CBBE_IMAGE_ADDR ), DDR_CBBE_IMAGE_SIZE },
-#endif
     {"DDR_LPHY_SDR_ADDR   ", MDDR_FAMA(DDR_LPHY_SDR_ADDR   ), DDR_LPHY_SDR_SIZE   },
     {"DDR_LCS_ADDR        ", MDDR_FAMA(DDR_LCS_ADDR        ), DDR_LCS_SIZE        },
-#ifdef  DDR_SEC_SHARED_ADDR
     {"DDR_SEC_SHARED_ADDR ", MDDR_FAMA(DDR_SEC_SHARED_ADDR ), DDR_SEC_SHARED_SIZE },
-#endif
     {"DDR_SHARED_MEM_ADDR ", MDDR_FAMA(DDR_SHARED_MEM_ADDR ), DDR_SHARED_MEM_SIZE },
     {"DDR_MNTN_ADDR       ", MDDR_FAMA(DDR_MNTN_ADDR       ), DDR_MNTN_SIZE       },
     {"DDR_SOCP_ADDR       ", MDDR_FAMA(DDR_SOCP_ADDR       ), DDR_SOCP_SIZE       },
-#ifdef DDR_HIFI_ADDR
     {"DDR_HIFI_ADDR       ", MDDR_FAMA(DDR_HIFI_ADDR       ), DDR_HIFI_SIZE       },
-#endif
 };
 /*****************************************************************************
  º¯ Êý Ãû  : show_global_ddr_status
@@ -346,18 +340,6 @@ EXPORT_SYMBOL(show_shared_ddr_status);
 
 int show_hpm_temp(void)
 {
-#ifndef BSP_CONFIG_PHONE_TYPE
-    SRAM_SMALL_SECTIONS * sram_mem;
-    struct hpm_tem_print *hpm_ptr;
-    sram_mem = ((SRAM_SMALL_SECTIONS * )(SRAM_BASE_ADDR+SRAM_OFFSET_SMALL_SECTIONS));
-    hpm_ptr = &(sram_mem->hpm_tem);
-    hwadp_printf("****************hpm_temperature****************\n");
-    hwadp_printf("hpm_uhvt_opc: 0x%x\n", hpm_ptr->hpm_uhvt_opc);
-    hwadp_printf("hpm_hvt_opc : 0x%x\n", hpm_ptr->hpm_hvt_opc);
-    hwadp_printf("hpm_svt_opc : 0x%x\n", hpm_ptr->hpm_svt_opc);
-    hwadp_printf("temperature : %d\n", hpm_ptr->temperature);
-    hwadp_printf("up_volt     : %d\n", hpm_ptr->up_volt);
-#endif
 	return 0;
 }
 EXPORT_SYMBOL(show_hpm_temp);

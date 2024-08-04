@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Huawei Technologies Co., Ltd. 2012-2019. All rights reserved.
+ * Copyright (C) Huawei Technologies Co., Ltd. 2012-2015. All rights reserved.
  * foss@huawei.com
  *
  * If distributed as part of the Linux kernel, the following license terms

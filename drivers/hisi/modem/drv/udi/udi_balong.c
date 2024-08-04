@@ -112,7 +112,7 @@ struct semaphore			g_udiMtxOpen;
 #define UDI_HANDLE_TO_IDX(hdl) ((unsigned int)((hdl) & 0xFFFF))
 
 #define UDI_IS_INVALID_TABLE(pstDrvTable) \
-    (0 == (uintptr_t)(pstDrvTable) || (uintptr_t)(-1) == (uintptr_t)(pstDrvTable))
+    (0 == (unsigned long)(pstDrvTable) || (unsigned long)(-1) == (unsigned long)(pstDrvTable))
 
 #define UDI_PARSE_DEV_ID(devId, mainId, devType) \
 do{\
@@ -129,8 +129,8 @@ static int udi_check_and_get_index(UDI_HANDLE handle)
 {
 	int index;
 
-	index = (unsigned int)handle & 0xFFFF;
-	if ((((unsigned int)handle & 0xFF0000)!= UDI_OPEN_NODE_HEADER) || 
+	index = handle & 0xFFFF;
+	if (((handle & 0xFF0000)!= UDI_OPEN_NODE_HEADER) || 
 		index >= UDI_MAX_OPEN_NODE_NUM) {
 		return -1;
 	}
@@ -218,7 +218,7 @@ int BSP_UDI_SetPrivate(UDI_DEVICE_ID_E devId, void* pPrivate)
 	unsigned int u32MainId;
 	unsigned int u32DevType;
     /*lint  e661 e662*/
-	UDI_PARSE_DEV_ID((unsigned int)devId, u32MainId, u32DevType);
+	UDI_PARSE_DEV_ID(devId, u32MainId, u32DevType);
 	if((u32MainId >= UDI_MAX_MAIN_DEV_NUM)||(u32DevType >= UDI_MAX_DEV_TYPE_NUM))
 	{
             bsp_err("BSP_UDI_SetCapability para error: u32MainId=%u u32DevType=%u\n", u32MainId, u32DevType);
@@ -245,7 +245,7 @@ int BSP_UDI_SetCapability(UDI_DEVICE_ID_E devId, unsigned int u32Capability)
 	unsigned int u32DevType;
 
     /*lint e662 e661*/
-	UDI_PARSE_DEV_ID((unsigned int)devId, u32MainId, u32DevType);
+	UDI_PARSE_DEV_ID(devId, u32MainId, u32DevType);
 	if((u32MainId >= UDI_MAX_MAIN_DEV_NUM)||(u32DevType >= UDI_MAX_DEV_TYPE_NUM))
 	{
             bsp_err("BSP_UDI_SetCapability para error: u32MainId=%u u32DevType=%u\n", u32MainId, u32DevType);
@@ -273,7 +273,7 @@ int BSP_UDI_SetInterfaceTable(UDI_DEVICE_ID_E devId, UDI_DRV_INTEFACE_TABLE *pDr
 	unsigned int u32MainId;
 	unsigned int u32DevType;
     /*lint e661 e662*/
-	UDI_PARSE_DEV_ID((unsigned int)devId, u32MainId, u32DevType);
+	UDI_PARSE_DEV_ID(devId, u32MainId, u32DevType);
 	if((u32MainId >= UDI_MAX_MAIN_DEV_NUM)||(u32DevType >= UDI_MAX_DEV_TYPE_NUM))
 	{
             bsp_err("BSP_UDI_SetInterfaceTable para error: u32MainId=%u u32DevType=%u\n", u32MainId, u32DevType);
@@ -336,7 +336,7 @@ int udi_get_capability(UDI_DEVICE_ID_E devId)
 	unsigned int u32MainId;
 	unsigned int u32DevType;
 
-	UDI_PARSE_DEV_ID((unsigned int)devId, u32MainId, u32DevType);
+	UDI_PARSE_DEV_ID(devId, u32MainId, u32DevType);
 	/* lint e661 e662*/
 	if((u32MainId >= UDI_MAX_MAIN_DEV_NUM)||(u32DevType >= UDI_MAX_DEV_TYPE_NUM))
 	{
@@ -368,7 +368,7 @@ UDI_HANDLE mdrv_udi_open(UDI_OPEN_PARAM_S *pParam)
 		goto UDI_OPEN_ERR;
 	}
 	/*lint e662 e661*/
-	UDI_PARSE_DEV_ID((unsigned int)pParam->devid, u32MainId, u32DevType);
+	UDI_PARSE_DEV_ID(pParam->devid, u32MainId, u32DevType);
    if((u32MainId >= UDI_MAX_MAIN_DEV_NUM)||(u32DevType >= UDI_MAX_DEV_TYPE_NUM))
 	{
       /*printk("mdrv_udi_open para error: u32MainId=%u u32DevType=%u\n", u32MainId, u32DevType);*/
@@ -553,9 +553,6 @@ int mdrv_udi_ioctl(UDI_HANDLE handle, unsigned int u32Cmd, void* pParam)
 }
 
 EXPORT_SYMBOL(mdrv_udi_ioctl);
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-arch_initcall(bsp_udi_init);
-#endif
 
 
 

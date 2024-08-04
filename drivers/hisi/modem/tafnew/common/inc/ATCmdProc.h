@@ -82,9 +82,6 @@
 
 #include "AtMtInterface.h"
 
-#include "adrv.h"
-#include <linux/version.h>
-
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
@@ -508,8 +505,6 @@ typedef TAF_UINT8   AT_MSG_DELETE_ENUM_U8;
 
 #define AT_PLMN_STR_MAX_LEN             (6)
 #define AT_PLMN_STR_MIN_LEN             (5)
-
-#define AT_DOUBLE_LENGTH             (2)
 
 enum B64ReultType{
     b64Result_OK=0,
@@ -1377,7 +1372,6 @@ typedef enum
     AT_CMD_HVSCONT,
     AT_CMD_HVPDH,
     AT_CMD_SCICHG,
-    AT_CMD_BWT,
     AT_CMD_HVCHECKCARD,
     /* Added by zhuli for VSIM, 2013-10-15 end */
 
@@ -1386,9 +1380,6 @@ typedef enum
 
     AT_CMD_SILENTPININFO,
 #endif
-
-    AT_CMD_PRIVATECCHO,
-    AT_CMD_PRIVATECCHP,
 
     AT_CMD_PRIVATECGLA,
 
@@ -1496,7 +1487,9 @@ typedef enum
 #if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     AT_CMD_CQOSPRI,
 
+    /* Added by f279542 for CDMA 1X Iteration 4, 2014-11-10, begin */
     AT_CMD_CBURSTDTMF,
+    /* Added by f279542 for CDMA 1X Iteration 4, 2014-11-10, end */
 #endif
 
     AT_CMD_QCCB,
@@ -1878,8 +1871,8 @@ typedef enum
 
     AT_CMD_MIPIOPERATE,
     AT_CMD_FAGCGAIN,
-    AT_CMD_EMC_STATUS,
-    AT_CMD_COMM_BUTT,
+
+    AT_CMD_COMM_BUTT,        /* ADD by c64416 for V9R1/V7R1 AT, 2013/09/18 */
 
 }AT_CMD_INDEX_ENUM;
 
@@ -2483,7 +2476,6 @@ typedef enum
     AT_CMD_HVPDH_SET,
     AT_CMD_SCICHG_SET,
     AT_CMD_SCICHG_QRY,
-    AT_CMD_BWT_SET,
 
 #if (FEATURE_ON == FEATURE_PHONE_SC)
     AT_CMD_SILENTPIN_SET,
@@ -2992,6 +2984,7 @@ typedef enum
 
     AT_CMD_FTEMPRPT_QRY,
 
+    /* modify by c64416 for V9R1/V7R1 AT, 2013/09/18 */
     AT_CMD_PSSCENE_SET,
     AT_CMD_PSSCENE_QRY,
 
@@ -4754,8 +4747,6 @@ extern TAF_UINT32   At_SetCnumPara(TAF_UINT8 ucIndex);
 extern TAF_UINT32   At_SetCsimPara(TAF_UINT8 ucIndex);
 extern TAF_UINT32   At_SetCchoPara(TAF_UINT8 ucIndex);
 extern TAF_UINT32   At_SetCchpPara(TAF_UINT8 ucIndex);
-extern TAF_UINT32   At_SetPrivateCchoPara(TAF_UINT8 ucIndex);
-extern TAF_UINT32   At_SetPrivateCchpPara(TAF_UINT8 ucIndex);
 extern TAF_UINT32   At_SetCchcPara(TAF_UINT8 ucIndex);
 extern TAF_UINT32   At_SetCglaPara(TAF_UINT8 ucIndex);
 extern TAF_UINT32   At_SetCrsmPara(TAF_UINT8 ucIndex);
@@ -4998,8 +4989,8 @@ VOS_UINT32 AT_AbortNetScan(
     VOS_UINT8                           ucIndex
 );
 #if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-extern TAF_UINT32   At_SetImeiPara(TAF_UINT8 ucIndex); 
-extern TAF_UINT32   At_SetTrigPara(TAF_UINT8 ucIndex); 
+extern TAF_UINT32   At_SetImeiPara(TAF_UINT8 ucIndex); /*added by luojian 60022475 2006.12.20*/
+extern TAF_UINT32   At_SetTrigPara(TAF_UINT8 ucIndex); /*added by sunshaohua 62952 2007.06.20*/
 #endif
 
 #ifndef _PS_COMPILE_EDGE_ADAPT_MOIRI_B073_
@@ -5023,7 +5014,9 @@ extern VOS_UINT32 AT_ResetNplmn ( VOS_UINT8 ucIndex );
 extern VOS_UINT32 AT_SetNplmn ( VOS_UINT8 ucIndex );
 extern VOS_UINT32 At_SetReadUsimStub( VOS_UINT8 ucIndex );
 
+/* Added by s46746 for DSDA GUNAS C CORE, 2013-01-28, begin */
 extern VOS_UINT32 AT_SetPidReinitPara ( VOS_UINT8 ucIndex );
+/* Added by s46746 for DSDA GUNAS C CORE, 2013-01-28, end */
 extern VOS_UINT32   AT_SetRplmnStub( VOS_UINT8 ucIndex );
 
 VOS_UINT32  AT_SetDamParaStub( VOS_UINT8 ucIndex );
@@ -5048,8 +5041,10 @@ extern VOS_UINT32 At_QryTinTypeStub(VOS_UINT8 ucIndex);
 extern VOS_UINT32  AT_SetPsRegisterContainDrxStub( VOS_UINT8 ucIndex );
 extern  VOS_UINT32 AT_QryPsRegisterContainDrxStub(VOS_UINT8 ucIndex);
 
+/* Added by s46746 for CS/PS mode 1, 2012-6-25, begin */
 extern VOS_UINT32 AT_SetCsUnAvailPlmnStub( VOS_UINT8 ucIndex );
 extern VOS_UINT32 AT_SetForbRoamTaStub( VOS_UINT8 ucIndex );
+/* Added by s46746 for CS/PS mode 1, 2012-6-25, end */
 
 VOS_UINT32 AT_SetDisableRatPlmnStub( VOS_UINT8 ucIndex );
 
@@ -6449,7 +6444,7 @@ extern  VOS_UINT32 atQryTdsFTXONParaCnfProc(VOS_UINT8 ucClientId, VOS_VOID *pMsg
 extern  VOS_UINT32 atQryTdsFRXONParaCnfProc(VOS_UINT8 ucClientId, VOS_VOID *pMsgBlock);
 
 extern VOS_UINT32 atLcacellCnfProc(VOS_VOID *pMsgBlock);
-extern VOS_UINT32 atLcacellInd(VOS_VOID *pMsgBlock);
+extern VOS_VOID atLcacellInd(VOS_VOID *pMsgBlock);
 
 
 VOS_UINT32 AT_SetNvmEccNumPara(VOS_UINT8 ucIndex);
@@ -6670,19 +6665,10 @@ VOS_INT AT_CCpuResetCallback(
     DRV_RESET_CB_MOMENT_E               eparam,
     VOS_INT                             iUserData
 );
-
-#if (LINUX_VERSION_CODE <= KERNEL_VERSION(4, 9, 0))
 VOS_INT AT_HifiResetCallback(
     DRV_RESET_CB_MOMENT_E               eparam,
     VOS_INT                             iUserData
 );
-
-#else
-VOS_INT AT_HifiResetCallback(
-    enum DRV_RESET_CALLCBFUN_MOMENT     eparam,
-    VOS_INT                             iUserData
-);
-#endif
 
 VOS_UINT32 AT_RcvTempprtStatusInd(VOS_VOID *pMsg);
 

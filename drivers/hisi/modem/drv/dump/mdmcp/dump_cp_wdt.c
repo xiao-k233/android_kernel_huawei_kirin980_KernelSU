@@ -63,6 +63,7 @@
 #include <linux/slab.h>
 #include <linux/of.h>
 #include <linux/delay.h>
+#include <linux/wakelock.h>
 #include <asm/string.h>
 #include <asm/traps.h>
 #include "product_config.h"
@@ -82,7 +83,6 @@
 #include "dump_config.h"
 #undef	THIS_MODU
 #define THIS_MODU mod_dump
-#if defined(BSP_CONFIG_PHONE_TYPE)
 u32 g_wdt_int_no = 0;
 
 wdt_timeout_cb g_wdt_reboot_func = NULL;
@@ -144,4 +144,3 @@ int bsp_wdt_register_hook(WDT_CORE_ID core_id, void *func)
 }
 
 
-#endif

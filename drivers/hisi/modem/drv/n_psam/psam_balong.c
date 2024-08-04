@@ -94,13 +94,6 @@ struct psam_hal_handle* psam_get_hal(unsigned int version_id)
 
 MODULE_DEVICE_TABLE(of, psam_match);
 
-void bsp_psam_clear_intr_stat(void)
-{
-    unsigned int stat;
-
-    stat = psam_readl(HI_PSAM_INT0_STAT_OFFSET);
-    psam_writel(stat, HI_PSAM_INT0_STAT_OFFSET);
-}
 
 int bsp_psam_idle(void)
 {
@@ -559,9 +552,6 @@ __init int psam_pltfm_driver_init(void)
 {
     return platform_driver_register(&psam_pltfm_driver);
 }
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-module_init(psam_pltfm_driver_init);
-#endif
 EXPORT_SYMBOL(g_psam_device);
 EXPORT_SYMBOL(psam_srset);
 EXPORT_SYMBOL(psam_reinit_regs);

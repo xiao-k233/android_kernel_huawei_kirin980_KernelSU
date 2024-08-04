@@ -1,4 +1,4 @@
-# MD5: 7df446e4ebec446a6004af090f5b3a24
+# MD5: 5cc8c2391610b0e8f558490989af5faa
 CFG_FEATURE_IMS                                 := FEATURE_ON
 CFG_FEATURE_LTE_R11                             := FEATURE_ON
 CFG_FEATURE_LTE_R13                             := FEATURE_ON
@@ -38,7 +38,7 @@ CFG_FEATURE_LTE_R12                                := FEATURE_ON
 CFG_FEATURE_LTE_DC                                 := FEATURE_ON
 CFG_FEATURE_LTE_LAA                 			   := FEATURE_ON
 CFG_FEATURE_R1_WIFI_DATA_RETRY                 	   := FEATURE_OFF
-CFG_FEATURE_CUSTOMISED_IMS                 	   := FEATURE_OFF
+CFG_FEATURE_VERIZON_IMS                 	   := FEATURE_OFF
 CFG_FEATURE_SUPPORT_5G_RTT_TIME_DOMAIN_BBIT        := FEATURE_OFF
 CFG_FEATURE_LTE_R15                                  := FEATURE_OFF
 CFG_FEATURE_LTE_ENDC                                  := FEATURE_OFF

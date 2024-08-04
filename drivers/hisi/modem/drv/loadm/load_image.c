@@ -75,11 +75,7 @@
 
 /* Dalls之后手机和MBB融合代码 */
 
-#ifdef BSP_CONFIG_PHONE_TYPE
 #define SECBOOT_BUFLEN  (0x100000)      /*1MB*/
-#else
-#define SECBOOT_BUFLEN  (0x100000/8)    /*128KB*/
-#endif
 
 #define MODEM_IMAGE_PATH    "/modem_fw/"
 #define NVM_IMAGE_PATH      "/mnvm2:0/modem_nv/"
@@ -96,9 +92,7 @@
 
 
 /* 带安全OS需要安全加载，预留连续内存，否则在系统长时间运行后，单独复位时可能申请不到连续内存 */
-#if (defined CONFIG_TZDRIVER) && (defined CONFIG_LOAD_SEC_IMAGE)
 static  u8 *SECBOOT_BUFFER = NULL;
-#endif
 
 struct image_type_name
 {
@@ -117,19 +111,13 @@ struct image_type_name  modem_images_root[] =
     {WAS,   0,                      0,                    MODEM_IMAGE_PATH,  "was.bin"},
     {CAS,   0,                      0,                    MODEM_IMAGE_PATH,  "cas.bin"}, /* 预留 */
     {MODEM_DTB, DDR_MCORE_DTS_ADDR, DDR_MCORE_DTS_SIZE,   MODEM_IMAGE_PATH,  "modem_dt.img"},
-#ifdef FEATURE_NV_SEC_ON
     {NVM,   0,                          0,                NVM_IMAGE_PATH,   "nv_rdwr.bin"},
     {NVM_S, 0,                          0,                NVM_IMAGE_PATH,   "nv_rdwr.bin"},
     {MBN_R, 0,                          0,                MBN_IMAGE_PATH,   "comm.bin"},
     {MBN_A, 0,                          0,                MBN_IMAGE_PATH,   "carrier.bin"},
-#endif
-#ifdef CONFIG_COLD_PATCH
     {MODEM_COLD_PATCH, DDR_MCORE_ADDR,         DDR_MCORE_SIZE,       MODEM_COLD_PATCH_PATH,  "balong_modem.bin.p"},
     {DSP_COLD_PATCH,   DDR_MCORE_ADDR,         DDR_MCORE_SIZE,       MODEM_COLD_PATCH_PATH,  "phy.bin.p"},
-#endif
-#ifdef BALONG_MODEM_CERT
     {MODEM_CERT, SHM_SIZE_SEC_CERT,  SHM_SIZE_SEC_CERT    ,MODEM_CERT_PATH,   "modemCert.cert"},
-#endif
     {SOC_MAX,       0,              0,                    "",                ""},
 };
 
@@ -141,19 +129,13 @@ struct image_type_name modem_images_vendor[] =
     {WAS,   0,                      0,                    MODEM_IMAGE_PATH_VENDOR,  "was.bin"},
     {CAS,   0,                      0,                    MODEM_IMAGE_PATH_VENDOR,  "cas.bin"}, /* 预留 */
     {MODEM_DTB, DDR_MCORE_DTS_ADDR, DDR_MCORE_DTS_SIZE,   MODEM_IMAGE_PATH_VENDOR,  "modem_dt.img"},
-#ifdef FEATURE_NV_SEC_ON
     {NVM,   0,                          0,                NVM_IMAGE_PATH_DATA,   "nv_rdwr.bin"},
     {NVM_S, 0,                          0,                NVM_IMAGE_PATH_DATA,   "nv_rdwr.bin"},
     {MBN_R, 0,                          0,                MBN_IMAGE_PATH_DATA,   "comm.bin"},
     {MBN_A, 0,                          0,                MBN_IMAGE_PATH_DATA,   "carrier.bin"},
-#endif
-#ifdef CONFIG_COLD_PATCH
     {MODEM_COLD_PATCH, DDR_MCORE_ADDR,         DDR_MCORE_SIZE,       MODEM_COLD_PATCH_PATH,  "balong_modem.bin.p"},
     {DSP_COLD_PATCH,   DDR_MCORE_ADDR,         DDR_MCORE_SIZE,       MODEM_COLD_PATCH_PATH,  "phy.bin.p"},
-#endif
-#ifdef BALONG_MODEM_CERT
     {MODEM_CERT, SHM_SIZE_SEC_CERT, SHM_SIZE_SEC_CERT,MODEM_CERT_PATH,   "modemCert.cert"},
-#endif
     {SOC_MAX,       0,              0,                    "",                ""},
 };
 
@@ -309,67 +291,7 @@ int gzip_header_check(unsigned char* zbuf)
     }
 }
 
-#if (!defined CONFIG_TZDRIVER) || (!defined CONFIG_LOAD_SEC_IMAGE)
-int zlib_inflate_image(struct image_type_name *image, void* vaddr_load, void* vaddr, u32 file_size)
-{
-    char* zlib_next_in;
-    unsigned int zlib_avail_in;
-    int ret;
-    u32 start,end;
 
-    sec_print_err(">>start to decompress image %d\n", image->etype);
-
-    zlib_next_in = (char*)vaddr_load;
-    if (gzip_header_check((unsigned char*)zlib_next_in)) {
-
-        /* skip over asciz filename */
-        if (zlib_next_in[3] & 0x8) {
-            /* skip over gzip header (1f,8b,08... 10 bytes total +
-            * possible asciz filename)
-            */
-            zlib_next_in = zlib_next_in + 10;
-            zlib_avail_in = (unsigned)((file_size - 10) - 8);
-            do {
-                /*
-                * If the filename doesn't fit into the buffer,
-                * the file is very probably corrupt. Don't try
-                * to read more data.
-                */
-                if (zlib_avail_in == 0) {
-                    sec_print_err("gzip header error");
-                    return -EIO;
-                }
-                --zlib_avail_in;
-            } while (*zlib_next_in++);
-        }
-        else
-        {
-            /* skip over gzip header (1f,8b,08... 10 bytes total +
-            * possible asciz filename)
-            */
-            zlib_next_in = zlib_next_in + 10;
-            zlib_avail_in = (unsigned)((file_size - 10) - 8);
-        }
-        start = bsp_get_slice_value();
-        ret = zlib_inflate_blob(vaddr, image->ddr_size, (void *)zlib_next_in, zlib_avail_in);
-        end = bsp_get_slice_value();
-        sec_print_err("image(%d), zlib inflate time 0x%x.\n", image->etype, end-start);
-        if (ret < 0) {
-            sec_print_err("fail to decompress image %d, error code %d\n", image->etype, ret);
-            return ret;
-        } else {
-            sec_print_err("decompress image %d success. file length = 0x%x\n", image->etype, (unsigned)ret);
-            return 0;
-        }
-    }
-    else{
-        sec_print_err("invalied head info.\n");
-        return -EIO;
-    }
-}
-#endif
-
-#if (defined CONFIG_TZDRIVER) && (defined CONFIG_LOAD_SEC_IMAGE)
 
 static TEEC_Session load_session;
 static TEEC_Context load_context;
@@ -584,7 +506,6 @@ static int verify_soc_image(enum SVC_SECBOOT_IMG_TYPE  image,
 }
 
 
-#ifdef CONFIG_COLD_PATCH
 struct cold_patch_info_s g_cold_patch_info;
 static u32 get_img_load_position_offset(const struct image_type_name* image,int img_size)
 {
@@ -621,7 +542,6 @@ static u32 get_img_load_position_offset(const struct image_type_name* image,int 
     }
     return 0;
 }
-#endif
 
 /******************************************************************************
 Function:       load_data_to_secos
@@ -695,7 +615,6 @@ static int load_data_to_secos(const char* file_name, u32 offset, u32 size,
             return readed_bytes;
         }
 
-#ifdef CONFIG_COLD_PATCH
         if(!load_position_offset)
         {
             if( (image->etype == DSP_COLD_PATCH) || (image->etype == MODEM_COLD_PATCH) )
@@ -712,20 +631,15 @@ static int load_data_to_secos(const char* file_name, u32 offset, u32 size,
                 load_position_offset = get_img_load_position_offset(image,remain_bytes);
             }
         }
-#endif
 
-#ifdef CONFIG_COMPRESS_CCORE_IMAGE
         if ((!load_position_offset) && (image->etype == MODEM))
             /* 将整个gzip格式的压缩镜像放在DDR空间结束位置 */
             load_position_offset = (u32)(image->ddr_size - (u32)remain_bytes);
-#endif
 
-#ifdef CONFIG_COMPRESS_DTB_IMAGE
         if ((!load_position_offset) && (image->etype == MODEM_DTB)) {
             /* 将整个gzip格式的压缩镜像放在DDR空间结束位置 */
             load_position_offset = (u32)(image->ddr_size - (u32)remain_bytes);
         }
-#endif
 
         ret = trans_data_to_os(image->etype, image->run_addr,  (void *)(SECBOOT_BUFFER), load_position_offset+file_offset, (u32)read_bytes);
         sec_print_info("trans data ot os: etype 0x%x ,load_offset 0x%x, to secos file_offset 0x%x, bytes 0x%x success\n",
@@ -855,7 +769,6 @@ error:
     return ret;
 }
 
-#ifdef CONFIG_COLD_PATCH
 void load_modem_cold_patch_image(enum SVC_SECBOOT_IMG_TYPE ecoretype)
 {
     s32 ret = 0;
@@ -952,147 +865,9 @@ void record_cold_patch_splicing_ret_val(enum modem_patch_type epatch_type,int va
     }
 }
 
-#endif
 
 
-#else
 
-/* 不带安全OS的镜像加载 */
-s32 load_image(enum SVC_SECBOOT_IMG_TYPE ecoretype, u32 run_addr, u32 ddr_size)
-{
-    s32 ret;
-    bool is_sec;
-    unsigned long paddr;
-    int file_size;
-    int readed_bytes;
-    char file_name[LOADM_FILE_NAME_LEN] = {0};
-    struct image_type_name *image;
-    void *vaddr = NULL;
-    void *vaddr_load;
-    unsigned int offset=0;
-
-    ret = get_image(&image, ecoretype,run_addr,ddr_size);
-    if(ret)
-    {
-        sec_print_err("can't find image\n");
-        return ret;
-    }
-
-    /* load image data to sec os */
-    if(!run_addr)
-    {
-        run_addr = image->run_addr;
-        ddr_size = image->ddr_size;
-    }
-
-    ret = get_file_name(file_name, image, &is_sec);
-    if(ret)
-    {
-        sec_print_err("can't find image\n");
-        return ret;
-    }
-    sec_print_info("find file %s, is_sec: %d\n", file_name, is_sec);
-
-    /*得到文件的大小*/
-    file_size = get_file_size(file_name);
-    sec_print_info("file_size 0x%x\n",file_size);
-    if (file_size <=0)
-    {
-        sec_print_err("error %s size < 0 \n", file_name);
-        return file_size;
-    }
-
-    /* 检查文件大小是否超过ddr分区大小 */
-    if((u32)file_size > ddr_size)
-    {
-        sec_print_err("image larger than ddr size:  file_size 0x%x > ddr_size %#x !\n", file_size, ddr_size);
-        return -ENOMEM;
-    }
-
-    paddr =MDDR_FAMA(run_addr);
-#ifdef CONFIG_ARM64
-    vaddr = ioremap_wc(paddr,ddr_size);
-    sec_print_err("image larger paddr 0x%lx ",paddr);
-#else
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 35))
-    vaddr = ioremap_cache(paddr, ddr_size);
-#else
-    vaddr = ioremap_cached(paddr, ddr_size);
-#endif
-#endif
-    if (vaddr == NULL)
-    {
-        sec_print_err("ioremap_cached error .\n");
-        return -ENOMEM;
-    }
-
-    vaddr_load = vaddr;
-
-#ifdef CONFIG_COMPRESS_CCORE_IMAGE
-    if(MODEM == ecoretype)
-    {
-        vaddr_load = vaddr - file_size + ddr_size;
-    }
-#endif
-
-    /*如果是安全的话就要把头去掉*/
-    if(is_sec)
-    {
-        offset = VRL_SIZE;
-        file_size = file_size - VRL_SIZE;
-    }
-
-    readed_bytes = read_file(file_name, offset, (u32)file_size, (s8 *)vaddr_load);
-    if (readed_bytes < 0 || readed_bytes != file_size) {
-        ret = -EIO;
-        sec_print_err("read_file %s err: readed_bytes 0x%x\n", file_name, file_size);
-        goto error_unmap;
-    }
-
-    ret = bsp_sec_check(vaddr_load, file_size);
-    if (ret)
-    {
-        sec_print_err("fail to check image %s, error code 0x%x\n", file_name, ret);
-        goto error_unmap;
-    }
-
-#ifdef CONFIG_COMPRESS_CCORE_IMAGE
-
-    if(MODEM == ecoretype)
-    {
-        ret = zlib_inflate_image(image, vaddr_load, vaddr, (u32)file_size);
-
-        if(ret)
-        {
-            sec_print_err("decompress image %d failed\n", image->etype);
-            goto error_unmap;
-        }
-    }
-#endif
-
-    sec_print_err("load image %s success\n", file_name);
-#ifdef CONFIG_ARM64 /* 手机平台非安全启动在Kernel直接激活A9 */
-#if (FEATURE_DELAY_MODEM_INIT==FEATURE_ON)
-    if(MODEM == ecoretype)
-    {
-        writel(0xB140, bsp_sysctrl_addr_byindex(sysctrl_mdm)+0x24);
-    }
-#endif
-#else
-    /*刷新cache*/
-    flush_cache_all();
-    outer_flush_all();
-#endif
-
-error_unmap:
-    iounmap(vaddr);
-
-    return ret;
-}
-
-#endif
-
-#ifdef CONFIG_MODEM_DTB_LOAD_IN_KERNEL
 static int get_dtb_entry(unsigned int modemid, unsigned int num, struct modem_dt_entry_t *dt_entry_ptr, struct modem_dt_entry_t *dt_entry_ccore)
 {
     uint32_t i;
@@ -1137,11 +912,6 @@ static s32 load_and_verify_dtb_data(void)
     struct modem_dt_entry_t dt_entry_ptr = {{0}};
 
 
-#if (!defined CONFIG_TZDRIVER) || (!defined CONFIG_LOAD_SEC_IMAGE)
-    void *vaddr;
-    void * vaddr_load;
-    unsigned long paddr;
-#endif
 
     char file_name[LOADM_FILE_NAME_LEN] = {0};
     struct image_type_name *image;
@@ -1215,7 +985,6 @@ static s32 load_and_verify_dtb_data(void)
         goto err_out;
     }
 
-#if (defined CONFIG_TZDRIVER) && (defined CONFIG_LOAD_SEC_IMAGE)
     /* 安全版本且使能了签名 */
     if(is_sec && 0 != dt_entry_ptr.vrl_size)
     {
@@ -1266,54 +1035,10 @@ static s32 load_and_verify_dtb_data(void)
         }
     }
     sec_print_err("verify modem dtb success\n");
-#else
-    /* Kernel非安全世界直接映射、加载 */
-    paddr =MDDR_FAMA(image->run_addr);
-
-    vaddr = ioremap_wc(paddr, (unsigned long)image->ddr_size);
-    if (vaddr == NULL)
-    {
-        sec_print_err("ioremap_cached error .\n");
-        ret = -ENOMEM;
-        goto err_out;
-    }
-    if(dt_entry_ptr.dtb_size > image->ddr_size)
-    {
-        sec_print_err("modem dtb dtb_size too large %d than ddr_size %d\n", dt_entry_ptr.vrl_size, image->ddr_size);
-        ret = -ENOMEM;
-        goto err_unmap;
-    }
-
-        vaddr_load = vaddr;
-#ifdef CONFIG_COMPRESS_DTB_IMAGE
-        vaddr_load = ((char*)vaddr_load - dt_entry_ptr.dtb_size) + image->ddr_size;
-#endif
-    readed_bytes = read_file(file_name, offset + dt_entry_ptr.dtb_offset, dt_entry_ptr.dtb_size, (s8 *)vaddr_load);
-    if (readed_bytes < 0 || readed_bytes != dt_entry_ptr.dtb_size) {
-        sec_print_err("read_file %s err: readed_bytes 0x%x\n", file_name, readed_bytes);
-        ret = -EIO;
-        goto err_unmap;
-    }
-#ifdef CONFIG_COMPRESS_DTB_IMAGE
-    ret = zlib_inflate_image(image, vaddr_load, vaddr, dt_entry_ptr.dtb_size);
-    if(ret)
-    {
-        sec_print_err("decompress image %d failed\n", image->etype);
-        goto err_unmap;
-    }
-
-    sec_print_err("decompress image %d success\n", image->etype);
-#endif
-
-err_unmap:
-    iounmap(vaddr);
-
-#endif
 err_out:
     kfree(dt_entry);
     return ret;
 }
-#endif
 
 /*****************************************************************************
  函 数 名  : Modem相关镜像加载接口
@@ -1326,13 +1051,10 @@ int bsp_load_modem_images(void)
 {
     int ret;
 
-#ifdef CONFIG_COLD_PATCH
     u32 cold_patch_stamp[2][2] = {{0,0}};
-#endif
 
     mutex_lock(&load_proc_lock);
 
-#if (defined CONFIG_TZDRIVER) && (defined CONFIG_LOAD_SEC_IMAGE)
     ret = TEEK_init();
     if(ret)
     {
@@ -1348,7 +1070,6 @@ int bsp_load_modem_images(void)
         sec_print_err("ccpu_reset failed, ret %#x\n", ret);
         return ret;
     }
-#endif
 
     ret = bsp_nvm_mreset_load();
     if(ret)
@@ -1357,64 +1078,46 @@ int bsp_load_modem_images(void)
     }
 
 
-#ifdef CONFIG_COLD_PATCH
     cold_patch_stamp[0][0] = bsp_get_slice_value();
     if(bsp_nvem_cold_patch_read(&g_cold_patch_info))
         memset_s(&g_cold_patch_info,sizeof(g_cold_patch_info),0,sizeof(g_cold_patch_info));
     load_modem_cold_patch_image(DSP_COLD_PATCH);
-#endif
 
 
 
 
 
-#ifdef CONFIG_COLD_PATCH
     cold_patch_stamp[0][1] = bsp_get_slice_value();
     update_modem_cold_patch_status(DSP_PATCH);
-#endif
 
 
-#ifdef CONFIG_MODEM_DTB_LOAD_IN_KERNEL
     ret = load_and_verify_dtb_data();
     if(ret)
     {
         goto error;
     }
-#endif
 
-#ifdef CONFIG_COLD_PATCH
     cold_patch_stamp[1][0] = bsp_get_slice_value();
     load_modem_cold_patch_image(MODEM_COLD_PATCH);
-#endif
 
-#if defined(BALONG_MODEM_CERT)
     (void)load_image(MODEM_CERT,0,0);
-#endif
     ret = load_image(MODEM, 0, 0);
     if(ret)
     {
-#ifdef CONFIG_COLD_PATCH
         record_cold_patch_splicing_ret_val(CCORE_PATCH,ret);
-#endif
         goto error;
     }
 
-#ifdef CONFIG_COLD_PATCH
     cold_patch_stamp[1][1] = bsp_get_slice_value();
     update_modem_cold_patch_status(CCORE_PATCH);
-#endif
 
 
 
 error:
-#if (defined CONFIG_TZDRIVER) && (defined CONFIG_LOAD_SEC_IMAGE)
     TEEK_uninit();
-#endif
-#ifdef CONFIG_COLD_PATCH
     (void)bsp_nvem_cold_patch_write(&g_cold_patch_info);
     printk(KERN_INFO "dsp_cold_patch loads start at 0x%x, splice end at 0x%x,modem_cold_patch loads start at 0x%x, splice end at 0x%x\n",
         cold_patch_stamp[0][0],cold_patch_stamp[0][1],cold_patch_stamp[1][0],cold_patch_stamp[1][1]);
-#endif
 
     mutex_unlock(&load_proc_lock);
 
@@ -1434,7 +1137,6 @@ int bsp_load_modem_single_image(enum SVC_SECBOOT_IMG_TYPE ecoretype, u32 run_add
 
     mutex_lock(&load_proc_lock);
 
-#if (defined CONFIG_TZDRIVER) && (defined CONFIG_LOAD_SEC_IMAGE)
     ret = TEEK_init();
     if(ret)
     {
@@ -1442,7 +1144,6 @@ int bsp_load_modem_single_image(enum SVC_SECBOOT_IMG_TYPE ecoretype, u32 run_add
         sec_print_err("TEEK_InitializeContext failed!\n");
         return ret;
     }
-#endif
 
     ret = load_image(ecoretype, run_addr, ddr_size);
     if(ret)
@@ -1451,9 +1152,7 @@ int bsp_load_modem_single_image(enum SVC_SECBOOT_IMG_TYPE ecoretype, u32 run_add
     }
 
 error:
-#if (defined CONFIG_TZDRIVER) && (defined CONFIG_LOAD_SEC_IMAGE)
     TEEK_uninit();
-#endif
 
     mutex_unlock(&load_proc_lock);
 
@@ -1463,19 +1162,14 @@ error:
 int __init bsp_load_image_init(void)
 {
 
-#if (defined CONFIG_TZDRIVER) && (defined CONFIG_LOAD_SEC_IMAGE)
     SECBOOT_BUFFER = (u8*)kmalloc(SECBOOT_BUFLEN, GFP_KERNEL);
     if (!SECBOOT_BUFFER) {
         sec_print_err("fail to malloc secboot buffer\n");
         return -1;
     }
-#endif
 
     return 0;
 }
 
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-core_initcall(bsp_load_image_init);
-#endif
 
 

@@ -115,11 +115,9 @@ VOS_UINT32 PPP_GenerateSeed
 
     VOS_UINT32                          ulLoop;
     VOS_UINT32                          ulSeed;
-    VOS_UINT8                          *pucSeed = VOS_NULL_PTR;
+    VOS_UINT8                          *pucSeed;
     VOS_UINT8                           ucTempValue = 0xFF;
 
-    /* 清除告警，外部代码保证ucSerialLen不会为0 */
-    ucSerialLen = TTF_MAX(1,ucSerialLen);
 
     /* 从随机序列里选四个字节作为种子 */
     pucSeed = (VOS_UINT8 *)&ulSeed;

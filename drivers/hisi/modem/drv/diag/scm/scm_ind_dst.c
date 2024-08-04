@@ -326,7 +326,7 @@ void  scm_set_power_on_log(void)
 }
 
 
-int scm_ind_dst_read_cb(unsigned int u32ChanID)
+void scm_ind_dst_read_cb(void)
 {
     u32                          ulChType;
     SOCP_BUFFER_RW_STRU                 stBuffer;
@@ -342,13 +342,13 @@ int scm_ind_dst_read_cb(unsigned int u32ChanID)
     if (SOCP_CODER_DEST_CHAN != ulChType)
     {
         diag_error("Channel Type(0x%x) is Error\n", ulChType);
-        return ERR_MSP_INVALID_PARAMETER;
+        return;
     }
 
     if (BSP_OK != bsp_socp_get_read_buff(ulDstChID, &stBuffer))
     {
         diag_error("Get Read Buffer is Error\n");/* 记录Log */
-        return ERR_MSP_INVALID_PARAMETER;
+        return;
     }
 
 
@@ -356,7 +356,7 @@ int scm_ind_dst_read_cb(unsigned int u32ChanID)
     if(NULL == g_astSCMIndCoderDstCfg.pfunc)
     {
         diag_crit("ind dst channel is null, delay log is open\n");
-        return ERR_MSP_SUCCESS;
+        return;
     }
 
     if((0 == (stBuffer.u32Size + stBuffer.u32RbSize))||(NULL == stBuffer.pBuffer))
@@ -364,12 +364,12 @@ int scm_ind_dst_read_cb(unsigned int u32ChanID)
         bsp_socp_read_data_done(ulDstChID, stBuffer.u32Size + stBuffer.u32RbSize);  /* 清空数据 */
         diag_system_debug_ind_dst_lost(EN_DIAG_DST_LOST_BRANCH, stBuffer.u32Size + stBuffer.u32RbSize);
         diag_error("Get RD error\n");
-        return ERR_MSP_SUCCESS;
+        return;
     }
 
     if(0 == stBuffer.u32Size)
     {
-        return ERR_MSP_SUCCESS;
+        return;
     }
 
     /* 发送数据 */
@@ -382,7 +382,7 @@ int scm_ind_dst_read_cb(unsigned int u32ChanID)
         bsp_socp_read_data_done(ulDstChID, stBuffer.u32Size + stBuffer.u32RbSize);  /* 清空数据 */
         diag_system_debug_ind_dst_lost(EN_DIAG_DST_LOST_BRANCH, stBuffer.u32Size + stBuffer.u32RbSize);
         diag_error("stBuffer.pBuffe==NULL\n");
-        return ERR_MSP_MALLOC_FAILUE;
+        return;
     }
     ulTimerIn = bsp_get_slice_value();
 
@@ -394,7 +394,7 @@ int scm_ind_dst_read_cb(unsigned int u32ChanID)
         diag_crit("g_astSCMCnfCoderDstCfg.pfunc Proc time 0x%x\n", (ulTimerOut - ulTimerIn));        
     }
 
-    return ERR_MSP_SUCCESS;
+    return;
 }
 
 u32 scm_ind_get_dst_buff_size(void)

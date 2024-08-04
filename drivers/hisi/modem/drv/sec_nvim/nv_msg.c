@@ -100,7 +100,7 @@ u32 bsp_nvm_ccore_msg_cb(u32 result, u32 sn)
         nv_printf("send icc to ccore fail, sn:0x%x  errno:0x%x", sn, ret);
     }
     //lint -save -e455
-    __pm_relax(&g_nv_ctrl.wake_lock);
+    wake_unlock(&g_nv_ctrl.wake_lock);
     g_msg_ctrl.icc_cb_reply++;
     return ret;
     //lint -restore
@@ -315,7 +315,7 @@ u32 nv_handle_icc_rmsg(u32 chanid, u32 len)
         case NV_ICC_REQ_UPDATE_DEFAULT:
         case NV_ICC_REQ_UPDATE_BACKUP:
         case NV_ICC_REQ_FACTORY_RESET:
-            __pm_stay_awake(&g_nv_ctrl.wake_lock);
+            wake_lock(&g_nv_ctrl.wake_lock);
             ret = nv_send_rmsg(icc_req.msg_type, icc_req.sn);
             break;
 
@@ -371,7 +371,7 @@ void nv_msg_dump(void) {
     nv_printf("remote_wr_count %d \n",      g_msg_ctrl.remote_wr_count);
     nv_printf("req_sn %d \n",        g_msg_ctrl.req_sn);
     nv_printf("task_proc_count %d \n", g_nv_ctrl.task_proc_count);
-    nv_printf("wake_lock_active status %d \n", g_nv_ctrl.wake_lock.active);
+    nv_printf("wake_lock_active status %d \n", wake_lock_active(&g_nv_ctrl.wake_lock));
 }
 
 EXPORT_SYMBOL(nv_msg_dump);

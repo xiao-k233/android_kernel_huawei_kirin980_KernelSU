@@ -46,6 +46,33 @@
  *
  */
 
+/*****************************************************************************/
+/*                                                                           */
+/*                Copyright 1999 - 2003, Huawei Tech. Co., Ltd.              */
+/*                           ALL RIGHTS RESERVED                             */
+/*                                                                           */
+/* FileName: v_typedef.h                                                     */
+/*                                                                           */
+/* Author: Yang Xiangqian                                                    */
+/*                                                                           */
+/* Version: 1.0                                                              */
+/*                                                                           */
+/* Date: 2006-10                                                             */
+/*                                                                           */
+/* Description: define the type of VAR                                       */
+/*                                                                           */
+/* Others:                                                                   */
+/*                                                                           */
+/* History:                                                                  */
+/* 1. Date:                                                                  */
+/*    Author:                                                                */
+/*    Modification: Create this file                                         */
+/*                                                                           */
+/* 2. Date: 2006-10                                                          */
+/*    Author: Xu Cheng                                                       */
+/*    Modification: Standardize code                                         */
+/*                                                                           */
+/*****************************************************************************/
 
 #ifndef _V_TYPDEF_H
 #define _V_TYPDEF_H
@@ -143,7 +170,7 @@ extern "C" {
 #define VOS_ERR                (1)                 /* For VRP VOS adaptation */
 #define VOS_ERROR              (-1)
 
-#define VOS_MEMORY_CRC         (0x5A5A5A5AUL)
+#define VOS_MEMORY_CRC         (0x55AA55AAUL)
 
 #if (VOS_WIN32 == VOS_OS_VER)
 typedef void                   VOS_VOID;

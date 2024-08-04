@@ -57,8 +57,7 @@ extern "C"
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/semaphore.h>
-#include <linux/device.h>
-#include <linux/pm_wakeup.h>
+#include <linux/wakelock.h>
 #include <linux/miscdevice.h>
 #include <linux/suspend.h>
 #include <bsp_dump.h>
@@ -73,6 +72,8 @@ extern "C"
 #define PM_OM_LOG_THRE_CORE_NUM (4)   /* 有几个核需要配置水线 */
 #define PM_OM_LOG_THRE_BUF_SIZE (200) /* 从文件节点读取水线的buffer大小 */
 
+#define pmom_safe_memset(dest, destMax, val, count) memset(dest, val, count)
+#define pmom_safe_memcpy(dest, destMax, src, count) memcpy(dest, src, count)
 #define MMU_VA_T phys_addr_t
 
 struct pm_om_platform

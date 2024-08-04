@@ -53,7 +53,7 @@
 /*                                                                           */
 /* FileName: OMRingBuffer.c                                                  */
 /*                                                                           */
-/*                                                                           */
+/* Author: Windriver                                                         */
 /*                                                                           */
 /* Version: 1.0                                                              */
 /*                                                                           */
@@ -65,176 +65,470 @@
 /*                                                                           */
 /* History:                                                                  */
 /* 1. Date:                                                                  */
-/*    Author:                                                                */
+/*    Author: H59254                                                         */
 /*    Modification: Adapt this file                                          */
 /*                                                                           */
 /*                                                                           */
 /*****************************************************************************/
 #include <linux/module.h>
-#include <securec.h>
 #include <bsp_dump.h>
 #include <osl_spinlock.h>
 #include <osl_malloc.h>
 #include "ring_buffer.h"
-#include "soft_decode.h"
 
 
 #define  THIS_MODU mod_soft_dec
 
+#define OM_ARM_ALIGNMENT         0x03
+#define OM_EVEN_NUBER            0x01
+
 #define OM_MIN(x, y)             (((x) < (y)) ? (x) : (y))
 
-OM_RING_ID diag_RingBufferCreate(int nbytes)
-{
-    char         *buffer = NULL;
-    OM_RING_ID    ringId = NULL;
+#define OM_RING_BUFF_EX_MAX_LEN  (1024*8)
+#define OM_MAX_RING_BUFFER_NUM   (48)  /* Error log新增32*/
 
-    buffer = (char *) osl_malloc((u32)nbytes);
-    if (buffer == NULL)
+u8 g_ucDiagBufferOccupiedFlag[OM_MAX_RING_BUFFER_NUM] = {0};
+OM_RING   g_stDiagControlBlock[OM_MAX_RING_BUFFER_NUM];
+
+
+spinlock_t   g_stDiagStaticMemSpinLock;
+
+/*******************************************************************************
+*
+* OM_RealMemCopy - copy one buffer to another
+*
+* This routine copies the first <nbytes> characters from <source> to
+* <destination>.  Overlapping buffers are handled correctly.  Copying is done
+* in the most efficient way possible, which may include long-word, or even
+* multiple-long-word moves on some architectures.  In general, the copy
+* will be significantly faster if both buffers are long-word aligned.
+* (For copying that is restricted to byte, word, or long-word moves, see
+* the manual entries for bcopyBytes(), bcopyWords(), and bcopyLongs().)
+*
+* RETURNS: N/A
+*
+* ERRNO: N/A
+*
+* SEE ALSO:
+*/
+void diag_RealMemCopy( const char *source, char *destination, int nbytes )
+{
+    char *dstend;
+    int *src;
+    int *dst;
+    int tmp = destination - source;
+
+    if ( 0 == nbytes )
+    {
+        return;
+    }
+
+    if ( (tmp <= 0) || (tmp >= nbytes) )
+    {
+        /* forward copy */
+        dstend = destination + nbytes;
+
+        /* do byte copy if less than ten or alignment mismatch */
+        /* coverity[BITWISE_OPERATOR] */
+        if (nbytes < 10 || (((unsigned long)destination ^ (unsigned long)source) & OM_ARM_ALIGNMENT))
+        {
+            /*lint -e801 */
+            goto byte_copy_fwd;
+            /*lint +e801 */
+        }
+
+        /* if odd-aligned copy byte */
+        while ((long)destination & OM_ARM_ALIGNMENT)
+        {
+            *destination++ = *source++;
+        }
+
+        src = (int *) source;
+        dst = (int *) destination;
+
+        do
+        {
+            *dst++ = *src++;
+        }while (((char *)dst + sizeof (int)) <= dstend);
+
+        destination = (char *)dst;
+        source      = (char *)src;
+
+byte_copy_fwd:
+        while (destination < dstend)
+        {
+            *destination++ = *source++;
+        }
+    }
+    else
+    {
+        /* backward copy */
+        dstend       = destination;
+        destination += nbytes;
+        source      += nbytes;
+
+        /* do byte copy if less than ten or alignment mismatch */
+        /* coverity[BITWISE_OPERATOR] */
+        if (nbytes < 10 || (((unsigned long)destination ^ (unsigned long)source) & OM_ARM_ALIGNMENT))
+        {
+            /*lint -e801 */
+            goto byte_copy_bwd;
+            /*lint +e801 */
+        }
+
+        /* if odd-aligned copy byte */
+        while ((long)destination & OM_ARM_ALIGNMENT)
+        {
+            *--destination = *--source;
+        }
+
+        src = (int *) source;
+        dst = (int *) destination;
+
+        do
+        {
+            *--dst = *--src;
+        }while (((char *)dst - sizeof(int)) >= dstend);
+
+        destination = (char *)dst;
+        source      = (char *)src;
+
+byte_copy_bwd:
+        while (destination > dstend)
+        {
+            *--destination = *--source;
+        }
+    }
+}
+
+
+/*******************************************************************************
+*
+* OM_RingBufferCreate - create an empty ring buffer
+*
+* This routine creates a ring buffer of size <nbytes>, and initializes
+* it.  Memory for the buffer is allocated from the system memory partition.
+*
+* RETURNS
+* The ID of the ring buffer, or NULL if memory cannot be allocated.
+*
+* ERRNO: N/A.
+************************************************************************/
+OM_RING_ID diag_RingBufferCreate( int nbytes )
+{
+    char         *buffer;
+    OM_RING_ID    ringId;
+    s32       i;
+    s32       lTempSufffix = 0;
+    unsigned long     ulLockLevel;
+
+    /*lLockLevel = VOS_SplIMP();*/
+    spin_lock_irqsave(&g_stDiagStaticMemSpinLock, ulLockLevel);
+
+    for ( i=OM_MAX_RING_BUFFER_NUM -1; i>=0; i-- )
+    {
+        if ( false == g_ucDiagBufferOccupiedFlag[i] )
+        {
+            lTempSufffix = i;
+            g_ucDiagBufferOccupiedFlag[i] = true;
+            break;
+        }
+    }
+
+    /*VOS_Splx(lLockLevel);*/
+    spin_unlock_irqrestore(&g_stDiagStaticMemSpinLock, ulLockLevel);
+
+    if ( 0 == lTempSufffix )
     {
         return NULL;
     }
 
-    ringId = (OM_RING_ID)osl_malloc(sizeof(OM_RING));
-    if (ringId == NULL) {
-        osl_free(buffer);
+    /*
+     * bump number of bytes requested because ring buffer algorithm
+     * always leaves at least one empty byte in buffer
+     */
+
+    /* buffer = (char *) malloc ((unsigned) ++nbytes); */
+    buffer = (char *) osl_malloc((unsigned) ++nbytes);
+
+    if ( NULL == buffer )
+    {
+        /*lLockLevel = VOS_SplIMP();*/
+        spin_lock_irqsave(&g_stDiagStaticMemSpinLock, ulLockLevel);
+
+        g_ucDiagBufferOccupiedFlag[lTempSufffix] = false;
+
+        /*VOS_Splx(lLockLevel);*/
+        spin_unlock_irqrestore(&g_stDiagStaticMemSpinLock, ulLockLevel);
+
+        /*system_error(DRV_ERRNO_SCM_ERROR, 0, 0, NULL, 0);*/
+
         return NULL;
     }
+
+    ringId = &(g_stDiagControlBlock[lTempSufffix]);
 
     ringId->bufSize = nbytes;
     ringId->buf     = buffer;
 
-    diag_RingBufferFlush(ringId);
+    diag_RingBufferFlush (ringId);
 
     return (ringId);
 }
 
+/*******************************************************************************
+*
+* OM_RingBufferFlush - make a ring buffer empty
+*
+* This routine initializes a specified ring buffer to be empty.
+* Any data currently in the buffer will be lost.
+*
+* RETURNS: N/A
+*
+* ERRNO: N/A.
+*/
 void diag_RingBufferFlush( OM_RING_ID ringId )
 {
     ringId->pToBuf   = 0;
     ringId->pFromBuf = 0;
 }
 
-void diag_get_data_buffer(OM_RING_ID ring_buffer, rw_buffer_s *rw_buff)
+/*******************************************************************************
+*
+* OM_RingBufferGet - get characters from a ring buffer
+*
+* This routine copies bytes from the ring buffer <rngId> into <buffer>.
+* It copies as many bytes as are available in the ring, up to <maxbytes>.
+* The bytes copied will be removed from the ring.
+*
+* RETURNS:
+* The number of bytes actually received from the ring buffer;
+* it may be zero if the ring buffer is empty at the time of the call.
+*
+* ERRNO: N/A.
+*/
+int diag_RingBufferGet( OM_RING_ID rngId, char *buffer, int maxbytes )
 {
-    if (ring_buffer->pFromBuf <= ring_buffer->pToBuf) {
-        /* 写指针大于读指针，直接计算 */
-        rw_buff->buffer = ring_buffer->buf + ring_buffer->pFromBuf;
-        rw_buff->size = ring_buffer->pToBuf - ring_buffer->pFromBuf;
-        rw_buff->rb_buffer = NULL;
-        rw_buff->rb_size = 0;
-    } else {
-        /* 读指针大于写指针，需要考虑回卷 */
-        rw_buff->buffer = ring_buffer->buf + ring_buffer->pFromBuf;
-        rw_buff->size = ring_buffer->bufSize - ring_buffer->pFromBuf ;
-        rw_buff->rb_buffer = ring_buffer->buf;
-        rw_buff->rb_size = ring_buffer->pToBuf;
+    int bytesgot;
+    int pToBuf;
+    int bytes2;
+    int pRngTmp;
+    /*int lLockLevel;*/
+
+    /*lLockLevel = VOS_SplIMP();*/
+
+    pToBuf = rngId->pToBuf;
+
+    if (pToBuf >= rngId->pFromBuf)
+    {
+        /* pToBuf has not wrapped around */
+        bytesgot = OM_MIN(maxbytes, pToBuf - rngId->pFromBuf);
+        diag_RealMemCopy (&rngId->buf [rngId->pFromBuf], buffer, bytesgot);
+        rngId->pFromBuf += bytesgot;
     }
+    else
+    {
+        /* pToBuf has wrapped around.  Grab chars up to the end of the
+         * buffer, then wrap around if we need to. */
+        bytesgot = OM_MIN(maxbytes, rngId->bufSize - rngId->pFromBuf);
+        diag_RealMemCopy (&rngId->buf [rngId->pFromBuf], buffer, bytesgot);
+        pRngTmp = rngId->pFromBuf + bytesgot;
+
+        /* If pFromBuf is equal to bufSize, we've read the entire buffer,
+         * and need to wrap now.  If bytesgot < maxbytes, copy some more chars
+         * in now. */
+        if (pRngTmp == rngId->bufSize)
+        {
+            bytes2 = OM_MIN(maxbytes - bytesgot, pToBuf);
+            diag_RealMemCopy (rngId->buf, buffer + bytesgot, bytes2);
+            rngId->pFromBuf = bytes2;
+            bytesgot += bytes2;
+        }
+        else
+        {
+            rngId->pFromBuf = pRngTmp;
+        }
+    }
+
+    /*VOS_Splx(lLockLevel);*/
+
+    return (bytesgot);
 }
 
-s32 diag_RingBufferGet( OM_RING_ID rngId, rw_buffer_s rw_buff, u8 *buffer, int data_len) 
+/*******************************************************************************
+*
+* OM_RingBufferRemove - remove characters from a ring buffer
+*
+* This routine copies bytes from the ring buffer <rngId> into <buffer>.
+* It copies as many bytes as are available in the ring, up to <maxbytes>.
+* The bytes copied will be removed from the ring.
+*
+* RETURNS:
+* The number of bytes actually received from the ring buffer;
+* it may be zero if the ring buffer is empty at the time of the call.
+*
+* ERRNO: N/A.
+*******************************************************************************/
+
+/*******************************************************************************
+*
+* OM_RingBufferPut - put bytes into a ring buffer
+*
+* This routine puts bytes from <buffer> into ring buffer <ringId>.  The
+* specified number of bytes will be put into the ring, up to the number of
+* bytes available in the ring.
+*
+* INTERNAL
+* Always leaves at least one byte empty between pToBuf and pFromBuf, to
+* eliminate ambiguities which could otherwise occur when the two pointers
+* are equal.
+*
+* RETURNS:
+* The number of bytes actually put into the ring buffer;
+* it may be less than number requested, even zero,
+* if there is insufficient room in the ring buffer at the time of the call.
+*
+* ERRNO: N/A.
+*/
+int diag_RingBufferPut( OM_RING_ID rngId, char *buffer, int nbytes )
 {
-    s32 ret;
+    int bytesput;
+    int pFromBuf;
+    int bytes2;
+    int pRngTmp;
+    /*int lLockLevel;*/
 
-    if (data_len == 0) {
-        return 0;
-    }
+    /*lLockLevel = VOS_SplIMP();*/
 
-    ret = memcpy_s(buffer, data_len, rw_buff.buffer, rw_buff.size);
-    if (ret) {
-        soft_decode_error("memcpy_s fail, ret=0x%x\n", ret);
-        return ret;
+    pFromBuf = rngId->pFromBuf;
+
+    if (pFromBuf > rngId->pToBuf)
+    {
+        /* pFromBuf is ahead of pToBuf.  We can fill up to two bytes
+         * before it */
+        bytesput = OM_MIN(nbytes, pFromBuf - rngId->pToBuf - 1);
+        diag_RealMemCopy (buffer, &rngId->buf [rngId->pToBuf], bytesput);
+        rngId->pToBuf += bytesput;
     }
-    
-    if (rw_buff.rb_size != 0) {
-        ret = memcpy_s(buffer + rw_buff.size, data_len - rw_buff.size, rw_buff.rb_buffer, data_len - rw_buff.size);
-        if (ret) {
-            soft_decode_error("memcpy_s fail, ret=0x%x\n", ret);
-            return ret;
+    else if (pFromBuf == 0)
+    {
+        /* pFromBuf is at the beginning of the buffer.  We can fill till
+         * the next-to-last element */
+        bytesput = OM_MIN(nbytes, rngId->bufSize - rngId->pToBuf - 1);
+        diag_RealMemCopy (buffer, &rngId->buf [rngId->pToBuf], bytesput);
+        rngId->pToBuf += bytesput;
+    }
+    else
+    {
+        /* pFromBuf has wrapped around, and its not 0, so we can fill
+         * at least to the end of the ring buffer.  Do so, then see if
+         * we need to wrap and put more at the beginning of the buffer. */
+        bytesput = OM_MIN(nbytes, rngId->bufSize - rngId->pToBuf);
+        diag_RealMemCopy (buffer, &rngId->buf [rngId->pToBuf], bytesput);
+        pRngTmp = rngId->pToBuf + bytesput;
+
+        if (pRngTmp == rngId->bufSize)
+        {
+            /* We need to wrap, and perhaps put some more chars */
+            bytes2 = OM_MIN(nbytes - bytesput, pFromBuf - 1);
+            diag_RealMemCopy (buffer + bytesput, rngId->buf, bytes2);
+            rngId->pToBuf = bytes2;
+            bytesput += bytes2;
         }
-        
-        rngId->pFromBuf = data_len - rw_buff.size;
-    } else {
-        rngId->pFromBuf += data_len;
+        else
+        {
+            rngId->pToBuf = pRngTmp;
+        }
     }
 
-    return 0;
+    /*VOS_Splx(lLockLevel);*/
+
+    return (bytesput);
 }
 
-void diag_get_idle_buffer(OM_RING_ID ring_buffer, rw_buffer_s *rw_buff)
+/*******************************************************************************
+*
+* OM_RingBufferIsEmpty - test if a ring buffer is empty
+*
+* This routine determines if a specified ring buffer is empty.
+*
+* RETURNS:
+* TRUE if empty, FALSE if not.
+*
+* ERRNO: N/A.
+*/
+bool diag_RingBufferIsEmpty( OM_RING_ID ringId )
 {
-    if (ring_buffer->pToBuf < ring_buffer->pFromBuf) {
-        /* 读指针大于写指针，直接计算 */
-        rw_buff->buffer = ring_buffer->buf + ring_buffer->pToBuf;
-        rw_buff->size = (ring_buffer->pFromBuf - ring_buffer->pToBuf - 1);
-        rw_buff->rb_buffer = NULL;
-        rw_buff->rb_size = 0;
-    } else {
-        /* 写指针大于读指针，需要考虑回卷 */
-        if (ring_buffer->pFromBuf != 0) {
-            rw_buff->buffer = ring_buffer->buf + ring_buffer->pToBuf;
-            rw_buff->size = ring_buffer->bufSize   - ring_buffer->pToBuf ;
-            rw_buff->rb_buffer = ring_buffer->buf;
-            rw_buff->rb_size = ring_buffer->pFromBuf - 1;
-        } else {
-            rw_buff->buffer = ring_buffer->buf + ring_buffer->pToBuf;
-            rw_buff->size = ring_buffer->bufSize   - ring_buffer->pToBuf - 1;
-            rw_buff->rb_buffer = NULL;
-            rw_buff->rb_size = 0;
-        }
-    }
+    return (ringId->pToBuf == ringId->pFromBuf);
 }
 
-s32 diag_RingBufferPut( OM_RING_ID rngId, rw_buffer_s rw_buffer, const u8 *buffer, int data_len)
+/*******************************************************************************
+*
+* OM_RingBufferIsFull - test if a ring buffer is full (no more room)
+*
+* This routine determines if a specified ring buffer is completely full.
+*
+* RETURNS:
+* TRUE if full, FALSE if not.
+*
+* ERRNO: N/A.
+*/
+bool diag_RingBufferIsFull( OM_RING_ID ringId )
 {
-    u32 size;
-    u32 rb_size;
-    s32 ret;
+    int n = ringId->pToBuf - ringId->pFromBuf + 1;
 
-    if (data_len == 0) {
-        return 0;
-    }
-
-    if (rw_buffer.size > data_len) {
-        if ((rw_buffer.buffer) && (rw_buffer.size)) {
-            ret = memcpy_s(((u8 *)rw_buffer.buffer), rw_buffer.size, buffer, data_len);
-            if (ret != EOK) {
-                soft_decode_error("memory copy fail 0x%x\n", ret);
-                return ret;
-            }
-        }
-        
-        rngId->pToBuf += data_len;
-    } else {
-        if ((rw_buffer.buffer) && (rw_buffer.size)) {
-            size = rw_buffer.size;
-            ret = memcpy_s(((u8 *)rw_buffer.buffer), rw_buffer.size, buffer, size);
-            if (ret != EOK) {
-                soft_decode_error("memory copy fail 0x%x\n", ret);
-                return ret;
-            }
-        } else {
-            size = 0;
-        }
-
-        rb_size = data_len - rw_buffer.size;
-        if (rb_size && rw_buffer.rb_buffer != NULL) {
-            ret = memcpy_s((u8 *)rw_buffer.rb_buffer, rw_buffer.rb_size, ((u8 *)buffer + size), rb_size);
-            if (ret != EOK) {
-                soft_decode_error("memory copy fail 0x%x\n", ret);
-                return ret;
-            }
-        }
-        
-        rngId->pToBuf = rb_size;
-    }
-
-    return 0;
+    return ((n == 0) || (n == ringId->bufSize)); /* [false alarm]: 屏蔽Fortify 错误 */
 }
 
+/*******************************************************************************
+*
+* OM_RingBufferFreeBytes - determine the number of free bytes in a ring buffer
+*
+* This routine determines the number of bytes currently unused in a specified
+* ring buffer.
+*
+* RETURNS: The number of unused bytes in the ring buffer.
+*
+* ERRNO: N/A.
+*/
+int diag_RingBufferFreeBytes( OM_RING_ID ringId)
+{
+    int n = ringId->pFromBuf - ringId->pToBuf - 1;
+
+    if (n < 0)
+    {
+        n += ringId->bufSize;
+    }
+
+    return (n);
+}
+
+/*******************************************************************************
+*
+* OM_RingBufferNBytes - determine the number of bytes in a ring buffer
+*
+* This routine determines the number of bytes currently in a specified
+* ring buffer.
+*
+* RETURNS: The number of bytes filled in the ring buffer.
+*
+* ERRNO: N/A.
+*/
+int diag_RingBufferNBytes( OM_RING_ID ringId )
+{
+    int n = ringId->pToBuf - ringId->pFromBuf;
+
+    if (n < 0)
+    {
+        n += ringId->bufSize;
+    }
+
+    return (n);
+}
 
 int __init diag_ring_buffer_init(void)
 {
+    spin_lock_init(&g_stDiagStaticMemSpinLock);
     return BSP_OK;
 }
-
 

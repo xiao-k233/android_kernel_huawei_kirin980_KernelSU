@@ -1,50 +1,4 @@
-/*
-* Copyright (C) Huawei Technologies Co., Ltd. 2012-2017. All rights reserved.
-* foss@huawei.com
-*
-* If distributed as part of the Linux kernel, the following license terms
-* apply:
-*
-* * This program is free software; you can redistribute it and/or modify
-* * it under the terms of the GNU General Public License version 2 and
-* * only version 2 as published by the Free Software Foundation.
-* *
-* * This program is distributed in the hope that it will be useful,
-* * but WITHOUT ANY WARRANTY; without even the implied warranty of
-* * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* * GNU General Public License for more details.
-* *
-* * You should have received a copy of the GNU General Public License
-* * along with this program; if not, write to the Free Software
-* * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
-*
-* Otherwise, the following license terms apply:
-*
-* * Redistribution and use in source and binary forms, with or without
-* * modification, are permitted provided that the following conditions
-* * are met:
-* * 1) Redistributions of source code must retain the above copyright
-* *    notice, this list of conditions and the following disclaimer.
-* * 2) Redistributions in binary form must reproduce the above copyright
-* *    notice, this list of conditions and the following disclaimer in the
-* *    documentation and/or other materials provided with the distribution.
-* * 3) Neither the name of Huawei nor the names of its contributors may
-* *    be used to endorse or promote products derived from this software
-* *    without specific prior written permission.
-*
-* * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-* POSSIBILITY OF SUCH DAMAGE.
-*
-*/
+
 
 #ifndef __TAF_CALL_COMM_H__
 #define __TAF_CALL_COMM_H__
@@ -95,8 +49,9 @@ extern "C"{
 #define TAF_CS_CAUSE_VC_BEGIN               (0x0D00)
 #define TAF_CS_CAUSE_IMS_BEGIN              (0x4800)
 #define TAF_CS_CAUSE_IMSA_BEGIN             (0x4C00)
+/* Added by l60609 for CDMA 1X Iteration 2, 2014-9-3, begin */
 #define TAF_CS_CAUSE_XCALL_BEGIN            (0x9000)
-
+/* Added by l60609 for CDMA 1X Iteration 2, 2014-9-3, end */
 /*****************************************************************************
   3 枚举定义
 *****************************************************************************/
@@ -108,6 +63,8 @@ enum MN_CALL_ALS_LINE_NO_ENUM
     MN_CALL_ALS_LINE_NO_BUTT
 };
 typedef VOS_UINT8 MN_CALL_ALS_LINE_NO_ENUM_U8;
+
+/* Added by f62575 for AT Project, 2011-11-1, end */
 
 
 /* Call Number Type  */
@@ -1116,6 +1073,8 @@ enum TAF_CALL_REJ_CAUSE_ENUM
 };
 typedef VOS_UINT8 TAF_CALL_REJ_CAUSE_ENUM_UINT8;
 
+/* Added by f62575 for STK&DCM Project, 2012/09/18, begin */
+
 
 enum MN_CALL_CF_CAUSE_ENUM
 {
@@ -1183,6 +1142,7 @@ typedef struct
     VOS_UINT8                           SubAddrInfo[MN_CALL_MAX_SUBADDR_INFO_LEN];
     VOS_UINT8                           ucReserved;
 }MN_CALL_SUBADDR_STRU;
+/* Added by f62575 for STK&DCM Project, 2012/09/18, end */
 
 #define MN_CALL_MAX_CALLED_BCD_NUM_LEN      (40)                                /* 3GPP TS 24.008 10.5.4.7 */
 #define MN_CALL_MAX_CALLED_ASCII_NUM_LEN    (MN_CALL_MAX_CALLED_BCD_NUM_LEN * 2)
@@ -1262,6 +1222,7 @@ typedef struct
     VOS_UINT8                           aucReserved[2];
 }TAF_CALL_ECBM_INFO_STRU;
 
+/* Modified by f62575 for V9R1 STK升级, 2013-6-26, begin */
 
 typedef struct
 {
@@ -1273,6 +1234,7 @@ typedef struct
                                                                                  大于70ms小于600ms */
     VOS_UINT8                           aucReserved[2];
 } TAF_CALL_DTMF_PARAM_STRU;
+/* Modified by f62575 for V9R1 STK升级, 2013-6-26, end */
 
 
 typedef struct
@@ -1328,7 +1290,9 @@ enum MN_CALL_CODEC_TYPE_ENUM
     MN_CALL_CODEC_TYPE_FR,                  /* full rate */
     MN_CALL_CODEC_TYPE_HR,                  /* half rate */
     MN_CALL_CODEC_TYPE_AMR2,
+    /* Added by z40661 for AMR-WB , 2012-02-09, begin */
     MN_CALL_CODEC_TYPE_AMRWB,
+    /* Added by z40661 for AMR-WB , 2012-02-09, end */
     MN_CALL_CODEC_TYPE_G711,
     MN_CALL_CODEC_TYPE_EVS,
 

@@ -57,11 +57,7 @@
 #include <bsp_slice.h>
 #include <bsp_nvim.h>
 #include <bsp_version.h>
-#ifdef BSP_CONFIG_PHONE_TYPE
 #include "../../adrv/adrv.h"
-#else
-#include <linux/hisi/rdr_pub.h>
-#endif
 #include <bsp_rfile.h>
 #include "nv_partition_img.h"
 #include "nv_comm.h"
@@ -594,6 +590,7 @@ void nv_show_ddr_info(void)
     nv_global_info_s* ddr_info = (nv_global_info_s*)NV_GLOBAL_INFO_ADDR;
     nv_ctrl_info_s* ctrl_info = (nv_ctrl_info_s*)NV_GLOBAL_CTRL_INFO_ADDR;
     nv_file_info_s* file_info = (nv_file_info_s*)(NV_GLOBAL_CTRL_INFO_ADDR+ctrl_info->file_offset);
+    nv_item_info_s* ref_info   = (nv_item_info_s*)(NV_GLOBAL_CTRL_INFO_ADDR+ctrl_info->ref_offset);
 
     nv_get_current_sys_time(&tm);
     nv_printf("current slice:0x%x sys time:%d-%02d-%02d %02d:%02d:%02d\n",\
@@ -601,7 +598,12 @@ void nv_show_ddr_info(void)
                     tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,\
                     tm.tm_hour, tm.tm_min, tm.tm_sec);
 
+    nv_printf("global start ddr        :0x%pK\n",(void *)NV_GLOBAL_INFO_ADDR);
+    nv_printf("global end   ddr        :0x%pK\n",(void *)NV_GLOBAL_END_ADDR);
     nv_printf("global nv ddr size      :0x%x\n",SHM_MEM_NV_SIZE);
+    nv_printf("global ctrl file ddr    :0x%pK\n",(void *)NV_GLOBAL_CTRL_INFO_ADDR);
+    nv_printf("global file list ddr    :0x%pK\n",file_info);
+    nv_printf("global ref info  ddr    :0x%pK\n",ref_info);
     nv_printf("global mem buf   ddr    :0x%x\n",ddr_info->nminfo.mem_buf_addr);
     nv_printf("global mem buf   size   :0x%x\n",ddr_info->nminfo.buf_size);
 
@@ -635,6 +637,7 @@ void nv_show_ddr_info(void)
     nv_printf("*******************global file list***********************\n");
     for(i = 0;i<ctrl_info->file_num;i++)
     {
+        nv_printf("file_info     : 0x%pK\n",file_info);
         nv_printf("file id       : 0x%x\n",file_info->file_id);
         nv_printf("file name     : %s\n",file_info->file_name);
         nv_printf("file size     : 0x%x\n",file_info->file_size);
@@ -661,6 +664,7 @@ void nv_show_ref_info(u32 arg1,u32 arg2)
 
     for(i = _min;i<_max;i++)
     {
+        nv_printf("第%d项 :\n",i);
         nv_printf("nvid   :0x%-8x, file id : 0x%-8x\n",ref_info->itemid,ref_info->file_id);
         nv_printf("nvlen  :0x%-8x, nv_off  : 0x%-8x, nv_pri 0x%-8x\n",ref_info->nv_len,ref_info->nv_off,ref_info->priority);
         nv_printf("dsda   :0x%-8x\n",ref_info->modem_num);
@@ -834,7 +838,6 @@ void nv_record(char* fmt,...)
 
 void nv_get_current_sys_time(struct rtc_time *tm)
 {
-#if (defined(CONFIG_RTC_LIB) && defined(CONFIG_RTC_CLASS)&&defined(CONFIG_RTC_HCTOSYS_DEVICE))
     u32 ret;
     struct rtc_device *rtc = rtc_class_open(CONFIG_RTC_HCTOSYS_DEVICE);
 
@@ -856,9 +859,6 @@ void nv_get_current_sys_time(struct rtc_time *tm)
     }
     /*获取到的时间为格林威治时间，转换为北京时间*/
     tm->tm_hour+=8;
-#else
-    (void)memset_s((void *)tm, sizeof(*tm), 0, sizeof(struct rtc_time));
-#endif
     return;
 }
 /*****************************************************************************

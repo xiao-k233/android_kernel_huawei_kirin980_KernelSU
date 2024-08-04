@@ -87,7 +87,6 @@ PS_OM_LAYER_MSG_REPLACE_CTRL_STRU            g_stAcpuLayerMsgReplaceCtrl =
 
 
 /* 防止PC工程编译过程中函数多重定义 */
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
 
 
 
@@ -130,5 +129,4 @@ VOS_UINT32 PS_OM_LayerMsgReplaceCBReg
     return  PS_OM_LayerMsgReplaceCBCommReg(&g_stAcpuLayerMsgReplaceCtrl, ulSendPid, pFunc);
 }
 
-#endif
 

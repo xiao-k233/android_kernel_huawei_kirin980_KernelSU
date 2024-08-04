@@ -99,7 +99,7 @@ static void hwadp_dts_register_base_addr(void)
 				ip_type = ~0U;
 			retval = bsp_hwadp_register_base_addr((BSP_IP_TYPE_E)ip_type, (const char *)np->name, (void *)base_addr);
 			if(retval)
-				hwadp_printf("hwadp:failed to register base addr!ip_type=%d name=%s\n",(int)ip_type, np->name);
+				hwadp_printf("hwadp:failed to register base addr!ip_type=%d base_addr=%pK name=%s\n",(int)ip_type, (void*)base_addr,np->name);
 			continue;
 		}
 
@@ -145,6 +145,3 @@ int hwadp_init(void)
     return ret;
 }
 
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-subsys_initcall(hwadp_init);
-#endif

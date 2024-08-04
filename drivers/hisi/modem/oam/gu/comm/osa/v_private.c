@@ -46,6 +46,30 @@
  *
  */
 
+/*****************************************************************************/
+/*                                                                           */
+/*                Copyright 1999 - 2015, Huawei Tech. Co., Ltd.              */
+/*                           ALL RIGHTS RESERVED                             */
+/*                                                                           */
+/* FileName: v_private.c                                                     */
+/*                                                                           */
+/* Author: dongtinghuan                                                      */
+/*                                                                           */
+/* Version: 1.0                                                              */
+/*                                                                           */
+/* Date: 2014-11                                                             */
+/*                                                                           */
+/* Description: 对底软接口的私有封装                                         */
+/*                                                                           */
+/* Others:                                                                   */
+/*                                                                           */
+/* History:                                                                  */
+/* 1. Date:                                                                  */
+/*    Author:                                                                */
+/*    Modification: Create this file                                         */
+/*                                                                           */
+/*****************************************************************************/
+
 
 #include "v_typdef.h"
 #include "v_IO.h"

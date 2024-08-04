@@ -286,42 +286,78 @@ extern NF_EXT_STATS_STRU g_stNfExtStats;
 *****************************************************************************/
 #if (FEATURE_ON == FEATURE_NFEXT)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0))
-extern unsigned int NFExt_BrPreRoutingHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_BrPreRoutingHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_BrPostRoutingHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_BrPostRoutingHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
 
-extern unsigned int NFExt_BrLocalInHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_BrLocalInHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_BrLocalOutHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_BrLocalOutHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_BrForwardHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_BrForwardHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_ArpInHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_ArpInHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_ArpOutHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_ArpOutHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_Ip4PreRoutingHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_Ip4PreRoutingHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_Ip4PostRoutingHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_Ip4PostRoutingHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_Ip4LocalInHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_Ip4LocalInHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_Ip4LocalOutHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_Ip4LocalOutHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_Ip4ForwardHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_Ip4ForwardHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_Ip6PreRoutingHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_Ip6PreRoutingHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_Ip6PostRoutingHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_Ip6PostRoutingHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_Ip6LocalInHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_Ip6LocalInHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_Ip6LocalOutHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_Ip6LocalOutHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_Ip6ForwardHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_Ip6ForwardHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
-extern unsigned int NFExt_BrForwardFlowCtrlHook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state);
+extern unsigned int NFExt_BrForwardFlowCtrlHook(const struct nf_hook_ops *ops,
+                                    struct sk_buff *skb,
+                                    const struct nf_hook_state *state);
 
 #else
 extern unsigned int NFExt_BrPreRoutingHook(unsigned int hooknum,
@@ -451,8 +487,8 @@ extern VOS_INT  NFExt_RegHooks(VOS_UINT32 ulMask);
 extern VOS_UINT32  NFExt_Get1stInetIpv4Addr(struct net_device *pstDev);
 extern PS_BOOL_ENUM_UINT8 NFExt_ConfigEffective(IPS_MNTN_TRACE_CONFIG_REQ_STRU *pRcvMsg);
 
-extern VOS_UINT32 NFExt_BrSetFlowCtrl(VOS_UINT32 ulParam1, VOS_UINT32 ulParam2);
-extern VOS_UINT32 NFExt_BrStopFlowCtrl(VOS_UINT32 ulParam1, VOS_UINT32 ulParam2);
+extern VOS_VOID  NFExt_BrSetFlowCtrl(VOS_VOID);
+extern VOS_VOID  NFExt_BrStopFlowCtrl(VOS_VOID);
 extern VOS_UINT32 NFExt_GetBrBytesCnt(VOS_VOID);
 
 
@@ -466,7 +502,7 @@ extern VOS_VOID NFExt_RcvOmMsg(VOS_VOID *pMsg);
 extern VOS_VOID NFExt_ProcDataNotify(VOS_VOID);
 extern VOS_VOID NFExt_MsgProc( struct MsgCB * pMsg );
 extern VOS_UINT32 NFExt_PidInit( enum VOS_INIT_PHASE_DEFINE ip );
-extern VOS_VOID NFExt_FidTask(VOS_UINT32 ulPara0, VOS_UINT32 ulPara1, VOS_UINT32 ulPara2, VOS_UINT32 ulPara3);
+extern VOS_VOID NFExt_FidTask(VOS_VOID);
 
 #ifdef __cplusplus
 #if __cplusplus

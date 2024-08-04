@@ -102,7 +102,7 @@ void PPM_UsbCfgStatusCB(ACM_EVT_E enPortState)
 }
 
 
-void PPM_UsbCfgWriteDataCB(char* pucVirData, char* pucPhyData, int lLen)
+void PPM_UsbCfgWriteDataCB(u8* pucVirData, u8* pucPhyData, s32 lLen)
 {
     PPM_PortWriteAsyCB(OM_USB_CFG_PORT_HANDLE, pucVirData, lLen);
 
@@ -110,10 +110,9 @@ void PPM_UsbCfgWriteDataCB(char* pucVirData, char* pucPhyData, int lLen)
 }
 
 
-void PPM_UsbCfgReadDataCB(void)
+s32 PPM_UsbCfgReadDataCB(void)
 {
-    PPM_ReadPortData(CPM_CFG_PORT, g_astOMPortUDIHandle[OM_USB_CFG_PORT_HANDLE], OM_USB_CFG_PORT_HANDLE);
-    return;
+    return PPM_ReadPortData(CPM_CFG_PORT, g_astOMPortUDIHandle[OM_USB_CFG_PORT_HANDLE], OM_USB_CFG_PORT_HANDLE);
 }
 
 
@@ -145,49 +144,18 @@ static inline u32 Max_UsbProcTime(u32 oldtime, u32 newtime)
 }
 void PPM_QueryUsbInfo(void *PpmUsbInfoStru, u32 len)
 {
-    if(memcpy_s(PpmUsbInfoStru, len, &g_strPpmUsbDebugInfo, sizeof(PPM_USB_DEBUG_INFO_STRU)))
-    {
-        diag_error("memcpy fail\n");
-    }
+    memcpy_s(PpmUsbInfoStru, len, &g_strPpmUsbDebugInfo, sizeof(PPM_USB_DEBUG_INFO_STRU));
 }
 void PPM_ClearUsbTimeInfo(void)
 {
-    if(memset_s(&g_strPpmUsbDebugInfo, sizeof(PPM_USB_DEBUG_INFO_STRU), 0, sizeof(PPM_USB_DEBUG_INFO_STRU)))
-    {
-        diag_error("memcpy fail\n");
-    }
+    memset_s(&g_strPpmUsbDebugInfo, sizeof(PPM_USB_DEBUG_INFO_STRU), 0, sizeof(PPM_USB_DEBUG_INFO_STRU));
 }
 
-#ifdef BSP_CONFIG_PHONE_TYPE
-void PPM_UsbIndWriteDataCB(char* pucVirData, char* pucPhyData, int lLen)
+void PPM_UsbIndWriteDataCB(u8* pucVirData, u8* pucPhyData, s32 lLen)
 {
 	PPM_PortWriteAsyCB(OM_USB_IND_PORT_HANDLE, pucVirData, lLen);
 	return;
 }
-#else
-void PPM_UsbIndWriteDataCB(ACM_WRITE_INFO *AcmWriteInfo)
-{
-	u32 DeltaSendTime = 0;
-    u32 DeltaCallBackTime = 0;
-
-    g_strPpmUsbDebugInfo.UsbCallbackCount++;
-
-	if(AcmWriteInfo == NULL)
-	{
-		diag_error("Param error\n");
-		return;
-	}
-	DeltaSendTime = AcmWriteInfo->complete_time - AcmWriteInfo->submit_time;
-    g_strPpmUsbDebugInfo.UsbSendTime += DeltaSendTime;
-	g_strPpmUsbDebugInfo.UsbMaxSendTime = Max_UsbProcTime(g_strPpmUsbDebugInfo.UsbMaxSendTime, DeltaSendTime);
-	DeltaCallBackTime = AcmWriteInfo->done_time - AcmWriteInfo->complete_time;
-    g_strPpmUsbDebugInfo.UsbCallbackDiagTime += DeltaCallBackTime;
-	g_strPpmUsbDebugInfo.UsbMaxCallBackTime = Max_UsbProcTime(g_strPpmUsbDebugInfo.UsbMaxCallBackTime, DeltaCallBackTime);
-    PPM_PortWriteAsyCB(OM_USB_IND_PORT_HANDLE, AcmWriteInfo->pVirAddr, AcmWriteInfo->u32Size);
-
-    return;
-}
-#endif
 
 void PPM_UsbIndPortOpen(void)
 {

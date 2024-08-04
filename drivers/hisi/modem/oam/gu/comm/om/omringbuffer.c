@@ -51,9 +51,7 @@
 #include "omringbuffer.h"
 #include "omprivate.h"
 
-#if(FEATURE_ON == FEATURE_PTM)
 #include "omerrorlog.h"
-#endif
 
 
 
@@ -65,14 +63,8 @@
 
 #define OM_MIN(x, y)             (((x) < (y)) ? (x) : (y))
 
-#if(FEATURE_ON == FEATURE_PTM)
 #define OM_RING_BUFF_EX_MAX_LEN  (1024*8)
 #define OM_MAX_RING_BUFFER_NUM   (48)  /* Error logÐÂÔö32*/
-#else
-#define OM_MAX_RING_BUFFER_NUM   (16)
-#endif
-
-#define OM_RING_BUFFER_ALLOC_MAX_SIZE (200 * 1024)
 
 VOS_UINT8 g_ucOMBufferOccupiedFlag[OM_MAX_RING_BUFFER_NUM] = {0};
 OM_RING   g_stOMControlBlock[OM_MAX_RING_BUFFER_NUM];
@@ -182,10 +174,6 @@ OM_RING_ID OM_RingBufferCreate( int nbytes )
     VOS_INT       lTempSufffix = VOS_NULL_WORD;
     VOS_ULONG     ulLockLevel;
 
-    if ((nbytes > OM_RING_BUFFER_ALLOC_MAX_SIZE) || (nbytes <= 0))
-    {
-        return VOS_NULL_PTR;
-    }
     VOS_SpinLockIntLock(&g_stVosStaticMemSpinLock, ulLockLevel);
 
     for ( i=OM_MAX_RING_BUFFER_NUM -1; i>=0; i-- )
@@ -239,11 +227,6 @@ OM_RING_ID OM_RingBufferCreate( int nbytes )
 
 void OM_RingBufferFlush( OM_RING_ID ringId )
 {
-    if (ringId ==  VOS_NULL_PTR)
-    {
-        return;
-    }
-
     ringId->pToBuf   = 0;
     ringId->pFromBuf = 0;
 }
@@ -256,11 +239,6 @@ int OM_RingBufferGet( OM_RING_ID rngId, char *buffer, int maxbytes )
     int pToBuf;
     int bytes2;
     int pRngTmp;
-
-    if ((rngId ==  VOS_NULL_PTR) || (buffer == VOS_NULL_PTR))
-    {
-        return 0;
-    }
 
     pToBuf = rngId->pToBuf;
 
@@ -391,11 +369,6 @@ int OM_RingBufferPut( OM_RING_ID rngId, char *buffer, int nbytes )
     int bytes2;
     int pRngTmp;
 
-    if ((rngId == VOS_NULL_PTR) || (buffer == VOS_NULL_PTR))
-    {
-        return 0;
-    }
-
     pFromBuf = rngId->pFromBuf;
 
     if (pFromBuf > rngId->pToBuf)
@@ -443,11 +416,6 @@ int OM_RingBufferPut( OM_RING_ID rngId, char *buffer, int nbytes )
 
 VOS_BOOL OM_RingBufferIsEmpty( OM_RING_ID ringId )
 {
-    if (ringId ==  VOS_NULL_PTR)
-    {
-        return VOS_TRUE;
-    }
-
     return (ringId->pToBuf == ringId->pFromBuf);
 }
 
@@ -462,14 +430,7 @@ VOS_BOOL OM_RingBufferIsFull( OM_RING_ID ringId )
 
 int OM_RingBufferFreeBytes( OM_RING_ID ringId)
 {
-    int             n;
-
-    if (ringId == VOS_NULL_PTR)
-    {
-        return 0;
-    }
-
-    n = ringId->pFromBuf - ringId->pToBuf - 1;
+    int n = ringId->pFromBuf - ringId->pToBuf - 1;
 
     if (n < 0)
     {
@@ -482,14 +443,7 @@ int OM_RingBufferFreeBytes( OM_RING_ID ringId)
 
 int OM_RingBufferNBytes( OM_RING_ID ringId )
 {
-    int                     n;
-
-    if (ringId ==  VOS_NULL_PTR)
-    {
-        return 0;
-    }
-
-    n = ringId->pToBuf - ringId->pFromBuf;
+    int n = ringId->pToBuf - ringId->pFromBuf;
 
     if (n < 0)
     {

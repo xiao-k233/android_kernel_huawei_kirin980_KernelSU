@@ -46,6 +46,34 @@
  *
  */
 
+/*****************************************************************************/
+/*                                                                           */
+/*                Copyright 1999 - 2003, Huawei Tech. Co., Ltd.              */
+/*                           ALL RIGHTS RESERVED                             */
+/*                                                                           */
+/* FileName: v_timer.c                                                       */
+/*                                                                           */
+/* Author: Yang Xiangqian                                                    */
+/*                                                                           */
+/* Version: 1.0                                                              */
+/*                                                                           */
+/* Date: 2006-10                                                             */
+/*                                                                           */
+/* Description: implement timer                                              */
+/*                                                                           */
+/* Others:                                                                   */
+/*                                                                           */
+/* History:                                                                  */
+/* 1. Date:                                                                  */
+/*    Author:                                                                */
+/*    Modification: Create this file                                         */
+/*                                                                           */
+/* 2. Date: 2006-10                                                          */
+/*    Author: Xu Cheng                                                       */
+/*    Modification: Standardize code                                         */
+/*                                                                           */
+/*****************************************************************************/
+
 #include "vos.h"
 #include "v_IO.h"
 #include "v_private.h"
@@ -54,9 +82,6 @@
 #include "pam_tag.h"
 
 /* LINUX不支持 */
-#if (VOS_VXWORKS == VOS_OS_VER)
-#include "stdlib.h"
-#endif
 
 
 /*****************************************************************************
@@ -128,13 +153,11 @@ typedef struct RTC_TIMER_CONTROL_STRU
     VOS_UINT32      ulPrecision;/* record only */
     VOS_UINT32      ulPrecisionInCycle;/* unit is 32K cycle */
 
-#if VOS_YES == VOS_TIMER_CHECK
     VOS_UINT32      ulAllocTick;/* CPU tick of block allocation */
     VOS_UINT32      ulFreeTick;/* CPU tick of block free */
     VOS_UINT32      ulFileID;/* alloc file ID */
     VOS_UINT32      ulLineNo;/* alloc line no. */
     VOS_UINT32      ulBackUpTimeOutValueInCycle;
-#endif
     VOS_UINT32      ulBackUpTimerId;/* timer ID */
 } RTC_TIMER_CONTROL_BLOCK;
 
@@ -151,11 +174,9 @@ typedef struct DRX_TIMER_CONTROL_STRU
     VOS_UINT32      ulTimeOutValueSlice;            /* timer's length(32k) */
     VOS_UINT32      ulTimeEndSlice;                 /* the end slice time of timer */
 
-#if VOS_YES == VOS_TIMER_CHECK
     VOS_UINT32      ulAllocTick;                    /* CPU tick of block allocation */
     VOS_UINT32      ulFileID;                       /* alloc file ID */
     VOS_UINT32      ulLineNo;                       /* alloc line no. */
-#endif
 } DRX_TIMER_CONTROL_BLOCK;
 /* Added by g47350 for DRX timer Project, 2012/11/5, end */
 
@@ -170,11 +191,9 @@ typedef struct BIT64_TIMER_CONTROL_STRU
     VOS_UINT64      ullTimeOutValueSlice;           /* timer's length(64k) */
     VOS_UINT64      ullTimeEndSlice;                /* the end slice time of timer */
 
-#if VOS_YES == VOS_TIMER_CHECK
     VOS_UINT64      ullAllocTick;                   /* CPU tick of block allocation */
     VOS_UINT32      ulFileID;                       /* alloc file ID */
     VOS_UINT32      ulLineNo;                       /* alloc line no. */
-#endif
 }BIT64_TIMER_CONTROL_BLOCK;
 
 /* the number of task's control block */
@@ -243,65 +262,15 @@ VOS_UINT32                g_ulDRXTimerTaskId;
 /* Added by g47350 for DRX timer Project, 2012/11/5, end */
 
 
-#if ((OSA_CPU_CCPU == VOS_OSA_CPU) || (OSA_CPU_NRCPU == VOS_OSA_CPU)) && (FEATURE_ON == FEATURE_VOS_18H_TIMER)
-
-VOS_UINT32                  g_ulBit64TimerTaskId;
-
-BIT64_TIMER_CONTROL_BLOCK   g_astBit64TimerCtrlBlk[BIT64_TIMER_MAX_NUMBER];
-
-VOS_SEM                     g_ulBit64TimerSem;
-
-VOS_UINT32                  g_ulBit64NextHardTimerSlice = 0;
-
-#endif
 
 
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
 
-/* 自旋锁，用来作DRX Timer的临界资源保护 */
-VOS_SPINLOCK                    g_stDrxTimerSpinLock;
-
-/* flight mode max mode number */
-#define DRX_TIMER_WAKE_SRC_MODE_NUM     (8)
-
-VOS_UINT32                      g_ulFlightModeVoteMap = 0;  /*DRX TIMER在飞行模式投票*/
-
-VOS_SPINLOCK                    g_ulFlightModeVoteMapSpinLock;/* 用于投票的自旋锁 */
-
-enum DRX_TIMER_WAKE_SRC_VOTE_TYPE_ENUM
-{
-    DRX_TIMER_WAKE_SRC_VOTE_SET_ALL     = 0,
-    DRX_TIMER_WAKE_SRC_VOTE_SET         = 1,
-    DRX_TIMER_WAKE_SRC_VOTE_CLEAR       = 2,
-    DRX_TIMER_WAKE_SRC_VOTE_BUTT
-};
-typedef VOS_UINT32 DRX_TIMER_WAKE_SRC_VOTE_ENUM_UINT32;
-
-typedef struct
-{
-    DRX_TIMER_WAKE_SRC_VOTE_ENUM_UINT32 enVoteType;
-    MODEM_ID_ENUM_UINT16                enVoteModem;
-    VOS_UINT8                           ucReserved[2];
-    VOS_RATMODE_ENUM_UINT32             enVoteMode;
-    VOS_UINT32                          ulVoteValue;
-    VOS_UINT32                          ulSlice;
-}DRX_TIMER_WAKE_SRC_VOTE_STRU;
-
-#endif
-
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
 #define VOS_RTC_TIMER_ID  (TIMER_ACPU_OSA_ID)
-#endif
 
-#if ( (OSA_CPU_CCPU == VOS_OSA_CPU) || (OSA_CPU_NRCPU == VOS_OSA_CPU) )
-#define VOS_RTC_TIMER_ID  (TIMER_CCPU_OSA_ID)
-#endif
 
-#if VOS_YES == VOS_TIMER_CHECK
 
 VOS_VOID VOS_ShowUsed32KTimerInfo( VOS_VOID );
 
-#endif
 
 extern VOS_VOID OM_RecordInfoEnd(VOS_EXC_DUMP_MEM_NUM_ENUM_UINT32 enNumber);
 extern VOS_VOID OM_RecordInfoStart(VOS_EXC_DUMP_MEM_NUM_ENUM_UINT32 enNumber, VOS_UINT32 ulSendPid, VOS_UINT32 ulRcvPid, VOS_UINT32 ulMsgName);
@@ -319,17 +288,6 @@ VOS_VOID RTC_Add_Timer_To_List( RTC_TIMER_CONTROL_BLOCK  *Timer);
 VOS_VOID RTC_Del_Timer_From_List( RTC_TIMER_CONTROL_BLOCK  *Timer);
 VOS_VOID ShowRtcTimerLog( VOS_VOID );
 
-#if ((OSA_CPU_CCPU == VOS_OSA_CPU) || (OSA_CPU_NRCPU == VOS_OSA_CPU)) && (FEATURE_ON == FEATURE_VOS_18H_TIMER)
-VOS_UINT64 BIT64_MUL_32_DOT_768(VOS_UINT32 ulValue,VOS_UINT32 ulFileID,
-                                 VOS_INT32 usLineNo);
-VOS_UINT64 BIT64_DIV_32_DOT_768(VOS_UINT64 ulValue,VOS_UINT32 ulFileID,
-                                 VOS_INT32 usLineNo);
-VOS_VOID VOS_Bit64TimerIsr(VOS_VOID);
-VOS_VOID VOS_StartBit64HardTimer(VOS_UINT32 ulValue);
-VOS_UINT32 VOS_GetNextBit64Timer(VOS_UINT64 ullCurSlice, VOS_UINT32* pulNeedStartTimer);
-VOS_VOID VOS_Bit64TimerTaskFunc( VOS_UINT32 Para0, VOS_UINT32 Para1,
-                            VOS_UINT32 Para2, VOS_UINT32 Para3 );
-#endif
 
 typedef struct RTC_TIMER_PMLOG_STRU
 {
@@ -340,7 +298,7 @@ typedef struct RTC_TIMER_PMLOG_STRU
 
 VOS_UINT32 g_ulTimerlpm = VOS_FALSE;
 
-VOS_INT VOS_TimerLpmCb(VOS_INT x)
+VOS_UINT32 VOS_TimerLpmCb(VOS_INT x)
 {
     g_ulTimerlpm = VOS_TRUE;
 
@@ -524,63 +482,6 @@ VOS_VOID RTC_GetDebugSocInfo(VOS_UINT32 *pulAction, VOS_UINT32 *pulSlice, VOS_UI
     }
 }
 
-#if ( (OSA_CPU_CCPU == VOS_OSA_CPU) || (OSA_CPU_NRCPU == VOS_OSA_CPU) )
-/********************************************************************
- Function   : RTC_SocTimerMemDump
- Description: Record the SOC timer's info.
- Input      :
- Return     :
- Other      :
- *****************************************************************************/
-VOS_VOID RTC_SocTimerMemDump(VOS_VOID)
-{
-    /*lint -e438 屏蔽pucDumpBuffer没有使用的错误*/
-    VOS_UINT8       *pucDumpBuffer;
-    VOS_UINT32       ulBufferSize;
-
-    (VOS_VOID)VOS_TaskLock();
-
-    pucDumpBuffer = (VOS_UINT8 *)VOS_EXCH_MEM_MALLOC;
-
-    if (VOS_NULL_PTR == pucDumpBuffer)
-    {
-        (VOS_VOID)VOS_TaskUnlock();
-        return;
-    }
-
-    ulBufferSize = VOS_DUMP_MEM_TOTAL_SIZE;
-
-    if ( VOS_NULL_PTR == VOS_MemSet_s((VOS_VOID *)pucDumpBuffer, ulBufferSize, 0, VOS_DUMP_MEM_TOTAL_SIZE) )
-    {
-        mdrv_om_system_error(VOS_REBOOT_MEMSET_MEM, VOS_DUMP_MEM_TOTAL_SIZE, (VOS_INT)((THIS_FILE_ID << 16) | __LINE__), 0, 0);
-    }
-
-    if ( VOS_NULL_PTR == VOS_MemCpy_s((VOS_VOID *)pucDumpBuffer, ulBufferSize, (VOS_VOID *)g_acRtcTimerCtrlBuf, RTC_TIMER_CTRL_BUF_SIZE) )
-    {
-        mdrv_om_system_error(VOS_REBOOT_MEMCPY_MEM, RTC_TIMER_CTRL_BUF_SIZE, (VOS_INT)((THIS_FILE_ID << 16) | __LINE__), 0, 0);
-    }
-
-    pucDumpBuffer += RTC_TIMER_CTRL_BUF_SIZE;
-    ulBufferSize  -= RTC_TIMER_CTRL_BUF_SIZE;
-
-    if ( VOS_NULL_PTR == VOS_MemCpy_s((VOS_VOID *)pucDumpBuffer, ulBufferSize, (VOS_VOID *)g_astRtcSocTimerDebugInfo, sizeof(g_astRtcSocTimerDebugInfo)) )
-    {
-        mdrv_om_system_error(VOS_REBOOT_MEMCPY_MEM, (VOS_INT)sizeof(g_astRtcSocTimerDebugInfo), (VOS_INT)((THIS_FILE_ID << 16) | __LINE__), 0, 0);
-    }
-
-    pucDumpBuffer += sizeof(g_astRtcSocTimerDebugInfo);
-    ulBufferSize  -= sizeof(g_astRtcSocTimerDebugInfo);
-
-    if ( VOS_NULL_PTR == VOS_MemCpy_s((VOS_VOID *)pucDumpBuffer, ulBufferSize, (VOS_VOID *)(&g_stRtcSocTimerInfo), sizeof(g_stRtcSocTimerInfo)) )
-    {
-        mdrv_om_system_error(VOS_REBOOT_MEMCPY_MEM, (VOS_INT)sizeof(g_stRtcSocTimerInfo), (VOS_INT)((THIS_FILE_ID << 16) | __LINE__), 0, 0);
-    }
-
-    (VOS_VOID)VOS_TaskUnlock();
-    return;
-    /*lint +e438 */
-}
-#endif
 
 /*****************************************************************************
  Function   : RTC_DualTimerIsrEntry
@@ -867,24 +768,8 @@ VOS_UINT32 RTC_TimerCtrlBlkInit(VOS_VOID)
     mdrv_timer_debug_register(VOS_RTC_TIMER_ID, (FUNCPTR_1)VOS_TimerLpmCb, 0);
 
     /* Added by g47350 for DRX timer Project, 2012/11/5, begin */
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-    if ( VOS_OK != VOS_DrxTimerCtrlBlkInit())
-    {
-        VOS_ProtectionReboot(VOS_ERRNO_DRXTIME_RESOURCE_INITFAIL, 0, 0, 0, 0);
-
-        return VOS_ERR;
-    }
-#endif
     /* Added by g47350 for DRX timer Project, 2012/11/5, end */
 
-#if ((OSA_CPU_CCPU == VOS_OSA_CPU) || (OSA_CPU_NRCPU == VOS_OSA_CPU)) && (FEATURE_ON == FEATURE_VOS_18H_TIMER)
-    if ( VOS_OK != VOS_Bit64RtcTimerCtrlBlkInit() )
-    {
-        VOS_ProtectionReboot(VOS_ERRNO_BIT64TIME_RESOURCE_INITFAIL, 0, 0, 0, 0);
-
-        return VOS_ERR;
-    }
-#endif
 
     return(VOS_OK);
 }
@@ -948,11 +833,9 @@ RTC_TIMER_CONTROL_BLOCK *RTC_TimerCtrlBlkGet(VOS_UINT32 ulFileID, VOS_INT32 usLi
     temp_Timer_Ctrl_Ptr->next = VOS_NULL_PTR;
     temp_Timer_Ctrl_Ptr->previous = VOS_NULL_PTR;
 
-#if VOS_YES == VOS_TIMER_CHECK
         temp_Timer_Ctrl_Ptr->ulFileID = ulFileID;
         temp_Timer_Ctrl_Ptr->ulLineNo = (VOS_UINT32)usLineNo;
         temp_Timer_Ctrl_Ptr->ulAllocTick = VOS_GetSlice();
-#endif
 
     return temp_Timer_Ctrl_Ptr;
 }
@@ -987,9 +870,7 @@ VOS_UINT32 RTC_TimerCtrlBlkFree(RTC_TIMER_CONTROL_BLOCK *Ptr, VOS_UINT8 ucTag )
 
     RTC_TimerIdleCtrlBlkNumber++;
 
-#if VOS_YES == VOS_TIMER_CHECK
     Ptr->ulFreeTick = VOS_GetSlice();
-#endif
 
     return VOS_OK;
 }
@@ -1012,17 +893,8 @@ VOS_VOID RTC_TimerTaskFunc( VOS_UINT32 Para0, VOS_UINT32 Para1,
     VOS_UINT32                  ulIntervalSlice;
     VOS_UINT_PTR                ulCtrlBlkAddress;
     VOS_UINT_PTR                TempValue;
-#if ( (OSA_CPU_CCPU == VOS_OSA_CPU) || (OSA_CPU_NRCPU == VOS_OSA_CPU) )
-    RTC_TIMER_PMLOG             stPmLog;
-#endif
 
-#if (VOS_WIN32 == VOS_OS_VER)
-    VOS_UINT32                  i;
-
-    for(i = 0; i < 1; i++)
-#else
     for(;;)
-#endif
     {
         if (VOS_ERR == VOS_FixedQueueRead(g_ulRTCTaskQueueId, 0, &ulCtrlBlkAddress, VOS_FID_MAX_MSG_LENGTH))
         {
@@ -1048,13 +920,8 @@ VOS_VOID RTC_TimerTaskFunc( VOS_UINT32 Para0, VOS_UINT32 Para1,
                                head_Ptr->Para,
                                VOS_RELTIMER_LOOP,
                                head_Ptr->ulPrecision,
-#if VOS_YES == VOS_TIMER_CHECK
                                head_Ptr->ulFileID,
                                (VOS_INT32)head_Ptr->ulLineNo);
-#else
-                               VOS_FILE_ID,
-                               (VOS_INT32)__LINE__);
-#endif
                 }
                 else
                 {
@@ -1066,13 +933,8 @@ VOS_VOID RTC_TimerTaskFunc( VOS_UINT32 Para0, VOS_UINT32 Para1,
                                VOS_RELTIMER_LOOP,
                                head_Ptr->CallBackFunc,
                                head_Ptr->ulPrecision,
-#if VOS_YES == VOS_TIMER_CHECK
                                head_Ptr->ulFileID,
                                (VOS_INT32)head_Ptr->ulLineNo);
-#else
-                               VOS_FILE_ID,
-                               (VOS_INT32)__LINE__);
-#endif
                 }
             }
 
@@ -1094,7 +956,6 @@ VOS_VOID RTC_TimerTaskFunc( VOS_UINT32 Para0, VOS_UINT32 Para1,
                     TempValue            = (VOS_UINT_PTR)(RTC_TimerCtrlBlkexpired->TimeOutValueInMilliSeconds);
                     pstExpireMsg->hTm    = (HTIMER)TempValue;
 
-#if (VOS_YES == VOS_TIMER_CHECK)
                     TempValue            = (VOS_UINT_PTR)RTC_TimerCtrlBlkexpired->ulAllocTick;
 
                     pstExpireMsg->pNext
@@ -1111,26 +972,13 @@ VOS_VOID RTC_TimerTaskFunc( VOS_UINT32 Para0, VOS_UINT32 Para1,
 
                     if ( (ulCurrentSlice - RTC_TimerCtrlBlkexpired->ulAllocTick) < ulIntervalSlice )
                     {
-#if ( (OSA_CPU_CCPU == VOS_OSA_CPU) || (OSA_CPU_NRCPU == VOS_OSA_CPU) )
-    #if (FEATURE_ON == FEATURE_RTC_TIMER_DBG)
-                        RTC_SocTimerMemDump();
-
-                        VOS_ProtectionReboot(RTC_TIMER_EXPIRED_TOO_SHORT, 0, (VOS_INT)ulCurrentSlice, (VOS_CHAR *)RTC_TimerCtrlBlkexpired, sizeof(RTC_TIMER_CONTROL_BLOCK));
-    #endif
-#endif
                     }
 
                     ulIntervalSlice = (RTC_TimerCtrlBlkexpired->ulBackUpTimeOutValueInCycle + RTC_TimerCtrlBlkexpired->ulPrecisionInCycle);
 
                     if ( (ulCurrentSlice - RTC_TimerCtrlBlkexpired->ulAllocTick) > (ulIntervalSlice + RTC_TIMER_CHECK_LONG_PRECISION) )
                     {
-#if ( (OSA_CPU_CCPU == VOS_OSA_CPU) || (OSA_CPU_NRCPU == VOS_OSA_CPU) )
-    #if (FEATURE_ON == FEATURE_RTC_TIMER_DBG)
-
-    #endif
-#endif
                     }
-#endif
                     (VOS_VOID)VOS_SendMsg(DOPRA_PID_TIMER, pstExpireMsg);
 
                 }
@@ -1144,27 +992,14 @@ VOS_VOID RTC_TimerTaskFunc( VOS_UINT32 Para0, VOS_UINT32 Para1,
 
             OM_RecordInfoEnd(VOS_EXC_DUMP_MEM_NUM_3);
 
-#if ( (OSA_CPU_CCPU == VOS_OSA_CPU) || (OSA_CPU_NRCPU == VOS_OSA_CPU) )
             if(VOS_TRUE == g_ulTimerlpm)
             {
                 g_ulTimerlpm = VOS_FALSE;
 
-                stPmLog.stPamType   = PM_LOG_COSA_PAM_TIMER;
-                stPmLog.ulPid       = RTC_TimerCtrlBlkexpired->Pid;
-                stPmLog.ulTimerId   = RTC_TimerCtrlBlkexpired->Name;
-
-                (VOS_VOID)mdrv_pm_log(PM_MOD_CP_OSA, sizeof(RTC_TIMER_PMLOG), &stPmLog);
-            }
-#else
-            if(VOS_TRUE == g_ulTimerlpm)
-            {
-                g_ulTimerlpm = VOS_FALSE;
-
-                mdrv_err("<RTC_TimerTaskFunc> rtc_timer: allocpid=%d, timername = 0x%x.\n",
+                mdrv_debug("<RTC_TimerTaskFunc> rtc_timer: allocpid=%d, timername = 0x%x.\n",
                     RTC_TimerCtrlBlkexpired->Pid, RTC_TimerCtrlBlkexpired->Name);
             }
 
-#endif
 
             RTC_TimerCtrlBlkexpired = RTC_TimerCtrlBlkexpired->next;
 
@@ -1201,24 +1036,8 @@ VOS_UINT32 RTC_TimerTaskCreat(VOS_VOID)
     }
 
     /* Added by g47350 for DRX timer Project, 2012/11/5, begin */
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-    if ( VOS_OK != VOS_DrxTimerTaskCreat() )
-    {
-        VOS_ProtectionReboot(VOS_ERRNO_DRXTIME_TASK_INITFAIL, 0, 0, 0, 0);
-
-        return VOS_ERR;
-    }
-#endif
     /* Added by g47350 for DRX timer Project, 2012/11/5, end */
 
-#if ((OSA_CPU_CCPU == VOS_OSA_CPU) || (OSA_CPU_NRCPU == VOS_OSA_CPU)) && (FEATURE_ON == FEATURE_VOS_18H_TIMER)
-    if ( VOS_OK != VOS_Bit64TimerTaskCreat() )
-    {
-        VOS_ProtectionReboot(VOS_ERRNO_BIT64TIME_TASK_INITFAIL, 0, 0, 0, 0);
-
-        return VOS_ERR;
-    }
-#endif
 
     return VOS_OK;
 }
@@ -1528,7 +1347,7 @@ VOS_UINT32 RTC_CheckTimer( HTIMER  *phTm, VOS_UINT32 *ulTimerID,
     }
     else
     {
-        VOS_ProtectionReboot(RTC_CHECK_TIMER_RANG, (VOS_INT)ulFileID, (VOS_INT)usLineNo, (VOS_CHAR *)phTm, sizeof(VOS_CHAR *));
+        VOS_ProtectionReboot(RTC_CHECK_TIMER_RANG, (VOS_INT)ulFileID, (VOS_INT)usLineNo, (VOS_CHAR *)phTm, 128);
     }
 
     return VOS_ERR;
@@ -1786,17 +1605,12 @@ VOS_UINT32 RTC_timer_running( VOS_VOID )
  *****************************************************************************/
 MODULE_EXPORTED VOS_UINT32 VOS_GetSlice(VOS_VOID)
 {
-#if (VOS_WIN32 != VOS_OS_VER)
     return mdrv_timer_get_normal_timestamp();
-#else
-    return VOS_GetTick();
-#endif
 }
 
 
 MODULE_EXPORTED VOS_UINT64 VOS_Get64BitSlice(VOS_VOID)
 {
-#if (VOS_WIN32 != VOS_OS_VER)
     VOS_UINT32  ulHighBitValue = 0;
     VOS_UINT32  ulLowBitValue = 0;
     VOS_UINT64  ullSlice;
@@ -1812,9 +1626,6 @@ MODULE_EXPORTED VOS_UINT64 VOS_Get64BitSlice(VOS_VOID)
     ullSlice = (((VOS_UINT64)ulHighBitValue<<32) & 0xffffffff00000000) | ((VOS_UINT64)ulLowBitValue & 0x00000000ffffffff);
 
     return ullSlice;
-#else
-    return VOS_GetTick();
-#endif
 }
 
 /*****************************************************************************
@@ -1847,7 +1658,6 @@ VOS_BOOL RTC_CalcTimerInfo(VOS_VOID)
 
     return VOS_FALSE;
 }
-#if VOS_YES == VOS_TIMER_CHECK
 
 /*****************************************************************************
  Function   : VOS_ShowUsed32KTimerInfo
@@ -1884,1065 +1694,11 @@ MODULE_EXPORTED VOS_VOID VOS_ShowUsed32KTimerInfo( VOS_VOID )
     return;
 }
 
-#endif
 
 /* Added by g47350 for DRX timer Project, 2012/11/5, begin */
 
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-
-VOS_UINT32 VOS_DrxCheckTimer( HTIMER *phTm, VOS_UINT32 ulFileID, VOS_INT32 lLineNo )
-{
-    VOS_UINT32                i;
-
-    for (i = 0; i < DRX_TIMER_MAX_NUMBER; i++)
-    {
-        if (*phTm == (HTIMER)(&g_astDRXTimerCtrlBlk[i]))
-        {
-            return VOS_OK;
-        }
-    }
-
-    VOS_ProtectionReboot(VOS_ERRNO_DRXTIME_ERROR_TIMERHANDLE, (VOS_INT)ulFileID, (VOS_INT)lLineNo, VOS_NULL_PTR, VOS_NULL);
-
-    return VOS_ERR;
-}
-
-/*****************************************************************************
- Function   : VOS_DrxTimerIsr
- Description: ISR of DRX Timer.
- Input      :
- Return     :
- Other      :
- *****************************************************************************/
-VOS_VOID VOS_DrxTimerIsr(VOS_VOID)
-{
-    g_stRtcSocTimerInfo.ulStopCount++;
-
-    if ( VOS_OK != mdrv_timer_stop(TIMER_CCPU_DRX_TIMER_ID) )
-    {
-        g_stRtcSocTimerInfo.ulStopErrCount++;
-    }
-
-    (VOS_VOID)VOS_SmV(g_ulDRXSem);
-
-    return;
-}
-
-/*****************************************************************************
- Function   : VOS_StartDrxHardTimer
- Description: Start SOC hard timer by DRV interface.
- Input      : ulValue - 32k timer length.
- Return     :
- Other      :
- *****************************************************************************/
-VOS_VOID VOS_StartDrxHardTimer(VOS_UINT32 ulValue)
-{
-    g_stRtcSocTimerInfo.ulStopCount++;
-    if ( VOS_OK != mdrv_timer_stop(TIMER_CCPU_DRX_TIMER_ID) )
-    {
-        g_stRtcSocTimerInfo.ulStopErrCount++;
-    }
-
-    g_stRtcSocTimerInfo.ulStartCount++;
-    if ( VOS_OK != mdrv_timer_start(TIMER_CCPU_DRX_TIMER_ID, (FUNCPTR_1)VOS_DrxTimerIsr, TIMER_CCPU_DRX_TIMER_ID, ulValue, TIMER_ONCE_COUNT,TIMER_UNIT_NONE) )
-    {
-        g_stRtcSocTimerInfo.ulStartErrCount++;
-    }
-
-    return;
-}
-
-/*****************************************************************************
- Function   : VOS_DrxTimerCtrlBlkInit
- Description: Init timer's control block
- Input      : VOS_VOID
- Return     : VOS_OK on success or errno on failure.
- Other      :
- *****************************************************************************/
-VOS_UINT32 VOS_DrxTimerCtrlBlkInit(VOS_VOID)
-{
-    VOS_UINT32                i;
-
-    for (i = 0; i < DRX_TIMER_MAX_NUMBER; i++)
-    {
-        g_astDRXTimerCtrlBlk[i].ulUsedFlag = DRX_TIMER_NOT_USED_FLAG;
-    }
-
-    if( VOS_OK != VOS_SmCreate("DRX", 0, VOS_SEMA4_FIFO, &g_ulDRXSem))
-    {
-        mdrv_err("<VOS_DrxTimerCtrlBlkInit> create semaphore error.\n");
-
-        return VOS_ERR;
-    }
-
-
-    return VOS_OK;
-}
-
-/*****************************************************************************
- Function   : VOS_GetNextDrxTimer
- Description: Get the shortest timer near now.
- Input      : ulCurSlice - the current time.
- Return     : the length of the shortest timer, or VOS_NULL_DWORD indicates no timer.
- Other      :
- *****************************************************************************/
-VOS_UINT32 VOS_GetNextDrxTimer(VOS_UINT32 ulCurSlice)
-{
-    VOS_UINT32                          i;
-    VOS_UINT32                          ulInterval;
-    VOS_UINT32                          ulMinValue;
-
-    ulMinValue = VOS_NULL_DWORD;
-
-    for (i = 0; i < DRX_TIMER_MAX_NUMBER; i++)
-    {
-        if (DRX_TIMER_USED_FLAG == g_astDRXTimerCtrlBlk[i].ulUsedFlag)
-        {
-            ulInterval = g_astDRXTimerCtrlBlk[i].ulTimeEndSlice - ulCurSlice;
-
-            /* The interval must be smaller than timer's length. */
-            if (g_astDRXTimerCtrlBlk[i].ulTimeOutValueSlice >= ulInterval)
-            {
-                if (ulMinValue > ulInterval)
-                {
-                    ulMinValue = ulInterval;
-                }
-            }
-        }
-    }
-
-    if (0 == ulMinValue)
-    {
-        ulMinValue += 1;
-    }
-
-    return ulMinValue;
-}
-
-/*****************************************************************************
- Function   : VOS_DrxTimerTaskFunc
- Description: DRX timer task entry
- Input      : Parameters are unuseful.
- Return     : void
- Other      :
- *****************************************************************************/
-VOS_VOID VOS_DrxTimerTaskFunc( VOS_UINT32 Para0, VOS_UINT32 Para1,
-                            VOS_UINT32 Para2, VOS_UINT32 Para3 )
-{
-    VOS_UINT32                          ulLockLevel;
-    VOS_UINT32                          ulCurSlice;
-    VOS_UINT32                          i;
-    VOS_UINT32                          ulNextTimer;
-    REL_TIMER_MSG                      *pstExpireMsg;
-
-#if (VOS_WIN32 == VOS_OS_VER)
-    VOS_UINT32                          j;
-
-    for(j = 0; j < 1; j++)
-#else
-    for(;;)
-#endif
-    {
-        /* SemTake SEM when release */
-        (VOS_VOID)VOS_SmP(g_ulDRXSem, 0);
-
-        VOS_SpinLockIntLock(&g_stDrxTimerSpinLock, ulLockLevel);
-
-        ulCurSlice = VOS_GetSlice();
-
-        for (i = 0; i < DRX_TIMER_MAX_NUMBER; i++)
-        {
-            if (DRX_TIMER_USED_FLAG == g_astDRXTimerCtrlBlk[i].ulUsedFlag)
-            {
-                /* Check timer is timeout.*/
-                if (DRX_TIMER_TIMEOUT_INTERVAL >= (ulCurSlice - g_astDRXTimerCtrlBlk[i].ulTimeEndSlice))
-                {
-                    /* timer is timeout then notify user by sending msg */
-                    pstExpireMsg = VOS_TimerPreAllocMsg(g_astDRXTimerCtrlBlk[i].ulPid);
-
-                    if ( VOS_NULL_PTR != pstExpireMsg )
-                    {
-                        pstExpireMsg->ulName = g_astDRXTimerCtrlBlk[i].ulName;
-                        pstExpireMsg->ulPara = g_astDRXTimerCtrlBlk[i].ulPara;
-
-#if (VOS_YES == VOS_TIMER_CHECK)
-                        pstExpireMsg->pNext
-                            = (struct REL_TIMER_MSG_STRU *)(g_astDRXTimerCtrlBlk[i].ulAllocTick);
-                        pstExpireMsg->pPrev
-                            = (struct REL_TIMER_MSG_STRU *)ulCurSlice;
-#endif
-                        (VOS_VOID)VOS_SendMsg(DOPRA_PID_TIMER, pstExpireMsg);
-                    }
-
-                    *(g_astDRXTimerCtrlBlk[i].phTm)    = VOS_NULL_PTR;
-                    g_astDRXTimerCtrlBlk[i].ulUsedFlag = DRX_TIMER_NOT_USED_FLAG;
-                }
-            }
-        }
-
-        ulNextTimer = VOS_GetNextDrxTimer(ulCurSlice);
-
-        if (VOS_NULL_DWORD != ulNextTimer)
-        {
-            VOS_StartDrxHardTimer(ulNextTimer);
-        }
-
-        VOS_SpinUnlockIntUnlock(&g_stDrxTimerSpinLock, ulLockLevel);
-    }
-
-    /*lint -e527 */
-    return;
-    /*lint +e527 */
-}
-
-
-/*****************************************************************************
- Function   : VOS_DrxTimerTaskCreat
- Description: create DRX timer task
- Input      : void
- Return     : VOS_OK on success or errno on failure.
- Other      :
- *****************************************************************************/
-VOS_UINT32 VOS_DrxTimerTaskCreat(VOS_VOID)
-{
-    VOS_UINT32 TimerArguments[4] = {0,0,0,0};
-
-    /* DrxTimer自旋锁的初始化 */
-    VOS_SpinLockInit(&g_stDrxTimerSpinLock);
-
-    /* Wake Src投票中使用的自旋锁的初始化 */
-    VOS_SpinLockInit(&g_ulFlightModeVoteMapSpinLock);
-
-    return( VOS_CreateTask( "DRX_TIMER",
-                            &g_ulDRXTimerTaskId,
-                            VOS_DrxTimerTaskFunc,
-                            COMM_RTC_TIMER_TASK_PRIO,
-                            RTC_TIMER_TASK_STACK_SIZE,
-                            TimerArguments) );
-}
-
-/*****************************************************************************
- Function   : V_StopDrxTimerFunc
- Description: stop a DRX timer which was previously started.
- Input      : phTm -- where store the timer to be stopped
- Return     :  VOS_OK on success or errno on failure
- *****************************************************************************/
-VOS_UINT32 V_StopDrxTimerFunc( HTIMER *phTm, VOS_UINT32 ulFileID, VOS_INT32 lLineNo)
-{
-    DRX_TIMER_CONTROL_BLOCK            *pstTimerCtrl;
-    VOS_UINT32                          ulNextTime;
-
-    if (VOS_NULL_PTR == *phTm)
-    {
-        return VOS_OK;
-    }
-
-    if (VOS_ERR == VOS_DrxCheckTimer(phTm, ulFileID, lLineNo))
-    {
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_DRXTIME_STOP_INPUTISNULL);
-
-        return VOS_ERRNO_DRXTIME_ERROR_TIMERHANDLE;
-    }
-
-    pstTimerCtrl = (DRX_TIMER_CONTROL_BLOCK*)(*phTm);
-    *phTm        = VOS_NULL_PTR;
-
-    if (DRX_TIMER_USED_FLAG == pstTimerCtrl->ulUsedFlag)
-    {
-        pstTimerCtrl->ulUsedFlag = DRX_TIMER_NOT_USED_FLAG;
-
-        ulNextTime = VOS_GetNextDrxTimer(VOS_GetSlice());
-
-        if (VOS_NULL_DWORD == ulNextTime)
-        {
-            g_stRtcSocTimerInfo.ulStopCount++;
-            if ( VOS_OK != mdrv_timer_stop(TIMER_CCPU_DRX_TIMER_ID) )
-            {
-                g_stRtcSocTimerInfo.ulStopErrCount++;
-            }
-        }
-        else
-        {
-            VOS_StartDrxHardTimer(ulNextTime);
-        }
-    }
-
-    return VOS_OK;
-}
-
-/*****************************************************************************
- Function   : V_StopDrxTimer
- Description: stop a DRX timer which was previously started.
- Input      : phTm -- where store the timer to be stopped
- Return     :  VOS_OK on success or errno on failure
- *****************************************************************************/
-MODULE_EXPORTED VOS_UINT32 V_StopDrxTimer( HTIMER *phTm, VOS_UINT32 ulFileID, VOS_INT32 lLineNo)
-{
-    VOS_UINT32                          ulLockLevel;
-    VOS_UINT32                          ulReturn;
-
-    if (VOS_NULL_PTR == phTm)
-    {
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_DRXTIME_STOP_INPUTISNULL);
-
-        return(VOS_ERRNO_DRXTIME_STOP_INPUTISNULL);
-    }
-
-    VOS_SpinLockIntLock(&g_stDrxTimerSpinLock, ulLockLevel);
-
-    ulReturn = V_StopDrxTimerFunc(phTm, ulFileID, lLineNo);
-
-    VOS_SpinUnlockIntUnlock(&g_stDrxTimerSpinLock, ulLockLevel);
-
-    return ulReturn;
-}
-
-/*****************************************************************************
- Function   : V_StartDrxTimer
- Description: allocate and start a DRX timer.
- Input      : Pid           -- process ID of application
-              ulLength       -- expire time. unit is millsecond
-              ulName         -- timer name to be pass to app as a parameter
-              ulParam        -- additional parameter to be pass to app
- Output     : phTm           -- timer pointer which system retuns to app
- Return     : VOS_OK on success and errno on failure
- *****************************************************************************/
-MODULE_EXPORTED VOS_UINT32 V_StartDrxTimer( HTIMER *phTm, VOS_PID Pid, VOS_UINT32 ulLength,
-    VOS_UINT32 ulName, VOS_UINT32 ulParam, VOS_UINT32 ulFileID, VOS_INT32 lLineNo)
-
-{
-    VOS_UINT32                          i;
-    VOS_UINT32                          ulLockLevel;
-    VOS_UINT32                          ulCurSlice;
-    VOS_UINT32                          ulNextTime;
-
-    if (VOS_NULL_PTR == phTm)
-    {
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_DRXTIME_START_INPUTISNULL);
-        return(VOS_ERRNO_DRXTIME_START_INPUTISNULL);
-    }
-
-    VOS_SpinLockIntLock(&g_stDrxTimerSpinLock, ulLockLevel);
-
-    /* stop the timer if exists */
-    if (VOS_NULL_PTR != *phTm)
-    {
-        if (VOS_OK != V_StopDrxTimerFunc(phTm, ulFileID, lLineNo))
-        {
-            VOS_SpinUnlockIntUnlock(&g_stDrxTimerSpinLock, ulLockLevel);
-
-            return VOS_ERRNO_DRXTIME_START_STOP_FAIL;
-        }
-    }
-
-    for(i = 0; i < DRX_TIMER_MAX_NUMBER; i++)
-    {
-        if (DRX_TIMER_NOT_USED_FLAG == g_astDRXTimerCtrlBlk[i].ulUsedFlag)
-        {
-            break;
-        }
-    }
-
-    /* All DRX timer are used. */
-    if (DRX_TIMER_MAX_NUMBER == i)
-    {
-        VOS_SpinUnlockIntUnlock(&g_stDrxTimerSpinLock, ulLockLevel);
-
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_DRXTIME_START_MSGNOTINSTALL);
-
-        VOS_ProtectionReboot(VOS_ERRNO_DRXTIME_START_MSGNOTINSTALL, (VOS_INT)Pid, (VOS_INT)ulName, (VOS_CHAR*)g_astDRXTimerCtrlBlk, sizeof(g_astDRXTimerCtrlBlk));
-
-        return(VOS_ERRNO_DRXTIME_START_MSGNOTINSTALL);
-    }
-
-    g_astDRXTimerCtrlBlk[i].ulPid   = Pid;
-    g_astDRXTimerCtrlBlk[i].ulName  = ulName;
-    g_astDRXTimerCtrlBlk[i].ulPara  = ulParam;
-    g_astDRXTimerCtrlBlk[i].phTm    = phTm;
-    g_astDRXTimerCtrlBlk[i].ulTimeOutValueInMilliSeconds = ulLength;
-
-    g_astDRXTimerCtrlBlk[i].ulTimeOutValueSlice = (VOS_UINT32)RTC_MUL_32_DOT_768(ulLength, ulFileID, lLineNo);
-
-    ulCurSlice = VOS_GetSlice();
-
-    g_astDRXTimerCtrlBlk[i].ulTimeEndSlice = g_astDRXTimerCtrlBlk[i].ulTimeOutValueSlice + ulCurSlice;
-
-#if VOS_YES == VOS_TIMER_CHECK
-    g_astDRXTimerCtrlBlk[i].ulFileID    = ulFileID;
-    g_astDRXTimerCtrlBlk[i].ulLineNo    = (VOS_UINT32)lLineNo;
-    g_astDRXTimerCtrlBlk[i].ulAllocTick = VOS_GetSlice();
-#endif
-
-    g_astDRXTimerCtrlBlk[i].ulUsedFlag  = DRX_TIMER_USED_FLAG;
-
-    *phTm = (HTIMER)(&g_astDRXTimerCtrlBlk[i]);
-
-    ulNextTime = VOS_GetNextDrxTimer(ulCurSlice);
-
-    if (VOS_NULL_DWORD != ulNextTime)
-    {
-        VOS_StartDrxHardTimer(ulNextTime);
-    }
-
-    VOS_SpinUnlockIntUnlock(&g_stDrxTimerSpinLock, ulLockLevel);
-
-    return VOS_OK;
-}
-
-/*****************************************************************************
- Function   : OM_SetDrxTimerWakeSrcAllVote
- Description: 清除当前modem上所有的票
- Input      : MODEM_ID_ENUM_UINT16 enModem
- Return     : VOS_VOID
- Other      :
-*****************************************************************************/
-MODULE_EXPORTED VOS_VOID OM_SetDrxTimerWakeSrcAllVote(MODEM_ID_ENUM_UINT16 enModem)
-{
-    VOS_ULONG                           ulLockLevel;
-    VOS_UINT32                          ulVoteBit;
-    VOS_UINT32                          ulBitPos;
-    DRX_TIMER_WAKE_SRC_VOTE_STRU        stDrxTimerWakeSrcVoteInfo;
-    VOS_UINT32                          ulVoteMap;
-
-    /* 参数检查 */
-    if (enModem >= MODEM_ID_BUTT)
-    {
-        return;
-    }
-
-    VOS_SpinLockIntLock(&g_ulFlightModeVoteMapSpinLock, ulLockLevel);
-
-    /* 当前modem不在drx，进飞行模式，销整个modem上的票 */
-    for (ulBitPos = 0; ulBitPos < DRX_TIMER_WAKE_SRC_MODE_NUM; ulBitPos++)
-    {
-        ulVoteBit               = enModem * DRX_TIMER_WAKE_SRC_MODE_NUM + ulBitPos;
-        g_ulFlightModeVoteMap  &= (~ BIT(ulVoteBit));
-    }
-    ulVoteMap   = g_ulFlightModeVoteMap;
-
-    VOS_SpinUnlockIntUnlock(&g_ulFlightModeVoteMapSpinLock, ulLockLevel);
-
-    /* 所有mode都退出了drx，就设为唤醒源 */
-    if ( 0 == ulVoteMap )
-    {
-        mdrv_pm_set_wakesrc(PM_WAKE_SRC_DRX_TIMER);
-    }
-
-    /* Mntn Event */
-    stDrxTimerWakeSrcVoteInfo.enVoteType    = DRX_TIMER_WAKE_SRC_VOTE_SET_ALL;
-    stDrxTimerWakeSrcVoteInfo.enVoteModem   = enModem;
-    stDrxTimerWakeSrcVoteInfo.enVoteMode    = VOS_RATMODE_GSM;
-    stDrxTimerWakeSrcVoteInfo.ulVoteValue   = ulVoteMap;
-    stDrxTimerWakeSrcVoteInfo.ulSlice       = VOS_GetSlice();
-    PAMOM_DrxTimer_Event((VOS_VOID*)&stDrxTimerWakeSrcVoteInfo, sizeof(DRX_TIMER_WAKE_SRC_VOTE_STRU));
-
-    return;
-}
-
-/*****************************************************************************
- Function   : OM_SetDrxTimerWakeSrc
- Description: 设置DRX timer作为唤醒源
- Input      : MODEM_ID_ENUM_UINT16 enModem
- Return     : VOS_VOID
- Other      :
-*****************************************************************************/
-MODULE_EXPORTED VOS_VOID OM_SetDrxTimerWakeSrc(MODEM_ID_ENUM_UINT16 enModem, VOS_RATMODE_ENUM_UINT32 enMode)
-{
-    VOS_ULONG                           ulLockLevel;
-    VOS_UINT32                          ulVoteBit;
-    DRX_TIMER_WAKE_SRC_VOTE_STRU        stDrxTimerWakeSrcVoteInfo;
-    VOS_UINT32                          ulVoteMap;
-
-    /* 参数检查 */
-    if ((enModem >= MODEM_ID_BUTT) || (enMode >= VOS_RATMODE_BUTT))
-    {
-        return;
-    }
-
-    VOS_SpinLockIntLock(&g_ulFlightModeVoteMapSpinLock, ulLockLevel);
-
-    /* 当前mode退出drx，要销票 */
-    ulVoteBit               = enModem * DRX_TIMER_WAKE_SRC_MODE_NUM + enMode;
-    g_ulFlightModeVoteMap  &= (~ BIT(ulVoteBit));
-    ulVoteMap               = g_ulFlightModeVoteMap;
-
-    VOS_SpinUnlockIntUnlock(&g_ulFlightModeVoteMapSpinLock, ulLockLevel);
-
-    /* 所有mode都退出了drx，就设为唤醒源 */
-    if ( 0 == ulVoteMap )
-    {
-        mdrv_pm_set_wakesrc(PM_WAKE_SRC_DRX_TIMER);
-    }
-
-    /* Mntn Event */
-    stDrxTimerWakeSrcVoteInfo.enVoteType    = DRX_TIMER_WAKE_SRC_VOTE_SET;
-    stDrxTimerWakeSrcVoteInfo.enVoteModem   = enModem;
-    stDrxTimerWakeSrcVoteInfo.enVoteMode    = enMode;
-    stDrxTimerWakeSrcVoteInfo.ulVoteValue   = ulVoteMap;
-    stDrxTimerWakeSrcVoteInfo.ulSlice       = VOS_GetSlice();
-    PAMOM_DrxTimer_Event((VOS_VOID*)&stDrxTimerWakeSrcVoteInfo, sizeof(DRX_TIMER_WAKE_SRC_VOTE_STRU));
-
-    return;
-}
-
-/*****************************************************************************
- Function   : OM_DelDrxTimerWakeSrc
- Description: 设置DRX timer不作为唤醒源
- Input      : MODEM_ID_ENUM_UINT16 enModem
- Return     : VOS_VOID
- Other      :
-*****************************************************************************/
-MODULE_EXPORTED VOS_VOID OM_DelDrxTimerWakeSrc(MODEM_ID_ENUM_UINT16 enModem, VOS_RATMODE_ENUM_UINT32 enMode)
-{
-    VOS_ULONG                           ulLockLevel;
-    VOS_UINT32                          ulVoteBit;
-    DRX_TIMER_WAKE_SRC_VOTE_STRU        stDrxTimerWakeSrcVoteInfo;
-    VOS_UINT32                          ulVoteMap;
-
-    /* 参数检查 */
-    if ((enModem >= MODEM_ID_BUTT) || (enMode >= VOS_RATMODE_BUTT))
-    {
-        return;
-    }
-
-    VOS_SpinLockIntLock(&g_ulFlightModeVoteMapSpinLock, ulLockLevel);
-
-    /* 当前mode进drx，要投票 */
-    ulVoteBit               = enModem * DRX_TIMER_WAKE_SRC_MODE_NUM + enMode;
-    g_ulFlightModeVoteMap  |= BIT(ulVoteBit);
-    ulVoteMap               = g_ulFlightModeVoteMap;
-
-    VOS_SpinUnlockIntUnlock(&g_ulFlightModeVoteMapSpinLock, ulLockLevel);
-
-    /* 只要有mode进drx，就设成不作为唤醒源 */
-    if ( 0 != ulVoteMap )
-    {
-        mdrv_pm_clear_wakesrc(PM_WAKE_SRC_DRX_TIMER);
-    }
-
-    /* Mntn Event */
-    stDrxTimerWakeSrcVoteInfo.enVoteType    = DRX_TIMER_WAKE_SRC_VOTE_CLEAR;
-    stDrxTimerWakeSrcVoteInfo.enVoteModem   = enModem;
-    stDrxTimerWakeSrcVoteInfo.enVoteMode    = enMode;
-    stDrxTimerWakeSrcVoteInfo.ulVoteValue   = ulVoteMap;
-    stDrxTimerWakeSrcVoteInfo.ulSlice       = VOS_GetSlice();
-    PAMOM_DrxTimer_Event((VOS_VOID*)&stDrxTimerWakeSrcVoteInfo, sizeof(DRX_TIMER_WAKE_SRC_VOTE_STRU));
-
-    return;
-}
-
-#endif
 /* Added by g47350 for DRX timer Project, 2012/11/5, end */
 
-#if ((OSA_CPU_CCPU == VOS_OSA_CPU) || (OSA_CPU_NRCPU == VOS_OSA_CPU)) && (FEATURE_ON == FEATURE_VOS_18H_TIMER)
-/*****************************************************************************
- Function   : BIT64_MUL_32_DOT_768
- Description: 乘以32.768
- Input      : ulValue -- timer's value.uint is 32K cycle.
-              ulFileID -- 文件ID
-              usLineNo -- 行号
- Return     : 与32.768做乘法的结果
- Other      :
- *****************************************************************************/
-VOS_UINT64 BIT64_MUL_32_DOT_768(VOS_UINT32 ulValue,VOS_UINT32 ulFileID,
-                                 VOS_INT32 usLineNo)
-{
-    VOS_UINT32                          ulProductHigh;
-    VOS_UINT32                          ulProductLow;
-    VOS_UINT32                          ulQuotientHigh;
-    VOS_UINT32                          ulQuotientLow;
-    VOS_UINT32                          ulRemainder;
-    VOS_UINT32                          ulReturn;
-    VOS_UINT64                          ull64Value;
-
-    ulReturn = VOS_64Multi32(0, ulValue, RTC_TIMER_CHECK_LONG_PRECISION, &ulProductHigh, &ulProductLow);
-    if (VOS_OK != ulReturn)
-    {
-        VOS_ProtectionReboot(RTC_FLOAT_MUL_32_DOT_768, (VOS_INT)ulFileID, (VOS_INT)usLineNo, (VOS_CHAR *)&ulValue, sizeof(ulValue));
-        return VOS_ERR;
-    }
-
-    ulReturn = VOS_64Div32(ulProductHigh, ulProductLow, 1000, &ulQuotientHigh, &ulQuotientLow, &ulRemainder);
-    if (VOS_OK != ulReturn)
-    {
-        VOS_ProtectionReboot(RTC_FLOAT_MUL_32_DOT_768, (VOS_INT)ulFileID, (VOS_INT)usLineNo, (VOS_CHAR *)&ulValue, sizeof(ulValue));
-        return VOS_ERR;
-    }
-
-    ull64Value = (((VOS_UINT64)ulQuotientHigh<<32) & 0xffffffff00000000) | ((VOS_UINT64)ulQuotientLow & 0x00000000ffffffff);
-
-    return ull64Value;
-}
-
-/*****************************************************************************
- Function   : BIT64_DIV_32_DOT_768
- Description: 除以32.768
- Input      : ulValue -- timer's value.uint is 32K cycle.
-              ulFileID -- 文件ID
-              usLineNo -- 行号
- Return     : 与32.768做除法的结果
- Other      :
- *****************************************************************************/
-VOS_UINT64 BIT64_DIV_32_DOT_768(VOS_UINT64 ulValue,VOS_UINT32 ulFileID,
-                                 VOS_INT32 usLineNo)
-{
-
-    VOS_UINT32                          ulProductHigh;
-    VOS_UINT32                          ulProductLow;
-    VOS_UINT32                          ulQuotientHigh;
-    VOS_UINT32                          ulQuotientLow;
-    VOS_UINT32                          ulRemainder;
-    VOS_UINT32                          ulReturn;
-    VOS_UINT64                          ull64Value;
-
-    ulReturn = VOS_64Multi32((VOS_UINT32)(ulValue>>32), (VOS_UINT32)(ulValue&0xffffffff), 1000, &ulProductHigh, &ulProductLow);
-    if (VOS_OK != ulReturn)
-    {
-        VOS_ProtectionReboot(RTC_FLOAT_DIV_32_DOT_768, (VOS_INT)ulFileID, (VOS_INT)usLineNo, (VOS_CHAR *)&ulValue, sizeof(ulValue));
-        return VOS_ERR;
-    }
-
-    ulReturn = VOS_64Div32(ulProductHigh, ulProductLow, RTC_TIMER_CHECK_LONG_PRECISION, &ulQuotientHigh, &ulQuotientLow, &ulRemainder);
-    if (VOS_OK != ulReturn)
-    {
-        VOS_ProtectionReboot(RTC_FLOAT_DIV_32_DOT_768, (VOS_INT)ulFileID, (VOS_INT)usLineNo, (VOS_CHAR *)&ulValue, sizeof(ulValue));
-        return VOS_ERR;
-    }
-
-    ull64Value = (((VOS_UINT64)ulQuotientHigh<<32) & 0xffffffff00000000) | ((VOS_UINT64)ulQuotientLow & 0x00000000ffffffff);
-
-    return ull64Value;
-
-}
-
-
-VOS_UINT32 VOS_Bit64TimerCheckTimer( HTIMER *phTm )
-{
-    VOS_UINT32                i;
-
-    for (i = 0; i < BIT64_TIMER_MAX_NUMBER; i++)
-    {
-        if (*phTm == (HTIMER)(&g_astBit64TimerCtrlBlk[i]))
-        {
-            return VOS_TRUE;
-        }
-    }
-
-    return VOS_FALSE;
-}
-
-
-VOS_VOID VOS_Bit64TimerIsr(VOS_VOID)
-{
-    g_stRtcSocTimerInfo.ulBit64TimerStopCount++;
-    if (VOS_OK != mdrv_timer_stop(TIMER_CCPU_OSA_TIMER2_ID))
-    {
-        g_stRtcSocTimerInfo.ulBit64TimerStopErrCount++;
-    }
-
-    (VOS_VOID)VOS_SmV(g_ulBit64TimerSem);
-
-    return;
-}
-
-
-VOS_VOID VOS_StartBit64HardTimer(VOS_UINT32 ulValue)
-{
-    g_stRtcSocTimerInfo.ulBit64TimerStopCount++;
-    if ( VOS_OK != mdrv_timer_stop(TIMER_CCPU_OSA_TIMER2_ID) )
-    {
-        g_stRtcSocTimerInfo.ulBit64TimerStopErrCount++;
-    }
-
-    g_stRtcSocTimerInfo.ulBit64TimerStartCount++;
-    if ( VOS_OK != mdrv_timer_start(TIMER_CCPU_OSA_TIMER2_ID, (FUNCPTR_1)VOS_Bit64TimerIsr, TIMER_CCPU_OSA_TIMER2_ID, ulValue, TIMER_ONCE_COUNT,TIMER_UNIT_NONE) )
-    {
-        g_stRtcSocTimerInfo.ulBit64TimerStartErrCount++;
-    }
-
-    return;
-}
-
-
-VOS_UINT32 VOS_Bit64RtcTimerCtrlBlkInit(VOS_VOID)
-{
-    VOS_UINT32                i;
-
-    for (i = 0; i < BIT64_TIMER_MAX_NUMBER; i++)
-    {
-        g_astBit64TimerCtrlBlk[i].ulUsedFlag = BIT64_TIMER_NOT_USED_FLAG;
-    }
-
-#if (OSA_CPU_NRCPU == VOS_OSA_CPU) && (VOS_WIN32 == VOS_OS_VER)
-#else
-    if( VOS_OK != VOS_SmCreate("B64", 0, VOS_SEMA4_FIFO, &g_ulBit64TimerSem))
-    {
-        mdrv_err("<VOS_64BitRtcTimerCtrlBlkInit> create semaphore error.\n");
-
-        return VOS_ERR;
-    }
-#endif
-
-    return VOS_OK;
-}
-
-
-VOS_UINT32 VOS_GetNextBit64Timer(VOS_UINT64 ullCurSlice, VOS_UINT32* pulNeedStartTimer)
-{
-    VOS_UINT32                          i;
-    VOS_UINT64                          ullInterval;
-    VOS_UINT32                          ulMinValue;
-
-    /* 64BIT定时器资源池列表中所有定时器距离当前系统时间超时时长超过18小时，
-       则需要启动18小时最大的定时计数。换算成32K硬件定时器时长为0x7E900000 */
-    ulMinValue         = 0x7E900000;
-    *pulNeedStartTimer  = VOS_FALSE;
-
-    for (i = 0; i < BIT64_TIMER_MAX_NUMBER; i++)
-    {
-        if (BIT64_TIMER_USED_FLAG == g_astBit64TimerCtrlBlk[i].ulUsedFlag)
-        {
-            *pulNeedStartTimer = VOS_TRUE;
-
-            if (g_astBit64TimerCtrlBlk[i].ullTimeEndSlice >= ullCurSlice)
-            {
-                ullInterval = g_astBit64TimerCtrlBlk[i].ullTimeEndSlice - ullCurSlice;
-            }
-            else
-            {
-                ullInterval = 0;
-            }
-
-            if ((VOS_UINT64)ulMinValue > ullInterval)
-            {
-                ulMinValue = (VOS_UINT32)ullInterval;
-            }
-        }
-    }
-
-    /* 规避芯片timerbug，不能启动0步长定时器 */
-    if (0 == ulMinValue)
-    {
-        ulMinValue += 1;
-    }
-
-    g_ulBit64NextHardTimerSlice    = ulMinValue;
-
-    return ulMinValue;
-}
-
-
-VOS_VOID VOS_Bit64TimerTaskFunc( VOS_UINT32 Para0, VOS_UINT32 Para1,
-                            VOS_UINT32 Para2, VOS_UINT32 Para3 )
-{
-    VOS_UINT32                          ulLockLevel;
-    VOS_UINT64                          ullCurSlice;
-    VOS_UINT32                          i;
-    VOS_UINT32                          ulNextTimer;
-    REL_TIMER_MSG                      *pstExpireMsg;
-    VOS_UINT32                          ulNeedStartTimer;
-
-#if (VOS_WIN32 == VOS_OS_VER)
-    VOS_UINT32                          j;
-
-    for(j = 0; j < 1; j++)
-#else
-    for(;;)
-#endif
-    {
-        /* SemTake SEM when release */
-        (VOS_VOID)VOS_SmP(g_ulBit64TimerSem, 0);
-
-        VOS_SpinLockIntLock(&g_stVosTimerSpinLock, ulLockLevel);
-
-        ullCurSlice = VOS_Get64BitSlice();
-
-        for (i = 0; i < BIT64_TIMER_MAX_NUMBER; i++)
-        {
-            if (BIT64_TIMER_USED_FLAG == g_astBit64TimerCtrlBlk[i].ulUsedFlag)
-            {
-                /* 64位Slice时间是个非常大的时间，按照正常使用该时间是几乎不会
-                  发生反转的，所以此处判断可以不用考虑反转场景 */
-                if (ullCurSlice >= g_astBit64TimerCtrlBlk[i].ullTimeEndSlice)
-                {
-                    /* 定时器超时后，给调用组件发送消息通知 */
-                    pstExpireMsg = VOS_TimerPreAllocMsg(g_astBit64TimerCtrlBlk[i].ulPid);
-
-                    if ( VOS_NULL_PTR != pstExpireMsg )
-                    {
-                        pstExpireMsg->ulName = g_astBit64TimerCtrlBlk[i].ulName;
-                        pstExpireMsg->ulPara = g_astBit64TimerCtrlBlk[i].ulPara;
-
-                        (VOS_VOID)VOS_SendMsg(DOPRA_PID_TIMER, pstExpireMsg);
-                    }
-
-                    *(g_astBit64TimerCtrlBlk[i].phTm)    = VOS_NULL_PTR;
-                    g_astBit64TimerCtrlBlk[i].ulUsedFlag = BIT64_TIMER_NOT_USED_FLAG;
-                }
-            }
-        }
-
-        ulNextTimer = VOS_GetNextBit64Timer(ullCurSlice, &ulNeedStartTimer);
-
-        if (VOS_TRUE == ulNeedStartTimer)
-        {
-            VOS_StartBit64HardTimer(ulNextTimer);
-        }
-
-        VOS_SpinUnlockIntUnlock(&g_stVosTimerSpinLock, ulLockLevel);
-    }
-
-    /*lint -e527 */
-    return;
-    /*lint +e527 */
-}
-
-
-VOS_UINT32 VOS_Bit64TimerTaskCreat(VOS_VOID)
-{
-    VOS_UINT32 TimerArguments[4] = {0,0,0,0};
-
-    return( VOS_CreateTask( "B64_TIMER",
-                            &g_ulBit64TimerTaskId,
-                            VOS_Bit64TimerTaskFunc,
-                            COMM_RTC_TIMER_TASK_PRIO,
-                            RTC_TIMER_TASK_STACK_SIZE,
-                            TimerArguments) );
-}
-
-
-VOS_UINT32 VOS_StopBit64Timer( HTIMER *phTm,
-                                     VOS_UINT32 ulFileID,
-                                     VOS_INT32 lLineNo,
-                                     VOS_TIMER_OM_EVENT_STRU *pstEvent)
-{
-    BIT64_TIMER_CONTROL_BLOCK          *pstTimerCtrl;
-    VOS_UINT64                          ullCurSlice;
-    VOS_UINT32                          ulNextTime;
-    VOS_UINT32                          ulNeedStartTimer;
-
-    pstTimerCtrl = (BIT64_TIMER_CONTROL_BLOCK*)(*phTm);
-    *phTm        = VOS_NULL_PTR;
-
-    if (BIT64_TIMER_USED_FLAG == pstTimerCtrl->ulUsedFlag)
-    {
-        pstTimerCtrl->ulUsedFlag = BIT64_TIMER_NOT_USED_FLAG;
-
-        ullCurSlice = VOS_Get64BitSlice();
-
-        ulNextTime = VOS_GetNextBit64Timer(ullCurSlice, &ulNeedStartTimer);
-
-        if (VOS_FALSE == ulNeedStartTimer)
-        {
-            g_stRtcSocTimerInfo.ulBit64TimerStopCount++;
-            if (VOS_OK != mdrv_timer_stop(TIMER_CCPU_OSA_TIMER2_ID))
-            {
-                g_stRtcSocTimerInfo.ulBit64TimerStopErrCount++;
-            }
-        }
-        else
-        {
-            VOS_StartBit64HardTimer(ulNextTime);
-        }
-    }
-    else
-    {
-        if ( VOS_NULL_PTR != pstEvent )
-        {
-            pstEvent->ucMode      = 0;
-            pstEvent->Pid         = pstTimerCtrl->ulPid;
-            pstEvent->ulLength    = pstTimerCtrl->ulTimeOutValueInMilliSeconds;
-            pstEvent->ulName      = pstTimerCtrl->ulName;
-            pstEvent->ulParam     = pstTimerCtrl->ulPara;
-            pstEvent->enPrecision = 0;
-        }
-
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_BIT64TIME_ERROR_TIMERNOUSED);
-
-        VOS_ProtectionReboot(VOS_ERRNO_BIT64TIME_ERROR_TIMERNOUSED, (VOS_INT)ulFileID, (VOS_INT)lLineNo, (VOS_CHAR*)phTm, sizeof(VOS_CHAR *));
-
-        /* 补充异常处理流程 */
-        return VOS_ERRNO_BIT64TIME_ERROR_TIMERNOUSED;
-    }
-
-    /* OM */
-    if ( VOS_NULL_PTR != pstEvent )
-    {
-        pstEvent->ucMode      = 0;
-        pstEvent->Pid         = pstTimerCtrl->ulPid;
-        pstEvent->ulLength    = pstTimerCtrl->ulTimeOutValueInMilliSeconds;
-        pstEvent->ulName      = pstTimerCtrl->ulName;
-        pstEvent->ulParam     = pstTimerCtrl->ulPara;
-        pstEvent->enPrecision = 0;
-    }
-
-    return VOS_OK;
-}
-
-
-
-MODULE_EXPORTED VOS_UINT32 VOS_StartBit64Timer( HTIMER *phTm,
-                                                     VOS_PID Pid,
-                                                     VOS_UINT32 ulLength,
-                                                     VOS_UINT32 ulName,
-                                                     VOS_UINT32 ulParam,
-                                                     VOS_UINT32 ulFileID,
-                                                     VOS_INT32 lLineNo)
-{
-    VOS_UINT32                          i;
-    VOS_UINT32                          ulLockLevel;
-    VOS_UINT64                          ullCurSlice;
-    VOS_UINT32                          ulNextTime;
-    VOS_UINT32                          ulNeedStartTimer;
-
-    VOS_SpinLockIntLock(&g_stVosTimerSpinLock, ulLockLevel);
-
-    /* 如果定时器已经启动，则先停止该定时器 */
-    if (VOS_NULL_PTR != *phTm)
-    {
-        if (VOS_OK != VOS_StopBit64Timer(phTm, ulFileID, lLineNo, VOS_NULL_PTR))
-        {
-            VOS_SpinUnlockIntUnlock(&g_stVosTimerSpinLock, ulLockLevel);
-
-            (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_BIT64TIME_START_STOP_FAIL);
-
-            VOS_ProtectionReboot(VOS_ERRNO_BIT64TIME_START_STOP_FAIL, (VOS_INT)Pid, (VOS_INT)ulName, (VOS_CHAR*)g_astBit64TimerCtrlBlk, sizeof(g_astBit64TimerCtrlBlk));
-
-            return VOS_ERRNO_BIT64TIME_START_STOP_FAIL;
-        }
-    }
-
-    /* 查找资源池中空闲的定时器资源 */
-    for(i = 0; i < BIT64_TIMER_MAX_NUMBER; i++)
-    {
-        if (BIT64_TIMER_NOT_USED_FLAG == g_astBit64TimerCtrlBlk[i].ulUsedFlag)
-        {
-            break;
-        }
-    }
-
-    /* 所有定时器资源都被使用，OSA发起保护性复位保留现场确认资源使用情况 */
-    if (BIT64_TIMER_MAX_NUMBER == i)
-    {
-        VOS_SpinUnlockIntUnlock(&g_stVosTimerSpinLock, ulLockLevel);
-
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_BIT64TIME_START_MSGNOTINSTALL);
-
-        VOS_ProtectionReboot(VOS_ERRNO_BIT64TIME_START_MSGNOTINSTALL, (VOS_INT)Pid, (VOS_INT)ulName, (VOS_CHAR*)g_astBit64TimerCtrlBlk, sizeof(g_astBit64TimerCtrlBlk));
-
-        return(VOS_ERRNO_BIT64TIME_START_MSGNOTINSTALL);
-    }
-
-    g_astBit64TimerCtrlBlk[i].ulPid     = Pid;
-    g_astBit64TimerCtrlBlk[i].ulName    = ulName;
-    g_astBit64TimerCtrlBlk[i].ulPara    = ulParam;
-    g_astBit64TimerCtrlBlk[i].phTm      = phTm;
-    g_astBit64TimerCtrlBlk[i].ulTimeOutValueInMilliSeconds  = ulLength;
-
-    g_astBit64TimerCtrlBlk[i].ullTimeOutValueSlice   = BIT64_MUL_32_DOT_768(ulLength, ulFileID, lLineNo);
-
-    ullCurSlice = VOS_Get64BitSlice();
-
-    g_astBit64TimerCtrlBlk[i].ullTimeEndSlice   = g_astBit64TimerCtrlBlk[i].ullTimeOutValueSlice + ullCurSlice;
-
-#if VOS_YES == VOS_TIMER_CHECK
-    g_astBit64TimerCtrlBlk[i].ulFileID      = ulFileID;
-    g_astBit64TimerCtrlBlk[i].ulLineNo      = (VOS_UINT32)lLineNo;
-    g_astBit64TimerCtrlBlk[i].ullAllocTick  = VOS_Get64BitSlice();
-#endif
-
-    g_astBit64TimerCtrlBlk[i].ulUsedFlag    = BIT64_TIMER_USED_FLAG;
-
-    *phTm = (HTIMER)(&g_astBit64TimerCtrlBlk[i]);
-
-    /* 遍历资源池，确认是否需要启动硬件定时器 */
-    ulNextTime = VOS_GetNextBit64Timer(ullCurSlice, &ulNeedStartTimer);
-
-    if (VOS_TRUE == ulNeedStartTimer)
-    {
-        VOS_StartBit64HardTimer(ulNextTime);
-    }
-
-    VOS_SpinUnlockIntUnlock(&g_stVosTimerSpinLock, ulLockLevel);
-
-    return VOS_OK;
-}
-
-
-VOS_UINT32 VOS_RestartBit64Timer( HTIMER *phTm,
-                                        VOS_UINT32 ulFileID,
-                                        VOS_INT32 lLineNo )
-{
-    BIT64_TIMER_CONTROL_BLOCK          *pstTimerCtrl;
-    VOS_UINT64                          ullCurSlice;
-    VOS_UINT32                          ulNextTime;
-    VOS_UINT32                          ulNeedStartTimer;
-
-    pstTimerCtrl = (BIT64_TIMER_CONTROL_BLOCK*)(*phTm);
-
-    if (BIT64_TIMER_NOT_USED_FLAG == pstTimerCtrl->ulUsedFlag)
-    {
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_BIT64TIME_ERROR_TIMERNOUSED);
-
-        VOS_ProtectionReboot(VOS_ERRNO_BIT64TIME_ERROR_TIMERNOUSED, (VOS_INT)ulFileID, (VOS_INT)lLineNo, (VOS_CHAR*)phTm, sizeof(VOS_CHAR *));
-
-        return VOS_ERRNO_BIT64TIME_ERROR_TIMERNOUSED;
-    }
-
-    ullCurSlice = VOS_Get64BitSlice();
-
-    /* 重置定时器预期超时物理时间 */
-    pstTimerCtrl->ullTimeEndSlice    = pstTimerCtrl->ullTimeOutValueSlice + ullCurSlice;
-
-    /* 遍历资源池，确认是否需要启动硬件定时器 */
-    ulNextTime = VOS_GetNextBit64Timer(ullCurSlice, &ulNeedStartTimer);
-
-    if (VOS_TRUE == ulNeedStartTimer)
-    {
-        VOS_StartBit64HardTimer(ulNextTime);
-    }
-
-    return VOS_OK;
-}
-
-
-VOS_UINT32 VOS_GetBit64RemainTime( HTIMER *phTm,
-                                           VOS_UINT32 *pulTime,
-                                           VOS_UINT32 ulFileID,
-                                           VOS_INT32 lLineNo )
-{
-    BIT64_TIMER_CONTROL_BLOCK          *pstTimerCtrl;
-    VOS_UINT64                          ullCurSlice;
-    VOS_UINT64                          ullTempTime;
-
-    pstTimerCtrl    = (BIT64_TIMER_CONTROL_BLOCK*)(*phTm);
-
-    if (BIT64_TIMER_NOT_USED_FLAG == pstTimerCtrl->ulUsedFlag)
-    {
-        (VOS_VOID)VOS_SetErrorNo(VOS_ERRNO_BIT64TIME_ERROR_TIMERNOUSED);
-
-        VOS_ProtectionReboot(VOS_ERRNO_BIT64TIME_ERROR_TIMERNOUSED, (VOS_INT)ulFileID, (VOS_INT)lLineNo, (VOS_CHAR*)phTm, sizeof(VOS_CHAR *));
-
-        return VOS_ERRNO_BIT64TIME_ERROR_TIMERNOUSED;
-    }
-
-    ullCurSlice     = VOS_Get64BitSlice();
-
-    if (pstTimerCtrl->ullTimeEndSlice >= ullCurSlice)
-    {
-        ullTempTime = pstTimerCtrl->ullTimeEndSlice - ullCurSlice;
-    }
-    else
-    {
-        ullTempTime = 0;
-    }
-
-    *pulTime    = (VOS_UINT32)BIT64_DIV_32_DOT_768(ullTempTime, ulFileID, usLineNo);
-
-    return VOS_OK;
-}
-
-#endif
 
 /*****************************************************************************
  Function   : ShowRtcTimerLog
@@ -3006,13 +1762,7 @@ VOS_VOID RTC_ReportOmInfo(VOS_VOID)
     {
         pstRTCInfo->ulSenderPid   = DOPRA_PID_TIMER;
 
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
         pstRTCInfo->ulReceiverPid = ACPU_PID_PAM_OM;
-#elif (OSA_CPU_NRCPU == VOS_OSA_CPU)
-        pstRTCInfo->ulReceiverPid = NRCPU_PID_PAM_OM;
-#else
-        pstRTCInfo->ulReceiverPid = CCPU_PID_PAM_OM;
-#endif
 
         pstRTCInfo->ulLength      = ulRTCLength;
 

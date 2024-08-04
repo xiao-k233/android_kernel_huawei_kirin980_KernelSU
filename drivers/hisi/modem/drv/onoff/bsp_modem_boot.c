@@ -149,7 +149,10 @@ ssize_t modem_reset_set(struct device *dev, struct device_attribute *attr, const
         return -EINVAL;
     }
 
+    //dev_info(dev, "Power set to %s\n", buf);
+	bsp_info("Power set to %s\n", buf);
     state = simple_strtol(buf, &endp, 10); /*10 means read as dec*/
+    bsp_err("count = %lu\n", (unsigned long)count);
 
     /* 整机复位对rild为桩,应该整机复位 */
     if (!bsp_reset_is_connect_ril())
@@ -309,7 +312,4 @@ int __init bsp_modem_boot_init(void)
     return ret;
 }
 
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-module_init(bsp_modem_boot_init);
-#endif
 

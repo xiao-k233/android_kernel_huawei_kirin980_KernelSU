@@ -70,8 +70,6 @@
 #include <securec.h>
 #include "bsp_om_log.h"
 
-#define OLD_MATCH	((u32)1)
-#define NEW_MATCH       ((u32)0)
 /*new print start*/
 #define THIS_MODU mod_print
 u32 g_print_close = 0;
@@ -149,7 +147,6 @@ bsp_log_swt_cfg_s  g_mod_peint_level_info[BSP_MODU_MAX]    =
     {BSP_LOG_LEVEL_ERROR}, {BSP_LOG_LEVEL_ERROR}, {BSP_LOG_LEVEL_ERROR}, {BSP_LOG_LEVEL_ERROR}
 };
 
-#ifdef ENABLE_BUILD_OM
 /*****************************************************************************
 * º¯ Êý Ãû  : bsp_log_module_cfg_get
 *
@@ -266,8 +263,7 @@ void bsp_trace(bsp_log_level_e log_level,bsp_module_e mod_id,char *fmt,...)
 {
     char    bsp_print_buffer[BSP_PRINT_BUF_LEN]={'\0',};
     va_list arglist;
-    u32 modid_u32 = (u32)mod_id,level_u32=(u32)log_level;
-    char *print_p = bsp_print_buffer;
+
     /*´òÓ¡¼¶±ð¹ýÂË*/
     if(mod_id >= BSP_MODU_MAX )
     {
@@ -281,22 +277,16 @@ void bsp_trace(bsp_log_level_e log_level,bsp_module_e mod_id,char *fmt,...)
     /*lint -save -e530*/
     va_start(arglist, fmt);
     /*lint -restore +e530*/
-#if (defined(BSP_CONFIG_PHONE_TYPE))
     (void)vsnprintf(bsp_print_buffer, (BSP_PRINT_BUF_LEN-1), fmt, arglist);/* unsafe_function_ignore: vsnprintf *//* [false alarm]:ÆÁ±ÎFortify´íÎó */
-#else
-    (void)vsnprintf_s(bsp_print_buffer, (BSP_PRINT_BUF_LEN-1), (BSP_PRINT_BUF_LEN-1), fmt, arglist);/* [false alarm]:ÆÁ±ÎFortify´íÎó */
-#endif
     va_end(arglist);
 
     bsp_print_buffer[BSP_PRINT_BUF_LEN - 1] = '\0';
 
     printk(KERN_ERR"%s", bsp_print_buffer);
-#if (FEATURE_HDS_PRINTLOG == FEATURE_ON)
     if(g_bsp_print_hook)
     {
-        g_bsp_print_hook(modid_u32,level_u32,OLD_MATCH,print_p);
+        g_bsp_print_hook(mod_id,log_level,1,bsp_print_buffer);
     }
-#endif
     return ;
 }
 EXPORT_SYMBOL_GPL(bsp_trace);
@@ -438,8 +428,7 @@ void bsp_print(module_tag modid, BSP_LOG_LEVEL level, char *fmt, ...)
 
     char print_buffer[BSP_PRINT_BUF_LEN]={'\0',};
     va_list arglist;
-    u32 modid_u32 = (u32)modid,level_u32=(u32)level;
-    char *print_p = print_buffer;
+
     if(modid >= MODU_MAX || BSP_PRINT_OFF == level)
     {
         return ;
@@ -461,11 +450,9 @@ void bsp_print(module_tag modid, BSP_LOG_LEVEL level, char *fmt, ...)
         (void)printk(KERN_INFO"%s",print_buffer);
     else
         return ;
-#if (FEATURE_HDS_PRINTLOG == FEATURE_ON)
     if(NULL != g_bsp_print_hook){
-        g_bsp_print_hook(modid_u32,level_u32,NEW_MATCH,print_p);
+        g_bsp_print_hook(modid,level,0,print_buffer);
         }
-#endif
 }
 EXPORT_SYMBOL_GPL(bsp_print);
 EXPORT_SYMBOL_GPL(logs);
@@ -496,7 +483,6 @@ void log_buff_info(void)
 }
 
 
-#endif
 
 EXPORT_SYMBOL(bsp_log_module_cfg_get);
 EXPORT_SYMBOL(bsp_mod_level_set);

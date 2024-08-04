@@ -174,11 +174,9 @@ VOS_VOID diag_LrmAgentMsgProc(MsgBlock* pMsgBlock)
         case ID_MSG_DIAG_CMD_DISCONNECT_CNF:
             diag_LRMConnCnfProc((VOS_UINT8 *)pMsgTmp);
             break;
-#ifdef DIAG_SEC_TOOLS
         case DIAG_MSG_MSP_AUTH_CNF:
             diag_ConnAuthRst(pMsgBlock);
             break;
-#endif
         default:
             break;
     }

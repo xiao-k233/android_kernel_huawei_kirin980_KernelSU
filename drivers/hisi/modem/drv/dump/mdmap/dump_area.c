@@ -85,9 +85,6 @@ s32 bsp_dump_mem_init(void)
 {
     return BSP_OK;
 }
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-arch_initcall(bsp_dump_mem_init);
-#endif
 EXPORT_SYMBOL_GPL(bsp_dump_register_field);
 EXPORT_SYMBOL_GPL(bsp_dump_get_field_addr);
 EXPORT_SYMBOL(dump_show_field);

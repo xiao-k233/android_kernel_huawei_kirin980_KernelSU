@@ -70,15 +70,6 @@ VOS_UINT32 USIMM_APP_FID_Init(enum VOS_INIT_PHASE_DEFINE ip)
     {
         case VOS_IP_LOAD_CONFIG:
         {
-#if (FEATURE_OFF == FEATURE_PHONE_SC)
-            ulRslt = VOS_RegisterPIDInfo(ACPU_PID_PB,
-                                        (Init_Fun_Type)WuepsPBPidInit,
-                                        (Msg_Fun_Type)I0_SI_PB_PidMsgProc);
-            if( VOS_OK != ulRslt )
-            {
-                return VOS_ERR;
-            }
-#endif
             ulRslt = VOS_RegisterPIDInfo(ACPU_PID_PCSC,
                                         VOS_NULL_PTR,
                                         (Msg_Fun_Type)PCSC_AcpuMsgProc);

@@ -66,12 +66,8 @@
 #include <mdrv_print.h>
 #define THIS_MODU   mod_print
 extern bsp_syslevel_ctrl g_print_sys_level;
-#if (FEATURE_HDS_PRINTLOG == FEATURE_ON)
 typedef int (*print_report_hook)(u32 module_id, u32 level, u32 sel, char* print_buff);
 extern print_report_hook g_bsp_print_hook;
-#define MODID_U32	((u32)1)
-#define NEW_MATCH	((u32)0)
-#endif
 #define BSP_PRINT_BUF_LEN (256)
 /*****************************************************************************
 * º¯ Êý Ãû	: mdrv_print
@@ -88,16 +84,11 @@ extern print_report_hook g_bsp_print_hook;
 void mdrv_print(unsigned int level, char *fmt, ...)
 {
     char print_buffer[BSP_PRINT_BUF_LEN]={'\0',};
-    char* print_p = print_buffer;
     va_list arglist;
     if(0 != bsp_get_print_status() || MDRV_P_CLOSE == level)
         return;
 	va_start(arglist, fmt);
-#if (defined(BSP_CONFIG_PHONE_TYPE))
     (void)vsnprintf(print_buffer, (BSP_PRINT_BUF_LEN-1), fmt, arglist);/* unsafe_function_ignore: vsnprintf */
-#else
-    (void)vsnprintf_s(print_buffer, (BSP_PRINT_BUF_LEN-1), (BSP_PRINT_BUF_LEN-1), fmt, arglist);
-#endif
     va_end(arglist);
     print_buffer[BSP_PRINT_BUF_LEN - 1] = '\0';
     
@@ -107,10 +98,8 @@ void mdrv_print(unsigned int level, char *fmt, ...)
         (void)printk(KERN_INFO"%s", print_buffer);
     else
         return ;
-#if (FEATURE_HDS_PRINTLOG == FEATURE_ON)    
     if(NULL != g_bsp_print_hook)
-        g_bsp_print_hook(MODID_U32,level,NEW_MATCH,print_p);
-#endif        
+        g_bsp_print_hook(THIS_MODU,level,0,print_buffer);
 }
 /*lint -restore +e530 +e830*/
 EXPORT_SYMBOL(mdrv_print);

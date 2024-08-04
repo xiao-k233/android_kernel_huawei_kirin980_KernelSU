@@ -116,7 +116,7 @@ static void check_fiq_send(void)
 	bsp_err("[fiq]check lost time fiq status\n");
 	for(index_fiq = (u32)0; index_fiq < (u32)CCPU_CORE_NUM; index_fiq++)
 	{
-		bsp_err("[fiq%d]fiq status regval=0x%x[bit%d]\n",index_fiq, readl((volatile const void *)(g_fiq_ctrl.per_cpu_fiq[index_fiq].sysctrl_fiq_status_reg)), g_fiq_ctrl.per_cpu_fiq[index_fiq].sysctrl_fiq_status_bit);
+		bsp_err("[fiq%d]fiq status regval[%pK]=0x%x[bit%d]\n",index_fiq,(g_fiq_ctrl.per_cpu_fiq[index_fiq].sysctrl_fiq_status_reg), readl((volatile const void *)(g_fiq_ctrl.per_cpu_fiq[index_fiq].sysctrl_fiq_status_reg)), g_fiq_ctrl.per_cpu_fiq[index_fiq].sysctrl_fiq_status_bit);
 		bsp_err("[fiq%d]fiq send cnt = %d,fiq receive cnt = %d\n",index_fiq,readl((volatile const void *)g_fiq_ctrl.per_cpu_fiq[index_fiq].smem_send_cnt_addr),readl((volatile const void *)g_fiq_ctrl.per_cpu_fiq[index_fiq].smem_recive_cnt_addr));
 		bsp_err("[fiq%d]smem clear value = 0x%x,smem status value = 0x%x\n",index_fiq,readl((volatile const void *)g_fiq_ctrl.per_cpu_fiq[index_fiq].smem_fiq_clear_addr),readl((volatile const void *)g_fiq_ctrl.per_cpu_fiq[index_fiq].smem_fiq_status_addr));
 		
@@ -223,10 +223,6 @@ int fiq_init(void)
 	bsp_err("init OK\n");
 	return 0;
 }
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-/*lint --e{528} */
-arch_initcall(fiq_init);
-#endif
 EXPORT_SYMBOL(bsp_send_cp_fiq);            /*lint !e19 */
 
 /*lint -restore +e754 +e550 +e528*/

@@ -93,12 +93,8 @@ void *scm_UnCacheMemAlloc(u32 ulSize, unsigned long *pulRealAddr)
     *pulRealAddr = 0;
     pVirtAdd     = 0;
 
-#ifdef CONFIG_ARM64
 
     pVirtAdd = dma_alloc_coherent(&modem_socp_pdev->dev, ulSize, &ulAddress, GFP_KERNEL);
-#else
-    pVirtAdd = dma_alloc_coherent(NULL, ulSize, &ulAddress, GFP_KERNEL);
-#endif
 
     *pulRealAddr = (unsigned long)ulAddress;
 
@@ -132,7 +128,6 @@ unsigned long scm_UncacheMemPhyToVirt(u8 *pucCurPhyAddr, u8 *pucPhyStart, u8 *pu
 u32 diag_shared_mem_write(u32 eType, u32 len, char *pData)
 {
     u8 *ptr;
-    errno_t ret = 0;
 
     if((pData == NULL) || (len == 0))
     {
@@ -149,9 +144,9 @@ u32 diag_shared_mem_write(u32 eType, u32 len, char *pData)
                 return ERR_MSP_FAILURE;
             }
             ptr = (u8 *)(((unsigned long)SHM_BASE_ADDR)+SHM_OFFSET_DIAG_POWER_ON_LOG);
-            ret = memcpy_s(&(((SHM_POWER_ON_LOG_FLAG_STRU *)ptr)->cPowerOnlogA),
+            memcpy_s(&(((SHM_POWER_ON_LOG_FLAG_STRU *)ptr)->cPowerOnlogA),
                 sizeof(((SHM_POWER_ON_LOG_FLAG_STRU *)ptr)->cPowerOnlogA), pData, len);
-            break;
+            return ERR_MSP_SUCCESS;
 
         case DS_DATA_BUFFER_STATE:
             if((pData == NULL) || (len == 0))
@@ -160,18 +155,13 @@ u32 diag_shared_mem_write(u32 eType, u32 len, char *pData)
                 return ERR_MSP_FAILURE;
             }
             ptr = (u8 *)(((unsigned long)SHM_BASE_ADDR)+SHM_OFFSET_DIAG_POWER_ON_LOG);
-            ret = memcpy_s(&(((SHM_POWER_ON_LOG_FLAG_STRU *)ptr)->cDsSocpBuffer),
+            memcpy_s(&(((SHM_POWER_ON_LOG_FLAG_STRU *)ptr)->cDsSocpBuffer),
                 sizeof(((SHM_POWER_ON_LOG_FLAG_STRU *)ptr)->cDsSocpBuffer), pData, len);
-            break;
+            return ERR_MSP_SUCCESS;
 
         default:
             return ERR_MSP_INVALID_ID;
     }
-    if (ret != EOK)
-    {
-        diag_error("memory copy failed 0x%x\n", ret);
-    }
-    return ERR_MSP_SUCCESS;
 }
 
 /*****************************************************************************

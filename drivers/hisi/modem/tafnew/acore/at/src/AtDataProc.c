@@ -104,22 +104,14 @@ CONST AT_PS_SND_PDP_DEACT_IND_STRU            g_astAtSndPdpDeActIndTab[] =
 
 CONST AT_CHDATA_RNIC_RMNET_ID_STRU            g_astAtChdataRnicRmNetIdTab[] =
 {
-#if (MULTI_MODEM_NUMBER >= 2)
     {AT_CH_DATA_CHANNEL_ID_1, RNIC_DEV_ID_RMNET0, PS_IFACE_ID_RMNET0, {0, 0}},
     {AT_CH_DATA_CHANNEL_ID_2, RNIC_DEV_ID_RMNET1, PS_IFACE_ID_RMNET1, {0, 0}},
     {AT_CH_DATA_CHANNEL_ID_3, RNIC_DEV_ID_RMNET2, PS_IFACE_ID_RMNET2, {0, 0}},
     {AT_CH_DATA_CHANNEL_ID_4, RNIC_DEV_ID_RMNET3, PS_IFACE_ID_RMNET3, {0, 0}},
     {AT_CH_DATA_CHANNEL_ID_5, RNIC_DEV_ID_RMNET4, PS_IFACE_ID_RMNET4, {0, 0}}
-#if (MULTI_MODEM_NUMBER == 3)
     ,
     {AT_CH_DATA_CHANNEL_ID_6, RNIC_DEV_ID_RMNET5, PS_IFACE_ID_RMNET5, {0, 0}},
     {AT_CH_DATA_CHANNEL_ID_7, RNIC_DEV_ID_RMNET6, PS_IFACE_ID_RMNET6, {0, 0}}
-#endif
-#else
-    {AT_CH_DATA_CHANNEL_ID_1, RNIC_DEV_ID_RMNET0, PS_IFACE_ID_RMNET0, {0, 0}},
-    {AT_CH_DATA_CHANNEL_ID_2, RNIC_DEV_ID_RMNET1, PS_IFACE_ID_RMNET1, {0, 0}},
-    {AT_CH_DATA_CHANNEL_ID_3, RNIC_DEV_ID_RMNET2, PS_IFACE_ID_RMNET2, {0, 0}}
-#endif
 };
 
 CONST AT_PS_APP_CALL_RNIC_IFACE_ID_STRU       g_astAtPsAppCallRnicIFaceIdTab[] =
@@ -140,14 +132,10 @@ AT_PS_FC_IFACE_ID_STRU                        g_astAtPsFcIFaceIdTab[] =
     {FC_ID_NIC_1,   PS_IFACE_ID_RMNET0, 0, 0},
     {FC_ID_NIC_2,   PS_IFACE_ID_RMNET1, 0, 0},
     {FC_ID_NIC_3,   PS_IFACE_ID_RMNET2, 0, 0},
-#if (MULTI_MODEM_NUMBER >= 2)
     {FC_ID_NIC_4,   PS_IFACE_ID_RMNET3, 0, 0},
     {FC_ID_NIC_5,   PS_IFACE_ID_RMNET4, 0, 0},
-#if (MULTI_MODEM_NUMBER == 3)
     {FC_ID_NIC_6,   PS_IFACE_ID_RMNET5, 0, 0},
     {FC_ID_NIC_7,   PS_IFACE_ID_RMNET6, 0, 0},
-#endif
-#endif
     /* NDIS的IFACE ID相关 */
     {FC_ID_NIC_1,   PS_IFACE_ID_NDIS0,  0, 0},
 };
@@ -212,9 +200,7 @@ CONST AT_PS_WLAN_PDN_DEACT_ERR_CODE_MAP_STRU           g_astTafPsWlanPdnDeActErr
 
 extern const TAF_CHAR                       *g_PppDialRateDisplay[];
 
-#if (FEATURE_ON == FEATURE_LTE)
 extern const AT_DISPLAY_RATE_PAIR_STRU      g_ucLTERateDisplay[AT_UE_LTE_CATEGORY_NUM_MAX];
-#endif
 
 extern const VOS_CHAR                       *g_ucDialRateDisplayNv[];
 
@@ -278,11 +264,7 @@ VOS_UINT32 AT_Ipv4AddrAtoi(
 
             /* 统计'.'的个数 */
             ulDotNum++;
-            if (ulDotNum >= TAF_IPV4_ADDR_LEN)
-            {
-                AT_NORM_LOG("AT_Ipv4AddrAtoi: dot num is more than 3, return ERROR");
-                return VOS_ERR;
-            }
+
             continue;
         }
         else
@@ -427,10 +409,6 @@ VOS_UINT32 AT_Ipv6AddrAtoi(
 
             /* 统计'.'的个数 */
             ulDotNum++;
-            if (ulDotNum >= TAF_IPV6_ADDR_LEN)
-            {
-                return VOS_ERR;
-            }
 
             continue;
         }
@@ -1135,17 +1113,13 @@ VOS_UINT32 AT_Ipv6AddrMask2FormatString(
 )
 {
     VOS_UINT32                          ulLength;
-#if (FEATURE_ON == FEATURE_IPV6)
     AT_COMM_PS_CTX_STRU                *pstCommPsCtx        = VOS_NULL_PTR;
     VOS_INT                             iRslt;
-#endif
 
     /* 局部变量初始化 */
     ulLength        = 0;
-#if (FEATURE_ON == FEATURE_IPV6)
     pstCommPsCtx    = AT_GetCommPsCtxAddr();
     iRslt           = 0;
-#endif
 
     /* 必须要有IPv6地址，不单独打印IPv6子网掩码 */
     if (VOS_NULL_PTR == aucIpv6Addr)
@@ -1155,10 +1129,8 @@ VOS_UINT32 AT_Ipv6AddrMask2FormatString(
         return 0;
     }
 
-#if (FEATURE_ON == FEATURE_IPV6)
     if (VOS_FALSE == pstCommPsCtx->bitOpIpv6AddrFormat)
     {
-#endif
         /* 10进制点分格式打印IPv6地址 */
         ulLength = AT_Ipv6Addr2DecString(pcIpv6FormatStr, aucIpv6Addr);
 
@@ -1172,7 +1144,6 @@ VOS_UINT32 AT_Ipv6AddrMask2FormatString(
             /* 10进制点分格式打印IPv6子网掩码 */
             ulLength += AT_Ipv6Addr2DecString(pcIpv6FormatStr + ulLength, aucIpv6Mask);
         }
-#if (FEATURE_ON == FEATURE_IPV6)
     }
     else
     {
@@ -1215,7 +1186,6 @@ VOS_UINT32 AT_Ipv6AddrMask2FormatString(
             }
         }
     }
-#endif
 
     /* 最后补充字符串结束符 */
     *(pcIpv6FormatStr + ulLength) = '\0';
@@ -1686,11 +1656,7 @@ VOS_UINT16 AT_CalcIpHdrCRC16(
 
     if (usSize)
     {
-#if (VOS_LITTLE_ENDIAN == VOS_BYTE_ORDER)
         ulCheckSum += *(VOS_UINT8 *)pusBuffer;
-#else
-        ulCheckSum += 0 | ((*(VOS_UINT8 *)pusBuffer) << 8);
-#endif
     }
 
     ulCheckSum  = (ulCheckSum >> 16) + (ulCheckSum & 0xffff);
@@ -1809,7 +1775,6 @@ VOS_UINT32 AT_GetDisplayRate(
             TAF_MEM_CPY_S(stDialRateTmp.ucDlSpeed, (VOS_SIZE_T)sizeof(stDialRateTmp.ucDlSpeed), g_PppDialRateDisplay[enRateDisplay], ulDlSpeedLen);
             TAF_MEM_CPY_S(stDialRateTmp.ucUlSpeed, (VOS_SIZE_T)sizeof(stDialRateTmp.ucUlSpeed), g_PppDialRateDisplay[enRateDisplay], ulUlSpeedLen);
         }
-#if (FEATURE_ON == FEATURE_LTE)
         else if (TAF_PH_INFO_LTE_RAT == stSysMode.enRatType)
         {
             ucDlCategoryIndex = AT_GetLteUeDlCategoryIndex();
@@ -1820,7 +1785,6 @@ VOS_UINT32 AT_GetDisplayRate(
             ulUlSpeedLen = VOS_StrLen((TAF_CHAR *)(g_ucLTERateDisplay[ucUlCategoryIndex].acStrUlSpeed));
             TAF_MEM_CPY_S(stDialRateTmp.ucUlSpeed, (VOS_SIZE_T)sizeof(stDialRateTmp.ucUlSpeed), g_ucLTERateDisplay[ucUlCategoryIndex].acStrUlSpeed, ulUlSpeedLen);
         }
-#endif
         else
         {
             enRateDisplay = AT_GetRateDisplayIndexForGsm(&stSysMode);
@@ -1934,9 +1898,7 @@ VOS_UINT32 AT_ResetFlowCtl(
         {
             if (1 == ((ulRabIdMask >> ucRabIdIndex) & 0x1))
             {
-#if(FEATURE_ON == FEATURE_ACPU_FC_POINT_REG)
                 FC_ChannelMapDelete(ucRabIdIndex, enModemId);
-#endif
             }
         }
 
@@ -2201,6 +2163,7 @@ VOS_UINT32 AT_RegModemPsDataFCPoint(
     FC_REG_POINT_STRU                   stRegFcPoint;
     VOS_UINT32                          ulRet;
     FC_PRI_ENUM_UINT8                   enFcPri;
+    /* Modified by l60609 for DSDA Phase II, 2012-12-21, Begin */
     MODEM_ID_ENUM_UINT16                enModemId;
     AT_UART_CTX_STRU                   *pstUartCtx = VOS_NULL_PTR;
 
@@ -2225,10 +2188,8 @@ VOS_UINT32 AT_RegModemPsDataFCPoint(
         return VOS_ERR;
     }
 
-#if(FEATURE_ON == FEATURE_ACPU_FC_POINT_REG)
     /* 配置通道与RABID映射关系 */
     FC_ChannelMapCreate(enFcId, pstEvent->ucRabId, enModemId);
-#endif
 
     stRegFcPoint.enFcId             = enFcId;
 
@@ -2246,18 +2207,12 @@ VOS_UINT32 AT_RegModemPsDataFCPoint(
     }
     stRegFcPoint.enFcPri            = enFcPri;
     stRegFcPoint.enPolicyId         = FC_POLICY_ID_MEM;
-#if (FEATURE_ON == FEATURE_AT_HSUART)
-    stRegFcPoint.pClrFunc           = (AT_CLIENT_TAB_HSUART_INDEX == ucIndex) ?
-                                      AT_HSUART_StopFlowCtrl : AT_MODEM_StopFlowCtrl;
-    stRegFcPoint.pSetFunc           = (AT_CLIENT_TAB_HSUART_INDEX == ucIndex) ?
-                                      AT_HSUART_StartFlowCtrl : AT_MODEM_StartFlowCtrl;
-#else
     stRegFcPoint.pClrFunc           = AT_MODEM_StopFlowCtrl;
     stRegFcPoint.pSetFunc            = AT_MODEM_StartFlowCtrl;
 
-#endif
     stRegFcPoint.ulParam1           = (VOS_UINT32)g_alAtUdiHandle[ucIndex];
     stRegFcPoint.enModemId          = enModemId;
+    /* Modified by l60609 for DSDA Phase II, 2012-12-21, End */
     stRegFcPoint.ulParam2           = enFcId;
     stRegFcPoint.pRstFunc           = AT_ResetFlowCtl;
 
@@ -2292,7 +2247,6 @@ VOS_UINT32 AT_RegModemPsDataFCPoint(
         return VOS_ERR;
     }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     stRegFcPoint.enPolicyId         = FC_POLICY_ID_CDMA;
     ulRet = FC_RegPoint(&stRegFcPoint);
     if (VOS_OK != ulRet)
@@ -2300,7 +2254,6 @@ VOS_UINT32 AT_RegModemPsDataFCPoint(
         AT_ERR_LOG("AT_RegModemFCPoint: ERROR: reg CDMA point Failed.");
         return VOS_ERR;
     }
-#endif
 
     /* 设置FCID与FC Pri的映射关系 */
     g_stFcIdMaptoFcPri[FC_ID_MODEM].ulUsed      = VOS_TRUE;
@@ -2322,6 +2275,7 @@ VOS_UINT32 AT_DeRegModemPsDataFCPoint(
 )
 {
     VOS_UINT32                          ulRet;
+    /* Modified by l60609 for DSDA Phase II, 2012-12-28, Begin */
     MODEM_ID_ENUM_UINT16                enModemId;
     AT_UART_CTX_STRU                   *pstUartCtx = VOS_NULL_PTR;
 
@@ -2342,10 +2296,9 @@ VOS_UINT32 AT_DeRegModemPsDataFCPoint(
         AT_ERR_LOG("AT_DeRegModemPsDataFCPoint: Get modem id fail.");
         return VOS_ERR;
     }
-#if(FEATURE_ON == FEATURE_ACPU_FC_POINT_REG)
+    /* Modified by l60609 for DSDA Phase II, 2012-12-21, Begin */
     /* 删除流控模块映射关系 */
     FC_ChannelMapDelete(ucRabId, enModemId);
-#endif
 
     ulRet = FC_DeRegPoint(FC_ID_MODEM, enModemId);
     if (VOS_OK != ulRet)
@@ -2353,6 +2306,7 @@ VOS_UINT32 AT_DeRegModemPsDataFCPoint(
         AT_ERR_LOG("AT_DeRegModemPsDataFCPoint: ERROR: FC DeRegPoint Failed.");
         return VOS_ERR;
     }
+    /* Modified by l60609 for DSDA Phase II, 2012-12-21, End */
 
     /* 清除FCID与FC Pri的映射关系 */
     g_stFcIdMaptoFcPri[FC_ID_MODEM].ulUsed      = VOS_FALSE;
@@ -2385,9 +2339,6 @@ VOS_VOID AT_ModemPsRspPdpActEvtCnfProc(
     /* 清除命令操作类型 */
     AT_STOP_TIMER_CMD_READY(ucIndex);
 
-#if(FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
-    gastAtClientTab[ucIndex].ucIfaceId = PS_IFACE_ID_PPP0;
-#endif
 
     if (TAF_PDP_PPP == pstEvent->stPdpAddr.enPdpType)
     {
@@ -2903,248 +2854,7 @@ TAF_UINT32 At_PppId2PsRab(
     return TAF_SUCCESS;
 } /* At_PppId2PsRab */
 
-#if (FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
 
-VOS_UINT32 At_IfaceId2PppId(
-    VOS_UINT8                           ucIfaceId,
-    VOS_UINT16                          *pusPppId
-)
-{
-    VOS_UINT16                          usPppId;
-    VOS_UINT8                           ucIndex;
-
-    if (VOS_NULL_PTR == pusPppId)
-    {
-        AT_WARN_LOG("At_IfaceId2PppId, pusPppId NULL");
-        return VOS_ERR;
-    }
-
-    /* 通过PPP ID方向查找，效率会比较高 */
-    for (usPppId = 1; usPppId <= PPP_MAX_ID_NUM; usPppId++)
-    {
-        ucIndex = gastAtPppIndexTab[usPppId];
-
-        if (AT_MAX_CLIENT_NUM <= ucIndex)
-        {
-            continue;
-        }
-
-        if (AT_CLIENT_USED != gastAtClientTab[ucIndex].ucUsed)
-        {
-            continue;
-        }
-
-        if (AT_DATA_MODE != gastAtClientTab[ucIndex].Mode)
-        {
-            continue;
-        }
-
-        if ( (AT_PPP_DATA_MODE != gastAtClientTab[ucIndex].DataMode)
-          && (AT_IP_DATA_MODE != gastAtClientTab[ucIndex].DataMode) )
-        {
-            continue;
-        }
-
-        if (gastAtClientTab[ucIndex].ucIfaceId == ucIfaceId)
-        {
-            *pusPppId = usPppId;    /* 返回结果 */
-            return VOS_OK;
-        }
-
-    }
-
-    AT_LOG1("AT, At_IfaceId2PppId, WARNING, Get PppId from Rab <1> Fail",
-                                                                   ucIfaceId);
-    return VOS_ERR;
-}
-
-
-VOS_UINT32 At_PppId2IfaceId(
-    VOS_UINT16                          usPppId,
-    VOS_UINT8                          *pucIfaceId
-)
-{
-    VOS_UINT8                           ucIndex;
-
-    if ((usPppId < 1) || (usPppId > PPP_MAX_ID_NUM))
-    {
-        TAF_LOG1(WUEPS_PID_AT, 0, PS_LOG_LEVEL_WARNING,
-            "AT, At_PppId2IfaceId, WARNING, PppId <1> Wrong", usPppId);
-        return VOS_ERR;
-    }
-
-    if (VOS_NULL_PTR == pucIfaceId)
-    {
-        AT_WARN_LOG("AT, At_PppId2IfaceId, WARNING, pucIfaceId NULL");
-        return VOS_ERR;
-    }
-
-    ucIndex = gastAtPppIndexTab[usPppId];
-    if (AT_MAX_CLIENT_NUM <= ucIndex)
-    {
-        AT_LOG1("AT, At_PppId2IfaceId, WARNING, index <1> Wrong", ucIndex);
-        return VOS_ERR;
-    }
-
-    if (AT_DATA_MODE != gastAtClientTab[ucIndex].Mode)
-    {
-        AT_LOG1("AT, At_PppId2IfaceId, WARNING, Mode <1> Wrong",
-                                                 gastAtClientTab[ucIndex].Mode);
-        return VOS_ERR;
-    }
-
-    if ( (AT_PPP_DATA_MODE != gastAtClientTab[ucIndex].DataMode)
-      && (AT_IP_DATA_MODE  != gastAtClientTab[ucIndex].DataMode) )
-    {
-        AT_LOG1("AT, At_PppId2IfaceId, WARNING, DataMode <1> Wrong",
-                                             gastAtClientTab[ucIndex].DataMode);
-        return VOS_ERR;
-    }
-
-    *pucIfaceId = gastAtClientTab[ucIndex].ucIfaceId;
-
-    return VOS_OK;
-}
-#endif
-
-#if( FEATURE_ON == FEATURE_CSD )
-
-VOS_UINT32 AT_VpResetFlowCtl(
-    VOS_UINT32                          ulParam1,
-    VOS_UINT32                          ulParam2
-)
-{
-    VOS_UINT32                          ulRet;
-    FC_ID_ENUM_UINT8                    enFcId;
-    MODEM_ID_ENUM_UINT16                enModemId;
-
-    enFcId    = ulParam2;
-    enModemId = g_stFcIdMaptoFcPri[enFcId].enModemId;
-
-    if (VOS_TRUE == g_stFcIdMaptoFcPri[enFcId].ulUsed)
-    {
-        ulRet = FC_DeRegPoint(enFcId, enModemId);
-        if (VOS_OK != ulRet)
-        {
-            AT_ERR_LOG("AT_VpResetFlowCtl: ERROR: de reg point Failed.");
-            return VOS_ERR;
-        }
-
-        g_stFcIdMaptoFcPri[enFcId].ulUsed       = VOS_FALSE;
-        g_stFcIdMaptoFcPri[enFcId].enFcPri      = FC_PRI_BUTT;
-        g_stFcIdMaptoFcPri[enFcId].enModemId    = MODEM_ID_BUTT;
-    }
-
-    return VOS_OK;
-}
-
-
-VOS_UINT32 AT_RegModemVideoPhoneFCPoint(
-    VOS_UINT8                           ucIndex,
-    FC_ID_ENUM_UINT8                    enFcId
-)
-{
-    FC_REG_POINT_STRU                   stRegFcPoint;
-    VOS_UINT32                          ulRet;
-    FC_PRI_ENUM_UINT8                   enFcPri;
-    MODEM_ID_ENUM_UINT16                enModemId;
-
-    enModemId = MODEM_ID_0;
-
-    TAF_MEM_SET_S(&stRegFcPoint, sizeof(stRegFcPoint), 0x00, sizeof(FC_REG_POINT_STRU));
-
-    ulRet = AT_GetModemIdFromClient(ucIndex, &enModemId);
-
-    if (VOS_OK != ulRet)
-    {
-        AT_ERR_LOG("AT_RegModemVideoPhoneFCPoint: Get modem id fail.");
-        return VOS_ERR;
-    }
-
-    stRegFcPoint.enFcId             = enFcId;
-
-    /*  FC_PRI_3        有最低优先级的承载
-        FC_PRI_4        有NONGBR承载
-        FC_PRI_5        有GBR承载 */
-    enFcPri                         = FC_PRI_FOR_PDN_LOWEST;
-    stRegFcPoint.enFcPri            = enFcPri;
-    stRegFcPoint.enPolicyId         = FC_POLICY_ID_MEM;
-    stRegFcPoint.enModemId          = enModemId;
-    stRegFcPoint.pClrFunc           = AT_MODEM_StopFlowCtrl;
-    stRegFcPoint.pSetFunc           = AT_MODEM_StartFlowCtrl;
-    stRegFcPoint.ulParam1           = (VOS_UINT32)g_alAtUdiHandle[ucIndex];
-    stRegFcPoint.ulParam2           = enFcId;
-    stRegFcPoint.pRstFunc           = AT_VpResetFlowCtl;
-
-    /* 注册流控点,需要分别注册MEM,CPU,CST */
-    ulRet = FC_RegPoint(&stRegFcPoint);
-    if (VOS_OK != ulRet)
-    {
-        AT_ERR_LOG("AT_RegModemVideoPhoneFCPoint: ERROR: FC RegPoint CST Failed.");
-        return VOS_ERR;
-    }
-
-    stRegFcPoint.enPolicyId         = FC_POLICY_ID_CPU_A;
-    ulRet = FC_RegPoint(&stRegFcPoint);
-    if (VOS_OK != ulRet)
-    {
-        AT_ERR_LOG("AT_RegModemVideoPhoneFCPoint: ERROR: FC RegPoint MEM Failed.");
-        return VOS_ERR;
-    }
-
-    stRegFcPoint.enPolicyId         = FC_POLICY_ID_CST;
-    ulRet = FC_RegPoint(&stRegFcPoint);
-    if (VOS_OK != ulRet)
-    {
-        AT_ERR_LOG("AT_RegModemVideoPhoneFCPoint: ERROR: FC RegPoint A CPU Failed.");
-        return VOS_ERR;
-    }
-
-    /* 设置FCID与FC Pri的映射关系 */
-    g_stFcIdMaptoFcPri[FC_ID_MODEM].ulUsed  = VOS_TRUE;
-    g_stFcIdMaptoFcPri[FC_ID_MODEM].enFcPri = enFcPri;
-    g_stFcIdMaptoFcPri[FC_ID_MODEM].enModemId = enModemId;
-
-    /* 勾流控消息 */
-    AT_MNTN_TraceRegFcPoint(ucIndex, AT_FC_POINT_TYPE_MODEM_VP);
-
-    return VOS_OK;
-}
-
-
-VOS_UINT32 AT_DeRegModemVideoPhoneFCPoint(VOS_UINT8 ucIndex)
-{
-    VOS_UINT32                          ulRet;
-    MODEM_ID_ENUM_UINT16                enModemId;
-
-    enModemId = MODEM_ID_0;
-
-    ulRet = AT_GetModemIdFromClient(ucIndex, &enModemId);
-
-    if (VOS_OK != ulRet)
-    {
-        AT_ERR_LOG("AT_DeRegModemVideoPhoneFCPoint: Get modem id fail.");
-        return VOS_ERR;
-    }
-
-    ulRet = FC_DeRegPoint(FC_ID_MODEM, enModemId);
-    if (VOS_OK != ulRet)
-    {
-        AT_ERR_LOG("AT_DeRegModemVideoPhoneFCPoint: ERROR: FC DeRegPoint Failed.");
-        return VOS_ERR;
-    }
-
-    /* 清除FCID与FC Pri的映射关系 */
-    g_stFcIdMaptoFcPri[FC_ID_MODEM].ulUsed      = VOS_FALSE;
-    g_stFcIdMaptoFcPri[FC_ID_MODEM].enFcPri     = FC_PRI_BUTT;
-    g_stFcIdMaptoFcPri[FC_ID_MODEM].enModemId   = MODEM_ID_BUTT;
-
-    /* 勾流控消息 */
-    AT_MNTN_TraceDeregFcPoint(ucIndex, AT_FC_POINT_TYPE_MODEM_VP);
-
-    return VOS_OK;
-}
-#endif
 
 
 VOS_UINT32 AT_GetLanAddr32(
@@ -3526,7 +3236,6 @@ CONST AT_CHDATA_RNIC_RMNET_ID_STRU *AT_PS_GetChDataCfgByChannelId(
             return VOS_NULL_PTR;
         }
     }
-#if (MULTI_MODEM_NUMBER >= 2)
     else if (MODEM_ID_1 == enModemId)
     {
         if ((enDataChannelId < AT_CH_DATA_CHANNEL_ID_4)
@@ -3535,7 +3244,6 @@ CONST AT_CHDATA_RNIC_RMNET_ID_STRU *AT_PS_GetChDataCfgByChannelId(
             return VOS_NULL_PTR;
         }
     }
-#if (MULTI_MODEM_NUMBER == 3)
     else if (MODEM_ID_2 == enModemId)
     {
         if ((enDataChannelId < AT_CH_DATA_CHANNEL_ID_6)
@@ -3544,8 +3252,6 @@ CONST AT_CHDATA_RNIC_RMNET_ID_STRU *AT_PS_GetChDataCfgByChannelId(
             return VOS_NULL_PTR;
         }
     }
-#endif /* #if (MULTI_MODEM_NUMBER == 3) */
-#endif
     else
     {
         return VOS_NULL_PTR;
@@ -3812,18 +3518,11 @@ VOS_UINT32 AT_PS_IsCallIdValid(
 
     pstPsModemCtx = AT_GetModemPsCtxAddrFromClientId(usClientId);
 
-#if (FEATURE_ON == FEATURE_IPV6)
     if ((AT_PS_CALL_INVALID_CID == pstPsModemCtx->astCallEntity[ucCallId].stIpv4Info.ucIpv4Cid)
      && (AT_PS_CALL_INVALID_CID == pstPsModemCtx->astCallEntity[ucCallId].stIpv6Info.ucIpv6Cid))
     {
         return VOS_FALSE;
     }
-#else
-    if (AT_PS_CALL_INVALID_CID == pstPsModemCtx->astCallEntity[ucCallId].stIpv4Info.ucIpv4Cid)
-    {
-        return VOS_FALSE;
-    }
-#endif
 
     return VOS_TRUE;
 }
@@ -4063,7 +3762,6 @@ VOS_VOID AT_PS_SetCid2CurrCall(
             pstCallEntity->stIpv4Info.ucIpv4Cid = ucCid;
             break;
 
-#if (FEATURE_ON == FEATURE_IPV6)
         case TAF_PDP_IPV6:
             pstCallEntity->stIpv6Info.ucIpv6Cid = ucCid;
             break;
@@ -4072,7 +3770,6 @@ VOS_VOID AT_PS_SetCid2CurrCall(
             pstCallEntity->stIpv4Info.ucIpv4Cid = ucCid;
             pstCallEntity->stIpv6Info.ucIpv6Cid = ucCid;
             break;
-#endif
 
         default:
             AT_ERR_LOG("AT_PS_SetCid2CurrCall: PDP type is invalid!");
@@ -4097,11 +3794,9 @@ VOS_UINT8 AT_PS_GetCidByCallType(
             ucCid = pstCallEntity->stIpv4Info.ucIpv4Cid;
             break;
 
-#if (FEATURE_ON == FEATURE_IPV6)
         case TAF_PDP_IPV6:
             ucCid = pstCallEntity->stIpv6Info.ucIpv6Cid;
             break;
-#endif
 
         default:
             ucCid = AT_PS_CALL_INVALID_CID;
@@ -4130,7 +3825,6 @@ VOS_VOID AT_PS_SetCallStateByType(
             pstCallEntity->stIpv4Info.enIpv4State = enPdpState;
             break;
 
-#if (FEATURE_ON == FEATURE_IPV6)
         case TAF_PDP_IPV6:
             pstCallEntity->stIpv6Info.enIpv6State = enPdpState;
             break;
@@ -4139,7 +3833,6 @@ VOS_VOID AT_PS_SetCallStateByType(
             pstCallEntity->stIpv4Info.enIpv4State = enPdpState;
             pstCallEntity->stIpv6Info.enIpv6State = enPdpState;
             break;
-#endif
 
         default:
             AT_ERR_LOG("AT_PS_SetCallStateByType: PDP type is invalid!");
@@ -4163,11 +3856,9 @@ AT_PDP_STATE_ENUM_U8 AT_PS_GetCallStateByType(
             enPdpState = pstCallEntity->stIpv4Info.enIpv4State;
             break;
 
-#if (FEATURE_ON == FEATURE_IPV6)
         case TAF_PDP_IPV6:
             enPdpState = pstCallEntity->stIpv6Info.enIpv6State;
             break;
-#endif
 
         default:
             enPdpState = AT_PDP_STATE_IDLE;
@@ -4189,12 +3880,10 @@ AT_PDP_STATE_ENUM_U8 AT_PS_GetCallStateByCid(
         return pstCallEntity->stIpv4Info.enIpv4State;
     }
 
-#if (FEATURE_ON == FEATURE_IPV6)
     if (pstCallEntity->stIpv6Info.ucIpv6Cid == ucCid)
     {
         return pstCallEntity->stIpv6Info.enIpv6State;
     }
-#endif
 
     return AT_PDP_STATE_IDLE;
 }
@@ -4278,7 +3967,6 @@ VOS_VOID AT_PS_ReportNdisStat(
                                                gaucAtCrLf);
             break;
 
-#if (FEATURE_ON == FEATURE_IPV6)
         case TAF_PDP_IPV6:
             usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
                                                (VOS_CHAR *)pgucAtSndCodeAddr,
@@ -4315,7 +4003,6 @@ VOS_VOID AT_PS_ReportNdisStat(
                                                    gaucAtCrLf);
             }
             break;
-#endif
 
         default:
             usLength = 0;
@@ -4375,7 +4062,6 @@ VOS_VOID AT_PS_ReportNdisStatEx(
                                                gaucAtCrLf);
             break;
 
-#if (FEATURE_ON == FEATURE_IPV6)
         case TAF_PDP_IPV6:
             usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
                                                (VOS_CHAR *)pgucAtSndCodeAddr,
@@ -4415,7 +4101,6 @@ VOS_VOID AT_PS_ReportNdisStatEx(
                                                    gaucAtCrLf);
             }
             break;
-#endif
 
         default:
             usLength = 0;
@@ -4471,7 +4156,6 @@ VOS_VOID AT_PS_ReportDCONN(
                                                gaucAtCrLf);
             break;
 
-#if (FEATURE_ON == FEATURE_IPV6)
         case TAF_PDP_IPV6:
             usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
                                                (VOS_CHAR *)pgucAtSndCodeAddr,
@@ -4498,7 +4182,6 @@ VOS_VOID AT_PS_ReportDCONN(
                                                pstUsrInfo->ucUsrCid,
                                                gaucAtCrLf);
             break;
-#endif
 
         default:
             AT_ERR_LOG("AT_PS_ReportDCONN: PDP type is invalid in ^DCONN.");
@@ -4568,7 +4251,6 @@ VOS_VOID AT_PS_ReportDEND(
                                                gaucAtCrLf);
 
             break;
-#if (FEATURE_ON == FEATURE_IPV6)
         case TAF_PDP_IPV6:
             usLength += (VOS_UINT16)At_sprintf(AT_CMD_MAX_LEN,
                                                (VOS_CHAR *)pgucAtSndCodeAddr,
@@ -4598,7 +4280,6 @@ VOS_VOID AT_PS_ReportDEND(
                                                enCause,
                                                gaucAtCrLf);
             break;
-#endif
 
         default:
             AT_ERR_LOG("AT_PS_ReportDEND: PDP type is invalid in ^DEND.");
@@ -5097,10 +4778,8 @@ VOS_VOID AT_PS_AppRegFCPoint(
         return;
     }
 
-#if(FEATURE_ON == FEATURE_ACPU_FC_POINT_REG)
     /* 配置通道与RABID映射关系 */
     FC_ChannelMapCreate(enFcId, pstEvent->ucRabId, enModemId);
-#endif
 
     /* 根据网卡上最高优先级RAB QoS优先级来折算,优先级改变时，需要改变优先级 */
     /*  FC_PRI_3        有最低优先级的承载
@@ -5229,10 +4908,8 @@ VOS_UINT32 AT_PS_RegNdisFCPoint(
 
     TAF_MEM_SET_S(&stRegFcPoint, sizeof(stRegFcPoint), 0x00, sizeof(FC_REG_POINT_STRU));
 
-#if(FEATURE_ON == FEATURE_ACPU_FC_POINT_REG)
     /* 配置通道与RABID映射关系 */
     FC_ChannelMapCreate(enFcId, pstEvent->ucRabId, enModemId);
-#endif
 
     stRegFcPoint.enFcId             = enFcId;
 
@@ -5320,10 +4997,8 @@ VOS_UINT32 AT_PS_DeRegNdisFCPoint(
         return VOS_ERR;
     }
 
-#if(FEATURE_ON == FEATURE_ACPU_FC_POINT_REG)
     /* 在调用FC_DeRegPoint前,先调用FC_ChannelMapDelete */
     FC_ChannelMapDelete(ucRabId, enModemId);
-#endif
 
     ulRet = FC_DeRegPoint(enFcId, enModemId);
     if (VOS_OK != ulRet)
@@ -5455,10 +5130,8 @@ VOS_UINT32 AT_PS_AppDeRegFCPoint(
         return VOS_ERR;
     }
 
-#if(FEATURE_ON == FEATURE_ACPU_FC_POINT_REG)
     /* 在调用FC_DeRegPoint前,先调用FC_ChannelMapDelete */
     FC_ChannelMapDelete(ucRabId, enModemId);
-#endif
 
     ulRslt = FC_DeRegPoint(enFcId, enModemId);
     if (VOS_OK != ulRslt)
@@ -5576,14 +5249,6 @@ VOS_VOID AT_PS_RegFCPoint(
     pstCallEntity       = AT_PS_GetCallEntity(pstEvent->stCtrl.usClientId, ucCallId);
     pstUserInfo         = &(pstCallEntity->stUserInfo);
 
-#if (FEATURE_ON == FEATURE_UE_MODE_NR)
-    if ((pstEvent->ucRabId < AT_PS_MIN_RABID)
-     || (pstEvent->ucRabId > AT_PS_MAX_RABID))
-    {
-        AT_ERR_LOG("AT_PS_RegFCPoint:ERROR: RABID is invalid!");
-        return;
-    }
-#endif
 
     /* APP PS CALL处理 */
     if (AT_PS_WAN_TYPE_APP == pstCallEntity->enPsCallType)
@@ -5705,11 +5370,7 @@ VOS_VOID AT_PS_SndRnicIpv4PdpActInd(
     pstMsg->ucRmNetId        = pstCallEntity->ucRmNetId;
     pstMsg->ucIfaceId        = pstCallEntity->ucIfaceId;
 
-#if(FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
-    pstMsg->ucPduSessionId   = pstCallEntity->stIpv4Info.stIpv4DhcpInfo.ucPduSessionId;
-#else
     pstMsg->ucRabId          = pstCallEntity->stIpv4Info.stIpv4DhcpInfo.ucRabId;
-#endif
     pstMsg->enModemId        = enModemId;
 
     pstMsg->ulIpv4Addr       = pstCallEntity->stIpv4Info.stIpv4DhcpInfo.ulIpv4Addr;
@@ -5761,11 +5422,7 @@ VOS_VOID AT_PS_SndRnicIpv6PdpActInd(
     pstMsg->ucRmNetId        = pstCallEntity->ucRmNetId;
     pstMsg->ucIfaceId        = pstCallEntity->ucIfaceId;
 
-#if(FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
-    pstMsg->ucPduSessionId   = pstCallEntity->stIpv6Info.stIpv6DhcpInfo.ucPduSessionId;
-#else
     pstMsg->ucRabId          = pstCallEntity->stIpv6Info.stIpv6DhcpInfo.ucRabId;
-#endif
     pstMsg->enModemId        = enModemId;
 
     TAF_MEM_CPY_S(pstMsg->aucIpv6Addr,
@@ -6234,248 +5891,6 @@ VOS_VOID AT_PS_SendNdisRelReq(
     return;
 }
 
-#if (FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
-
-VOS_VOID AT_PS_SendNdisIPv4IfaceUpCfgInd(
-    AT_PS_CALL_ENTITY_STRU             *pstCallEntity
-)
-{
-    AT_NDIS_IFACE_UP_CONFIG_IND_STRU   *pstNdisCfgUp        = VOS_NULL_PTR;
-    AT_IPV4_DHCP_PARAM_STRU            *pstIPv4DhcpParam    = VOS_NULL_PTR;
-
-    /* 申请AT_NDIS_IFACE_UP_CONFIG_IND_STRU消息 */
-    pstNdisCfgUp = (AT_NDIS_IFACE_UP_CONFIG_IND_STRU *)AT_ALLOC_MSG_WITH_HDR(
-                            sizeof(AT_NDIS_IFACE_UP_CONFIG_IND_STRU));
-    if (VOS_NULL_PTR == pstNdisCfgUp)
-    {
-        AT_WARN_LOG("AT_PS_SendNdisIPv4IfaceUpCfgInd: alloc msg fail!");
-        return;
-    }
-
-    pstIPv4DhcpParam = &(pstCallEntity->stIpv4Info.stIpv4DhcpInfo);
-
-    /* 初始化消息 */
-    AT_CLR_MSG_ENTITY(pstNdisCfgUp);
-
-    /* 填写消息头 */
-    AT_CFG_NDIS_MSG_HDR(pstNdisCfgUp, ID_AT_NDIS_IFACE_UP_CONFIG_IND);
-
-    /* 填写消息体 */
-    pstNdisCfgUp->bitOpIpv4PdnInfo  = VOS_TRUE;
-    pstNdisCfgUp->ucIfaceId         = pstCallEntity->ucIfaceId;
-    pstNdisCfgUp->ulHandle          = g_ulAtUdiNdisHdl;
-
-    /* 构造消息 */
-    /* 填写IPv4地址 */
-    if (0 != pstIPv4DhcpParam->ulIpv4Addr)
-    {
-        pstNdisCfgUp->stIpv4PdnInfo.bitOpPdnAddr = VOS_TRUE;
-        AT_PutNetworkAddr32(pstNdisCfgUp->stIpv4PdnInfo.stPDNAddrInfo.aucIpV4Addr,
-                            pstIPv4DhcpParam->ulIpv4Addr);
-    }
-
-    /* 填写掩码地址 */
-    if (0 != pstIPv4DhcpParam->ulIpv4NetMask)
-    {
-        AT_PutNetworkAddr32(pstNdisCfgUp->stIpv4PdnInfo.stSubnetMask.aucIpV4Addr,
-                            pstIPv4DhcpParam->ulIpv4NetMask);
-    }
-
-    /* 填写网关地址 */
-    if (0 != pstIPv4DhcpParam->ulIpv4GateWay)
-    {
-        AT_PutNetworkAddr32(pstNdisCfgUp->stIpv4PdnInfo.stGateWayAddrInfo.aucIpV4Addr,
-                            pstIPv4DhcpParam->ulIpv4GateWay);
-    }
-
-    /* 填写主DNS地址 */
-    if (0 != pstIPv4DhcpParam->ulIpv4PrimDNS)
-    {
-        pstNdisCfgUp->stIpv4PdnInfo.bitOpDnsPrim = VOS_TRUE;
-        AT_PutNetworkAddr32(pstNdisCfgUp->stIpv4PdnInfo.stDnsPrimAddrInfo.aucIpV4Addr,
-                            pstIPv4DhcpParam->ulIpv4PrimDNS);
-
-    }
-
-    /* 填写辅DNS地址 */
-    if (0 != pstIPv4DhcpParam->ulIpv4SecDNS)
-    {
-        pstNdisCfgUp->stIpv4PdnInfo.bitOpDnsSec = VOS_TRUE;
-        AT_PutNetworkAddr32(pstNdisCfgUp->stIpv4PdnInfo.stDnsSecAddrInfo.aucIpV4Addr,
-                          pstIPv4DhcpParam->ulIpv4SecDNS);
-
-    }
-
-    /* 填写主WINS地址 */
-    if (0 != pstIPv4DhcpParam->ulIpv4PrimWINNS)
-    {
-        pstNdisCfgUp->stIpv4PdnInfo.bitOpWinsPrim = VOS_TRUE;
-        AT_PutNetworkAddr32(pstNdisCfgUp->stIpv4PdnInfo.stWinsPrimAddrInfo.aucIpV4Addr,
-                            pstIPv4DhcpParam->ulIpv4PrimWINNS);
-    }
-
-    /* 填写辅WINS地址 */
-    if (0 != pstIPv4DhcpParam->ulIpv4SecWINNS)
-    {
-        pstNdisCfgUp->stIpv4PdnInfo.bitOpWinsSec = VOS_TRUE;
-        AT_PutNetworkAddr32(pstNdisCfgUp->stIpv4PdnInfo.stWinsSecAddrInfo.aucIpV4Addr,
-                            pstIPv4DhcpParam->ulIpv4SecWINNS);
-    }
-
-    if (pstIPv4DhcpParam->stIpv4PcscfList.ucIpv4PcscfAddrNum > 0)
-    {
-        AT_PutNetworkAddr32(pstNdisCfgUp->stIpv4PdnInfo.stPcscfPrimAddrInfo.aucIpV4Addr,
-                            pstIPv4DhcpParam->stIpv4PcscfList.aulIpv4PcscfAddrList[0]);
-
-        pstNdisCfgUp->stIpv4PdnInfo.bitOpPcscfPrim = VOS_TRUE;
-    }
-
-    if (pstIPv4DhcpParam->stIpv4PcscfList.ucIpv4PcscfAddrNum > 1)
-    {
-        AT_PutNetworkAddr32(pstNdisCfgUp->stIpv4PdnInfo.stPcscfSecAddrInfo.aucIpV4Addr,
-                            pstIPv4DhcpParam->stIpv4PcscfList.aulIpv4PcscfAddrList[1]);
-
-        pstNdisCfgUp->stIpv4PdnInfo.bitOpPcscfSec = VOS_TRUE;
-    }
-
-    /* 发送消息 */
-    (VOS_VOID)PS_SEND_MSG(WUEPS_PID_AT,pstNdisCfgUp);
-
-    return;
-}
-
-
-VOS_VOID AT_PS_SendNdisIfaceDownCfgInd (
-    AT_PS_CALL_ENTITY_STRU              *pstCallEntity,
-    TAF_PS_CALL_PDP_DEACTIVATE_CNF_STRU *pstEvent
-)
-{
-    AT_NDIS_IFACE_DOWN_CONFIG_IND_STRU  *pstNdisCfgDown = VOS_NULL_PTR;
-
-    /* 申请AT_NDIS_IFACE_DOWN_CONFIG_IND_STRU消息 */
-    pstNdisCfgDown = (AT_NDIS_IFACE_DOWN_CONFIG_IND_STRU *)AT_ALLOC_MSG_WITH_HDR(
-                            sizeof(AT_NDIS_IFACE_DOWN_CONFIG_IND_STRU));
-    if (VOS_NULL_PTR == pstNdisCfgDown)
-    {
-        AT_WARN_LOG("AT_PS_SendNdisIfaceDownCfgInd: alloc msg fail!");
-        return;
-    }
-
-    /* 初始化消息 */
-    AT_CLR_MSG_ENTITY(pstNdisCfgDown);
-
-    /* 填写消息头 */
-    AT_CFG_NDIS_MSG_HDR(pstNdisCfgDown, ID_AT_NDIS_IFACE_DOWN_CONFIG_IND);
-
-    /* 填写消息体 */
-    pstNdisCfgDown->bitOpIpv4PdnInfo = (TAF_PDP_IPV4 == (pstEvent->enPdpType & TAF_PDP_IPV4) ? VOS_TRUE : VOS_FALSE);
-    pstNdisCfgDown->bitOpIpv6PdnInfo = (TAF_PDP_IPV6 == (pstEvent->enPdpType & TAF_PDP_IPV6) ? VOS_TRUE : VOS_FALSE);
-    pstNdisCfgDown->ucIfaceId        = pstCallEntity->ucIfaceId;
-
-    /* 发送消息 */
-    (VOS_VOID)PS_SEND_MSG(WUEPS_PID_AT, pstNdisCfgDown);
-
-    return;
-}
-
-
-VOS_VOID AT_PS_SendNdisIPv6IfaceUpCfgInd(
-    AT_PS_CALL_ENTITY_STRU              *pstCallEntity,
-    TAF_PS_IPV6_INFO_IND_STRU           *pIPv6RaNotify
-)
-{
-    AT_NDIS_IFACE_UP_CONFIG_IND_STRU    *pstNdisCfgUp     = VOS_NULL_PTR;
-
-    /* 申请ID_AT_NDIS_IFACE_UP_CONFIG_IND消息 */
-    pstNdisCfgUp = (AT_NDIS_IFACE_UP_CONFIG_IND_STRU *)AT_ALLOC_MSG_WITH_HDR(
-                            sizeof(AT_NDIS_IFACE_UP_CONFIG_IND_STRU));
-    if (VOS_NULL_PTR == pstNdisCfgUp)
-    {
-        AT_WARN_LOG("AT_PS_SendNdisIPv6IfaceUpCfgInd: alloc msg fail!");
-        return;
-    }
-
-    /* 初始化消息 */
-    AT_CLR_MSG_ENTITY(pstNdisCfgUp);
-
-    /* 填写消息头 */
-    AT_CFG_NDIS_MSG_HDR(pstNdisCfgUp, ID_AT_NDIS_IFACE_UP_CONFIG_IND);
-
-    /* 填写消息体 */
-    pstNdisCfgUp->bitOpIpv6PdnInfo      = VOS_TRUE;
-    pstNdisCfgUp->ucIfaceId             = pstCallEntity->ucIfaceId;
-    pstNdisCfgUp->ulHandle              = g_ulAtUdiNdisHdl;
-
-    /* 填充主副DNS */
-    pstNdisCfgUp->stIpv6PdnInfo.stDnsSer.ucSerNum    = 0;
-    if (VOS_TRUE == pstCallEntity->stIpv6Info.stIpv6DhcpInfo.bitOpIpv6PriDns)
-    {
-        TAF_MEM_CPY_S((VOS_VOID *)pstNdisCfgUp->stIpv6PdnInfo.stDnsSer.aucPriServer,
-                    sizeof(pstNdisCfgUp->stIpv6PdnInfo.stDnsSer.aucPriServer),
-                    pstCallEntity->stIpv6Info.stIpv6DhcpInfo.aucIpv6PrimDNS,
-                    TAF_IPV6_ADDR_LEN);
-        pstNdisCfgUp->stIpv6PdnInfo.stDnsSer.ucSerNum += 1;
-    }
-
-    if (VOS_TRUE == pstCallEntity->stIpv6Info.stIpv6DhcpInfo.bitOpIpv6SecDns)
-    {
-        TAF_MEM_CPY_S((VOS_VOID *)pstNdisCfgUp->stIpv6PdnInfo.stDnsSer.aucSecServer,
-                    sizeof(pstNdisCfgUp->stIpv6PdnInfo.stDnsSer.aucSecServer),
-                    pstCallEntity->stIpv6Info.stIpv6DhcpInfo.aucIpv6SecDNS,
-                    TAF_IPV6_ADDR_LEN);
-        pstNdisCfgUp->stIpv6PdnInfo.stDnsSer.ucSerNum += 1;
-    }
-
-    /* 填充MTU */
-    if (VOS_TRUE == pIPv6RaNotify->stIpv6RaInfo.bitOpMtu)
-    {
-        pstNdisCfgUp->stIpv6PdnInfo.ulBitOpMtu   = VOS_TRUE;
-        pstNdisCfgUp->stIpv6PdnInfo.ulMtu        = pIPv6RaNotify->stIpv6RaInfo.ulMtu;
-    }
-
-    pstNdisCfgUp->stIpv6PdnInfo.ulBitCurHopLimit = pIPv6RaNotify->stIpv6RaInfo.ulBitCurHopLimit;
-    pstNdisCfgUp->stIpv6PdnInfo.ulBitM           = pIPv6RaNotify->stIpv6RaInfo.ulBitM;
-    pstNdisCfgUp->stIpv6PdnInfo.ulBitO           = pIPv6RaNotify->stIpv6RaInfo.ulBitO;
-    pstNdisCfgUp->stIpv6PdnInfo.ulPrefixNum      = pIPv6RaNotify->stIpv6RaInfo.ulPrefixNum;
-    TAF_MEM_CPY_S((VOS_VOID *)pstNdisCfgUp->stIpv6PdnInfo.astPrefixList,
-                sizeof(pstNdisCfgUp->stIpv6PdnInfo.astPrefixList),
-                (VOS_VOID *)pIPv6RaNotify->stIpv6RaInfo.astPrefixList,
-                sizeof(TAF_PDP_IPV6_PREFIX_STRU)*TAF_MAX_PREFIX_NUM_IN_RA);
-
-    /* 填写INTERFACE，取IPV6地址的后8字节来填写INTERFACE */
-    TAF_MEM_CPY_S((VOS_VOID*)pstNdisCfgUp->stIpv6PdnInfo.aucInterfaceId,
-                sizeof(pstNdisCfgUp->stIpv6PdnInfo.aucInterfaceId),
-               (VOS_VOID*)pstCallEntity->stIpv6Info.stIpv6DhcpInfo.aucIpv6Addr,
-                sizeof(VOS_UINT8)*AT_NDIS_IPV6_IFID_LENGTH);
-
-    /* 填充主副PCSCF地址  */
-    pstNdisCfgUp->stIpv6PdnInfo.stPcscfSer.ucSerNum      = 0;
-    if (pstCallEntity->stIpv6Info.stIpv6DhcpInfo.stIpv6PcscfList.ucIpv6PcscfAddrNum > 0)
-    {
-        pstNdisCfgUp->stIpv6PdnInfo.stPcscfSer.ucSerNum++;
-
-        TAF_MEM_CPY_S((VOS_VOID *)pstNdisCfgUp->stIpv6PdnInfo.stPcscfSer.aucPriServer,
-                      sizeof(pstNdisCfgUp->stIpv6PdnInfo.stPcscfSer.aucPriServer),
-                      pstCallEntity->stIpv6Info.stIpv6DhcpInfo.stIpv6PcscfList.astIpv6PcscfAddrList[0].aucPcscfAddr,
-                      sizeof(pstCallEntity->stIpv6Info.stIpv6DhcpInfo.stIpv6PcscfList.astIpv6PcscfAddrList[0].aucPcscfAddr));
-    }
-
-    if (pstCallEntity->stIpv6Info.stIpv6DhcpInfo.stIpv6PcscfList.ucIpv6PcscfAddrNum > 1)
-    {
-        pstNdisCfgUp->stIpv6PdnInfo.stPcscfSer.ucSerNum++;
-
-        TAF_MEM_CPY_S((VOS_VOID *)pstNdisCfgUp->stIpv6PdnInfo.stPcscfSer.aucSecServer,
-                      sizeof(pstNdisCfgUp->stIpv6PdnInfo.stPcscfSer.aucSecServer),
-                      pstCallEntity->stIpv6Info.stIpv6DhcpInfo.stIpv6PcscfList.astIpv6PcscfAddrList[1].aucPcscfAddr,
-                      sizeof(pstCallEntity->stIpv6Info.stIpv6DhcpInfo.stIpv6PcscfList.astIpv6PcscfAddrList[1].aucPcscfAddr));
-    }
-
-    /* 发送消息 */
-    (VOS_VOID)PS_SEND_MSG(WUEPS_PID_AT, pstNdisCfgUp);
-
-    return;
-}
-#endif
 
 
 VOS_VOID AT_PS_ProcNdisPdpActInd(
@@ -6490,13 +5905,9 @@ VOS_VOID AT_PS_ProcNdisPdpActInd(
     /* 向DIPC上报PDP IPv4已经激活事件 */
     if (TAF_PDP_IPV4 == (enPdpType & TAF_PDP_IPV4))
     {
-#if(FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
-        AT_PS_SendNdisIPv4IfaceUpCfgInd(pstCallEntity);
-#else
         /* 把IPV4的PDN信息发送给NDIS模块 */
         AT_PS_SendNdisIPv4PdnInfoCfgReq(pstCallEntity->stUserInfo.enPortIndex,
                                         &(pstCallEntity->stIpv4Info.stIpv4DhcpInfo));
-#endif
     }
 
     /* 向DIPC上报PDP IPv6已经激活事件 */
@@ -6516,11 +5927,7 @@ VOS_VOID AT_PS_ProcNdisPdpDeActInd(
     TAF_PDP_TYPE_ENUM_UINT8              enPdpType
 )
 {
-#if(FEATURE_ON == FEATURE_DATA_SERVICE_NEW_PLATFORM)
-    AT_PS_SendNdisIfaceDownCfgInd(pstCallEntity, pstEvent);
-#else
     AT_PS_SendNdisRelReq(pstCallEntity->stUserInfo.enPortIndex, pstEvent);
-#endif
 
     /* 通知网卡去激活 */
     AT_PS_DeActiveUsbNet();
@@ -6688,7 +6095,6 @@ VOS_VOID AT_PS_ProcHoEndCellularConnect(
 }
 
 
-#if (FEATURE_ON == FEATURE_IPV6)
 
 VOS_UINT32 AT_PS_CmpIpv6PrefixAddr(
     VOS_UINT8                          *pucLocIpv6PrefixAddr,
@@ -6719,15 +6125,10 @@ VOS_UINT64 AT_PS_GenerateRandomIPv6IID(VOS_VOID)
     ulSlice = VOS_GetSlice();
 
     /* 在进行PC测试时，不使用随机值 */
-#if (VOS_WIN32 == VOS_OS_VER)
-    pulAddr[0] = 0xFFFFFFFFU;
-    pulAddr[1] = 0xFFFFFFFFU;
-#else
     VOS_SetSeed(ulSlice);
     pulAddr[0] = VOS_Rand(0xFFFFFFFFU);
     VOS_SetSeed(pulAddr[0]);
     pulAddr[1] = VOS_Rand(0xFFFFFFFFU);
-#endif
 
     *(VOS_UINT8 *)(&pulAddr[0]) &= ~0x02;
 
@@ -7217,19 +6618,12 @@ VOS_UINT32 AT_PS_GenIpv6LanAddrWithRadomIID(
     ulTick = VOS_GetTick();
 
     /* 在进行PC测试时，不使用随机值 */
-#if (VOS_WIN32 == VOS_OS_VER)
-    paulAddr[2] = 0xFFFFFFFFU;
-
-    paulAddr[3] = 0xFFFFFFFFU;
-
-#else
     VOS_SetSeed(ulTick);
     paulAddr[2] = VOS_Rand(0xFFFFFFFFU);
 
     VOS_SetSeed(ulTick + 10);
     paulAddr[3] = VOS_Rand(0xFFFFFFFFU);
 
-#endif
 
     *(VOS_UINT8 *)(&paulAddr[2]) &= ~0x02;
 
@@ -7783,9 +7177,7 @@ VOS_VOID AT_PS_ProcDualStackCallConn(
         {
             /* 原因值#50 (IPv4 ONLY), 通知APP模块IPv6激活失败 */
             case TAF_PS_CAUSE_SM_NW_PDP_TYPE_IPV4_ONLY_ALLOWED:
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
             case TAF_PS_CAUSE_PDP_TYPE_IPV4_ONLY_ALLOWED:
-#endif
                 AT_PS_SndCallEndedResult(pstEvent->stCtrl.usClientId,
                                          ucCallId,
                                          TAF_PDP_IPV6,
@@ -7796,9 +7188,7 @@ VOS_VOID AT_PS_ProcDualStackCallConn(
 
             /* 原因值#51 (IPv6 ONLY), 通知APP模块IPv4激活失败 */
             case TAF_PS_CAUSE_SM_NW_PDP_TYPE_IPV6_ONLY_ALLOWED:
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
             case TAF_PS_CAUSE_PDP_TYPE_IPV6_ONLY_ALLOWED:
-#endif
                 AT_PS_SndCallEndedResult(pstEvent->stCtrl.usClientId,
                                          ucCallId,
                                          TAF_PDP_IPV4,
@@ -8007,7 +7397,6 @@ VOS_UINT32 AT_PS_ProcIpv4v6ConnFailFallback(
 
     return ulRslt;
 }
-#endif
 
 
 VOS_UINT32 AT_PS_CmpIpv4Addr(
@@ -8189,13 +7578,11 @@ VOS_VOID AT_PS_ProcIpv4CallConnected(
             pstCallEntity->stIpv4Info.usIpv4Mtu = pstEvent->usIpv4Mtu;
         }
 
-#if (FEATURE_ON == FEATURE_IPV6)
         /* 如果用户发起的是IPV4V6，需要激活另一个PDP */
         if (VOS_TRUE == AT_PS_IsUsrDialTypeDualStack(pstCallEntity))
         {
             AT_PS_ProcIpv4ConnSuccFallback(ucCallId, pstEvent);
         }
-#endif
         if ( (AT_PDP_STATE_IDLE == pstCallEntity->stIpv6Info.enIpv6State)
           || ( (AT_PDP_STATE_ACTED == pstCallEntity->stIpv6Info.enIpv6State)
             && (VOS_TRUE == pstCallEntity->stIpv6Info.stIpv6RaInfo.bitOpPrefixAddr)))
@@ -8296,7 +7683,6 @@ VOS_VOID AT_PS_ProcIpv4CallReject(
        PDP激活为了防止PDP激活嵌套, 如果IPv6类型的PDP激活失败, 将不再尝试
        IPv4类型的PDP激活 */
 
-#if (FEATURE_ON == FEATURE_IPV6)
     AT_PDP_STATE_ENUM_U8                enPreCallState;
     TAF_PDP_TYPE_ENUM_UINT8             enPrePdpTypeChgValue;
     AT_PS_PDP_TYPE_CHG_ENTRY_STRU      *pstEntry        = VOS_NULL_PTR;
@@ -8306,7 +7692,6 @@ VOS_VOID AT_PS_ProcIpv4CallReject(
     pstCallEntity           = AT_PS_GetCallEntity(pstEvent->stCtrl.usClientId, ucCallId);
     enPreCallState          = AT_PS_GetCallStateByType(pstCallEntity, TAF_PDP_IPV4);
     enPrePdpTypeChgValue    = TAF_PDP_TYPE_BUTT;
-#endif
 
     if (VOS_TRUE == AT_PS_ProcHoCallThrotRejectCause(pstEvent->stCtrl.usClientId, ucCallId))
     {
@@ -8330,7 +7715,6 @@ VOS_VOID AT_PS_ProcIpv4CallReject(
     /* 释放CALLID和CID的映射关系 */
     AT_PS_FreeCallIdToCid(pstEvent->stCtrl.usClientId, pstEvent->ucCid, ucCallId, TAF_PS_APN_DATA_SYS_CELLULAR);
 
-#if (FEATURE_ON == FEATURE_IPV6)
     if ( (AT_PS_IsUsrDialTypeDualStack(pstCallEntity))
       && (AT_PDP_STATE_ACTING == enPreCallState) )
     {
@@ -8376,7 +7760,6 @@ VOS_VOID AT_PS_ProcIpv4CallReject(
             }
         }
     }
-#endif
 
     AT_ERR_LOG("AT_PS_ProcIpv4CallReject: AT_PS_FreeCallEntity.");
 
@@ -8429,7 +7812,6 @@ VOS_VOID AT_PS_ProcIpv4CallEnded(
     /* 释放CALLID和CID的映射关系 */
     AT_PS_FreeCallIdToCid(pstEvent->stCtrl.usClientId, pstEvent->ucCid, ucCallId, TAF_PS_APN_DATA_SYS_CELLULAR);
 
-#if (FEATURE_ON == FEATURE_IPV6)
     /* 如果IPv6类型的PDP还处于激活状态, 需要将其去激活 */
     if (AT_PS_IsUsrDialTypeDualStack(pstCallEntity))
     {
@@ -8449,7 +7831,6 @@ VOS_VOID AT_PS_ProcIpv4CallEnded(
                                      TAF_PS_APN_DATA_SYS_CELLULAR);
         }
     }
-#endif
 
     AT_ERR_LOG("AT_PS_ProcIpv4CallEnded: AT_PS_FreeCallEntity.");
 
@@ -8459,7 +7840,6 @@ VOS_VOID AT_PS_ProcIpv4CallEnded(
     return;
 }
 
-#if (FEATURE_ON == FEATURE_IPV6)
 
 VOS_VOID AT_PS_ProcIpv6HoCallConnected(
     VOS_UINT8                           ucCallId,
@@ -8945,7 +8325,6 @@ VOS_VOID AT_PS_ProcIpv4v6CallEnded(
 
     return;
 }
-#endif
 
 
 VOS_VOID AT_PS_ProcCallConnectedEvent(
@@ -8970,7 +8349,6 @@ VOS_VOID AT_PS_ProcCallConnectedEvent(
             AT_PS_ProcIpv4CallConnected(ucCallId, pstEvent);
             break;
 
-#if (FEATURE_ON == FEATURE_IPV6)
         case TAF_PDP_IPV6:
             /* 处理IPv6的PDP激活成功事件 */
             AT_PS_ProcIpv6CallConnected(ucCallId, pstEvent);
@@ -8980,7 +8358,6 @@ VOS_VOID AT_PS_ProcCallConnectedEvent(
             /* 处理IPv4v6的PDP激活成功事件 */
             AT_PS_ProcIpv4v6CallConnected(ucCallId, pstEvent);
             break;
-#endif
 
         default:
             AT_WARN_LOG("AT_PS_ProcCallConnectedEvent:WARNING: PDP type is invaild!");
@@ -9013,7 +8390,6 @@ VOS_VOID AT_PS_ProcCallRejectEvent(
             AT_PS_ProcIpv4CallReject(ucCallId, pstEvent);
             break;
 
-#if (FEATURE_ON == FEATURE_IPV6)
         case TAF_PDP_IPV6:
             /* 处理IPv6的PDP激活被拒事件 */
             AT_PS_ProcIpv6CallReject(ucCallId, pstEvent);
@@ -9023,7 +8399,6 @@ VOS_VOID AT_PS_ProcCallRejectEvent(
             /* 处理IPv4v6的PDP激活被拒事件 */
             AT_PS_ProcIpv4v6CallReject(ucCallId, pstEvent);
             break;
-#endif
 
         default:
             AT_WARN_LOG("AT_PS_ProcCallRejectEvent:WARNING: PDP type is invaild!");
@@ -9056,7 +8431,6 @@ VOS_VOID AT_PS_ProcCallEndedEvent(
             AT_PS_ProcIpv4CallEnded(ucCallId, pstEvent);
             break;
 
-#if (FEATURE_ON == FEATURE_IPV6)
         case TAF_PDP_IPV6:
             /* 处理IPv6的PDP去激活事件 */
             AT_PS_ProcIpv6CallEnded(ucCallId, pstEvent);
@@ -9066,7 +8440,6 @@ VOS_VOID AT_PS_ProcCallEndedEvent(
             /* 处理IPv4v6的PDP去激活事件 */
             AT_PS_ProcIpv4v6CallEnded(ucCallId, pstEvent);
             break;
-#endif
 
         default:
             AT_WARN_LOG("AT_PS_ProcCallRejectEvent:WARNING: PDP type is invaild!");
@@ -9348,11 +8721,9 @@ VOS_UINT32 AT_PS_AllocCallEntity(
             stMntnPsCallEntity.ucIpv4Cid                = pstCallEntity->stIpv4Info.ucIpv4Cid;
             stMntnPsCallEntity.ucIpv4State              = pstCallEntity->stIpv4Info.enIpv4State;
             stMntnPsCallEntity.ucIpv4DendRptFlg         = pstCallEntity->stIpv4Info.ucIpv4DendRptFlg;
-#if (FEATURE_ON == FEATURE_IPV6)
             stMntnPsCallEntity.ucIpv6Cid                = pstCallEntity->stIpv6Info.ucIpv6Cid;
             stMntnPsCallEntity.ucIpv6State              = pstCallEntity->stIpv6Info.enIpv6State;
             stMntnPsCallEntity.ucIpv6DendRptFlg         = pstCallEntity->stIpv6Info.ucIpv6DendRptFlg;
-#endif
             /* 发送消息 */
             AT_MNTN_TraceEvent(&stMntnPsCallEntity);
         }
@@ -9427,7 +8798,6 @@ VOS_VOID AT_PS_FreeCallEntity(
                   0x00,
                   (VOS_UINT32)(sizeof(AT_IPV4_DHCP_PARAM_STRU)));
 
-#if (FEATURE_ON == FEATURE_IPV6)
     pstCallEntity->stIpv6Info.ucIpv6Cid         = AT_PS_CALL_INVALID_CID;
     pstCallEntity->stIpv6Info.enIpv6State       = AT_PDP_STATE_IDLE;
     pstCallEntity->stIpv6Info.enWlanIpv6State   = AT_PDP_STATE_IDLE;
@@ -9442,7 +8812,6 @@ VOS_VOID AT_PS_FreeCallEntity(
                   (VOS_UINT32)(sizeof(pstCallEntity->stIpv6Info.stIpv6DhcpInfo)),
                   0x00,
                   (VOS_UINT32)(sizeof(AT_IPV6_DHCP_PARAM_STRU)));
-#endif
 
     TAF_MEM_SET_S(&pstCallEntity->stApnDataSysInfo,
                   (VOS_UINT32)(sizeof(pstCallEntity->stApnDataSysInfo)),
@@ -9476,13 +8845,11 @@ VOS_UINT32 AT_PS_IsWlanLinkGoingUp(
         ulLinkUpFlg = VOS_TRUE;
     }
 
-#if (FEATURE_ON == FEATURE_IPV6)
     if ((AT_PDP_STATE_ACTED == pstCallEntity->stIpv6Info.enWlanIpv6State)
      || (AT_PDP_STATE_ACTING == pstCallEntity->stIpv6Info.enWlanIpv6State))
     {
         ulLinkUpFlg = VOS_TRUE;
     }
-#endif
 
     return ulLinkUpFlg;
 }
@@ -9507,13 +8874,11 @@ VOS_UINT32 AT_PS_IsLinkGoingUp(
         ulLinkUpFlg = VOS_TRUE;
     }
 
-#if (FEATURE_ON == FEATURE_IPV6)
     if ((AT_PDP_STATE_ACTED  == pstCallEntity->stIpv6Info.enIpv6State)
      || (AT_PDP_STATE_ACTING == pstCallEntity->stIpv6Info.enIpv6State))
     {
         ulLinkUpFlg = VOS_TRUE;
     }
-#endif
 
     return ulLinkUpFlg;
 }
@@ -9538,12 +8903,10 @@ VOS_UINT32 AT_PS_IsWlanLinkGoingDown(
         ulLinkDownFlg = VOS_TRUE;
     }
 
-#if (FEATURE_ON == FEATURE_IPV6)
     if (AT_PDP_STATE_DEACTING == pstCallEntity->stIpv6Info.enWlanIpv6State)
     {
         ulLinkDownFlg = VOS_TRUE;
     }
-#endif
 
     return ulLinkDownFlg;
 }
@@ -9567,12 +8930,10 @@ VOS_UINT32 AT_PS_IsLinkGoingDown(
         ulLinkDownFlg = VOS_TRUE;
     }
 
-#if (FEATURE_ON == FEATURE_IPV6)
     if (AT_PDP_STATE_DEACTING == pstCallEntity->stIpv6Info.enIpv6State)
     {
         ulLinkDownFlg = VOS_TRUE;
     }
-#endif
 
     return ulLinkDownFlg;
 }
@@ -9596,12 +8957,10 @@ VOS_UINT32 AT_PS_IsLinkDown(
         ulLinkDownFlg = VOS_FALSE;
     }
 
-#if (FEATURE_ON == FEATURE_IPV6)
     if (AT_PDP_STATE_IDLE != pstCallEntity->stIpv6Info.enIpv6State)
     {
         ulLinkDownFlg = VOS_FALSE;
     }
-#endif
 
     return ulLinkDownFlg;
 }
@@ -9629,14 +8988,12 @@ VOS_VOID AT_PS_ReportCurrCallConnState(
             pRptConnRsltFunc(&(pstCallEntity->stUserInfo), TAF_PDP_IPV4);
         }
 
-#if (FEATURE_ON == FEATURE_IPV6)
         if ( ( (AT_PDP_STATE_ACTED == pstCallEntity->stIpv6Info.enIpv6State)
             && (VOS_TRUE == pstCallEntity->stIpv6Info.stIpv6RaInfo.bitOpPrefixAddr))
           || (AT_PDP_STATE_ACTED == pstCallEntity->stIpv6Info.enWlanIpv6State) )
         {
             pRptConnRsltFunc(&(pstCallEntity->stUserInfo), TAF_PDP_IPV6);
         }
-#endif
     }
     else
     {
@@ -9671,7 +9028,6 @@ VOS_VOID AT_PS_ReportCurrCallEndState(
                             TAF_PS_CAUSE_SUCCESS);
         }
 
-#if (FEATURE_ON == FEATURE_IPV6)
         if (VOS_TRUE == AT_PS_IsIpv6Support())
         {
             if ( (AT_PDP_STATE_IDLE == pstCallEntity->stIpv6Info.enIpv6State)
@@ -9682,7 +9038,6 @@ VOS_VOID AT_PS_ReportCurrCallEndState(
                                 TAF_PS_CAUSE_SUCCESS);
             }
         }
-#endif
     }
     else
     {
@@ -9717,14 +9072,12 @@ VOS_VOID AT_PS_ReportAllCallEndState(
                         TAF_PDP_IPV4,
                         TAF_PS_CAUSE_SUCCESS);
 
-#if (FEATURE_ON == FEATURE_IPV6)
         if (VOS_TRUE == AT_PS_IsIpv6Support())
         {
             pRptEndRsltFunc(&stUsrInfo,
                             TAF_PDP_IPV6,
                             TAF_PS_CAUSE_SUCCESS);
         }
-#endif
     }
     else
     {
@@ -9995,7 +9348,6 @@ VOS_UINT32 AT_PS_ValidateDialParam(
         return ulRst;
     }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     if (gastAtParaList[7].usParaLen > 0)
     {
         if (VOS_TRUE != AT_PS_CheckDialRatType(ucIndex, (VOS_UINT8)gastAtParaList[7].ulParaValue))
@@ -10004,7 +9356,6 @@ VOS_UINT32 AT_PS_ValidateDialParam(
             return AT_CME_INCORRECT_PARAMETERS;
         }
     }
-#endif
 
     /* 检查通道映射 */
     ulRst = AT_PS_CheckDialParamDataChanl(ucIndex, enPsCallType);
@@ -10098,7 +9449,6 @@ VOS_VOID AT_PS_ParseUsrDialAuthType(
     pucSystemAppConfig  = AT_GetSystemAppConfigAddr();
 
     /* AUTH TYPE */
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
     if ( (VOS_TRUE == At_CheckCurrRatModeIsCL(ucIndex))
       && (SYSTEM_APP_WEBUI != *pucSystemAppConfig)
       && (AT_PS_WAN_TYPE_APP == enPsCallType))
@@ -10107,7 +9457,6 @@ VOS_VOID AT_PS_ParseUsrDialAuthType(
                                                                gastAtParaList[5].usParaLen);
     }
     else
-#endif
     {
         if (gastAtParaList[5].usParaLen > 0)
         {
@@ -10198,23 +9547,19 @@ VOS_UINT32 AT_PS_ParseUsrDialParam(
         pstUsrDialParam->enPdpType = TAF_PDP_IPV4;
     }
 
-#if(FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
     if (gastAtParaList[7].usParaLen > 0)
     {
         pstUsrDialParam->ucBitRatType  = (VOS_UINT8)gastAtParaList[7].ulParaValue;
     }
 
-#endif
 
-#if(FEATURE_ON == FEATURE_IPV6)
     if (VOS_OK != AT_CheckIpv6Capability(pstUsrDialParam->enPdpType))
     {
         AT_INFO_LOG("AT_PS_ParseUsrDialParam: PDP type is not supported.");
 
         return VOS_ERR;
     }
-#endif
 
     return VOS_OK;
 }
@@ -10458,9 +9803,7 @@ VOS_VOID AT_PS_GetPsDialParamFromAtDialParam(
         }
     }
 
-#if(FEATURE_ON == FEATURE_UE_MODE_CDMA)
     pstPsDialParam->ucBitRatType   = pstDialParam->ucBitRatType;
-#endif
 
 }
 
@@ -10702,7 +10045,6 @@ VOS_UINT32 AT_PS_HangupCall(
         }
     }
 
-#if (FEATURE_ON == FEATURE_IPV6)
     if ( ( (pstCallEntity->stIpv4Info.ucIpv4Cid != pstCallEntity->stIpv6Info.ucIpv6Cid)
         || (AT_PDP_STATE_IDLE == pstCallEntity->stIpv4Info.enIpv4State))
       && ( (AT_PDP_STATE_ACTED == pstCallEntity->stIpv6Info.enIpv6State)
@@ -10722,7 +10064,6 @@ VOS_UINT32 AT_PS_HangupCall(
             return VOS_ERR;
         }
     }
-#endif
 
     return VOS_OK;
 }
@@ -10778,7 +10119,6 @@ VOS_UINT32 AT_PS_ProcConflictDialUpWithCurrCall(
     return VOS_ERR;
 }
 
-#if (FEATURE_ON == FEATURE_IPV6)
 
 VOS_VOID AT_PS_ProcDialPdpTypeChg(
     VOS_UINT16                          usClientId,
@@ -10815,7 +10155,6 @@ VOS_VOID AT_PS_ProcDialPdpTypeChg(
 
     return;
 }
-#endif
 
 
 VOS_UINT32 AT_PS_DialUpDataSys(
@@ -10841,9 +10180,7 @@ VOS_UINT32 AT_PS_DialUpDataSys(
     {
         /* 在Cellular下发起呼叫 */
         /* 处理PDP TYPE CHG */
-#if (FEATURE_ON == FEATURE_IPV6)
         AT_PS_ProcDialPdpTypeChg(pstCallEntity->stUserInfo.enUserIndex, &stUsrDialParam);
-#endif
 
         /* 建立呼叫 */
         ulRslt = AT_PS_SetupCall(pstCallEntity->stUserInfo.enUserIndex, ucCallId, &stUsrDialParam);
@@ -11235,7 +10572,6 @@ VOS_UINT16 AT_PS_BuildPsCallExClientId(
     }
 }
 
-#if (FEATURE_ON == FEATURE_UE_MODE_CDMA)
 
 VOS_UINT32 AT_PS_CheckDialRatType(
     VOS_UINT8                           ucIndex,
@@ -11262,7 +10598,6 @@ VOS_UINT32 AT_PS_CheckDialRatType(
         return VOS_FALSE;
     }
 }
-#endif
 
 
 VOS_VOID AT_PS_ProcRabidChangedEvent(
@@ -11418,7 +10753,6 @@ VOS_VOID AT_PS_SetWlanCallStateByType(
             pstCallEntity->stIpv4Info.enWlanIpv4State = enPdpState;
             break;
 
-#if (FEATURE_ON == FEATURE_IPV6)
         case TAF_PDP_IPV6:
             pstCallEntity->stIpv6Info.enWlanIpv6State = enPdpState;
             break;
@@ -11427,7 +10761,6 @@ VOS_VOID AT_PS_SetWlanCallStateByType(
             pstCallEntity->stIpv4Info.enWlanIpv4State = enPdpState;
             pstCallEntity->stIpv6Info.enWlanIpv6State = enPdpState;
             break;
-#endif
 
         default:
             AT_ERR_LOG("AT_PS_SetWlanCallStateByType: PDP type is invalid!");
@@ -12002,7 +11335,6 @@ TAF_PDP_TYPE_ENUM_UINT8 AT_PS_ConvertPdpType2Cellular(IMSA_WIFI_IP_TYPE_ENUM_INT
             enPdpType = TAF_PDP_IPV4;
             break;
 
-#if (FEATURE_ON == FEATURE_IPV6)
         case IMSA_WIFI_IP_IPV6:
             enPdpType = TAF_PDP_IPV6;
             break;
@@ -12010,7 +11342,6 @@ TAF_PDP_TYPE_ENUM_UINT8 AT_PS_ConvertPdpType2Cellular(IMSA_WIFI_IP_TYPE_ENUM_INT
         case IMSA_WIFI_IP_IPV4V6:
             enPdpType = TAF_PDP_IPV4V6;
             break;
-#endif
 
         default:
             enPdpType = TAF_PDP_TYPE_BUTT;
@@ -12030,7 +11361,6 @@ IMSA_WIFI_IP_TYPE_ENUM_INT8 AT_PS_ConvertPdpType2Wlan( TAF_PDP_TYPE_ENUM_UINT8 e
             enPdpType = IMSA_WIFI_IP_IPV4;
             break;
 
-#if (FEATURE_ON == FEATURE_IPV6)
         case TAF_PDP_IPV6 :
             enPdpType = IMSA_WIFI_IP_IPV6;
             break;
@@ -12038,7 +11368,6 @@ IMSA_WIFI_IP_TYPE_ENUM_INT8 AT_PS_ConvertPdpType2Wlan( TAF_PDP_TYPE_ENUM_UINT8 e
         case TAF_PDP_IPV4V6:
             enPdpType = IMSA_WIFI_IP_IPV4V6;
             break;
-#endif
 
         default:
             enPdpType = IMSA_WIFI_IP_TYPE_BUTT;

@@ -68,7 +68,7 @@
 #else
 #include "AdsDeviceInterface.h"
 #endif
-#include <linux/pm_wakeup.h>
+#include <linux/wakelock.h>
 
 
 #ifdef __cplusplus
@@ -518,7 +518,7 @@ typedef struct
     VOS_UINT8                           aucRsv[3];
     VOS_SEM                             hResetSem;                              /* 二进制信号量，用于复位处理 */
     RNIC_TETHER_INFO_STRU               stTetherInfo;                           /* Tethering信息 */
-    struct wakeup_source                stOnDemandDisconnWakeLock;
+    struct wake_lock                    stOnDemandDisconnWakeLock;
 }RNIC_CTX_STRU;
 
 /*****************************************************************************

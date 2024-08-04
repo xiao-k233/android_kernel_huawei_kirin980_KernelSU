@@ -78,10 +78,8 @@
 #include "securec.h"
 
 #define THIS_MODU mod_efuse
-#ifdef HI_K3_EFUSE
 #include <mdrv.h>
 #include "../../adrv/adrv.h"
-#endif
 
 struct work_struct efuse_work;
 
@@ -99,35 +97,20 @@ void efuse_handle_work(struct work_struct *work)
 
     if (EFUSE_READ == msg->opt) {
         efuse_print_info("efuse read start group = %d, length = %d\n", msg->start, msg->len);
-#ifdef HI_K3_EFUSE
         msg->ret = EFUSE_ERROR_ARGS;
         efuse_print_error("error group for efuse read, group = %d\n", msg->start);
-#else
-        msg->ret = bsp_efuse_read(msg->buf, msg->start,msg->len);
-#endif
         efuse_print_info("efuse read finish, ret = %d\n", msg->ret);
     }
     else if (EFUSE_WRITE == msg->opt) {
         efuse_print_info("efuse write start group = %d, length = %d\n", msg->start, msg->len);
-#ifdef HI_K3_EFUSE
         if ((msg->start == EFUSE_GRP_HUK) && (!is_in_llt())) {
             msg->ret = set_efuse_kce_value((unsigned char *)msg->buf, (unsigned int)msg->len * 4, 0);
         } else {
             msg->ret = EFUSE_ERROR_ARGS;
             efuse_print_error("error group for efuse write, group = %d\n", msg->start);
         }
-#else
-        msg->ret = bsp_efuse_write(msg->buf, msg->start,msg->len);
-#endif
         efuse_print_info("efuse write finish, ret = %d\n", msg->ret);
     }
-#ifndef HI_K3_EFUSE
-    else if (EFUSE_SEC_READ == msg->opt) {
-        efuse_print_info("efuse read start group = %d, length = %d\n", msg->start, msg->len);
-        msg->ret = bsp_efuse_sec_read(msg->buf, msg->start,msg->len);
-        efuse_print_info("efuse read finish, ret = %d\n", msg->ret);
-    }
-#endif
     else {
         msg->ret = EFUSE_ERROR_ARGS;
         efuse_print_error("error opt, opt = 0x%08X\n", msg->opt);
@@ -181,6 +164,3 @@ int __init bsp_efuse_agent_init(void)
 
     return EFUSE_OK;
 }
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-module_init(bsp_efuse_agent_init);
-#endif

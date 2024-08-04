@@ -78,7 +78,7 @@ unsigned long scm_cnf_dst_buff_phy_to_virt(u8 * phyAddr);
 u32 scm_cnf_dst_channel_init(void);
 void scm_send_cnf_data_to_udi(u8 *pucVirData, u8 *pucPHYData, u32 ulDataLen);
 void scm_reg_cnf_coder_dst_send_fuc(void);
-int scm_cnf_dst_read_cb(unsigned int u32ChanID);
+void scm_cnf_dst_read_cb(void);
 
 
 #ifdef __cplusplus

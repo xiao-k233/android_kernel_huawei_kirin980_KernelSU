@@ -62,7 +62,6 @@
 *****************************************************************************/
 #define    THIS_FILE_ID PS_FILE_ID_SI_ACORE_API_C
 
-#if (FEATURE_ON == FEATURE_SCI_SWITCH_OPTIMIZE)
 
 SI_PIH_CARD_SLOT_ENUM_UINT32 SI_GetSlotIdByModemId(
     MODEM_ID_ENUM_UINT16                enModemId
@@ -83,16 +82,12 @@ SI_PIH_CARD_SLOT_ENUM_UINT32 SI_GetSlotIdByModemId(
         case MODEM_ID_0:
             enSlotId = stSciCfg.bitModem0Slot;
             break;
-#if (1 < MULTI_MODEM_NUMBER)
         case MODEM_ID_1:
             enSlotId = stSciCfg.bitModem1Slot;
             break;
-#if (3 == MULTI_MODEM_NUMBER)
         case MODEM_ID_2:
             enSlotId = stSciCfg.bitModem2Slot;
             break;
-#endif
-#endif
         default:
             enSlotId = SI_PIH_CARD_SLOT_BUTT;
             break;
@@ -100,6 +95,5 @@ SI_PIH_CARD_SLOT_ENUM_UINT32 SI_GetSlotIdByModemId(
 
     return enSlotId;
 }
-#endif  /* (FEATURE_ON == FEATURE_SCI_SWITCH_OPTIMIZE) */
 
 

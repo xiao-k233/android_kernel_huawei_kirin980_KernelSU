@@ -54,9 +54,6 @@
 #include "TafSsaApi.h"
 #include "MnClient.h"
 
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-#include "NasMultiInstanceApi.h"
-#endif
 
 
 
@@ -76,12 +73,10 @@
    3 外部函数声明
 *****************************************************************************/
 
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
 extern VOS_UINT32 AT_GetDestPid(
     MN_CLIENT_ID_T                      usClientId,
     VOS_UINT32                          ulRcvPid
 );
-#endif
 
 
 /*****************************************************************************
@@ -96,17 +91,8 @@ VOS_VOID TAF_SSA_SndTafMsg(
 {
     TAF_SSA_MSG_STRU                   *pstMsg   = VOS_NULL_PTR;
     VOS_UINT32                          ulRealPid;
-#if (OSA_CPU_CCPU == VOS_OSA_CPU)
-    MODEM_ID_ENUM_UINT16                enModemId;
-#endif
-#if (OSA_CPU_ACPU == VOS_OSA_CPU)
     /* 填写消息头 */
     ulRealPid = AT_GetDestPid(((TAF_CTRL_STRU *)pData)->usClientId, WUEPS_PID_TAF);
-#else
-    enModemId = NAS_MULTIINSTANCE_GetCurrInstanceModemId(WUEPS_PID_TAF);
-
-    ulRealPid = NAS_MULTIINSTANCE_GetSpecModemPid(enModemId, WUEPS_PID_TAF);
-#endif
 
     /* 构造消息 */
     pstMsg = (TAF_SSA_MSG_STRU*)PS_ALLOC_MSG_WITH_HEADER_LEN(

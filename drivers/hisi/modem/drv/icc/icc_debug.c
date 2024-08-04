@@ -70,17 +70,13 @@ s32 bsp_icc_debug_register(u32 channel_id, FUNCPTR_1 debug_routine, int param)
 {
 	struct icc_channel_vector *vector = NULL;
 
-    if ((GET_CHN_ID(channel_id) >= ICC_CHN_ID_MAX) || g_icc_ctrl.channels[GET_CHN_ID(channel_id)] == NULL ||
+	if((GET_CHN_ID(channel_id)  >= ICC_CHN_ID_MAX) ||
 	   (GET_FUNC_ID(channel_id) >= g_icc_ctrl.channels[GET_CHN_ID(channel_id)]->func_size))
 	{
 		icc_print_error("invalide parameter! channel_id=0x%x\n", channel_id);
 		return ICC_INVALID_PARA;
 	}
 	/*lint --e{409} */
-    if (g_icc_ctrl.channels[GET_CHN_ID(channel_id)]->vector == NULL) {
-        icc_print_error("vector NULL\n");
-        return ICC_NULL_PTR;
-    }
 	vector = &(g_icc_ctrl.channels[GET_CHN_ID(channel_id)]->vector[GET_FUNC_ID(channel_id)]);
 	vector->pm_debug.debug_routine = debug_routine;
 	vector->pm_debug.para = param;
@@ -134,11 +130,6 @@ int icc_channel_packet_dump(struct icc_channel_packet *packet)
 	void *read_context = NULL;
 	int ret = ICC_OK;
 
-    if ((GET_CHN_ID(packet->channel_id) >= ICC_CHN_ID_MAX) || (!g_icc_ctrl.channels[GET_CHN_ID(packet->channel_id)]) ||
-        (GET_FUNC_ID(packet->channel_id) >= g_icc_ctrl.channels[GET_CHN_ID(packet->channel_id)]->func_size)) {
-        icc_print_error("para err,chan_id=0x%x\n", GET_CHN_ID(packet->channel_id));
-        return ICC_ERR;
-    }
 	channel = g_icc_ctrl.channels[GET_CHN_ID(packet->channel_id)];
 	name = channel->name;
 	vector = &channel->vector[GET_FUNC_ID(packet->channel_id)];
@@ -168,7 +159,9 @@ int icc_channel_packet_dump(struct icc_channel_packet *packet)
 	icc_print_info("src_cpu_id  : 0x%x\n", packet->src_cpu_id);
 	icc_print_info("timestamp   : 0x%x\n", packet->timestamp);
 	icc_print_info("task_id     : 0x%x\n", packet->task_id);
-	icc_print_info("<icc[%s] end>\n", name);
+	icc_print_info("read_cb     : %pK\n",   read_cb);
+	icc_print_info("read_context: %pK\n",   read_context);
+	icc_print_info("<icc[%s] end>\n");
 	return ret;
 }
 
@@ -192,7 +185,7 @@ void icc_dbg_info_print(const char *fifo_name, u32 channel_id, u8 *data, u32 dat
 {
 	if(g_icc_dbg.msg_print_sw)
 	{
-		icc_print_error("%s: channel[0x%x], msg: 0x%x, len[%d]:\n", fifo_name, channel_id, *(u32 *)data, data_len);
+		icc_print_error("%s: channel[0x%x], msg[0x%p]: 0x%x, len[%d]:\n", fifo_name, channel_id, data, *(u32 *)data, data_len);
 	}
 }
 
@@ -251,7 +244,6 @@ void icc_dump_hook(void)
 {/*lint --e{539}*/
     char *dump_buf = g_icc_dbg.dump_buf_addr;
     u32  dump_size = g_icc_dbg.dump_buf_size;
-	errno_t err = EOK;
 
     /* do nothing, if om init fail */
     if (0 == dump_size || NULL == dump_buf)
@@ -260,11 +252,8 @@ void icc_dump_hook(void)
     }
 
 	/* coverity[secure_coding] */
-	err = memcpy_s((void *)g_icc_dbg.dump_buf_addr, sizeof(struct icc_msg_info), 
+	(void)memcpy_s((void *)g_icc_dbg.dump_buf_addr, sizeof(struct icc_msg_info), 
 		(void *)&g_icc_dbg.msg_stat, sizeof(struct icc_msg_info));
-	if (err != EOK) {
-		icc_print_error("memcpy faild, err = %d\n", err);
-	}
 
     return;
 }
@@ -398,12 +387,8 @@ void icc_debug_after_send(struct icc_channel *channel, struct icc_channel_packet
     	msg_tx.channel_id = packet->channel_id;
 	msg_tx.recv_task_id = 0;
 	msg_tx.duration_post = bsp_get_slice_value();
-
-    if ((GET_CHN_ID(msg_tx.channel_id) >= ICC_CHN_ID_MAX) || (!g_icc_ctrl.channels[GET_CHN_ID(msg_tx.channel_id)]) ||
-        (GET_FUNC_ID(msg_tx.channel_id) >= g_icc_ctrl.channels[GET_CHN_ID(msg_tx.channel_id)]->func_size)) {
-        icc_print_error("para err, chan_id=0x%x.\n", msg_tx.channel_id);
-        return;
-    }
+	/* coverity[secure_coding] */
+	(void)memcpy_s((void *)msg_tx.data, ICC_MSG_RECORED_DATA_LEN, (void *)data, min(msg_tx.len, (u32)ICC_MSG_RECORED_DATA_LEN));
 	icc_send_msg_queue_in(&(g_icc_dbg.msg_stat.send), &msg_tx);
 	icc_channel_msg_stat(&(g_icc_dbg.channel_stat[GET_CHN_ID(msg_tx.channel_id)]->send.total), msg_tx.len, msg_tx.send_task_id);
 	icc_channel_msg_stat(&(g_icc_dbg.channel_stat[GET_CHN_ID(msg_tx.channel_id)]->send.sub_chn[GET_FUNC_ID(msg_tx.channel_id)]), msg_tx.len, msg_tx.send_task_id);
@@ -457,11 +442,6 @@ void icc_debug_after_recv(struct icc_channel_packet *pkg_header)
 	msg_rx.perf.sum += delta_slice;
 	msg_rx.perf.avg = msg_rx.perf.sum / msg_rx.perf.cnt;
 
-    if ((GET_CHN_ID(channel_id) >= ICC_CHN_ID_MAX) || (!g_icc_ctrl.channels[GET_CHN_ID(channel_id)]) ||
-        (GET_FUNC_ID(channel_id) >= g_icc_ctrl.channels[GET_CHN_ID(channel_id)]->func_size)) {
-        icc_print_error("para err, chan_id=0x%x.\n", channel_id);
-        return;
-    }
 	icc_recv_msg_queue_in(&(g_icc_dbg.msg_stat.recv), &msg_rx);
 	icc_channel_msg_stat(&(g_icc_dbg.channel_stat[GET_CHN_ID(channel_id)]->recv.total), msg_rx.len, msg_rx.recv_task_id);
 	icc_channel_msg_stat(&(g_icc_dbg.channel_stat[GET_CHN_ID(channel_id)]->recv.sub_chn[GET_FUNC_ID(channel_id)]), \

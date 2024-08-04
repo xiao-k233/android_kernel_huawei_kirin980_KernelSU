@@ -67,11 +67,6 @@ extern VOS_UINT32 AT_GetDestPid(
     VOS_UINT32                          ulRcvPid
 );
 
-#if ( VOS_WIN32 == VOS_OS_VER )
-extern VOS_VOID STUB_SetTafAgentMtaWriteACoreNvCnf(
-    TAF_WRITE_ACORE_NV_STRU            *pstWriteAcoreNv);
-extern VOS_VOID STUB_SetTafAgentMtaProcACoreNvCnf(VOS_VOID);
-#endif
 
 /*****************************************************************************
 3 函数实现
@@ -1550,7 +1545,6 @@ VOS_UINT32 TAF_AGENT_WriteACoreNv(
     }
 
     /* 填写消息头 */
-#if (1 < MULTI_MODEM_NUMBER)
     if ( MODEM_ID_0 == pstWriteAcoreNv->ulModemId )
     {
         pstReq->ulReceiverPid = I0_UEPS_PID_MTA;
@@ -1563,9 +1557,6 @@ VOS_UINT32 TAF_AGENT_WriteACoreNv(
     {
         pstReq->ulReceiverPid = I2_UEPS_PID_MTA;
     }
-#else
-    pstReq->ulReceiverPid = I0_UEPS_PID_MTA;
-#endif
 
     pstReq->enMsgId       = ID_TAFAGENT_MTA_WRITE_ACORE_NV_REQ;
     pstReq->ulNvItemId    = pstWriteAcoreNv->ulNvItemId;
@@ -1609,9 +1600,6 @@ VOS_UINT32 TAF_AGENT_WriteACoreNv(
         return NV_WRITE_UNABLE;
     }
 
-#if ( VOS_WIN32 == VOS_OS_VER )
-    STUB_SetTafAgentMtaWriteACoreNvCnf(pstWriteAcoreNv);
-#endif
 
     ulResult = NV_WRITE_UNABLE;
     pstCnf   = (TAFAGENT_MTA_WRITE_ACORE_NV_CNF_STRU*)TAF_AGENT_GetTafAcpuCnfMsg();
@@ -1727,9 +1715,6 @@ VOS_UINT32 TAF_AGENT_ProcACoreNv(
         return VOS_ERR;
     }
 
-#if ( VOS_WIN32 == VOS_OS_VER )
-    STUB_SetTafAgentMtaProcACoreNvCnf();
-#endif
 
     ulResult = VOS_ERR;
     pstCnf   = (TAFAGENT_MTA_PROC_ACORE_NV_CNF_STRU*)TAF_AGENT_GetTafAcpuCnfMsg();

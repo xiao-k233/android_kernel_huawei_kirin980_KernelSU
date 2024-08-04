@@ -193,7 +193,6 @@ u32 nv_upgrade_file_updata(void)
     return NV_OK;
 }
 
-#ifdef BSP_CONFIG_PHONE_TYPE
 u32 nv_set_coldpatch_upgrade_flag(bool flag)
 {
     u32 ret = NV_ERROR;
@@ -246,7 +245,6 @@ u32 nv_set_coldpatch_upgrade_flag(bool flag)
 
     return NV_OK;
 }
-#endif
 
 u32 nv_upgrade_set_flag(bool flag)
 {

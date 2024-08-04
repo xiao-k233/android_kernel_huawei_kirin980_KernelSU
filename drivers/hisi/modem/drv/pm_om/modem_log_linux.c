@@ -53,8 +53,7 @@
 #include <linux/fs.h>
 #include <linux/miscdevice.h>
 #include <linux/suspend.h>
-#include <linux/device.h>
-#include <linux/pm_wakeup.h>
+#include <linux/wakelock.h>
 #include <linux/uaccess.h>
 #include <linux/poll.h>
 
@@ -95,7 +94,7 @@ struct logger_log {
 
 struct modem_log
 {
-	struct wakeup_source  wake_lock;
+	struct wake_lock  wake_lock;
 	struct notifier_block pm_notify;
 	u32 init_flag;
 };
@@ -107,7 +106,7 @@ struct modem_log g_modem_log;
 
 static struct logger_log *get_modem_log_from_name(const char* name)
 {
-    struct logger_log *log = NULL;
+    struct logger_log *log;
 
     list_for_each_entry(log, &modem_log_list, logs)
     {
@@ -122,7 +121,7 @@ static struct logger_log *get_modem_log_from_name(const char* name)
 
 struct logger_log *get_modem_log_from_minor(int minor)
 {
-    struct logger_log *log = NULL;
+    struct logger_log *log;
 
     list_for_each_entry(log, &modem_log_list, logs)
     {
@@ -135,24 +134,14 @@ struct logger_log *get_modem_log_from_minor(int minor)
     return NULL;
 }
 
-int kernel_user_memcpy(void* dest, u32 destMax, void* src, u32 count)
+unsigned long kernel_user_memcpy(void* dest, u32 destMax, const void* src, u32 count)
 {/*lint --e{715} suppress destMax not referenced*/
 	/* coverity[HW_CBG_C_COPY_TO_USER] */
-    unsigned long ret;
-    unsigned long src_addr = (uintptr_t)src;
-    src = (void*)(uintptr_t)src_addr;
-    ret = copy_to_user(dest, src, (unsigned long)count);
-    if(ret != 0)
-    {
-            modem_log_pr_err("copy_to_user err\n");
-            return -1;
-    }
-    return 0;
+	return copy_to_user(dest, src, (unsigned long)count);
 }
 
 void modem_log_ring_buffer_get(struct log_usr_info * usr_info, struct ring_buffer *rb)
 {
-	int ret;
 	if (usr_info  && usr_info->mem)
 	{
 		rb->buf   = usr_info->ring_buf;
@@ -162,17 +151,13 @@ void modem_log_ring_buffer_get(struct log_usr_info * usr_info, struct ring_buffe
 	}
 	else
 	{
-		ret = memset_s((void *)rb, sizeof(*rb), 0, sizeof(*rb));
-		if(ret)
-		{
-			modem_log_pr_err("rb memset ret = %d\n", ret);
-		}
+		memset_s((void *)rb, sizeof(*rb), 0, sizeof(*rb));
 	}
 }
 
 static unsigned int modem_log_poll(struct file *file, poll_table *wait)
 {
-	struct logger_log *log = NULL;
+	struct logger_log *log;
 	unsigned int ret = 0;
 	u32 read = 0;
 	u32 write = 0;
@@ -265,7 +250,7 @@ skip_read:
 			break;
 		}
 
-		__pm_relax(&g_modem_log.wake_lock); /*lint !e455*/
+		wake_unlock(&g_modem_log.wake_lock); /*lint !e455*/
 		schedule();
 		modem_log_pr_debug("give up cpu in modem_log_read\n");
 	}
@@ -371,7 +356,7 @@ static int modem_log_release(struct inode *inode, struct file *file)
 	}
 	mutex_unlock(&log->mutex);
 
-	__pm_relax(&g_modem_log.wake_lock); /*lint !e455*/
+	wake_unlock(&g_modem_log.wake_lock); /*lint !e455*/
 
 	modem_log_pr_debug("%s entry\n", __func__);
 	return 0;
@@ -390,12 +375,12 @@ static const struct file_operations modem_log_fops = {
  */
 void modem_log_wakeup_all(void)
 {
-    struct logger_log *log = NULL;
+    struct logger_log *log;
     list_for_each_entry(log, &modem_log_list, logs)
     {
 		if (log->usr_info->mem && log->usr_info->mem->read != log->usr_info->mem->write)
 		{
-			__pm_wakeup_event(&g_modem_log.wake_lock, jiffies_to_msecs((long)HZ));
+			wake_lock_timeout(&g_modem_log.wake_lock,(long)(HZ));
 			if((&log->wq)!=NULL)
 			{
 			wake_up_interruptible(&log->wq);
@@ -419,7 +404,7 @@ void modem_log_ipc_handler(u32 data)
  */
 s32 modem_log_notify(struct notifier_block *notify_block, unsigned long mode, void *unused)
 {/*lint --e{715} suppress notify_block&unused not referenced*/
-    struct logger_log *log = NULL;
+    struct logger_log *log;
 
 	modem_log_pr_debug("entry\n");
 
@@ -430,7 +415,7 @@ s32 modem_log_notify(struct notifier_block *notify_block, unsigned long mode, vo
 	    {
 			if ((log->usr_info->mem) && (log->usr_info->mem->read != log->usr_info->mem->write) && (log->usr_info->mem->app_is_active))
 			{
-				__pm_wakeup_event(&g_modem_log.wake_lock, jiffies_to_msecs((long)HZ));
+				wake_lock_timeout(&g_modem_log.wake_lock,(long)(HZ));
 				if((&log->wq)!=NULL)
 				{
 				wake_up_interruptible(&log->wq);
@@ -514,7 +499,7 @@ out:
  */
 void bsp_modem_log_fwrite_trigger(struct log_usr_info *usr_info)
 {
-	struct logger_log *log = NULL;
+	struct logger_log *log;
 
 	if (!usr_info)
 	{
@@ -532,7 +517,7 @@ void bsp_modem_log_fwrite_trigger(struct log_usr_info *usr_info)
 	/* if reader is not ready, no need to wakeup waitqueue */
 	if (usr_info->mem && usr_info->mem->app_is_active)  /*lint !e456*/
 	{
-		__pm_stay_awake(&g_modem_log.wake_lock); /*lint !e454*/
+		wake_lock(&g_modem_log.wake_lock); /*lint !e454*/
 		if((&log->wq)!=NULL)
 		{
 		wake_up_interruptible(&log->wq);
@@ -554,7 +539,7 @@ EXPORT_SYMBOL(modem_log_fwrite_trigger_force); /*lint !e19 */
  */
 int __init modem_log_init(void)
 {
-	wakeup_source_init(&g_modem_log.wake_lock, "modem_log_wake");
+	wake_lock_init(&g_modem_log.wake_lock, WAKE_LOCK_SUSPEND, "modem_log_wake");
 
 	g_modem_log.pm_notify.notifier_call = modem_log_notify;
 	register_pm_notifier(&g_modem_log.pm_notify);
@@ -579,6 +564,3 @@ ipc_err:
 	return MODEM_LOG_NO_IPC_SRC;
 }
 
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-module_init(modem_log_init);
-#endif

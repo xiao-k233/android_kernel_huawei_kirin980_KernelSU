@@ -251,7 +251,7 @@ extern VOS_UINT32  AT_PppDataModeRcvModemMsc(
 extern VOS_INT AT_RcvFromAppCom(
            VOS_UINT8                           ucVcomId,
            VOS_UINT8                          *pData,
-           VOS_UINT32                          ullength
+           VOS_UINT16                          uslength
        );
 extern VOS_INT AT_RcvFromAppSock(
            VOS_UINT8                           ucPortNo,
@@ -319,7 +319,7 @@ extern VOS_UINT32 At_ModemDataInd(
            VOS_UINT8                           ucDlci,
            IMM_ZC_STRU                        *pstData
        );
-extern VOS_VOID AT_UsbModemEnableCB(VOS_UINT32 ulEnable );
+extern VOS_VOID AT_UsbModemEnableCB( PS_BOOL_ENUM_UINT8 ucEnable );
 VOS_UINT32 At_ModemEst (
     VOS_UINT8                           ucIndex,
     AT_CLIENT_ID_ENUM_UINT16            usClientId,
@@ -327,11 +327,11 @@ VOS_UINT32 At_ModemEst (
 );
 extern VOS_VOID AT_ModemeEnableCB(
     VOS_UINT8                           ucIndex,
-    VOS_UINT32                          ulEnable
+    PS_BOOL_ENUM_UINT8                  ucEnable
 );
 
 extern VOS_VOID AT_ModemFreeDlDataBuf(
-    VOS_CHAR                           *pstBuf
+    IMM_ZC_STRU                        *pstBuf
 );
 extern VOS_UINT32 AT_ModemFreeUlDataBuf(
     VOS_UINT8                           ucIndex,

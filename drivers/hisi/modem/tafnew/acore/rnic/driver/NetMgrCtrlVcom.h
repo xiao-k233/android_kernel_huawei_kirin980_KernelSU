@@ -74,7 +74,7 @@
 #include <asm/uaccess.h>
 #include <linux/poll.h>
 #include <linux/slab.h>
-#include <linux/mutex.h>
+#include <linux/spinlock.h>
 #include <linux/list.h>
 #else
 #include "Linuxstub.h"
@@ -153,7 +153,7 @@ typedef struct
 {
     struct cdev                        *pstNmCtrlDev;            /* cdev结构体，与字符设备对应 */
     wait_queue_head_t                   stReadInq;
-    struct mutex                        stListLock;             /* 新增一个成员，定义一个互斥锁,访问链表时需要加锁 */
+    spinlock_t                          stListLock;             /* 新增一个成员，定义一个spin锁,访问链表时需要加锁 */
     LIST_HEAD_STRU                      stListHead;
     LIST_HEAD_STRU                      stLowPriListHead;
     unsigned int                        ulMajorNum;

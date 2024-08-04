@@ -147,8 +147,7 @@ OSL_IRQ_FUNC(static irqreturn_t,adp_timer_handler,irq,para)
 {
 	u32 ret_value = 0;
 	u32 timer_id;
-	int ret;
-	timer_id = (u32)(uintptr_t)para;
+	timer_id = (u32)(unsigned long)para;
 	timer_callback_stamp_dbg(timer_id);
 	ret_value = bsp_hardtimer_int_status(timer_id);
 	if(0x0 !=ret_value)
@@ -158,11 +157,7 @@ OSL_IRQ_FUNC(static irqreturn_t,adp_timer_handler,irq,para)
 		(void)bsp_hardtimer_disable(timer_id);
 		if(NULL!=adp_timer_ctrl[timer_id].routine)
 		{
-			ret = adp_timer_ctrl[timer_id].routine(adp_timer_ctrl[timer_id].args);
-			if(ret)
-			{
-			    hardtimer_print_error("timerid0x%x,ret=0x%x\n",timer_id,ret);
-			}
+			adp_timer_ctrl[timer_id].routine(adp_timer_ctrl[timer_id].args);
 		}
 	}
 
@@ -275,19 +270,12 @@ BSP_VOID mdrv_timer_debug_register(unsigned int usrClkId,FUNCPTR_1 routine, int 
 static void get_timer_int_stat(void)
 {
 	unsigned int i = 0;
-	int ret;
 	pr_info("%s +\n", __func__);
 	for(i = 0;i <TIMER_ID_MAX;i++){
 		if(adp_timer_ctrl[i].debug_routine)
 		{
 			if(bsp_hardtimer_int_status(i))
-			{
-				ret = adp_timer_ctrl[i].debug_routine(adp_timer_ctrl[i].debug_args);
-				if(ret)
-				{
-				    pr_info("timer%d,ret=0x%x\n",i,ret);
-				}
-			}
+				adp_timer_ctrl[i].debug_routine(adp_timer_ctrl[i].debug_args);
 		}
 	}
 	pr_info("%s -\n", __func__);

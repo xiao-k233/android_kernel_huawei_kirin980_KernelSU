@@ -112,19 +112,11 @@ u32 g_pm_om_magic_tbl[PM_OM_MOD_ID_ENUM_MAX]={
 u32 ring_buffer_in(struct ring_buffer *rb, void *data, u32 len)
 {
 	/* 首先拷贝 rb->write到buffer末尾的一段数据 */
-	int ret;
 	u32 left = min(len,  rb->size - rb->write);
-	ret = memcpy_s((void *)(rb->buf + rb->write), rb->size, (void *)data, (unsigned long)left);/*lint !e124 */
-	if(ret)
-	{
-		pmom_pr_err("rb->buf + rb->write memcpy ret = %d\n", ret);
-	}
+	(void)pmom_safe_memcpy((void *)(rb->buf + rb->write), rb->size, (void *)data, (unsigned long)left);/*lint !e124 */
+
 	/* 接着将剩余待写入数据 (如果还有的话)从buffer的开始位置拷贝 */
-	ret = memcpy_s((void *)rb->buf, rb->size, (void *)(data + left), (unsigned long)(len - left));/*lint !e124 */
-	if(ret)
-	{
-		pmom_pr_err("rb->buf memcpy ret = %d\n", ret);
-	}
+	(void)pmom_safe_memcpy((void *)rb->buf, rb->size, (void *)(data + left), (unsigned long)(len - left));/*lint !e124 */
 
 	rb->write += len;
 	rb->write %= (rb->size);
@@ -247,8 +239,8 @@ void *bsp_pm_log_addr_get(void)
 
 void *bsp_pm_dump_get(u32 mod_id, u32 len)
 {
-	struct pm_om_head_entry *entry = NULL;
-	void *dump_area =NULL;
+	struct pm_om_head_entry *entry;
+	void *dump_area;
 	u32 reg_cnt = g_pmom_ctrl.dump.region_cnt;
 	u32 i;
 	unsigned long flags = 0;
@@ -273,7 +265,7 @@ void *bsp_pm_dump_get(u32 mod_id, u32 len)
 	{
 		if (g_pm_om_magic_tbl[mod_id] == entry[i].magic)
 		{
-			return (void *)(uintptr_t)entry[i].offset;
+			return (void *)entry[i].offset;
 		}
 	}
 
@@ -293,7 +285,7 @@ void *bsp_pm_dump_get(u32 mod_id, u32 len)
 
 	entry[reg_cnt].magic  = g_pm_om_magic_tbl[mod_id]; /*lint !e661 !e662 */
 	entry[reg_cnt].len    = len;                      /*lint !e661 !e662 */
-	entry[reg_cnt].offset = (long)(uintptr_t)g_pmom_ctrl.dump.sub_region; /*lint !e661 !e662 */
+	entry[reg_cnt].offset = (long)g_pmom_ctrl.dump.sub_region; /*lint !e661 !e662 */
 
 	dump_area = (void *)g_pmom_ctrl.dump.sub_region;
 	g_pmom_ctrl.dump.sub_region += len;
@@ -308,19 +300,9 @@ __init int bsp_pm_om_log_init(void)
 {
 	DRV_PM_OM_CFG_STRU nv_cfg = {0};
 	void *temp = NULL;
-	int ret;
-	
-	ret = memset_s((void *)&nv_cfg, sizeof(nv_cfg), 0, sizeof(nv_cfg));
-	if(ret)
-	{
-		pmom_pr_err("nv_cfg memset ret = %d\n", ret);
-	}
-	ret = memset_s((void *)&g_pmom_ctrl.log, sizeof(g_pmom_ctrl.log), 0, sizeof(g_pmom_ctrl.log));
-	if(ret)
-	{
-		pmom_pr_err("g_pmom_ctrl.log memset ret = %d\n", ret);
-	}
 
+	(void)pmom_safe_memset((void *)&nv_cfg, sizeof(nv_cfg), 0, sizeof(nv_cfg));
+	(void)pmom_safe_memset((void *)&g_pmom_ctrl.log, sizeof(g_pmom_ctrl.log), 0, sizeof(g_pmom_ctrl.log));
 
 	/* 当前debug和platform主要和log强相关, dump比较独立 */
 	g_pmom_ctrl.platform = NULL;
@@ -338,10 +320,10 @@ __init int bsp_pm_om_log_init(void)
 	{
 		/* 使用socp的1M往后的内存 */
 		temp = ioremap_wc((MMU_VA_T)DDR_SOCP_ADDR, (unsigned long)DDR_SOCP_SIZE);
-		g_pmom_ctrl.log.smem = (struct pm_om_smem_cfg *)((uintptr_t)temp + PM_OM_SOCP_OFFSET);
+		g_pmom_ctrl.log.smem = (struct pm_om_smem_cfg *)((unsigned long)temp + PM_OM_SOCP_OFFSET);
 	}
 
-	g_pmom_ctrl.log.rb.buf       = (char *)((uintptr_t)g_pmom_ctrl.log.smem + sizeof(struct pm_om_smem_cfg));
+	g_pmom_ctrl.log.rb.buf       = (char *)((long)g_pmom_ctrl.log.smem + (long)sizeof(struct pm_om_smem_cfg));
 	g_pmom_ctrl.log.rb.size      = g_pmom_ctrl.log.smem->mem_info.size;
 	g_pmom_ctrl.log.rb.read      = 0;
 	g_pmom_ctrl.log.rb.write     = 0;
@@ -355,22 +337,16 @@ __init int bsp_pm_om_log_init(void)
 
 __init int bsp_pm_om_dump_init(void)
 {
-	unsigned long base_addr = 0;
-	int ret;
+	long base_addr = 0;
+
 	/* add pm info collect */
-	ret = memset_s((void *)&g_pmom_ctrl.pm_info, sizeof(g_pmom_ctrl.pm_info), 0, sizeof(g_pmom_ctrl.pm_info));
-	if(ret)
-	{
-		pmom_pr_err("g_pmom_ctrl.pm_info memset ret = %d\n", ret);
-	}
+	(void)pmom_safe_memset((void *)&g_pmom_ctrl.pm_info, sizeof(g_pmom_ctrl.pm_info), 0, sizeof(g_pmom_ctrl.pm_info));
 	spin_lock_init(&g_pmom_ctrl.pm_info.lock);
 	INIT_LIST_HEAD(&g_pmom_ctrl.pm_info.list);
 	g_pmom_ctrl.pm_info.init_flag = 1;
-	ret = memset_s((void *)&g_pmom_ctrl.dump, sizeof(g_pmom_ctrl.dump), 0, sizeof(g_pmom_ctrl.dump));
-	if(ret)
-	{
-		pmom_pr_err("g_pmom_ctrl.dump memset ret = %d\n", ret);
-	}
+
+	(void)pmom_safe_memset((void *)&g_pmom_ctrl.dump, sizeof(g_pmom_ctrl.dump), 0, sizeof(g_pmom_ctrl.dump));
+
 	spin_lock_init(&g_pmom_ctrl.dump.lock);
 
 	g_pmom_ctrl.dump.base = (void *)bsp_dump_register_field(PM_OM_DUMP_ID, "PM_OM", 0, 0, PM_OM_DUMP_SIZE, 0); 
@@ -389,15 +365,11 @@ __init int bsp_pm_om_dump_init(void)
 
 	g_pmom_ctrl.dump.sub_region += sizeof(*(g_pmom_ctrl.dump.cfg));
 
-	base_addr = (uintptr_t)g_pmom_ctrl.dump.sub_region;
-	g_pmom_ctrl.dump.sub_region = (char *)(uintptr_t)OSL_ROUND_UP(base_addr, 4);
+	base_addr = (long)g_pmom_ctrl.dump.sub_region;
+	g_pmom_ctrl.dump.sub_region = (char *)OSL_ROUND_UP(base_addr, 4);
 
-	ret = memset_s((void *)g_pmom_ctrl.dump.cfg->entry_tbl, sizeof(g_pmom_ctrl.dump.cfg->entry_tbl),
+	(void)pmom_safe_memset((void *)g_pmom_ctrl.dump.cfg->entry_tbl, sizeof(g_pmom_ctrl.dump.cfg->entry_tbl),
 		0, sizeof(g_pmom_ctrl.dump.cfg->entry_tbl));
-	if(ret)
-	{
-		pmom_pr_err("g_pmom_ctrl.dump.cfg->entry_tbl memset ret = %d\n", ret);
-	}
 
 	g_pmom_ctrl.dump.init_flag = PM_OM_INIT_MAGIC;
 
@@ -413,9 +385,8 @@ err_ret:
 /*lint -save -e144 -e413 -e613 -e64 -e826*/
 int bsp_pm_info_stat_register(pm_info_cbfun pcbfun, struct pm_info_usr_data *usr_data)
 {
-	struct pm_info_list *pm_info = NULL; /*lint !e830*/
+	struct pm_info_list *pm_info; /*lint !e830*/
 	unsigned long flags = 0;
-	int ret;
 	UNUSED(flags);
 
 	if (NULL == pcbfun || NULL == usr_data)
@@ -439,18 +410,11 @@ int bsp_pm_info_stat_register(pm_info_cbfun pcbfun, struct pm_info_usr_data *usr
 	    return PM_OM_ERR;
 	}
 
-	ret = memset_s(pm_info, sizeof(*pm_info), 0, sizeof(*pm_info));
-	if(ret)
-	{
-		pmom_pr_err("pm_info memset ret = %d\n", ret);
-	}
+	(void)pmom_safe_memset(pm_info, sizeof(*pm_info), 0, sizeof(*pm_info));
 
 	pm_info->cb_func  = pcbfun;
-	ret = memcpy_s((void *)&pm_info->usr_data, sizeof(pm_info->usr_data), usr_data, sizeof(*usr_data));
-	if(ret)
-	{
-		pmom_pr_err("pm_info->usr_data memcpy ret = %d\n", ret);
-	}
+	/* coverity[extend_simple_error] */
+	(void)pmom_safe_memcpy((void *)&pm_info->usr_data, sizeof(pm_info->usr_data), usr_data, sizeof(*usr_data));
 
 	spin_lock_irqsave(&g_pmom_ctrl.pm_info.lock, flags);/*lint !e550: (Warning -- Symbol '__dummy' not accessed)*/
 	g_pm_om_magic_tbl[pm_info->usr_data.mod_id] = pm_info->usr_data.magic;
@@ -464,10 +428,6 @@ int bsp_pm_info_stat_register(pm_info_cbfun pcbfun, struct pm_info_usr_data *usr
 /*lint -restore +e144 +e413 +e613 +e64 +e826*/
 
 /*lint --e{528}*/
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-module_init(bsp_pm_om_log_init);        /*lint !e19 */
-arch_initcall_sync(bsp_pm_om_dump_init);/*lint !e19 */
-#endif
 EXPORT_SYMBOL(bsp_pm_log_type);         /*lint !e19 */
 EXPORT_SYMBOL(bsp_pm_log);              /*lint !e19 */
 EXPORT_SYMBOL(pm_om_ctrl_get);          /*lint !e19 */

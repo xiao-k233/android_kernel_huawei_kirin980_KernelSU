@@ -46,6 +46,30 @@
  *
  */
 
+/*****************************************************************************/
+/*                                                                           */
+/*                Copyright 1999 - 2003, Huawei Tech. Co., Ltd.              */
+/*                           ALL RIGHTS RESERVED                             */
+/*                                                                           */
+/* FileName: include/v_iddef.h                                               */
+/*                                                                           */
+/* Author:                                                                   */
+/*                                                                           */
+/* Version: 1.0                                                              */
+/*                                                                           */
+/* Date:                                                                     */
+/*                                                                           */
+/* Description:                                                              */
+/*                                                                           */
+/* Others:                                                                   */
+/*                                                                           */
+/* History:                                                                  */
+/* 1. Date:                                                                  */
+/*    Author:                                                                */
+/*    Modification: Create this file                                         */
+/*                                                                           */
+/*                                                                           */
+/*****************************************************************************/
 #ifndef  _V_IDDEF_H
 #define  _V_IDDEF_H
 

@@ -64,6 +64,7 @@
 #include <linux/slab.h>
 #include <linux/of.h>
 #include <linux/delay.h>
+#include <linux/wakelock.h>
 #include <asm/string.h>
 #include <asm/traps.h>
 #include "product_config.h"
@@ -198,7 +199,4 @@ void dump_set_init_phase(u32 phase)
 }
 
 
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-module_init(bsp_dump_init);
-#endif
 

@@ -51,9 +51,8 @@
   1 头文件包含
 **************************************************************************** */
 #include <linux/module.h>
-#include <securec.h>
-#include <eagleye.h>
 #include <mdrv.h>
+#include <eagleye.h>
 #include <osl_sem.h>
 #include <osl_thread.h>
 #include <osl_malloc.h>
@@ -111,31 +110,33 @@ u32 SCM_SoftDecodeCfgDataRcv(u8 *pucBuffer, u32 ulLen)
 
 u32 SCM_SoftDecodeDataRcv(u8 *pucBuffer, u32 ulLen)
 {
-    rw_buffer_s rw_buffer;
-    u32 ret;
-    
+    s32                           sRet;
+
     diag_PTR(EN_DIAG_PTR_SCM_SOFTDECODE, 0, 0, 0);
-    
-    diag_get_idle_buffer(g_stSCMDataRcvTaskCtrlInfo.rngOmRbufId, &rw_buffer);
-    
-    if ((rw_buffer.size + rw_buffer.rb_size) < ulLen) {
+
+    if (ulLen > (u32)diag_RingBufferFreeBytes(g_stSCMDataRcvTaskCtrlInfo.rngOmRbufId))
+    {
         g_stScmSoftDecodeInfo.stRbInfo.ulBufferNotEnough++;
         diag_PTR(EN_DIAG_PTR_SCM_ERR1, 0, 0, 0);
+
         return ERR_MSP_FAILURE;
     }
 
-
-    ret = diag_RingBufferPut(g_stSCMDataRcvTaskCtrlInfo.rngOmRbufId, rw_buffer, pucBuffer, (s32)ulLen);
+    sRet = diag_RingBufferPut(g_stSCMDataRcvTaskCtrlInfo.rngOmRbufId,
+                            (s8 *)pucBuffer,
+                            (s32)ulLen);
     COVERITY_TAINTED_SET((VOID *)&(g_stSCMDataRcvTaskCtrlInfo.rngOmRbufId.buf));
-    if (ret) {
-        g_stScmSoftDecodeInfo.stRbInfo.ulRingBufferPutErr++;
-        diag_PTR(EN_DIAG_PTR_SCM_ERR2, 0, 0, 0);
-        return ret; 
+
+    if (ulLen == (u32)sRet)
+    {
+        osl_sem_up(&(g_stSCMDataRcvTaskCtrlInfo.SmID));
+        return BSP_OK;
     }
 
-    osl_sem_up(&(g_stSCMDataRcvTaskCtrlInfo.SmID));
-    return BSP_OK;
+    g_stScmSoftDecodeInfo.stRbInfo.ulRingBufferPutErr++;
+    diag_PTR(EN_DIAG_PTR_SCM_ERR2, 0, 0, 0);
 
+    return ERR_MSP_FAILURE;
 }
 
 
@@ -204,12 +205,15 @@ u32 SCM_SoftDecodeCfgHdlcInit(OM_HDLC_STRU *pstHdlc)
 }
 
 
-int SCM_SoftDecodeCfgRcvSelfTask(void* para)
+void SCM_SoftDecodeCfgRcvSelfTask(void)
 {
-    s32 ret;
-    s32 lLen;
-    unsigned long ulLockLevel;
-    rw_buffer_s rw_buffer;
+    s32                           sRet;
+    s32                           lLen;
+    s32                           lRemainlen;
+    s32                           lReadLen;
+    u32                          ulPktNum;
+    u32                          i;
+    unsigned long                           ulLockLevel;
 
     for (;;)
     {
@@ -219,38 +223,68 @@ int SCM_SoftDecodeCfgRcvSelfTask(void* para)
 
         COVERITY_TAINTED_SET((VOID *)&(g_stSCMDataRcvTaskCtrlInfo.rngOmRbufId.buf));
 
-        diag_get_data_buffer(g_stSCMDataRcvTaskCtrlInfo.rngOmRbufId, &rw_buffer);
-        lLen = rw_buffer.size + rw_buffer.rb_size;
-        if ((rw_buffer.size + rw_buffer.rb_size) == 0)
+        lLen = diag_RingBufferNBytes(g_stSCMDataRcvTaskCtrlInfo.rngOmRbufId);
+
+        if (lLen <= 0)
         {
             continue;
         }
-        
-        ret = diag_RingBufferGet(g_stSCMDataRcvTaskCtrlInfo.rngOmRbufId, rw_buffer,
-                                 (u8 *)g_stSCMDataRcvTaskCtrlInfo.pucBuffer, lLen);
-        if (ret)
+
+        ulPktNum = (u32)((lLen + SCM_DATA_RCV_PKT_SIZE - 1) / SCM_DATA_RCV_PKT_SIZE);
+
+        lRemainlen = lLen;
+
+        for (i = 0; i < ulPktNum; i++)
         {
-            spin_lock_irqsave(&g_stScmSoftDecodeDataRcvSpinLock, ulLockLevel);
-            diag_RingBufferFlush(g_stSCMDataRcvTaskCtrlInfo.rngOmRbufId);
-            spin_unlock_irqrestore(&g_stScmSoftDecodeDataRcvSpinLock, ulLockLevel);
-            g_stScmSoftDecodeInfo.stRbInfo.ulRingBufferFlush++;
-            diag_PTR(EN_DIAG_PTR_SCM_ERR3, 0, 0, 0);
-            continue;
+            if (SCM_DATA_RCV_PKT_SIZE < lRemainlen)
+            {
+                lReadLen = SCM_DATA_RCV_PKT_SIZE;
+
+                sRet = diag_RingBufferGet(g_stSCMDataRcvTaskCtrlInfo.rngOmRbufId,
+                                        g_stSCMDataRcvTaskCtrlInfo.pucBuffer,
+                                        SCM_DATA_RCV_PKT_SIZE);
+            }
+            else
+            {
+                lReadLen = lRemainlen;
+
+                sRet = diag_RingBufferGet(g_stSCMDataRcvTaskCtrlInfo.rngOmRbufId,
+                                        g_stSCMDataRcvTaskCtrlInfo.pucBuffer,
+                                        lRemainlen);
+            }
+
+            if (sRet != lReadLen)
+            {
+                spin_lock_irqsave(&g_stScmSoftDecodeDataRcvSpinLock, ulLockLevel);
+
+                diag_RingBufferFlush(g_stSCMDataRcvTaskCtrlInfo.rngOmRbufId);
+
+                spin_unlock_irqrestore(&g_stScmSoftDecodeDataRcvSpinLock, ulLockLevel);
+
+                g_stScmSoftDecodeInfo.stRbInfo.ulRingBufferFlush++;
+                diag_PTR(EN_DIAG_PTR_SCM_ERR3, 0, 0, 0);
+
+                continue;
+            }
+
+            lRemainlen -= lReadLen;
+
+            g_stScmSoftDecodeInfo.stGetInfo.ulDataLen += lReadLen;
+
+            diag_PTR(EN_DIAG_PTR_SCM_RCVDATA, 0, 0, 0);
+
+            /* 调用HDLC解封装函数 */
+            if (BSP_OK != SCM_SoftDecodeAcpuRcvData(&g_stScmHdlcSoftDecodeEntity,
+                                                    (u8 *)g_stSCMDataRcvTaskCtrlInfo.pucBuffer,
+                                                    (u32)lReadLen))
+            {
+                soft_decode_error("SCM_SoftDecodeAcpuRcvData Fail\n");
+            }
         }
-        g_stScmSoftDecodeInfo.stGetInfo.ulDataLen += lLen;
-        diag_PTR(EN_DIAG_PTR_SCM_RCVDATA, 0, 0, 0);
-        
-        /* 调用HDLC解封装函数 */
-        if (BSP_OK != SCM_SoftDecodeAcpuRcvData(&g_stScmHdlcSoftDecodeEntity,
-                                                (u8 *)g_stSCMDataRcvTaskCtrlInfo.pucBuffer,
-                                                (u32)lLen))
-        {
-            soft_decode_error("SCM_SoftDecodeAcpuRcvData Fail\n");
-        }
+
+
+    /* coverity[loop_bottom] */
     }
-
-
-    return 0;
 }
 
 
@@ -262,6 +296,7 @@ int SCM_SoftDecodeCfgRcvTaskInit(void)
 
 
     g_stSCMDataRcvTaskCtrlInfo.rngOmRbufId = diag_RingBufferCreate(SCM_DATA_RCV_BUFFER_SIZE);
+
     if (NULL == g_stSCMDataRcvTaskCtrlInfo.rngOmRbufId)
     {
         soft_decode_error("Creat OMCFG ringBuffer Fail.\n");
@@ -304,9 +339,6 @@ int SCM_SoftDecodeCfgRcvTaskInit(void)
 
     return BSP_OK;
 }
-#ifndef CONFIG_HISI_BALONG_MODEM_MODULE
-module_init(SCM_SoftDecodeCfgRcvTaskInit);
-#endif
 void  scm_soft_decode_init(void)
 {
     CPM_LogicRcvReg(CPM_OM_CFG_COMM, SCM_SoftDecodeCfgDataRcv);

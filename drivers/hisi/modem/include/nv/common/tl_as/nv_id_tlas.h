@@ -59,7 +59,8 @@ extern "C" {
 /*****************************************************************************
   1 Include Headfile
 *****************************************************************************/
-
+/* this file is included by drv, submit by zhouluojun, reviewed by hujianbo */
+/* #pragma pack(4) */
 
 /*****************************************************************************
   2 macro
@@ -90,7 +91,14 @@ typedef unsigned long NV_ITEM_ID_ENUM_UINT32;
 *****************************************************************************/
 
 
-
+/* this file is included by drv, submit by zhouluojun, reviewed by hujianbo */
+/*
+#if (VOS_OS_VER == VOS_WIN32)
+#pragma pack()
+#else
+#pragma pack(0)
+#endif
+*/
 
 
 
@@ -100,5 +108,5 @@ typedef unsigned long NV_ITEM_ID_ENUM_UINT32;
     #endif
 #endif
 
-#endif
+#endif /* end of PsNvInterface.h */
 

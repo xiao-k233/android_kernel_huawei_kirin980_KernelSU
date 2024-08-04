@@ -67,9 +67,7 @@
 #define    THIS_FILE_ID        MSP_FILE_ID_AT_LTE_UPGRADE_PROC_C
 /*lint +e767 */
 
-#ifdef FEATURE_UPGRADE_TL
 #define AT_NV_IMEI_LEN              15
-#endif
 
 VOS_UINT32 g_atNvBackupFlag = 0;
 
@@ -79,7 +77,6 @@ VOS_UINT32 atQryBootRomVer(VOS_UINT8 ucClientId)
     return AT_ERROR;
 }
 
-#ifdef FEATURE_UPGRADE_TL
 VOS_UINT32 At_GetNvRevertState(VOS_VOID)
 {
     VOS_UINT32 ret = (VOS_UINT32)-1;
@@ -233,9 +230,7 @@ VOS_UINT32 atSetNVBackup(VOS_UINT8 ucClientId)
 
     AT_PR_LOGI("Rcv Msg");
 
-#if (VOS_OS_VER != VOS_WIN32)
     ulRst = TAF_ACORE_NV_UPGRADE_BACKUP(EN_NVM_BACKUP_FILE);
-#endif
     if(VOS_OK != ulRst)
     {
         CmdErrProc(ucClientId, ulRst, 0, NULL);
@@ -279,7 +274,7 @@ VOS_UINT32 atQryAuthorityVer(VOS_UINT8 ucClientId)
 {
     VOS_UINT32 ulRst = AT_OK;
     VOS_UINT32 ulAuthorityVer = 0;
-    VOS_UINT8  ucVer[5]       = {0};
+    VOS_UINT8  ucVer[4] ={0};
     VOS_UINT32 i = 0;
 
     ulRst = At_GetNvAuthorityVer(&ulAuthorityVer);
@@ -330,35 +325,6 @@ VOS_UINT32 atQryAuthorityID(VOS_UINT8 ucClientId)
 }
 
 //切换到下载模式命令单板重启后将进入下载模式
-#if (FEATURE_ON == FEATURE_PHONE_ENG_AT_CMD)
-VOS_UINT32 atSetGodLoad(VOS_UINT8 ucClientId)
-{
-    gstAtSendData.usBufLen = 0;
-
-    gstAtSendData.usBufLen = (VOS_UINT16)At_sprintf( AT_CMD_MAX_LEN,
-                                           (VOS_CHAR*)pgucAtSndCodeAddr,
-                                           (VOS_CHAR*)pgucAtSndCodeAddr,
-                                           "OK"
-                                         );
-    mdrv_dload_set_curmode(DLOAD_MODE_DOWNLOAD);
-
-    VOS_TaskDelay(500);
-
-    /*lint -e40 */
-#if (VOS_OS_VER != VOS_WIN32)
-    mdrv_dload_set_softload(true);
-#endif
-    /*lint +e40 */
-
-#if (VOS_WIN32 == VOS_OS_VER)
-    mdrv_sysboot_shutdown(0);
-#else
-    mdrv_sysboot_shutdown();
-#endif
-
-    return AT_OK;
-}
-#endif
 // *****************************************************************************
 // 函数名称: atSetReset
 // 功能描述: 单板重启命令 "^RESET"
@@ -439,7 +405,6 @@ VOS_UINT32 atSetNVFactoryRestore(VOS_UINT8 ucClientId)
     return AT_OK;
 }
 
-#endif
 
 VOS_UINT32 atSetNVFactoryBack(VOS_UINT8 ucClientId)
 {
